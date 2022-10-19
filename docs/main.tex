@@ -52,7 +52,7 @@ We need to justify two cases: $(\lambda f. f~1 : (\mathtt{Int} \rightarrow \math
 
 \subsection{Typing}
 
-We introduce the typing judgment $\Gamma \vdash A \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns a inferred type $B$.
+We introduce the typing judgment $\Gamma \vdash A \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns an inferred type $B$.
 
 \begin{mathpar}
 \inferrule*[lab=T-Lit]
@@ -126,6 +126,9 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 
 $\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A'$ breaks the Lemma 2, since checked by \texttt{Top} tells us nothing and we cannot ensure it must infer a type.
 
+\chapter{Related work}
+
+Dunfield's bidirectional typing mentioned concluded this is a simultaneous input and output.
 
 
 \end{document}
