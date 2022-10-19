@@ -1,0 +1,61 @@
+%
+% Hyperlinks in rule names:
+%
+%  The first time a rule name is used is presumed to be the definition
+%  (probably in some figure with a bunch of rules).
+%
+%  Subsequent uses will be hyperlinks to the definition site.
+%
+% TODO:
+%   Provide a way of using a rule name that doesn't establish that site
+%   as the definition.
+%
+
+\ProvidesPackage{rulelinks}[2015/06/09 - First release]
+
+\RequirePackage{mathpartir}
+
+%
+% \newrulecommand{Rulename}{MyName}
+%
+% Note: don't put a backslash in Rulename.
+%
+
+\newcommand{\newrulecommand}[2]{%
+    \expandafter\newcommand\csname NoLink#1\endcsname{#2}%
+    \expandafter\newcommand\csname #1\endcsname{%
+        \ifcsname ZZRULE#1\endcsname%
+            % Already defined:  Link to definition.
+            %  "\expandafter...\endcsname" is what actually renders the rule,
+            %   by invoking the \NoLink... version defined above.
+            \hyperlink{rule:#1}{\expandafter\csname NoLink#1\endcsname}%
+         %
+        \else%
+             % Not yet defined:  Declare a hypertarget.
+             \hypertarget{rule:#1}{\expandafter\csname NoLink#1\endcsname}%
+             \expandafter\gdef\csname ZZRULE#1\endcsname{}% Declare a macro so we go to the "Already defined" branch for subsequent uses
+        \fi\xspace%
+    }
+}
+
+%
+% \newrulecommandONE: for rule names that take one argument (like \SumIntro{k}).
+%
+% \newrulecommandONE{Rulename}{MyName#1}
+%
+\newcommand{\newrulecommandONE}[2]{%
+    \expandafter\newcommand\csname NoLink#1\endcsname[1]{#2}%
+    \expandafter\newcommand\csname #1\endcsname[1]{%
+        \ifcsname ZZRULE#1\endcsname%
+            % Already defined:  Link to definition.
+            %  "\expandafter...\endcsname" is what actually renders the rule,
+            %   by invoking the \NoLink... version defined above.
+            \hyperlink{rule:#1}{\expandafter\csname NoLink#1\endcsname{##1}}%
+         %
+        \else%
+             % Not yet defined:  Declare a hypertarget.
+             \hypertarget{rule:#1}{\expandafter\csname NoLink#1\endcsname{##1}}%
+             \expandafter\gdef\csname ZZRULE#1\endcsname{}% Declare a macro so we go to the "Already defined" branch for subsequent uses
+        \fi\xspace%
+    }
+}
