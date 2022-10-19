@@ -1,0 +1,131 @@
+\documentclass{mimosis}
+
+\usepackage{mathpartir}
+\usepackage{amsthm}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\title{Generlizing Bi-directional Typing}
+\author{Xu Xue}
+
+\begin{document}
+\maketitle	
+%\tableofcontents
+
+\chapter{STLC with subtyping}
+
+\section{Declarative System}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B\\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}
+
+The second application rule is declarative \footnote{it differs from the original interpretation of bi-directional typing that targets for algorithmic system} since we need to guess the type $B$, with only partial information $A$. However, we can prove that it is implementable.
+
+We need to justify two cases: $(\lambda f. f~1 : (\mathtt{Int} \rightarrow \mathtt{Int}))~(\lambda x.~x)$ and $(\lambda x.~x)~1$.
+
+\begin{mathpar}
+\inferrule*[lab=T-App1]
+{\Gamma \vdash e_1 \Rightarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Leftarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+
+
+\inferrule*[lab=T-App2]
+{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Rightarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+\end{mathpar}
+
+\section{Algorithmic System}
+
+\subsection{Syntax}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \boxed{e}\\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}
+
+\subsection{Typing}
+
+We introduce the typing judgment $\Gamma \vdash A \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns a inferred type $B$.
+
+\begin{mathpar}
+\inferrule*[lab=T-Lit]
+{\Gamma \vdash \mathtt{Int} <: A}
+{\Gamma \vdash A \Rightarrow i \Rightarrow \mathsf{Int}}
+
+\inferrule*[lab=T-Var]
+{x : B \in \Gamma \\
+ \Gamma \vdash B <: A}
+{\Gamma \vdash A \Rightarrow x \Rightarrow B}
+
+\inferrule*[lab=T-App]
+{\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow D}
+{\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow D}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
+ \Gamma \vdash B <: A}
+{\Gamma \vdash A \Rightarrow e : B \Rightarrow B}
+
+\inferrule*[lab=T-Lam1]
+{\Gamma \vdash \mathtt{Top} \Rightarrow e_1 \Rightarrow A \\
+ \Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
+{\Gamma \vdash \boxed{e_1} \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
+
+\inferrule*[lab=T-Lam2]
+{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
+{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
+
+\inferrule*[lab=T-Lam3]
+{ }
+{\Gamma \vdash \mathtt{Top} \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
+\end{mathpar}
+
+\subsection{Subtyping}
+
+Typing and subtyping are mutually dependent. There's an observation that $\boxed{e}$ will only appear on the left of the subtyping.
+
+\begin{mathpar}
+\inferrule*[lab=S-Refl]	
+{ }
+{\Gamma \vdash \mathtt{Int} <: \mathtt{Int}}
+
+\inferrule*[lab=S-Top]
+{ }
+{\Gamma \vdash A <: \mathtt{Top}}
+
+\inferrule*[lab=S-Arr]
+{\Gamma \vdash C <: A \\
+ \Gamma \vdash B <: D}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D}
+
+\inferrule*[lab=S-Tele]
+{\Gamma \vdash A \Rightarrow e \Rightarrow A'}
+{\Gamma \vdash \boxed{e} <: A}
+
+\end{mathpar}
+
+
+\section{Metatheory}
+
+\begin{lemma}[Generlizing infer mode]
+$\Gamma \vdash e \Rightarrow A \cong \Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A$
+\end{lemma}
+
+\begin{lemma}[Generlizing check mode]
+$\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'$
+\end{lemma}
+
+\section{Problems Identified}
+
+$\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A'$ breaks the Lemma 2, since checked by \texttt{Top} tells us nothing and we cannot ensure it must infer a type.
+
+
+
+\end{document}
