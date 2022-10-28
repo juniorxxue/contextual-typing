@@ -14,6 +14,8 @@
 \usepackage{amsmath}
 \usepackage{marvosym}  % for \Pointinghand / \Hand in llproof
 
+\usepackage{cite}
+
 \usepackage{srcltx}
 \usepackage{goodcharter}
 \usepackage{euler}
@@ -21,7 +23,6 @@
 \usepackage{jdunfield}
 \usepackage{llproof}
 \usepackage{rulelinks}
-
 % strike through
 \usepackage{soul}
 
@@ -210,8 +211,27 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 
 \section{Related work}
 
-Dunfield's bidirectional typing mentioned concluded this is a simultaneous input and output.
+\subsection{Bidirectional Typing \cite{dunfield2021bidirectional}}
+It mentioned concluded this is a simultaneous input and output. 
 
+\subsection{Round-trip Type Checking \cite{polikarpova2016program}}
+
+\subsection{Let arguments go first \cite{xie2018let}}
+
+\begin{mathpar}
+\inferrule*[lab=T-App]
+{\Gamma \vdash e_2 \Rightarrow A \\ \Gamma \mid \Psi, A \vdash e_1 \Rightarrow A \rightarrow B}
+{\Gamma \mid \Psi \vdash e_1 ~ e_2 \Rightarrow B}
+
+\inferrule*[lab=T-Lam]
+{\Gamma, x : A \mid \Psi \vdash e \Rightarrow B}
+{\Gamma \mid \Psi, A \vdash \lambda x~. e \Rightarrow A \rightarrow B}
+\end{mathpar}
+
+
+
+\bibliography{ref}
+\bibliographystyle{plain}
 
 \end{document}
 
