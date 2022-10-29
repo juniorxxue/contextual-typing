@@ -81,6 +81,16 @@ The second application rule is declarative \footnote{it differs from the origina
 
 We introduce the typing judgment $\Gamma \vdash A \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns an inferred type $B$.
 
+There's a proposal to unify two lambda rules: simply abandon T-Lam1 and use T-Lam2 as the main rule, thus for the second example $(\lambda x.~x) ~ 1$, there'll be a case
+\begin{mathpar}
+\inferrule*[Right=T-Lam2]
+{x : \boxed{1} \vdash Top \Rightarrow x \Rightarrow Int}
+{. \vdash \boxed{1} \rightarrow Top \Rightarrow \lambda x . ~x \Rightarrow Int \rightarrow Int}
+\end{mathpar}
+
+\noindent Then, we need to add a constraint in the variable rule, which must infer a type in a canonical form (here, types without \boxed{e} is in canonical form).
+
+
 \begin{mathpar}
 \inferrule*[lab=T-Lit]
 {\Gamma \vdash \mathtt{Int} <: A}
@@ -207,6 +217,7 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 	\item $\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A'$ breaks the Lemma 2, since checked by \texttt{Top} tells us nothing and we cannot ensure it must infer a type.
 	\item \st{The metatheory only tells that it subsumes the traditional bidirectional typing, but it hasn't shown that we can infer more types}.
 	\item We need to find a way to normalize/categorize the type, otherwise, we will get the final inferred type which is \boxed{e}.
+	\item There is a concern of rule T-Lam3, whose the type has no meaning.
 \end{enumerate}
 
 \section{Related work}
