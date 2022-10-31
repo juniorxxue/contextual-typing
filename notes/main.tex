@@ -26,6 +26,8 @@
 % strike through
 \usepackage{soul}
 
+\usepackage{hyperref}
+
 
 \newcommand{\macroname}[1]{\texttt{\Backslash}\textvtt{#1}}
 
@@ -124,6 +126,46 @@ There's a proposal to unify two lambda rules: simply abandon T-Lam1 and use T-La
 {\Gamma \vdash \mathtt{Top} \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 \end{mathpar}
 
+\subsection{Typing II}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \boxed{e}\\
+&\text{Types Normal Form} \quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}
+
+Note that T-Var1 and T-Var2 are not complete in syntax and may not cover all cases.
+
+\begin{mathpar}
+\inferrule*[lab=T-Lit]
+{\Gamma \vdash \mathtt{Int} <: A}
+{\Gamma \vdash A \Rightarrow i \Rightarrow \mathsf{Int}}
+
+\inferrule*[lab=T-Var1]
+{x : B* \in \Gamma \\
+ \Gamma \vdash B* <: A}
+{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
+
+\inferrule*[lab=T-Var2]
+{x : \boxed{e} \in \Gamma \\ \Gamma \vdash Top \Rightarrow e \Rightarrow B* \\
+ \Gamma \vdash B* <: A}
+{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
+
+\inferrule*[lab=T-App]
+{\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow D}
+{\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow D}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
+ \Gamma \vdash B <: A}
+{\Gamma \vdash A \Rightarrow e : B \Rightarrow B}
+
+\inferrule*[lab=T-Lam]
+{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
+{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
+\end{mathpar}
+
 \subsection{Subtyping}
 
 Typing and subtyping are mutually dependent. There's an observation that $\boxed{e}$ will only appear on the left of the subtyping.
@@ -203,6 +245,10 @@ This case is used in ``let arguments go first", where the type of arguments can 
 
 \section{Metatheory}
 
+\begin{lemma}[Subtyping]
+If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, thenz $\Gamma \vdash B <: A$.
+\end{lemma}
+
 \begin{lemma}[Generlizing infer mode]
 $\Gamma \vdash e \Rightarrow A \cong \Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A$
 \end{lemma}
@@ -217,8 +263,29 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 	\item $\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A'$ breaks the Lemma 2, since checked by \texttt{Top} tells us nothing and we cannot ensure it must infer a type.
 	\item \st{The metatheory only tells that it subsumes the traditional bidirectional typing, but it hasn't shown that we can infer more types}.
 	\item We need to find a way to normalize/categorize the type, otherwise, we will get the final inferred type which is \boxed{e}.
-	\item There is a concern of rule T-Lam3, whose the type has no meaning.
+	\item There is a concern of rule T-Lam3, whose type has no meaning.
 \end{enumerate}
+
+\section{Discussions}
+
+\subsection{Top Type}
+In traditional system bidirectional typing, we have the rule and/or property that $\Gamma \vdash e \Leftarrow Top$, right?
+
+\subsection{Let-binding and lambda binding}
+
+Appending one rule like this simply solves the $(\lambda x .~x) 1$ where arguments appear as a binding in the function body.
+
+\begin{mathpar}
+\inferrule*[lab=T-Let]
+{\Gamma \vdash e \Rightarrow A \\ \Gamma, x : A \vdash e' \Rightarrow B}
+{\Gamma \vdash let ~x = e ~in~ e' \Rightarrow B}
+
+\inferrule*[lab=T-App-Dumb]
+{\Gamma \vdash e_2 \Rightarrow A \\ \Gamma, x : A \vdash e_2 \Rightarrow B}
+{\Gamma \vdash (\lambda x . ~e_1) ~e_2 \Rightarrow B}
+\end{mathpar}
+
+
 
 \section{Related work}
 
@@ -226,6 +293,18 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 It mentioned concluded this is a simultaneous input and output. 
 
 \subsection{Round-trip Type Checking \cite{polikarpova2016program}}
+
+\begin{center}
+	\url{https://people.csail.mit.edu/asolar/SynthesisCourse/Lecture16.htm}	
+\end{center}
+
+\begin{quote}
+Bidirectional type
+propagation is “all-or-nothing”: once a checking problem for
+a term cannot be decomposed perfectly into checking problems
+for its subterms, the system abandons all information about the
+goal type and switches to purely bottom-up inference. Our insight is that some information from the goal type can be retained in the bottom-up phase, leading to more local error detection.
+\end{quote}
 
 \subsection{Let arguments go first \cite{xie2018let}}
 
