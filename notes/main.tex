@@ -74,14 +74,15 @@ The second application rule is declarative \footnote{it differs from the origina
 \subsection{Syntax}
 
 \begin{align*}
-&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \boxed{e}\\
+&\text{Types with Holes}\quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \mid \boxed{e}\\
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B\\
 &\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
 &\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
 \end{align*}
 
 \subsection{Typing}
 
-We introduce the typing judgment $\Gamma \vdash A \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns an inferred type $B$.
+We introduce the typing judgment $\Gamma \vdash A* \Rightarrow e \Rightarrow B$. It accepts three inputs: a context $\Gamma$, a checking type $A$ and an expression $B$ and returns an inferred type $B$.
 
 There's a proposal to unify two lambda rules: simply abandon T-Lam1 and use T-Lam2 as the main rule, thus for the second example $(\lambda x.~x) ~ 1$, there'll be a case
 \begin{mathpar}
@@ -95,79 +96,36 @@ There's a proposal to unify two lambda rules: simply abandon T-Lam1 and use T-La
 
 \begin{mathpar}
 \inferrule*[lab=T-Lit]
-{\Gamma \vdash \mathtt{Int} <: A}
-{\Gamma \vdash A \Rightarrow i \Rightarrow \mathsf{Int}}
+{\Gamma \vdash \mathtt{Int} <: A*}
+{\Gamma \vdash A* \Rightarrow i \Rightarrow \mathsf{Int}}
 
 \inferrule*[lab=T-Var]
 {x : B \in \Gamma \\
- \Gamma \vdash B <: A}
-{\Gamma \vdash A \Rightarrow x \Rightarrow B}
+ \Gamma \vdash B <: A*}
+{\Gamma \vdash A* \Rightarrow x \Rightarrow B}
 
 \inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow D}
-{\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow D}
+{\Gamma \vdash \boxed{e_2} \rightarrow A* \Rightarrow e_1 \Rightarrow C \rightarrow D}
+{\Gamma \vdash A* \Rightarrow e_1~e_2 \Rightarrow D}
 
 \inferrule*[lab=T-Ann]
 {\Gamma \vdash B \Rightarrow e \Rightarrow B \\
- \Gamma \vdash B <: A}
-{\Gamma \vdash A \Rightarrow e : B \Rightarrow B}
+ \Gamma \vdash B <: A*}
+{\Gamma \vdash A* \Rightarrow e : B \Rightarrow B}
 
 \inferrule*[lab=T-Lam1]
 {\Gamma \vdash \mathtt{Top} \Rightarrow e_1 \Rightarrow A \\
- \Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
-{\Gamma \vdash \boxed{e_1} \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
+ \Gamma, x : A \vdash B* \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{e_1} \rightarrow B* \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 
 \inferrule*[lab=T-Lam2]
-{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
-{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
-
-\inferrule*[lab=T-Lam3]
-{ }
-{\Gamma \vdash \mathtt{Top} \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
-\end{mathpar}
-
-\subsection{Typing II}
-
-\begin{align*}
-&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \boxed{e}\\
-&\text{Types Normal Form} \quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \\
-&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
-&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
-\end{align*}
-
-Note that T-Var1 and T-Var2 are not complete in syntax and may not cover all cases.
-
-\begin{mathpar}
-\inferrule*[lab=T-Lit]
-{\Gamma \vdash \mathtt{Int} <: A}
-{\Gamma \vdash A \Rightarrow i \Rightarrow \mathsf{Int}}
-
-\inferrule*[lab=T-Var1]
-{x : B* \in \Gamma \\
- \Gamma \vdash B* <: A}
-{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
-
-\inferrule*[lab=T-Var2]
-{x : \boxed{e} \in \Gamma \\ \Gamma \vdash Top \Rightarrow e \Rightarrow B* \\
- \Gamma \vdash B* <: A}
-{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
-
-\inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow D}
-{\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow D}
-
-\inferrule*[lab=T-Ann]
-{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
- \Gamma \vdash B <: A}
-{\Gamma \vdash A \Rightarrow e : B \Rightarrow B}
-
-\inferrule*[lab=T-Lam]
-{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
-{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
+{\Gamma, x : A \vdash B* \Rightarrow e \Rightarrow C}
+{\Gamma \vdash A \rightarrow B* \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
 \end{mathpar}
 
 \subsection{Subtyping}
 
+Subtyping has the form $\Gamma \vdash A* <: B*$.
 Typing and subtyping are mutually dependent. There's an observation that $\boxed{e}$ will only appear on the left of the subtyping.
 
 \begin{mathpar}
@@ -177,16 +135,16 @@ Typing and subtyping are mutually dependent. There's an observation that $\boxed
 
 \inferrule*[lab=S-Top]
 { }
-{\Gamma \vdash A <: \mathtt{Top}}
+{\Gamma \vdash A* <: \mathtt{Top}}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \\
- \Gamma \vdash B <: D}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D}
+{\Gamma \vdash C* <: A* \\
+ \Gamma \vdash B* <: D*}
+{\Gamma \vdash A* \rightarrow B* <: C* \rightarrow D*}
 
 \inferrule*[lab=S-Tele]
-{\Gamma \vdash A \Rightarrow e \Rightarrow A'}
-{\Gamma \vdash \boxed{e} <: A}
+{\Gamma \vdash A* \Rightarrow e \Rightarrow A}
+{\Gamma \vdash \boxed{e} <: A*}
 
 \end{mathpar}
 
@@ -271,6 +229,8 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 \subsection{Top Type}
 In traditional system bidirectional typing, we have the rule and/or property that $\Gamma \vdash e \Leftarrow Top$, right?
 
+\paragraph{Remark} We should start with whether the declartive system support such a property. For now, it is not supported by the rules in declarative one and may lose the property of check subsumption (the ideal one). 
+
 \subsection{Let-binding and lambda binding}
 
 Appending one rule like this simply solves the $(\lambda x .~x) 1$ where arguments appear as a binding in the function body.
@@ -283,6 +243,49 @@ Appending one rule like this simply solves the $(\lambda x .~x) 1$ where argumen
 \inferrule*[lab=T-App-Dumb]
 {\Gamma \vdash e_2 \Rightarrow A \\ \Gamma, x : A \vdash e_2 \Rightarrow B}
 {\Gamma \vdash (\lambda x . ~e_1) ~e_2 \Rightarrow B}
+\end{mathpar}
+
+\paragraph{Remark} The typing rule for let can easily deal with nested lets, but not with the counter rule in the right. This desugar can work relatively well with other systems, but not in bidirecitonal typing style.
+
+\subsection{Another Style of Typing}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \boxed{e}\\
+&\text{Types Normal Form} \quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}
+
+Note that T-Var1 and T-Var2 are not complete in syntax and may not cover all cases.
+\paragraph{Remark} It seems to complicate the story since we put the \boxed{e} in the context instead of propogating it through the checking place.
+
+\begin{mathpar}
+\inferrule*[lab=T-Lit]
+{\Gamma \vdash \mathtt{Int} <: A}
+{\Gamma \vdash A \Rightarrow i \Rightarrow \mathsf{Int}}
+
+\inferrule*[lab=T-Var1]
+{x : B* \in \Gamma \\
+ \Gamma \vdash B* <: A}
+{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
+
+\inferrule*[lab=T-Var2]
+{x : \boxed{e} \in \Gamma \\ \Gamma \vdash Top \Rightarrow e \Rightarrow B* \\
+ \Gamma \vdash B* <: A}
+{\Gamma \vdash A \Rightarrow x \Rightarrow B*}
+
+\inferrule*[lab=T-App]
+{\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow D}
+{\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow D}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
+ \Gamma \vdash B <: A}
+{\Gamma \vdash A \Rightarrow e : B \Rightarrow B}
+
+\inferrule*[lab=T-Lam]
+{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
+{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
 \end{mathpar}
 
 
