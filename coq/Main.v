@@ -15,6 +15,11 @@ Inductive term :=
 | App (e1 e2 : term)
 | Ann (e : term) (A : type).
 
+Instance Ids_term : Ids term. derive. Defined.
+Instance Rename_term : Rename term. derive. Defined.
+Instance Subst_term : Subst term. derive. Defined.
+Instance SubstLemmas_term : SubstLemmas term. derive. Qed.
+
 (* ------- Typing --------------- *)
 
 Inductive htype :=
@@ -23,7 +28,7 @@ Inductive htype :=
 | HArr (A B : htype)
 | Hole (e : term).
 
-Fixpoint type_is_htype (A : type) :=
+Fixpoint type_is_htype (A : type) : htype :=
   match A with
   | Int => HInt
   | Top => HTop
@@ -32,36 +37,70 @@ Fixpoint type_is_htype (A : type) :=
 
 Coercion type_is_htype : type >-> htype.
 
-Inductive ty (G : var -> type) : htype -> term -> type -> Prop :=
+Inductive ty (Γ : var -> type) : htype -> term -> type -> Prop :=
 | Ty_Lit  A n :
-  sub G Int A ->
-  ty G A (Lit n) Int
+  sub Γ Int A ->
+  ty Γ A (Lit n) Int
 | Ty_Var A B x :
-  G x = B -> sub G B A ->
-  ty G A (Var x) B
+  Γ x = B -> sub Γ B A ->
+  ty Γ A (Var x) B
 | Ty_App e1 e2 A C D :
-  ty G (HArr (Hole e2) A) e1 (Arr C D) ->
-  ty G A (App e1 e2) D
-| Ty_Ann A (B : type) e :
-  ty G B e B -> sub G B A ->
-  ty G A (Ann e B) B
+  ty Γ (HArr (Hole e2) A) e1 (Arr C D) ->
+  ty Γ A (App e1 e2) D
+| Ty_Ann A (B : type) C e :
+  ty Γ B e C -> sub Γ B A ->
+  ty Γ A (Ann e B) B
 | Ty_Lam1 e1 e A B B':
-  ty G Top e1 A ->
-  ty (A .: G) B' e B ->
-  ty G (HArr (Hole e1) B') (Lam e) (Arr A B)
+  ty Γ Top e1 A ->
+  ty (A .: Γ) B' e B ->
+  ty Γ (HArr (Hole e1) B') (Lam e) (Arr A B)
 | Ty_Lam2 e A B' C :
-  ty (A .: G) B' e C ->
-  ty G (HArr A B') (Lam e) (Arr A C)
-with sub (G : var -> type) : htype -> htype -> Prop :=
-| S_Refl        : sub G HInt HInt
-| S_Top A       : sub G A HTop
-| S_Arr A B C D : sub G C A -> sub G B D -> sub G (HArr A B) (HArr C D)
-| S_Hole A A' e : ty G A e A' -> sub G (Hole e) A.
+  ty (A .: Γ) B' e C ->
+  ty Γ (HArr A B') (Lam e) (Arr A C)
+with sub (Γ : var -> type) : htype -> htype -> Prop :=
+| S_Refl        : sub Γ HInt HInt
+| S_Top A       : sub Γ A HTop
+| S_Arr A B C D : sub Γ C A -> sub Γ B D -> sub Γ (HArr A B) (HArr C D)
+| S_Hole A A' e : ty Γ A e A' -> sub Γ (Hole e) A.
 
+Notation "A → B" := (Arr A B) (at level 20).
+Notation "A *→ B" := (HArr A B) (at level 20).
+Notation "⟦ e ⟧" := (Hole e) (at level 20).
+
+Notation "G ⊢ A ⇒ e ⇒ B" := (ty G A e B) (at level 50).
+Notation "G ⊢ A <: B" := (sub G A B) (at level 50).
+
+(** Weakening Lemma *)
+
+Lemma sub_ren Γ A B:
+  sub Γ A B -> forall Δ ξ, Γ = ξ >>> Δ -> sub Δ A B.
+Proof.
+  intros. subst. dependent induction H; eauto.
+  - econstructor.
+  - econstructor.
+  - econstructor; eauto.
+  - econstructor.
+Admitted.
+
+
+Lemma ty_ren Γ e A B:
+  ty Γ B e A -> forall Δ ξ, Γ = ξ >>> Δ -> ty Δ B e.[ren ξ] A.
+Proof.
+  induction 1; intros.
+  - simpl. apply Ty_Lit; eauto.
+    eapply sub_ren; eauto.
+Admitted.          
+  
 Lemma ty_sub : forall A B e G,
     ty G A e B ->
     sub G B A.
 Proof.
   intros. dependent induction H.
+  - assumption.
+  - assumption.
+  - dependent destruction IHty. assumption.
+  - assumption.
+  - eapply S_Arr.
+    + admit.
+    + eapply ty_ren in H0; eauto. admit.
 Admitted.
-  
