@@ -1,3 +1,5 @@
 .DS_Store
 .texpadtmp/
 *.pdf
+agda/
+*.swp

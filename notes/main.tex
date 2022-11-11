@@ -221,7 +221,7 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 	\item $\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A'$ breaks the Lemma 2, since checked by \texttt{Top} tells us nothing and we cannot ensure it must infer a type.
 	\item \st{The metatheory only tells that it subsumes the traditional bidirectional typing, but it hasn't shown that we can infer more types}.
 	\item We need to find a way to normalize/categorize the type, otherwise, we will get the final inferred type which is \boxed{e}.
-	\item There is a concern of rule T-Lam3, whose type has no meaning.
+	\item There is a concern about rule T-Lam3, whose type has no meaning.
 \end{enumerate}
 
 \section{Discussions}
@@ -229,7 +229,7 @@ $\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'
 \subsection{Top Type}
 In traditional system bidirectional typing, we have the rule and/or property that $\Gamma \vdash e \Leftarrow Top$, right?
 
-\paragraph{Remark} We should start with whether the declartive system support such a property. For now, it is not supported by the rules in declarative one and may lose the property of check subsumption (the ideal one). 
+\paragraph{Remark} We should start with whether the declarative system supports such a property. For now, it is not supported by the rules in declarative one and may lose the property of check subsumption (the ideal one). 
 
 \subsection{Let-binding and lambda binding}
 
@@ -245,15 +245,15 @@ Appending one rule like this simply solves the $(\lambda x .~x) 1$ where argumen
 {\Gamma \vdash (\lambda x . ~e_1) ~e_2 \Rightarrow B}
 \end{mathpar}
 
-\paragraph{Remark} The typing rule for let can easily deal with nested lets, but not with the counter rule in the right. This desugar can work relatively well with other systems, but not in bidirecitonal typing style.
+\paragraph{Remark} The typing rule for let can easily deal with nested lets, but not with the counter rule in the right. This desugar can work relatively well with other systems, but not in a bidirectional typing style.
 
 \subsection{Type flows out}
 
-There's a variant of bidrectional typing can type check the term $\lambda x. ~x + x$, where the inner type flows out, which seems not possible in our system.
+There's a variant of bidirectional typing that can type check the term $\lambda x. ~x + x$, where the inner type flows out, which seems not possible in our system.
 
 \subsection{Uniqueness of inference, check and another possiblity}
 
-Snow argues the rule T-App2 is not correct, in terms of merge operator.
+Snow argues the rule T-App2 is not correct, in terms of the merge operator.
 
 \begin{mathpar}
 \inferrule*[lab=T-App2]
