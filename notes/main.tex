@@ -247,6 +247,21 @@ Appending one rule like this simply solves the $(\lambda x .~x) 1$ where argumen
 
 \paragraph{Remark} The typing rule for let can easily deal with nested lets, but not with the counter rule in the right. This desugar can work relatively well with other systems, but not in bidirecitonal typing style.
 
+\subsection{Type flows out}
+
+There's a variant of bidrectional typing can type check the term $\lambda x. ~x + x$, where the inner type flows out, which seems not possible in our system.
+
+\subsection{Uniqueness of inference, check and another possiblity}
+
+Snow argues the rule T-App2 is not correct, in terms of merge operator.
+
+\begin{mathpar}
+\inferrule*[lab=T-App2]
+{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Rightarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+\end{mathpar}
+
 \subsection{Another Style of Typing}
 
 \begin{align*}
