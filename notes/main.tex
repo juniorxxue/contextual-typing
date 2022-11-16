@@ -204,16 +204,28 @@ This case is used in ``let arguments go first", where the type of arguments can 
 \section{Metatheory}
 
 \begin{lemma}[Subtyping]
-If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, thenz $\Gamma \vdash B <: A$.
+If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
 \end{lemma}
 
 \begin{lemma}[Generlizing infer mode]
 $\Gamma \vdash e \Rightarrow A \cong \Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A$
 \end{lemma}
 
+This maybe wrong if the declarative inference is not unique.
+
 \begin{lemma}[Generlizing check mode]
-$\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A'$
+$\Gamma \vdash e \Leftarrow A \cong \Gamma \vdash A \Rightarrow e \Rightarrow A$
 \end{lemma}
+
+\begin{theorem}[Completeness]
+If $\Gamma \vdash e \Rightarrow A$, then $\Gamma \vdash Top \Rightarrow e \Rightarrow B$ and $B <: A$.
+\end{theorem}
+
+\begin{theorem}[Soundness]
+
+\end{theorem}
+
+
 
 \section{Problems Identified}
 
@@ -302,6 +314,16 @@ Note that T-Var1 and T-Var2 are not complete in syntax and may not cover all cas
 {\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'}
 {\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B'}
 \end{mathpar}
+
+\subsection{Minimal type property}
+We expect a property from declaretive system to algorithmic system, it that the algorithmic one always computes a minimal type.
+
+\begin{lemma}[Minimal type]
+If $\Gamma \vdash e \Rightarrow A$, then $\Gamma \vdash Top \Rightarrow e \Rightarrow B$ and $B <: A$.	
+\end{lemma}
+
+\paragraph{Remark} this property/lemma is actually the completeness lemma of two systems.
+
 
 
 

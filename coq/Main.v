@@ -91,14 +91,6 @@ Proof.
   auto.
 Qed.
 
-Lemma sub_ren' Γ A B:
-  sub Γ A B -> forall Δ ξ, Γ = ξ >>> Δ -> sub Δ A B.
-Proof.
-  intros. induction H.
-  - econstructor.
-Admitted.
-  
-
 Lemma sub_ren :
   forall Γ A B, sub Γ A B -> forall Δ ξ, Γ = ξ >>> Δ -> sub Δ (rename_htype A ξ) (rename_htype B ξ).
 Proof.
@@ -111,16 +103,28 @@ Proof.
       P := fun Γ A e B h => forall Δ ξ, Γ = ξ >>> Δ -> ty Δ (rename_htype A ξ) e.[ren ξ] B
     )
   ; intros; eauto.
+  (* Typing *)
   - simpl in *. eapply Ty_Lit; eauto.
   - subst. simpl in *. econstructor; eauto.
     specialize (H0 Δ ξ (eq_refl _)).
     rewrite (rename_type_eq _ _) in H0.
     auto.
+  - econstructor. eapply H0; eauto.
+  - econstructor.
+    + pose proof (rename_type_eq B0 ξ).
+      specialize (H0 Δ ξ). rewrite H3 in H0. eapply H0. assumption.
+    + pose proof (rename_type_eq B0 ξ).
+      specialize (H1 Δ ξ). rewrite H3 in H1. eapply H1. assumption.
+  - simpl in *. econstructor; eauto.
+    admit.
   - admit.
-  - admit.
-  - admit.
-  - 
+    (* Subtyping *)
+  - simpl. econstructor.
+  - simpl. econstructor.
+  - simpl. econstructor; eauto.
+  - simpl. econstructor. eapply H0; eauto.
 Admitted.
+
 
 Lemma ty_ren Γ e A B:
   ty Γ B e A -> forall Δ ξ, Γ = ξ >>> Δ -> ty Δ B e.[ren ξ] A.
