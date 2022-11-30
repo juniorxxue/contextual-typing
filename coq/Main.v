@@ -1,12 +1,12 @@
 Require Import Autosubst.Autosubst.
 Require Import Coq.Program.Equality.
 
-(* ------- Syntax --------------- *)  
+(* ------- Syntax --------------- *)
 
 Inductive type :=
 | Int
 | Top
-| Arr (A B : type).  
+| Arr (A B : type).
 
 Inductive term :=
 | Lit (n : nat)
@@ -48,7 +48,7 @@ Coercion type_is_htype : type >-> htype.
 Inductive ty (Γ : var -> type) : htype -> term -> type -> Prop :=
 | Ty_Lit  A n :
   sub Γ Int A ->
-  ty Γ A (Lit n) Int     
+  ty Γ A (Lit n) Int
 | Ty_Var A B x :
   Γ x = B -> sub Γ B A ->
   ty Γ A (Var x) B     
@@ -66,8 +66,8 @@ Inductive ty (Γ : var -> type) : htype -> term -> type -> Prop :=
   ty (A .: Γ) B' e C ->
   ty Γ (HArr A B') (Lam e) (Arr A C)
 with sub (Γ : var -> type) : htype -> htype -> Prop :=
-| S_Refl        : sub Γ HInt HInt
-| S_Top A       : sub Γ A HTop
+| S_Int         : sub Γ Int Int
+| S_Top A       : sub Γ A Top
 | S_Arr A B C D : sub Γ C A -> sub Γ B D -> sub Γ (HArr A B) (HArr C D)
 | S_Hole A A' e : ty Γ A e A' -> sub Γ (Hole e) A.
 
@@ -80,6 +80,24 @@ Notation "⟦ e ⟧" := (Hole e) (at level 20).
 Notation "G ⊢ A ⇒ e ⇒ B" := (ty G A e B) (at level 50).
 Notation "G ⊢ A <: B" := (sub G A B) (at level 50).
 
+Lemma sub_refl:
+  forall Γ A,
+    sub Γ A A.
+Proof.
+  intros. dependent induction A.
+  - eapply S_Int.
+  - eapply S_Top.
+  - eapply S_Arr; eauto.
+  - eapply S_Hole.
+Abort.
+    
+Lemma coerc_case:
+  forall Γ A B,
+    sub Γ (Arr A B) (Arr A B).
+Proof.
+  intros.
+  eapply S_Refl.
+
 (** Weakening Lemma *)
 Check sub_ind.
 Check sub_mut.
@@ -90,6 +108,10 @@ Proof.
   simpl in *. rewrite IHt1. rewrite IHt2.
   auto.
 Qed.
+
+Check upren.
+
+Print upren.
 
 Lemma sub_ren :
   forall Γ A B, sub Γ A B -> forall Δ ξ, Γ = ξ >>> Δ -> sub Δ (rename_htype A ξ) (rename_htype B ξ).
@@ -115,7 +137,8 @@ Proof.
       specialize (H0 Δ ξ). rewrite H3 in H0. eapply H0. assumption.
     + pose proof (rename_type_eq B0 ξ).
       specialize (H1 Δ ξ). rewrite H3 in H1. eapply H1. assumption.
-  - simpl in *. econstructor; eauto.
+  - simpl in *. econstructor; eauto. asimpl.
+    specialize (H1 (A0 .: Δ) (upren ξ)). 
     admit.
   - admit.
     (* Subtyping *)
@@ -130,10 +153,18 @@ Lemma ty_ren Γ e A B:
   ty Γ B e A -> forall Δ ξ, Γ = ξ >>> Δ -> ty Δ B e.[ren ξ] A.
 Proof.
 Admitted.
+
+Lemma infer_without_hint :
+  forall Γ e A,
+    ty Γ Top e A -> forall B, ty Γ B e A.
+Proof.
+  intros Γ e A Ty.
+  dependent induction Ty; intros.
+  - econstructor.
+Abort.
   
-Lemma ty_sub : forall A B e G,
-    ty G A e B ->
-    sub G B A.
+Lemma ty_sub : forall A B e Γ,
+    ty Γ A e B -> sub Γ B A.
 Proof.
   intros. dependent induction H.
   - assumption.
@@ -141,6 +172,4 @@ Proof.
   - dependent destruction IHty. assumption.
   - assumption.
   - eapply S_Arr.
-    + admit.
-    + eapply ty_ren in H0; eauto. admit.
-Admitted.
+    + eapply S_Hole. dependent induction A; eauto.
