@@ -96,7 +96,7 @@ Lemma coerc_case:
     sub Γ (Arr A B) (Arr A B).
 Proof.
   intros.
-  eapply S_Refl.
+Admitted.
 
 (** Weakening Lemma *)
 Check sub_ind.
