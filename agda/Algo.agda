@@ -12,8 +12,8 @@ infixl 7 _·_
 infix  9 `_
 infix  5 _⦂_
 infixr 8 _⇒_
-infixr 8 _⇛_
-infixr 8 ⟦_⟧⇛_
+infixr 8 _*⇒_
+infixr 8 ⟦_⟧*⇒_
 
 data Type : Set where
   Int : Type
@@ -85,3 +85,9 @@ data _⊢_≤_ where
     → Γ ⊢ Hop ⇛ e ⇛ A'
     → Γ ⊢ h A' ≤ A
     → Γ ⊢ A *⇒ B ≤ ⟦ e ⟧*⇒ C
+
+data _⊢_⇛_⇛_ where
+
+  ty-lit : ∀ {Γ A n}
+    → Γ ⊢ Hnt ≤ A
+    → Γ ⊢ A ⇛ lit n ⇛ Int
