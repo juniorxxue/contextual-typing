@@ -30,12 +30,12 @@ data Term : Set where
 data Hype : Set where
   Hnt : Hype
   Hop : Hype
-  _⇛_  : Hype → Hype → Hype
-  ⟦_⟧⇛_ : Term → Hype → Hype
+  _*⇒_  : Hype → Hype → Hype
+  ⟦_⟧*⇒_ : Term → Hype → Hype
 
 
 _ : Hype
-_ = ⟦ lit 1 ⟧⇛ Hnt
+_ = ⟦ lit 1 ⟧*⇒ Hnt
 
 data Mode : Set where
   ⇛ : Mode
@@ -66,6 +66,11 @@ infix 5 _⊢_≤_
 data _⊢_≤_ : Context → Hype → Hype → Set
 data _⊢_⇛_⇛_ : Context → Hype → Term → Type → Set
 
+h : Type → Hype
+h Int = Hnt
+h Top = Hnt
+h (A ⇒ B) = (h A) *⇒ (h B)
+
 data _⊢_≤_ where
   ≤-int : ∀ {Γ}
     → Γ ⊢ Hnt ≤ Hnt
@@ -74,9 +79,9 @@ data _⊢_≤_ where
   ≤-arr : ∀ {Γ A B C D}
     → Γ ⊢ C ≤ A
     → Γ ⊢ B ≤ D
-    → Γ ⊢ (A ⇛ B) ≤ (C ⇛ D)
-  ≤-hole : ∀ {Γ e A B C}
+    → Γ ⊢ (A *⇒ B) ≤ (C *⇒ D)
+  ≤-hole : ∀ {Γ e A A' B C}
     → Γ ⊢ B ≤ C
     → Γ ⊢ Hop ⇛ e ⇛ A'
-    → Γ ⊢ A' ≤ A
-    → A ⇛ B ≤ ⟦ e ⟧⇛ C
+    → Γ ⊢ h A' ≤ A
+    → Γ ⊢ A *⇒ B ≤ ⟦ e ⟧*⇒ C
