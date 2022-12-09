@@ -62,6 +62,7 @@ data _∋_⦂_ : Context → Id → Type → Set where
     → Γ , y ⦂ B ∋ x ⦂ A
 
 infix 5 _⊢_≤_
+infix 4 _⊢_⇛_⇛_ 
 
 data _⊢_≤_ : Context → Hype → Hype → Set
 data _⊢_⇛_⇛_ : Context → Hype → Term → Type → Set
@@ -91,3 +92,26 @@ data _⊢_⇛_⇛_ where
   ty-lit : ∀ {Γ A n}
     → Γ ⊢ Hnt ≤ A
     → Γ ⊢ A ⇛ lit n ⇛ Int
+
+  ty-var : ∀ {Γ A B x}
+    → Γ ∋ x ⦂ B
+    → Γ ⊢ h B ≤ A
+    → Γ ⊢ A ⇛ ` x ⇛ B
+
+  ty-app : ∀ {Γ e₁ e₂ A C D}
+    → Γ ⊢ ⟦ e₂ ⟧*⇒ A ⇛ e₁ ⇛ (C ⇒ D)
+    → Γ ⊢ A ⇛ e₁ · e₂ ⇛ D
+
+  ty-ann : ∀ {Γ e A B}
+    → Γ ⊢ h B ⇛ e ⇛ B
+    → Γ ⊢ h B ≤ A
+    → Γ ⊢ A ⇛ e ⦂ B ⇛ B
+
+  ty-lam₁ : ∀ {Γ e₁ e x A B C}
+    → Γ ⊢ Hop ⇛ e₁ ⇛ A
+    → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
+    → Γ ⊢ ⟦ e₁ ⟧*⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+
+  ty-lam₂ : ∀ {Γ x e A B C}
+    → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
+    → Γ ⊢ h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
