@@ -14,10 +14,11 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 Id : Set
 Id = String
 
-infix  5  ƛ_⇒_
+infixr  5  ƛ_⇒_
 infixl 7  _·_
 infix  9  `_
 infix  5  _⦂_
+infixr 8 _⇒_
 
 data Type : Set where
   Int : Type
@@ -88,7 +89,7 @@ data _⊢_∙_∙_ : Context → Term → Mode → Type → Set where
 
   ty-app₁ : ∀ {Γ e₁ e₂ A B}
     → Γ ⊢ e₁ ∙ ⇛ ∙ A ⇒ B
-    → Γ ⊢ e₂ ∙ ⇚ ∙ B
+    → Γ ⊢ e₂ ∙ ⇚ ∙ A
     → Γ ⊢ e₁ · e₂ ∙ ⇛ ∙ B
 
   ty-app₂ : ∀ {Γ e₁ e₂ A B}
@@ -116,6 +117,8 @@ _ = ty-app₂ (ty-lam (ty-sub (ty-var Z) ≤-int)) ty-int
 ≤-refl {Top} = ≤-top
 ≤-refl {A ⇒ B} = ≤-arr ≤-refl ≤-refl
 
+_ : ∅ ⊢ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
+_ = ty-app₁ (ty-ann (ty-lam (ty-sub (ty-app₁ (ty-var Z) (ty-sub ty-int ≤-int)) ≤-int))) (ty-lam (ty-sub (ty-var Z) ≤-int))
 
 
 
