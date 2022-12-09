@@ -1,14 +1,7 @@
-module STLC where
+module Dec where
 
-open import Data.Bool using (Bool; true; false; T; not)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Data.List using (List; _∷_; [])
-open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (∃-syntax; _×_)
-open import Data.String using (String; _≟_)
-open import Data.Unit using (tt)
-open import Relation.Nullary using (Dec; yes; no; ¬_)
-open import Relation.Nullary.Decidable using (False; toWitnessFalse)
+open import Data.Nat using (ℕ)
+open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 
 Id : Set
@@ -119,9 +112,3 @@ _ = ty-app₂ (ty-lam (ty-sub (ty-var Z) ≤-int)) ty-int
 
 _ : ∅ ⊢ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
 _ = ty-app₁ (ty-ann (ty-lam (ty-sub (ty-app₁ (ty-var Z) (ty-sub ty-int ≤-int)) ≤-int))) (ty-lam (ty-sub (ty-var Z) ≤-int))
-
-
-
-
-
-
