@@ -115,3 +115,10 @@ data _⊢_⇛_⇛_ where
   ty-lam₂ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
     → Γ ⊢ h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+
+
+≤-refl : ∀ {Γ A} → Γ ⊢ A ≤ A
+≤-refl {A = Hnt} = ≤-int
+≤-refl {A = Hop} = ≤-top
+≤-refl {A = A *⇒ B} = ≤-arr ≤-refl ≤-refl
+≤-refl {A = ⟦ x ⟧*⇒ A} = {!!}
