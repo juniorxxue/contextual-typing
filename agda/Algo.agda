@@ -17,11 +17,11 @@ data Hype : Set where
 _ : Hype
 _ = ⟦ lit 1 ⟧ *⇒ Hnt
 
-infix 5 _⊢_≤_
-infix 4 _⊢_⇛_⇛_ 
+infix 5 _⊢a_≤_
+infix 4 _⊢a_⇛_⇛_ 
 
-data _⊢_≤_ : Context → Hype → Hype → Set
-data _⊢_⇛_⇛_ : Context → Hype → Term → Type → Set
+data _⊢a_≤_ : Context → Hype → Hype → Set
+data _⊢a_⇛_⇛_ : Context → Hype → Term → Type → Set
 
 h : Type → Hype
 h Int = Hnt
@@ -33,51 +33,51 @@ h (A ⇒ B) = (h A) *⇒ (h B)
 -- unh Hop = Top
 -- unh (A *⇒ B) = (unh A) ⇒ (unh B)
 
-data _⊢_≤_ where
-  ≤-int : ∀ {Γ}
-    → Γ ⊢ Hnt ≤ Hnt
-  ≤-top : ∀ {Γ A}
-    → Γ ⊢ A ≤ Hop
-  ≤-arr : ∀ {Γ A B C D}
-    → Γ ⊢ C ≤ A
-    → Γ ⊢ B ≤ D
-    → Γ ⊢ (A *⇒ B) ≤ (C *⇒ D)
-  ≤-hole : ∀ {Γ A B e}
-    → Γ ⊢ A ⇛ e ⇛ B
-    → Γ ⊢ ⟦ e ⟧ ≤ A
+data _⊢a_≤_ where
+  ≤a-int : ∀ {Γ}
+    → Γ ⊢a Hnt ≤ Hnt
+  ≤a-top : ∀ {Γ A}
+    → Γ ⊢a A ≤ Hop
+  ≤a-arr : ∀ {Γ A B C D}
+    → Γ ⊢a C ≤ A
+    → Γ ⊢a B ≤ D
+    → Γ ⊢a (A *⇒ B) ≤ (C *⇒ D)
+  ≤a-hole : ∀ {Γ A B e}
+    → Γ ⊢a A ⇛ e ⇛ B
+    → Γ ⊢a ⟦ e ⟧ ≤ A
 
-data _⊢_⇛_⇛_ where
+data _⊢a_⇛_⇛_ where
 
-  ty-lit : ∀ {Γ A n}
-    → Γ ⊢ Hnt ≤ A
-    → Γ ⊢ A ⇛ lit n ⇛ Int
+  ⊢a-lit : ∀ {Γ A n}
+    → Γ ⊢a Hnt ≤ A
+    → Γ ⊢a A ⇛ lit n ⇛ Int
 
-  ty-var : ∀ {Γ A B x}
+  ⊢a-var : ∀ {Γ A B x}
     → Γ ∋ x ⦂ B
-    → Γ ⊢ h B ≤ A
-    → Γ ⊢ A ⇛ ` x ⇛ B
+    → Γ ⊢a h B ≤ A
+    → Γ ⊢a A ⇛ ` x ⇛ B
 
-  ty-app : ∀ {Γ e₁ e₂ A C D}
-    → Γ ⊢ ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ (C ⇒ D)
-    → Γ ⊢ A ⇛ e₁ · e₂ ⇛ D
+  ⊢a-app : ∀ {Γ e₁ e₂ A C D}
+    → Γ ⊢a ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ (C ⇒ D)
+    → Γ ⊢a A ⇛ e₁ · e₂ ⇛ D
 
-  ty-ann : ∀ {Γ e A B}
-    → Γ ⊢ h B ⇛ e ⇛ B
-    → Γ ⊢ h B ≤ A
-    → Γ ⊢ A ⇛ e ⦂ B ⇛ B
+  ⊢a-ann : ∀ {Γ e A B}
+    → Γ ⊢a h B ⇛ e ⇛ B
+    → Γ ⊢a h B ≤ A
+    → Γ ⊢a A ⇛ e ⦂ B ⇛ B
 
-  ty-lam₁ : ∀ {Γ e₁ e x A B C}
-    → Γ ⊢ Hop ⇛ e₁ ⇛ A
-    → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
-    → Γ ⊢ ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+  ⊢a-lam₁ : ∀ {Γ e₁ e x A B C}
+    → Γ ⊢a Hop ⇛ e₁ ⇛ A
+    → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+    → Γ ⊢a ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
-  ty-lam₂ : ∀ {Γ x e A B C}
-    → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
-    → Γ ⊢ h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+  ⊢a-lam₂ : ∀ {Γ x e A B C}
+    → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+    → Γ ⊢a h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
 
-_ : ∅ ⊢ Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ty-app (ty-lam₁ (ty-lit ≤-top) (ty-var Z ≤-top))
+_ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top))
 
-_ : ∅ ⊢ Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ty-app (ty-ann (ty-lam₂ (ty-app (ty-var Z (≤-arr (≤-hole (ty-lit ≤-int)) ≤-int)))) (≤-arr (≤-hole (ty-lam₂ {A = Int} (ty-var Z ≤-int))) ≤-top))
+_ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
+_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int)))) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int))) ≤a-top))
