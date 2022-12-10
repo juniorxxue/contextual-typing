@@ -3,20 +3,7 @@ module Dec where
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
-
-Id : Set
-Id = String
-
-infixr  5  ƛ_⇒_
-infixl 7  _·_
-infix  9  `_
-infix  5  _⦂_
-infixr 8 _⇒_
-
-data Type : Set where
-  Int : Type
-  Top : Type
-  _⇒_ : Type → Type → Type
+open import Common
 
 infix 5 _≤_
 
@@ -28,43 +15,11 @@ data _≤_ : Type → Type → Set where
   ≤-arr : ∀ {A B C D}
     → C ≤ A
     → B ≤ D
-    → A ⇒ B ≤ C ⇒ D
-    
-
-data Term : Set where
-  lit      : ℕ → Term
-  `_       : Id → Term
-  ƛ_⇒_     : Id → Term → Term
-  _·_      : Term → Term → Term
-  _⦂_      : Term → Type → Term
+    → A ⇒ B ≤ C ⇒ D    
 
 data Mode : Set where
   ⇛ : Mode
   ⇚ : Mode
-
-infixl 5  _,_⦂_
-
-data Context : Set where
-  ∅     : Context
-  _,_⦂_ : Context → Id → Type → Context
-
-infix  4  _∋_⦂_
-
-data _∋_⦂_ : Context → Id → Type → Set where
-
-  Z : ∀ {Γ x A}
-      ------------------
-    → Γ , x ⦂ A ∋ x ⦂ A
-
-  S : ∀ {Γ x y A B}
-    → x ≢ y
-    → Γ ∋ x ⦂ A
-      ------------------
-    → Γ , y ⦂ B ∋ x ⦂ A
-
-
-_ : Term
-_ = lit 1
 
 infix  4  _⊢_∙_∙_
 
