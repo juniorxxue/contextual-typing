@@ -81,11 +81,10 @@ data _⊢_≤_ where
     → Γ ⊢ C ≤ A
     → Γ ⊢ B ≤ D
     → Γ ⊢ (A *⇒ B) ≤ (C *⇒ D)
-  ≤-hole : ∀ {Γ e A A' B C}
-    → Γ ⊢ B ≤ C
+  ≤-hole : ∀ {Γ e A A' C}
     → Γ ⊢ Hop ⇛ e ⇛ A'
-    → Γ ⊢ h A' ≤ A
-    → Γ ⊢ A *⇒ B ≤ ⟦ e ⟧*⇒ C
+    → Γ ⊢ A ≤ h A' *⇒ C
+    → Γ ⊢ A ≤ ⟦ e ⟧*⇒ C
 
 data _⊢_⇛_⇛_ where
 
@@ -121,4 +120,9 @@ data _⊢_⇛_⇛_ where
 ≤-refl {A = Hnt} = ≤-int
 ≤-refl {A = Hop} = ≤-top
 ≤-refl {A = A *⇒ B} = ≤-arr ≤-refl ≤-refl
-≤-refl {A = ⟦ x ⟧*⇒ A} = {!!}
+≤-refl {A = ⟦ e ⟧*⇒ A} = ≤-hole {!!} {!!}
+
+
+
+-- Γ |- [e] <: [e]
+-- Γ |- [e] -> A <: [e] -> A
