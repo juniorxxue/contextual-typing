@@ -1,4 +1,4 @@
-module Algo2 where
+module Algo where
 
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
@@ -13,7 +13,7 @@ infix  9 `_
 infix  5 _⦂_
 infixr 8 _⇒_
 infixr 8 _*⇒_
-infixr 8 ⟦_⟧
+infixr 8 ⟦_⟧*⇒_
 
 data Type : Set where
   Int : Type
@@ -31,11 +31,11 @@ data Hype : Set where
   Hnt : Hype
   Hop : Hype
   _*⇒_  : Hype → Hype → Hype
-  ⟦_⟧ : Term → Hype
+  ⟦_⟧*⇒_ : Term → Hype → Hype
 
 
 _ : Hype
-_ = ⟦ lit 1 ⟧ *⇒ Hnt
+_ = ⟦ lit 1 ⟧*⇒ Hnt
 
 data Mode : Set where
   ⇛ : Mode
@@ -72,11 +72,6 @@ h Int = Hnt
 h Top = Hnt
 h (A ⇒ B) = (h A) *⇒ (h B)
 
--- unh : Hype → Type
--- unh Hnt = Int
--- unh Hop = Top
--- unh (A *⇒ B) = (unh A) ⇒ (unh B)
-
 data _⊢_≤_ where
   ≤-int : ∀ {Γ}
     → Γ ⊢ Hnt ≤ Hnt
@@ -86,9 +81,10 @@ data _⊢_≤_ where
     → Γ ⊢ C ≤ A
     → Γ ⊢ B ≤ D
     → Γ ⊢ (A *⇒ B) ≤ (C *⇒ D)
-  ≤-hole : ∀ {Γ A B e}
-    → Γ ⊢ A ⇛ e ⇛ B
-    → Γ ⊢ ⟦ e ⟧ ≤ A
+  ≤-hole : ∀ {Γ e A A' C}
+    → Γ ⊢ Hop ⇛ e ⇛ A'
+    → Γ ⊢ A ≤ h A' *⇒ C
+    → Γ ⊢ A ≤ ⟦ e ⟧*⇒ C
 
 data _⊢_⇛_⇛_ where
 
@@ -102,7 +98,7 @@ data _⊢_⇛_⇛_ where
     → Γ ⊢ A ⇛ ` x ⇛ B
 
   ty-app : ∀ {Γ e₁ e₂ A C D}
-    → Γ ⊢ ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ (C ⇒ D)
+    → Γ ⊢ ⟦ e₂ ⟧*⇒ A ⇛ e₁ ⇛ (C ⇒ D)
     → Γ ⊢ A ⇛ e₁ · e₂ ⇛ D
 
   ty-ann : ∀ {Γ e A B}
@@ -113,15 +109,19 @@ data _⊢_⇛_⇛_ where
   ty-lam₁ : ∀ {Γ e₁ e x A B C}
     → Γ ⊢ Hop ⇛ e₁ ⇛ A
     → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
-    → Γ ⊢ ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+    → Γ ⊢ ⟦ e₁ ⟧*⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
   ty-lam₂ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢ B ⇛ e ⇛ C
     → Γ ⊢ h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
 
-_ : ∅ ⊢ Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ty-app (ty-lam₁ (ty-lit ≤-top) (ty-var Z ≤-top))
+≤-refl : ∀ {Γ A} → Γ ⊢ A ≤ A
+≤-refl {A = Hnt} = ≤-int
+≤-refl {A = Hop} = ≤-top
+≤-refl {A = A *⇒ B} = ≤-arr ≤-refl ≤-refl
+≤-refl {A = ⟦ e ⟧*⇒ A} = ≤-hole {!!} {!!}
 
-_ : ∅ ⊢ Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ty-app (ty-ann (ty-lam₂ (ty-app (ty-var Z (≤-arr (≤-hole (ty-lit ≤-int)) ≤-int)))) (≤-arr (≤-hole (ty-lam₂ {A = Int} (ty-var Z ≤-int))) ≤-top))
+-- Γ |- [e] => A
+-- Γ |- [e] <: [e]
+-- Γ |- [e] -> A <: [e] -> A
