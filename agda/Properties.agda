@@ -4,19 +4,40 @@ open import Common
 open import Dec
 open import Algo
 
-sound-chk : ∀ {Γ e A}
-  → Γ ⊢d e ∙ ⇚ ∙ A
-  → Γ ⊢a h A ⇛ e ⇛ A
-sound-chk (⊢d-lam ⊢d) = ⊢a-lam₂ (sound-chk ⊢d)
-sound-chk (⊢d-sub ⊢d x) = {!!}
-
-sound : ∀ {Γ e A}
-  → Γ ⊢d e ∙ ⇛ ∙ A
-  → Γ ⊢a Hop ⇛ e ⇛ A
-sound ⊢d-int = ⊢a-lit ≤a-top
-sound (⊢d-var x) = ⊢a-var x ≤a-top
-sound (⊢d-app₁ ⊢de₁ ⊢de₂) = {!!}
-sound (⊢d-app₂ ⊢d ⊢d₁) = {!!}
-sound (⊢d-ann ⊢d) = ⊢a-ann (sound-chk ⊢d) ≤a-top
+data Normal : Hype → Set where
+  nf-int :
+      Normal Hnt
+  nf-top :
+      Normal Hop
+  nf-arr : ∀ {A B}
+    → Normal A
+    → Normal B
+    → Normal (A *⇒ B)
 
 
+-- It looks like the same with previous one
+-- hole never appears in this lemma
+≤a-refl : ∀ {A Γ}
+  → Normal A
+  → Γ ⊢a A ≤ A
+≤a-refl = {!!}
+
+
+-- sound-chk : ∀ {Γ e A}
+--   → Γ ⊢d e ∙ ⇚ ∙ A
+--   → Γ ⊢a h A ⇛ e ⇛ A
+
+-- sound : ∀ {Γ e A}
+--   → Γ ⊢d e ∙ ⇛ ∙ A
+--   → Γ ⊢a Hop ⇛ e ⇛ A
+
+-- generlized to
+
+f : Mode → Type → Type
+f ⇛ A = Top
+f ⇚ A = A
+
+sound : ∀ {Γ e A ⇔}
+  → Γ ⊢d e ∙ ⇔ ∙ A
+  → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
+sound = {!!}
