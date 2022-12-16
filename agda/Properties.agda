@@ -38,6 +38,16 @@ rename-⊢a ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (rename-⊢a ρ ⊢a) (rename-≤
 rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂)
 rename-⊢a ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (rename-⊢a (ext ρ) ⊢a)
 
+weaken : ∀ {Γ e A B}
+  → ∅ ⊢a B ⇛ e ⇛ A
+  → Γ ⊢a B ⇛ e ⇛ A
+weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
+  where
+  ρ : ∀ {z C}
+    → ∅ ∋ z ⦂ C
+    → Γ ∋ z ⦂ C
+  ρ = λ ()
+  
 -------------------------------------------------------------
 
 data Normal : Hype → Set where
