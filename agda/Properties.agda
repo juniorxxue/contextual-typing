@@ -3,6 +3,7 @@ module Properties where
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 
 open import Common
 open import Dec
@@ -47,6 +48,21 @@ weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
     → ∅ ∋ z ⦂ C
     → Γ ∋ z ⦂ C
   ρ = λ ()
+
+≤a-arr-inv : ∀ {Γ A B C D}
+  → Γ ⊢a A *⇒ B ≤ C *⇒ D
+  → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
+≤a-arr-inv (≤a-arr ≤a₁ ≤a₂) = ⟨ ≤a₁ , ≤a₂ ⟩
+
+≤a-to-⊢a : ∀ {Γ e A B}
+  → Γ ⊢a B ⇛ e ⇛ A
+  → Γ ⊢a h A ≤ B
+≤a-to-⊢a (⊢a-lit ≤a) = ≤a
+≤a-to-⊢a (⊢a-var ∋x ≤a) = ≤a
+≤a-to-⊢a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (≤a-to-⊢a ⊢a))
+≤a-to-⊢a (⊢a-ann ⊢a ≤a) = ≤a
+≤a-to-⊢a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!!}
+≤a-to-⊢a (⊢a-lam₂ ⊢a) = {!!}
   
 -------------------------------------------------------------
 
