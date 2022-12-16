@@ -33,10 +33,10 @@ rename-≤a ρ (≤a-hole ⊢a) = ≤a-hole (rename-⊢a ρ ⊢a)
 
 rename-⊢a ρ (⊢a-lit ⊢a) = ⊢a-lit (rename-≤a ρ ⊢a)
 rename-⊢a ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (rename-≤a ρ ∋x)
-rename-⊢a ρ (⊢a-app ⊢a) = {!!}
+rename-⊢a ρ (⊢a-app ⊢a) = ⊢a-app (rename-⊢a ρ ⊢a)
 rename-⊢a ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (rename-⊢a ρ ⊢a) (rename-≤a ρ ≤a)
-rename-⊢a ρ (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
-rename-⊢a ρ (⊢a-lam₂ ⊢a) = {!!}
+rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂)
+rename-⊢a ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (rename-⊢a (ext ρ) ⊢a)
 
 -------------------------------------------------------------
 
