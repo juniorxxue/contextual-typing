@@ -25,7 +25,7 @@ data _⊢a_⇛_⇛_ : Context → Hype → Term → Type → Set
 
 h : Type → Hype
 h Int = Hnt
-h Top = Hnt
+h Top = Hop
 h (A ⇒ B) = (h A) *⇒ (h B)
 
 -- unh : Hype → Type

@@ -22,7 +22,6 @@ data Normal : Hype → Set where
   → Γ ⊢a A ≤ A
 ≤a-refl = {!!}
 
-
 -- sound-chk : ∀ {Γ e A}
 --   → Γ ⊢d e ∙ ⇚ ∙ A
 --   → Γ ⊢a h A ⇛ e ⇛ A
@@ -40,4 +39,10 @@ f ⇚ A = A
 sound : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
-sound = {!!}
+sound ⊢d-int = ⊢a-lit ≤a-top
+sound (⊢d-var x) = ⊢a-var x ≤a-top
+sound (⊢d-lam ⊢d) = {!!}
+sound (⊢d-app₁ ⊢d ⊢d₁) = {!!}
+sound (⊢d-app₂ ⊢d ⊢d₁) = {!!}
+sound (⊢d-ann ⊢d) = ⊢a-ann (sound ⊢d) ≤a-top
+sound (⊢d-sub ⊢d ≤d) = {!!}
