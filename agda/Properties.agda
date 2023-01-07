@@ -54,15 +54,15 @@ weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
 ≤a-arr-inv (≤a-arr ≤a₁ ≤a₂) = ⟨ ≤a₁ , ≤a₂ ⟩
 
-≤a-to-⊢a : ∀ {Γ e A B}
+⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a h A ≤ B
-≤a-to-⊢a (⊢a-lit ≤a) = ≤a
-≤a-to-⊢a (⊢a-var ∋x ≤a) = ≤a
-≤a-to-⊢a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (≤a-to-⊢a ⊢a))
-≤a-to-⊢a (⊢a-ann ⊢a ≤a) = ≤a
-≤a-to-⊢a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!!}
-≤a-to-⊢a (⊢a-lam₂ ⊢a) = {!!}
+⊢a-to-≤a (⊢a-lit ≤a) = ≤a
+⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
+⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
+⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!!}
+⊢a-to-≤a (⊢a-lam₂ ⊢a) = {!!}
   
 -------------------------------------------------------------
 
@@ -100,14 +100,33 @@ f : Mode → Type → Type
 f ⇛ A = Top
 f ⇚ A = A
 
+
+------------------- Lemmas for soundness ------------------
+-- fun-with-hint : ∀ {Γ e A B}
+-----------------------------------------------------------
+
 sound : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
 sound ⊢d-int = ⊢a-lit ≤a-top
 sound (⊢d-var x) = ⊢a-var x ≤a-top
-sound (⊢d-lam ⊢d) = {!!}
+sound (⊢d-lam ⊢d) = ⊢a-lam₂ (sound ⊢d)
 -- app rules require some intuition
-sound (⊢d-app₁ ⊢df ⊢da) = {!!}
+
+{-
+G |- Top => e1 => A -> B
+G |- A => e2 => A
+-----------------------------
+[e2] -> Top => e1 => ? -> B
+
+Two observations:
+1. Whatever hint is given, the output type B is preseved
+2. Given a hint, the e1 will infer more precise type (?)
+
+1st try:
+abstract a lemma out of here
+-}
+sound (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!sound ⊢da!}
 sound (⊢d-app₂ ⊢df ⊢da) = {!!}
 sound (⊢d-ann ⊢d) = ⊢a-ann (sound ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure
