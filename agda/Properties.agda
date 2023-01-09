@@ -3,7 +3,7 @@ module Properties where
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
-open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
+open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 
 open import Common
 open import Dec
@@ -102,7 +102,36 @@ f ⇚ A = A
 
 
 ------------------- Lemmas for soundness ------------------
--- fun-with-hint : ∀ {Γ e A B}
+{-
+fun-with-hint : ∀ {Γ e₁ e₂ A B}
+  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a h A ⇛ e₂ ⇛ A
+  → ∃[ C ] Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ C ⇒ B
+fun-with-hint {A = A} (⊢a-var x x₁) ⊢a = ⟨ A , ⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top) ⟩
+fun-with-hint (⊢a-app ⊢f) ⊢a = {!!}
+fun-with-hint (⊢a-ann ⊢f x) ⊢a = {!!}
+-}
+
+-- maybe the existential C is fixed for A
+
+fun-with-hint : ∀ {Γ e₁ e₂ A B}
+  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a h A ⇛ e₂ ⇛ A
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ A ⇒ B
+fun-with-hint (⊢a-var x x₁) ⊢a = ⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top)
+fun-with-hint (⊢a-app ⊢f) ⊢a = {!!}
+fun-with-hint (⊢a-ann ⊢f x) ⊢a = ⊢a-ann ⊢f (≤a-arr (≤a-hole ⊢a) ≤a-top)
+
+-- generlize a bit
+
+fun-with-hint1 : ∀ {Γ e₁ e₂ A B}
+  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a h A ⇛ e₂ ⇛ A
+  → Γ ⊢a Hop ⇛ e₁ · e₂ ⇛ B
+fun-with-hint1 (⊢a-var x x₁) ⊢a = ⊢a-app (⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top))
+fun-with-hint1 (⊢a-app ⊢f) ⊢a = ⊢a-app {!!}
+fun-with-hint1 (⊢a-ann ⊢f x) ⊢a = ⊢a-app (⊢a-ann ⊢f (≤a-arr (≤a-hole ⊢a) ≤a-top))
+
 -----------------------------------------------------------
 
 sound : ∀ {Γ e A ⇔}
@@ -126,7 +155,7 @@ Two observations:
 1st try:
 abstract a lemma out of here
 -}
-sound (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!sound ⊢da!}
+sound (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-with-hint (sound ⊢df) (sound ⊢da)!}
 sound (⊢d-app₂ ⊢df ⊢da) = {!!}
 sound (⊢d-ann ⊢d) = ⊢a-ann (sound ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure
