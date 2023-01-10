@@ -11,6 +11,8 @@ open import Algo
 
 ------------ Properties of Algorithmic System ---------------
 
+
+
 -- renaming
 
 ext : ∀ {Γ Δ}
@@ -135,11 +137,17 @@ fun-with-hint1 (⊢a-ann ⊢f x) ⊢a = ⊢a-app (⊢a-ann ⊢f (≤a-arr (≤a-
 -----------------------------------------------------------
 
 sound : ∀ {Γ e A ⇔}
+  → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
+  → Γ ⊢d e ∙ ⇔ ∙ A
+sound ⊢a = {!!}
+-- ? 
+
+complete : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
-sound ⊢d-int = ⊢a-lit ≤a-top
-sound (⊢d-var x) = ⊢a-var x ≤a-top
-sound (⊢d-lam ⊢d) = ⊢a-lam₂ (sound ⊢d)
+complete ⊢d-int = ⊢a-lit ≤a-top
+complete (⊢d-var x) = ⊢a-var x ≤a-top
+complete (⊢d-lam ⊢d) = ⊢a-lam₂ (complete ⊢d)
 -- app rules require some intuition
 
 {-
@@ -155,8 +163,28 @@ Two observations:
 1st try:
 abstract a lemma out of here
 -}
-sound (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-with-hint (sound ⊢df) (sound ⊢da)!}
-sound (⊢d-app₂ ⊢df ⊢da) = {!!}
-sound (⊢d-ann ⊢d) = ⊢a-ann (sound ⊢d) ≤a-top
+complete (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-with-hint (complete ⊢df) (complete ⊢da)!}
+complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!})
+complete (⊢d-app₂ (⊢d-sub ⊢df ≤d) ⊢da) = ⊢a-app {!!}
+complete (⊢d-ann ⊢d) = ⊢a-ann (complete ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure
-sound (⊢d-sub ⊢d ≤d) = {!!}
+complete (⊢d-sub ⊢d ≤d) = {!!}
+
+output : Hype → Hype
+output Hop = Hop
+output (A *⇒ B) = B
+output _ = Hop
+
+fun-with-hint2 : ∀ {Γ e₁ e₂ A B C}
+  → Γ ⊢a C ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a h A ⇛ e₂ ⇛ A
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ output C ⇛ e₁ ⇛ A ⇒ B
+fun-with-hint2 (⊢a-var x x₁) ⊢a = {!!}
+fun-with-hint2 (⊢a-app ⊢f) ⊢a = ⊢a-app {! cv!}
+fun-with-hint2 (⊢a-ann ⊢f x) ⊢a = {!!}
+fun-with-hint2 (⊢a-lam₁ ⊢f ⊢f₁) ⊢a = {!!}
+fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
+
+-- in application
+-- if we know nothing (Top)
+-- we can infer the same thing with the extra hint (arguments
