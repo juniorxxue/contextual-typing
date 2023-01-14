@@ -11,7 +11,33 @@ open import Algo
 
 ------------ Properties of Algorithmic System ---------------
 
+-------------------------------------------------------------
 
+data Normal : Hype → Set where
+  nf-int :
+      Normal Hnt
+  nf-top :
+      Normal Hop
+  nf-arr : ∀ {A B}
+    → Normal A
+    → Normal B
+    → Normal (A *⇒ B)
+
+
+-- It looks like the same with previous one, nothing special
+-- hole never appears in this lemma
+≤a-refl : ∀ {A Γ}
+  → Normal A
+  → Γ ⊢a A ≤ A
+≤a-refl nf-int = ≤a-int
+≤a-refl nf-top = ≤a-top
+≤a-refl (nf-arr nor₁ nor₂) = ≤a-arr (≤a-refl nor₁) (≤a-refl nor₂)
+
+≤a-refl-h : ∀ {A Γ}
+  → Γ ⊢a h A ≤ h A
+≤a-refl-h {A = Int} = ≤a-int
+≤a-refl-h {A = Top} = ≤a-top
+≤a-refl-h {A = A ⇒ A₁} = ≤a-arr ≤a-refl-h ≤a-refl-h
 
 -- renaming
 
@@ -56,6 +82,23 @@ weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
 ≤a-arr-inv (≤a-arr ≤a₁ ≤a₂) = ⟨ ≤a₁ , ≤a₂ ⟩
 
+--------------------- Lemmas for typing and subtyping --------
+
+{-
+
+Goal: Γ ⊢a h C ≤ B
+Have: (Γ , x ⦂ A) ⊢a h C ≤ B
+————————————————————————————————————————————————————————————
+⊢a₂ : Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+⊢a₁ : Γ ⊢a Hop ⇛ e₁ ⇛ A
+
+Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B type
+
+1st try: fix the rule
+2nd try: de bruijn or something else
+
+-}
+
 ⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a h A ≤ B
@@ -63,30 +106,11 @@ weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!!}
-⊢a-to-≤a (⊢a-lam₂ ⊢a) = {!!}
-  
--------------------------------------------------------------
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
-data Normal : Hype → Set where
-  nf-int :
-      Normal Hnt
-  nf-top :
-      Normal Hop
-  nf-arr : ∀ {A B}
-    → Normal A
-    → Normal B
-    → Normal (A *⇒ B)
+------------------- Lemmas for sound/complete ------------------
 
-
--- It looks like the same with previous one, nothing special
--- hole never appears in this lemma
-≤a-refl : ∀ {A Γ}
-  → Normal A
-  → Γ ⊢a A ≤ A
-≤a-refl nf-int = ≤a-int
-≤a-refl nf-top = ≤a-top
-≤a-refl (nf-arr nor₁ nor₂) = ≤a-arr (≤a-refl nor₁) (≤a-refl nor₂)
 
 -- sound-chk : ∀ {Γ e A}
 --   → Γ ⊢d e ∙ ⇚ ∙ A
@@ -102,8 +126,6 @@ f : Mode → Type → Type
 f ⇛ A = Top
 f ⇚ A = A
 
-
-------------------- Lemmas for soundness ------------------
 {-
 fun-with-hint : ∀ {Γ e₁ e₂ A B}
   → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
@@ -179,8 +201,8 @@ fun-with-hint2 : ∀ {Γ e₁ e₂ A B C}
   → Γ ⊢a C ⇛ e₁ ⇛ A ⇒ B
   → Γ ⊢a h A ⇛ e₂ ⇛ A
   → Γ ⊢a ⟦ e₂ ⟧ *⇒ output C ⇛ e₁ ⇛ A ⇒ B
-fun-with-hint2 (⊢a-var x x₁) ⊢a = {!!}
-fun-with-hint2 (⊢a-app ⊢f) ⊢a = ⊢a-app {! cv!}
+fun-with-hint2 (⊢a-var x x₁) ⊢a = ⊢a-var x (≤a-arr (≤a-hole ⊢a) {!!})
+fun-with-hint2 (⊢a-app ⊢f) ⊢a = ⊢a-app {! !}
 fun-with-hint2 (⊢a-ann ⊢f x) ⊢a = {!!}
 fun-with-hint2 (⊢a-lam₁ ⊢f ⊢f₁) ⊢a = {!!}
 fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
