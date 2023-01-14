@@ -106,7 +106,7 @@ Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B t
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr {!!} {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 ------------------- Lemmas for sound/complete ------------------
@@ -210,3 +210,21 @@ fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
 -- in application
 -- if we know nothing (Top)
 -- we can infer the same thing with the extra hint (arguments
+
+--------------------- Lemmas for algo typing -----------------
+
+-- Two lemmas should be unified
+
+⊢a-hint-self-1 : ∀ {Γ A B C e}
+  → Γ ⊢a (B *⇒ Hop) ⇛ e ⇛ (C ⇒ A)
+  → Γ ⊢a (B *⇒ h A) ⇛ e ⇛ (C ⇒ A)
+⊢a-hint-self : ∀ {Γ A e}
+  → Γ ⊢a Hop ⇛ e ⇛ A
+  → Γ ⊢a h A ⇛ e ⇛ A
+
+⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
+⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
+⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
+⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
+
+⊢a-hint-self-1 ⊢a = {!!} 
