@@ -3,6 +3,8 @@ module Algo where
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Nullary using (¬_)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Common
 
 infixr 8 _*⇒_
@@ -14,8 +16,15 @@ data Hype : Set where
   _*⇒_  : Hype → Hype → Hype
   ⟦_⟧ : Term → Hype
 
-_ : Hype
-_ = ⟦ lit 1 ⟧ *⇒ Hnt
+data free : Term → Id → Set where
+  free-var : ∀ {x} → free (` x) x
+  free-lam : ∀ {x₁ x₂ e} → free e x₁ → x₁ ≢ x₂ → free (ƛ x₂ ⇒ e) x₁
+  free-app-l : ∀ {e₁ e₂ x} → free e₁ x → free (e₁ · e₂) x
+  free-app-r : ∀ {e₁ e₂ x} → free e₂ x → free (e₁ · e₂) x
+  free-ann : ∀ {e A x} → free e x → free (e ⦂ A) x
+
+data freeT : Hype → Id → Set where
+  free-hole : ∀ {e x} → free e x → freeT (⟦ e ⟧) x
 
 infix 5 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
@@ -69,6 +78,7 @@ data _⊢a_⇛_⇛_ where
   ⊢a-lam₁ : ∀ {Γ e₁ e x A B C}
     → Γ ⊢a Hop ⇛ e₁ ⇛ A
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+    → ¬ (freeT B x)
     → Γ ⊢a ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
   ⊢a-lam₂ : ∀ {Γ x e A B C}
@@ -77,7 +87,10 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top))
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) λ ())
+
+_ : ∀ {x} → ¬ freeT Hop x
+_ = λ ()
 
 _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
 _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int)))) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int))) ≤a-top))

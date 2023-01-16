@@ -4,6 +4,8 @@ open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Relation.Nullary using (¬_)
 
 open import Common
 open import Dec
@@ -64,7 +66,7 @@ rename-⊢a ρ (⊢a-lit ⊢a) = ⊢a-lit (rename-≤a ρ ⊢a)
 rename-⊢a ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (rename-≤a ρ ∋x)
 rename-⊢a ρ (⊢a-app ⊢a) = ⊢a-app (rename-⊢a ρ ⊢a)
 rename-⊢a ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (rename-⊢a ρ ⊢a) (rename-≤a ρ ≤a)
-rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂)
+rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂) nf
 rename-⊢a ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (rename-⊢a (ext ρ) ⊢a)
 
 weaken : ∀ {Γ e A B}
@@ -99,6 +101,12 @@ Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B t
 
 -}
 
+strengthen : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a h C ≤ B
+  → ¬ freeT B x
+  → Γ ⊢a h C ≤ B
+strengthen {B = B} ≤ nf = {!!}  
+
 ⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a h A ≤ B
@@ -106,7 +114,7 @@ Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B t
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 ------------------- Lemmas for sound/complete ------------------
@@ -186,7 +194,7 @@ Two observations:
 abstract a lemma out of here
 -}
 complete (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-with-hint (complete ⊢df) (complete ⊢da)!}
-complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!})
+complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!} {!!})
 complete (⊢d-app₂ (⊢d-sub ⊢df ≤d) ⊢da) = ⊢a-app {!!}
 complete (⊢d-ann ⊢d) = ⊢a-ann (complete ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure
@@ -204,7 +212,7 @@ fun-with-hint2 : ∀ {Γ e₁ e₂ A B C}
 fun-with-hint2 (⊢a-var x x₁) ⊢a = ⊢a-var x (≤a-arr (≤a-hole ⊢a) {!!})
 fun-with-hint2 (⊢a-app ⊢f) ⊢a = ⊢a-app {! !}
 fun-with-hint2 (⊢a-ann ⊢f x) ⊢a = {!!}
-fun-with-hint2 (⊢a-lam₁ ⊢f ⊢f₁) ⊢a = {!!}
+fun-with-hint2 (⊢a-lam₁ ⊢f ⊢f₁ nf) ⊢a = {!!}
 fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
 
 -- in application
@@ -236,9 +244,3 @@ Goal: Γ ⊢a ⟦ e₂ ⟧ *⇒ (B *⇒ h A) ⇛ e₁ ⇛ C₁ ⇒ (C ⇒ A)
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
 ⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
 ⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
-
-⊢a-hint-self-1 (⊢a-var x x₁) = ⊢a-var x (≤a-arr (proj₁ (≤a-arr-inv x₁)) ≤a-refl-h)
-⊢a-hint-self-1 (⊢a-app ⊢a) = ⊢a-app {!⊢a-hint-self-1 ⊢a!}
-⊢a-hint-self-1 (⊢a-ann ⊢a x) = {!!}
-⊢a-hint-self-1 (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
-⊢a-hint-self-1 (⊢a-lam₂ ⊢a) = {!!}
