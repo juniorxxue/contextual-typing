@@ -105,7 +105,12 @@ strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a h C ≤ B
   → ¬ freeT B x
   → Γ ⊢a h C ≤ B
-strengthen {B = B} ≤ nf = {!!}  
+strengthen {B = Hnt} {C = Int} ≤ nf = ≤a-int
+strengthen {B = Hop} {C = Int} ≤ nf = ≤a-top
+strengthen {B = Hop} {C = Top} ≤ nf = ≤a-top
+strengthen {B = .Hop} {C = C₁ ⇒ C₂} ≤a-top nf = ≤a-top
+strengthen {B = .(_ *⇒ _)} {C = C₁ ⇒ C₂} (≤a-arr ≤ ≤₁) nf = ≤a-arr {!!} {!!}
+-- the problem here is that arrow type is contra
 
 ⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
