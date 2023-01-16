@@ -215,16 +215,30 @@ fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
 
 -- Two lemmas should be unified
 
-⊢a-hint-self-1 : ∀ {Γ A B C e}
-  → Γ ⊢a (B *⇒ Hop) ⇛ e ⇛ (C ⇒ A)
-  → Γ ⊢a (B *⇒ h A) ⇛ e ⇛ (C ⇒ A)
+
 ⊢a-hint-self : ∀ {Γ A e}
   → Γ ⊢a Hop ⇛ e ⇛ A
   → Γ ⊢a h A ⇛ e ⇛ A
+  
+-- this is wrong, apparently
+
+{-
+Goal: Γ ⊢a ⟦ e₂ ⟧ *⇒ (B *⇒ h A) ⇛ e₁ ⇛ C₁ ⇒ (C ⇒ A)
+————————————————————————————————————————————————————————————
+⊢a :  Γ ⊢a ⟦ e₂ ⟧ *⇒ (B *⇒ Hop) ⇛ e₁ ⇛ C₁ ⇒ (C ⇒ A)
+-}
+
+⊢a-hint-self-1 : ∀ {Γ A B C e}
+  → Γ ⊢a (B *⇒ Hop) ⇛ e ⇛ (C ⇒ A)
+  → Γ ⊢a (B *⇒ h A) ⇛ e ⇛ (C ⇒ A)
 
 ⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
 ⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
 ⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
 
-⊢a-hint-self-1 ⊢a = {!!} 
+⊢a-hint-self-1 (⊢a-var x x₁) = ⊢a-var x (≤a-arr (proj₁ (≤a-arr-inv x₁)) ≤a-refl-h)
+⊢a-hint-self-1 (⊢a-app ⊢a) = ⊢a-app {!⊢a-hint-self-1 ⊢a!}
+⊢a-hint-self-1 (⊢a-ann ⊢a x) = {!!}
+⊢a-hint-self-1 (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+⊢a-hint-self-1 (⊢a-lam₂ ⊢a) = {!!}

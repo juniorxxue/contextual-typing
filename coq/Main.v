@@ -1,175 +1,90 @@
-Require Import Autosubst.Autosubst.
+Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
+Require Import Coq.Strings.String.
 
-(* ------- Syntax --------------- *)
+Import ListNotations.
 
-Inductive type :=
+Set Printing Parentheses.
+
+Inductive type : Set :=
 | Int
 | Top
 | Arr (A B : type).
 
-Inductive term :=
-| Lit (n : nat)
-| Var (x : var)
-| Lam (e : {bind term})
-| App (e1 e2 : term)
-| Ann (e : term) (A : type).
+Inductive term : Set :=
+| Lit : nat -> term
+| Bvar : nat -> term
+| Fvar : var -> term
+| Lam : term -> term
+| App : term -> term -> term
+| Ann : term -> type -> term.
 
-Instance Ids_term : Ids term. derive. Defined.
-Instance Rename_term : Rename term. derive. Defined.
-Instance Subst_term : Subst term. derive. Defined.
-Instance SubstLemmas_term : SubstLemmas term. derive. Qed.
-
-(* ------- Typing --------------- *)
-
-Inductive htype :=
-| HInt
-| HTop
-| HArr (A B : htype)
+Inductive hype : Set :=
+| Hnt
+| Hop
+| Hrr (A B : hype)
 | Hole (e : term).
 
-Fixpoint rename_htype (A : htype) Γ : htype :=
-  match A with
-  | HInt => HInt
-  | HTop => HTop
-  | HArr A B => HArr (rename_htype A Γ) (rename_htype B Γ)
-  | Hole e => Hole (e.[ren Γ])
+Hint Constructors type : core.
+Hint Constructors term : core.
+Hint Constructors hype : core.
+
+Coercion Fvar : atom >-> term.
+
+Definition ctx : Set := list (var * type).
+
+(** * Substituion *)
+
+Fixpoint substitution (z : atom) (u : term) (e : term) {struct e} : term :=
+  match e with
+  | Lit n => Lit n
+  | Bvar i => Bvar i
+  | Fvar x => if x == z then u else (Fvar x)
+  | Lam e => Lam (substitution z u e)
+  | App e1 e2 => App (substitution z u e1) (substitution z u e2)
+  | Ann e A => Ann (substitution z u e) A
   end.
 
-Fixpoint type_is_htype (A : type) : htype :=
-  match A with
-  | Int => HInt
-  | Top => HTop
-  | Arr A B => HArr (type_is_htype A) (type_is_htype B)
+Notation "{ z ↦ u } e" := (substitution z u e) (at level 69).
+
+(** * Free variables *)
+
+Fixpoint fv (e : term) {struct e} : atoms :=
+  match e with
+  | Lit n => empty
+  | Bvar i => empty
+  | Fvar x => singleton x
+  | Lam e => fv e
+  | App e1 e2 => (fv e1) `union` (fv e2)
+  | Ann e A => fv e
   end.
 
-Coercion type_is_htype : type >-> htype.
+(** * Opening *)
 
-Inductive ty (Γ : var -> type) : htype -> term -> type -> Prop :=
-| Ty_Lit  A n :
-  sub Γ Int A ->
-  ty Γ A (Lit n) Int
-| Ty_Var A B x :
-  Γ x = B -> sub Γ B A ->
-  ty Γ A (Var x) B     
-| Ty_App e1 e2 A C D :
-  ty Γ (HArr (Hole e2) A) e1 (Arr C D) ->
-  ty Γ A (App e1 e2) D     
-| Ty_Ann A (B : type) C e :
-  ty Γ B e C -> sub Γ B A ->
-  ty Γ A (Ann e B) B     
-| Ty_Lam1 e1 e A B B':
-  ty Γ Top e1 A ->
-  ty (A .: Γ) B' e B ->
-  ty Γ (HArr (Hole e1) B') (Lam e) (Arr A B)     
-| Ty_Lam2 e A B' C :
-  ty (A .: Γ) B' e C ->
-  ty Γ (HArr A B') (Lam e) (Arr A C)
-with sub (Γ : var -> type) : htype -> htype -> Prop :=
-| S_Int         : sub Γ Int Int
-| S_Top A       : sub Γ A Top
-| S_Arr A B C D : sub Γ C A -> sub Γ B D -> sub Γ (HArr A B) (HArr C D)
-| S_Hole A A' e : ty Γ A e A' -> sub Γ (Hole e) A.
+Fixpoint open_rec (k : nat) (u : term) (e : term) {struct e} : term :=
+  match e with
+  | Lit n => Lit n
+  | Bvar i => if k == i then u else (Bvar i)
+  | Fvar x => Fvar x
+  | Lam e => Lam (open_rec (S k) u e)
+  | App e1 e2 => App (open_rec k u e1) (open_rec k u e2)
+  | Ann e A => Ann (open_rec k u e) A
+  end.
 
-Scheme ty_mut := Induction for ty Sort Prop with sub_mut := Induction for sub Sort Prop.
+Definition open e u := open_rec 0 u e.
+
+(** Auxiliary functions for building contexts automatically *)
+
+Ltac gather_atoms ::=
+  let A := gather_atoms_with (fun x : atoms => x) in
+  let B := gather_atoms_with (fun x : atom => singleton x) in
+  let C := gather_atoms_with (fun x : list (atom * type) => dom x) in
+  let D := gather_atoms_with (fun x : term => fv x) in
+  constr:(A `union` B `union` C `union` D).
 
 Notation "A → B" := (Arr A B) (at level 20).
-Notation "A *→ B" := (HArr A B) (at level 20).
-Notation "⟦ e ⟧" := (Hole e) (at level 20).
+Notation "A *→ B" := (Hrr A B) (at level 20).
+Notation "e ∷ A" := (Ann e A) (at level 20).
+Notation "ƛ . e" := (Lam e) (at level 20).
+Notation "⟦ e ⟧" := (Hole e) (at level 19).
 
-Notation "G ⊢ A ⇒ e ⇒ B" := (ty G A e B) (at level 50).
-Notation "G ⊢ A <: B" := (sub G A B) (at level 50).
-
-Lemma sub_refl:
-  forall Γ A,
-    sub Γ A A.
-Proof.
-  intros. dependent induction A.
-  - eapply S_Int.
-  - eapply S_Top.
-  - eapply S_Arr; eauto.
-  - eapply S_Hole.
-Abort.
-    
-Lemma coerc_case:
-  forall Γ A B,
-    sub Γ (Arr A B) (Arr A B).
-Proof.
-  intros.
-Admitted.
-
-(** Weakening Lemma *)
-Check sub_ind.
-Check sub_mut.
-
-Lemma rename_type_eq : forall (t : type) ξ, rename_htype t ξ = t.
-Proof.
-  intros. induction t; eauto.
-  simpl in *. rewrite IHt1. rewrite IHt2.
-  auto.
-Qed.
-
-Check upren.
-
-Print upren.
-
-Lemma sub_ren :
-  forall Γ A B, sub Γ A B -> forall Δ ξ, Γ = ξ >>> Δ -> sub Δ (rename_htype A ξ) (rename_htype B ξ).
-Proof.
-  
-  Check sub_mut.
-  intros Γ A B H.
-  pattern Γ, A, B, H.
-  eapply sub_mut with
-    (
-      P := fun Γ A e B h => forall Δ ξ, Γ = ξ >>> Δ -> ty Δ (rename_htype A ξ) e.[ren ξ] B
-    )
-  ; intros; eauto.
-  (* Typing *)
-  - simpl in *. eapply Ty_Lit; eauto.
-  - subst. simpl in *. econstructor; eauto.
-    specialize (H0 Δ ξ (eq_refl _)).
-    rewrite (rename_type_eq _ _) in H0.
-    auto.
-  - econstructor. eapply H0; eauto.
-  - econstructor.
-    + pose proof (rename_type_eq B0 ξ).
-      specialize (H0 Δ ξ). rewrite H3 in H0. eapply H0. assumption.
-    + pose proof (rename_type_eq B0 ξ).
-      specialize (H1 Δ ξ). rewrite H3 in H1. eapply H1. assumption.
-  - simpl in *. econstructor; eauto. asimpl.
-    specialize (H1 (A0 .: Δ) (upren ξ)). 
-    admit.
-  - admit.
-    (* Subtyping *)
-  - simpl. econstructor.
-  - simpl. econstructor.
-  - simpl. econstructor; eauto.
-  - simpl. econstructor. eapply H0; eauto.
-Admitted.
-
-
-Lemma ty_ren Γ e A B:
-  ty Γ B e A -> forall Δ ξ, Γ = ξ >>> Δ -> ty Δ B e.[ren ξ] A.
-Proof.
-Admitted.
-
-Lemma infer_without_hint :
-  forall Γ e A,
-    ty Γ Top e A -> forall B, ty Γ B e A.
-Proof.
-  intros Γ e A Ty.
-  dependent induction Ty; intros.
-  - econstructor.
-Abort.
-  
-Lemma ty_sub : forall A B e Γ,
-    ty Γ A e B -> sub Γ B A.
-Proof.
-  intros. dependent induction H.
-  - assumption.
-  - assumption.
-  - dependent destruction IHty. assumption.
-  - assumption.
-  - eapply S_Arr.
-    + eapply S_Hole. dependent induction A; eauto.
