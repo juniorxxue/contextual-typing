@@ -101,6 +101,7 @@ Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B t
 
 -}
 
+{-
 strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a h C ≤ B
   → ¬ freeT B x
@@ -110,7 +111,40 @@ strengthen {B = Hop} {C = Int} ≤ nf = ≤a-top
 strengthen {B = Hop} {C = Top} ≤ nf = ≤a-top
 strengthen {B = .Hop} {C = C₁ ⇒ C₂} ≤a-top nf = ≤a-top
 strengthen {B = .(_ *⇒ _)} {C = C₁ ⇒ C₂} (≤a-arr ≤ ≤₁) nf = ≤a-arr {!!} {!!}
--- the problem here is that arrow type is contra
+
+the problem here is that arrow type is contra
+Just notice that the free shouldn't be baised on each side
+so
+
+-}
+
+strengthen : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a C ≤ B
+  → ¬ freeT C x
+  → ¬ freeT B x
+  → Γ ⊢a C ≤ B
+strengthen {B = Hnt} {C = Hnt} ≤ nf₁ nf₂ = ≤a-int
+strengthen {B = Hop} {C = Hnt} ≤ nf₁ nf₂ = ≤a-top
+strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
+strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
+strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (strengthen ≤₁ {!!} {!!}) (strengthen ≤₂ {!!} {!!}) -- trivial
+strengthen {C = ⟦ x ⟧} ≤ nf₁ nf₂ = {!!}
+
+{-
+Goal: Γ ⊢a Hnt ⇛ x ⇛ _B_656
+————————————————————————————————————————————————————————————
+nf₂ : ¬ freeT Hnt x₂
+nf₁ : ¬ freeT ⟦ x ⟧ x₂
+x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
+-}
+
+-- it looks like we need a strengthen lemma for typing
+⊢a-strengthen : ∀ {Γ e x A B C}
+  → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
+  → ¬ free e x
+  → ¬ freeT B x
+  → Γ ⊢a B ⇛ e ⇛ C
+⊢a-strengthen = {!!}
 
 ⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
