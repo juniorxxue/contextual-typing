@@ -1,10 +1,12 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Algo where
 
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
-open import Relation.Nullary using (¬_)
+open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Relation.Nullary using (¬_)
 open import Common
 
 infixr 8 _*⇒_
@@ -94,3 +96,177 @@ _ = λ ()
 
 _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
 _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int)))) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int))) ≤a-top))
+
+
+------------ Properties of Algorithmic System ---------------
+
+≤a-refl-h : ∀ {A Γ}
+  → Γ ⊢a h A ≤ h A
+≤a-refl-h {A = Int} = ≤a-int
+≤a-refl-h {A = Top} = ≤a-top
+≤a-refl-h {A = A ⇒ A₁} = ≤a-arr ≤a-refl-h ≤a-refl-h
+
+-- renaming
+
+{-
+according to https://plfa.github.io/Properties/
+three corollaries follow this lemma
+1. weakening lemma
+2. drop lemma: drop shadowed occurrence
+3. swap lemma
+-}
+
+ext : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {x y A B} → Γ , y ⦂ B ∋ x ⦂ A → Δ , y ⦂ B ∋ x ⦂ A)
+ext ρ Z           =  Z
+ext ρ (S x≢y ∋x)  =  S x≢y (ρ ∋x)
+
+rename-≤a : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
+
+rename-⊢a : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {e A B} → Γ ⊢a B ⇛ e ⇛ A → Δ ⊢a B ⇛ e ⇛ A)
+
+rename-≤a ρ ≤a-int = ≤a-int
+rename-≤a ρ ≤a-top = ≤a-top
+rename-≤a ρ (≤a-arr ≤a₁ ≤a₂) = ≤a-arr (rename-≤a ρ ≤a₁) (rename-≤a ρ ≤a₂)
+rename-≤a ρ (≤a-hole ⊢a) = ≤a-hole (rename-⊢a ρ ⊢a)
+
+rename-⊢a ρ (⊢a-lit ⊢a) = ⊢a-lit (rename-≤a ρ ⊢a)
+rename-⊢a ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (rename-≤a ρ ∋x)
+rename-⊢a ρ (⊢a-app ⊢a) = ⊢a-app (rename-⊢a ρ ⊢a)
+rename-⊢a ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (rename-⊢a ρ ⊢a) (rename-≤a ρ ≤a)
+rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂) nf
+rename-⊢a ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (rename-⊢a (ext ρ) ⊢a)
+
+-- weakening
+
+weaken : ∀ {Γ e A B}
+  → ∅ ⊢a B ⇛ e ⇛ A
+  → Γ ⊢a B ⇛ e ⇛ A
+weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
+  where
+  ρ : ∀ {z C}
+    → ∅ ∋ z ⦂ C
+    → Γ ∋ z ⦂ C
+  ρ = λ ()
+
+-- strengthening
+
+{-
+
+Goal: Γ ⊢a h C ≤ B
+Have: (Γ , x ⦂ A) ⊢a h C ≤ B
+————————————————————————————————————————————————————————————
+⊢a₂ : Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+⊢a₁ : Γ ⊢a Hop ⇛ e₁ ⇛ A
+
+Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B type
+
+1st try: fix the rule
+2nd try: de bruijn or something else <- i don't think it solves the problem
+
+-}
+
+{-
+strengthen : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a h C ≤ B
+  → ¬ freeT B x
+  → Γ ⊢a h C ≤ B
+strengthen {B = Hnt} {C = Int} ≤ nf = ≤a-int
+strengthen {B = Hop} {C = Int} ≤ nf = ≤a-top
+strengthen {B = Hop} {C = Top} ≤ nf = ≤a-top
+strengthen {B = .Hop} {C = C₁ ⇒ C₂} ≤a-top nf = ≤a-top
+strengthen {B = .(_ *⇒ _)} {C = C₁ ⇒ C₂} (≤a-arr ≤ ≤₁) nf = ≤a-arr {!!} {!!}
+
+the problem here is that arrow type is contra
+Just notice that the free shouldn't be baised on each side
+so
+
+-}
+
+≤-strengthen : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a C ≤ B
+  → ¬ freeT C x
+  → ¬ freeT B x
+  → Γ ⊢a C ≤ B
+≤-strengthen {B = Hnt} {C = Hnt} ≤ nf₁ nf₂ = ≤a-int
+≤-strengthen {B = Hop} {C = Hnt} ≤ nf₁ nf₂ = ≤a-top
+≤-strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
+≤-strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
+≤-strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (≤-strengthen ≤₁ {!!} {!!}) (≤-strengthen ≤₂ {!!} {!!}) -- trivial
+≤-strengthen {C = ⟦ x ⟧} ≤ nf₁ nf₂ = {!!}
+
+{-
+Goal: Γ ⊢a Hnt ⇛ x ⇛ _B_656
+————————————————————————————————————————————————————————————
+nf₂ : ¬ freeT Hnt x₂
+nf₁ : ¬ freeT ⟦ x ⟧ x₂
+x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
+-}
+
+∋-strengthen : ∀ {Γ x y A B}
+  → Γ , y ⦂ A ∋ x ⦂ B
+  → y ≢ x
+  → Γ ∋ x ⦂ B
+∋-strengthen Z neq = ⊥-elim (neq refl)
+∋-strengthen (S x ∋) neq = ∋
+
+-- it looks like we need a strengthen lemma for typing
+⊢a-strengthen : ∀ {Γ e x A B C}
+  → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
+  → ¬ free e x
+  → ¬ freeT B x
+  → Γ ⊢a B ⇛ e ⇛ C
+⊢a-strengthen (⊢a-lit ≤) nf nft = ⊢a-lit (≤-strengthen ≤ {!!} nft) -- trivial
+⊢a-strengthen (⊢a-var ∋ ≤) nf nft = ⊢a-var (∋-strengthen ∋ {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
+⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!})
+⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} {!!})
+⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
+⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ {!⊢a-strengthen ⊢!} -- strengthen should be more general
+
+-- inversion lemmas
+
+≤a-arr-inv : ∀ {Γ A B C D}
+  → Γ ⊢a A *⇒ B ≤ C *⇒ D
+  → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
+≤a-arr-inv (≤a-arr ≤a₁ ≤a₂) = ⟨ ≤a₁ , ≤a₂ ⟩
+
+-- lemmas about typing and subtyping
+
+⊢a-to-≤a : ∀ {Γ e A B}
+  → Γ ⊢a B ⇛ e ⇛ A
+  → Γ ⊢a h A ≤ B
+⊢a-to-≤a (⊢a-lit ≤a) = ≤a
+⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
+⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
+⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
+
+-- lemmas about algo typing
+
+--------------------- Lemmas for algo typing -----------------
+
+-- Two lemmas should be unified
+
+
+⊢a-hint-self : ∀ {Γ A e}
+  → Γ ⊢a Hop ⇛ e ⇛ A
+  → Γ ⊢a h A ⇛ e ⇛ A
+
+⊢a-hint-self-1 : ∀ {Γ B C e₁ e₂}
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ B ⇒ C
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ h C ⇛ e₁ ⇛ B ⇒ C
+⊢a-hint-self-1 {e₁ = ` x} (⊢a-var x₁ (≤a-arr x₂ x₃)) = ⊢a-var x₁ (≤a-arr x₂ ≤a-refl-h)
+⊢a-hint-self-1 {e₁ = ƛ x ⇒ e₁} ⊢ = {!!}
+⊢a-hint-self-1 {e₁ = e₁ · e₂} ⊢ = {!!}
+⊢a-hint-self-1 {e₁ = e₁ ⦂ x} ⊢ = {!!}
+
+⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
+⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
+⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
+⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
