@@ -263,17 +263,19 @@ r-}
 ≤-strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (≤-strengthen ≤₁ {!!} {!!}) (≤-strengthen ≤₂ {!!} {!!}) -- trivial
 ≤-strengthen {C = ⟦ x ⟧} ≤a-top nf₁ nf₂ = ≤a-top
-≤-strengthen {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole (⊢a-strengthen ⊢ {!!} {!!})
+≤-strengthen {x = y} {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole (⊢a-strengthen ⊢ ~f nf₂)
+  where
+    ~f : ¬ free x y
+    ~f = λ z → nf₁ (free-hole z)
 
 ⊢a-strengthen (⊢a-lit ≤) nf nft = ⊢a-lit (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-var ∋ ≤) nf nft = ⊢a-var (∋-strengthen ∋ {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!}) -- trivial
 ⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
-⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap {!!} ⊢) {!!} {!!}) -- strengthen should be more general or a swap lemma (proved); others are trivial lemmas
-
--- inversion lemmas
-
+⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap {!!} ⊢) {!!} {!!})
+-- strengthen should be more general or a swap lemma (proved); others are trivial lemmas-- inversion lemmas
+ 
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
@@ -323,6 +325,7 @@ r-}
 
 
 {-
+
 work around: ⊢a-to-≤a
 
 rule change: not free condition in lam rule
