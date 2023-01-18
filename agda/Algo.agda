@@ -122,39 +122,75 @@ ext : ∀ {Γ Δ}
 ext ρ Z           =  Z
 ext ρ (S x≢y ∋x)  =  S x≢y (ρ ∋x)
 
-rename-≤a : ∀ {Γ Δ}
+_ : ∅ , "x" ⦂ Int ∋ "x" ⦂ Int
+_ = Z
+
+_ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
+_ = Z
+
+
+-- I might sketech a wrong rename lemma
+
+≤a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
 
-rename-⊢a : ∀ {Γ Δ}
+⊢a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {e A B} → Γ ⊢a B ⇛ e ⇛ A → Δ ⊢a B ⇛ e ⇛ A)
 
-rename-≤a ρ ≤a-int = ≤a-int
-rename-≤a ρ ≤a-top = ≤a-top
-rename-≤a ρ (≤a-arr ≤a₁ ≤a₂) = ≤a-arr (rename-≤a ρ ≤a₁) (rename-≤a ρ ≤a₂)
-rename-≤a ρ (≤a-hole ⊢a) = ≤a-hole (rename-⊢a ρ ⊢a)
+≤a-rename ρ ≤a-int = ≤a-int
+≤a-rename ρ ≤a-top = ≤a-top
+≤a-rename ρ (≤a-arr ≤a₁ ≤a₂) = ≤a-arr (≤a-rename ρ ≤a₁) (≤a-rename ρ ≤a₂)
+≤a-rename ρ (≤a-hole ⊢a) = ≤a-hole (⊢a-rename ρ ⊢a)
 
-rename-⊢a ρ (⊢a-lit ⊢a) = ⊢a-lit (rename-≤a ρ ⊢a)
-rename-⊢a ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (rename-≤a ρ ∋x)
-rename-⊢a ρ (⊢a-app ⊢a) = ⊢a-app (rename-⊢a ρ ⊢a)
-rename-⊢a ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (rename-⊢a ρ ⊢a) (rename-≤a ρ ≤a)
-rename-⊢a ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ⊢a-lam₁ (rename-⊢a ρ ⊢a₁) (rename-⊢a (ext ρ) ⊢a₂) nf
-rename-⊢a ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (rename-⊢a (ext ρ) ⊢a)
+⊢a-rename ρ (⊢a-lit ⊢a) = ⊢a-lit (≤a-rename ρ ⊢a)
+⊢a-rename ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (≤a-rename ρ ∋x)
+⊢a-rename ρ (⊢a-app ⊢a) = ⊢a-app (⊢a-rename ρ ⊢a)
+⊢a-rename ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (⊢a-rename ρ ⊢a) (≤a-rename ρ ≤a)
+⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂) nf
+⊢a-rename ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a)
 
 -- weakening
 
-weaken : ∀ {Γ e A B}
+⊢a-weaken : ∀ {Γ e A B}
   → ∅ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a B ⇛ e ⇛ A
-weaken {Γ} ⊢e = rename-⊢a ρ ⊢e
+⊢a-weaken {Γ} ⊢e = ⊢a-rename ρ ⊢e
   where
   ρ : ∀ {z C}
     → ∅ ∋ z ⦂ C
     → Γ ∋ z ⦂ C
   ρ = λ ()
 
+-- swap
+
+⊢a-swap : ∀ {Γ x y e A B C D}
+  → x ≢ y
+  → Γ , y ⦂ B , x ⦂ A ⊢a C ⇛ e ⇛ D
+  → Γ , x ⦂ A , y ⦂ B ⊢a C ⇛ e ⇛ D
+⊢a-swap {Γ} {x} {y} {e} {A} {B} {C} {D} x≢y ⊢ = ⊢a-rename ρ ⊢
+  where
+    ρ : ∀ {z D}
+      → Γ , y ⦂ B , x ⦂ A ∋ z ⦂ D
+      → Γ , x ⦂ A , y ⦂ B ∋ z ⦂ D
+    ρ Z                   =  S x≢y Z
+    ρ (S z≢x Z)           =  Z
+    ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
+
 -- strengthening
+
+≤-strengthen-r : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a C ≤ B
+  → ¬ freeT C x
+  → ¬ freeT B x
+  → Γ ⊢a C ≤ B
+≤-strengthen-r {Γ} {x} {A} {B} {C} ≤ nf₁ nf₂ = ≤a-rename ρ ≤
+  where
+    ρ : ∀ {z D}
+      → Γ , x ⦂ A ∋ z ⦂ D
+      → Γ ∋ z ⦂ D
+    ρ = {!!}
 
 {-
 
@@ -186,7 +222,7 @@ the problem here is that arrow type is contra
 Just notice that the free shouldn't be baised on each side
 so
 
--}
+r-}
 
 ≤-strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a C ≤ B
@@ -198,7 +234,8 @@ so
 ≤-strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (≤-strengthen ≤₁ {!!} {!!}) (≤-strengthen ≤₂ {!!} {!!}) -- trivial
-≤-strengthen {C = ⟦ x ⟧} ≤ nf₁ nf₂ = {!!}
+≤-strengthen {C = ⟦ x ⟧} ≤a-top nf₁ nf₂ = ≤a-top
+≤-strengthen {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole {!!}
 
 {-
 Goal: Γ ⊢a Hnt ⇛ x ⇛ _B_656
@@ -226,7 +263,7 @@ x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
 ⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!})
 ⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} {!!})
 ⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
-⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ {!⊢a-strengthen ⊢!} -- strengthen should be more general
+⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ {!⊢a-strengthen ⊢!} -- strengthen should be more general or a swap lemma
 
 -- inversion lemmas
 
@@ -270,3 +307,15 @@ x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
 ⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
 ⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
+
+
+{-
+work around: ⊢a-to-≤a
+
+1. strengthening lemma <-- find the correct lemma, and simplify the proof
+
+   problems with rename lemma
+
+2. ⊢a-hint-self: <-- find the correct with lemma intuituion
+
+-}
