@@ -28,7 +28,7 @@ data free : Term → Id → Set where
 data freeT : Hype → Id → Set where
   free-hole : ∀ {e x} → free e x → freeT (⟦ e ⟧) x
 
-infix 5 _⊢a_≤_
+infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
 
 data _⊢a_≤_ : Context → Hype → Hype → Set
@@ -129,8 +129,6 @@ _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
 
 
--- I might sketech a wrong rename lemma
-
 ≤a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
@@ -164,6 +162,19 @@ _ = Z
   ρ = λ ()
 
 -- swap
+≤a-swap : ∀ {Γ x y A B C D}
+  → x ≢ y
+  → Γ , y ⦂ B , x ⦂ A ⊢a C ≤ D
+  → Γ , x ⦂ A , y ⦂ B ⊢a C ≤ D
+≤a-swap {Γ} {x} {y} {A} {B} {C} {D} x≢y ≤ = ≤a-rename ρ ≤
+  where
+    ρ : ∀ {z D}
+      → Γ , y ⦂ B , x ⦂ A ∋ z ⦂ D
+      → Γ , x ⦂ A , y ⦂ B ∋ z ⦂ D
+    ρ Z                   =  S x≢y Z
+    ρ (S z≢x Z)           =  Z
+    ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
+
 
 ⊢a-swap : ∀ {Γ x y e A B C D}
   → x ≢ y
@@ -185,12 +196,15 @@ _ = Z
   → ¬ freeT C x
   → ¬ freeT B x
   → Γ ⊢a C ≤ B
-≤-strengthen-r {Γ} {x} {A} {B} {C} ≤ nf₁ nf₂ = ≤a-rename ρ ≤
+≤-strengthen-r {Γ} {x} {A} {B} {C} ≤ nf₁ nf₂ = ≤a-rename {!!} ≤
+
+{-
   where
     ρ : ∀ {z D}
       → Γ , x ⦂ A ∋ z ⦂ D
       → Γ ∋ z ⦂ D
     ρ = {!!}
+-}    
 
 {-
 
@@ -224,11 +238,25 @@ so
 
 r-}
 
+∋-strengthen : ∀ {Γ x y A B}
+  → Γ , y ⦂ A ∋ x ⦂ B
+  → y ≢ x
+  → Γ ∋ x ⦂ B
+∋-strengthen Z neq = ⊥-elim (neq refl)
+∋-strengthen (S x ∋) neq = ∋
+
 ≤-strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a C ≤ B
   → ¬ freeT C x
   → ¬ freeT B x
   → Γ ⊢a C ≤ B
+
+⊢a-strengthen : ∀ {Γ e x A B C}
+  → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
+  → ¬ free e x
+  → ¬ freeT B x
+  → Γ ⊢a B ⇛ e ⇛ C
+
 ≤-strengthen {B = Hnt} {C = Hnt} ≤ nf₁ nf₂ = ≤a-int
 ≤-strengthen {B = Hop} {C = Hnt} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
@@ -237,33 +265,12 @@ r-}
 ≤-strengthen {C = ⟦ x ⟧} ≤a-top nf₁ nf₂ = ≤a-top
 ≤-strengthen {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole {!!}
 
-{-
-Goal: Γ ⊢a Hnt ⇛ x ⇛ _B_656
-————————————————————————————————————————————————————————————
-nf₂ : ¬ freeT Hnt x₂
-nf₁ : ¬ freeT ⟦ x ⟧ x₂
-x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
--}
-
-∋-strengthen : ∀ {Γ x y A B}
-  → Γ , y ⦂ A ∋ x ⦂ B
-  → y ≢ x
-  → Γ ∋ x ⦂ B
-∋-strengthen Z neq = ⊥-elim (neq refl)
-∋-strengthen (S x ∋) neq = ∋
-
--- it looks like we need a strengthen lemma for typing
-⊢a-strengthen : ∀ {Γ e x A B C}
-  → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
-  → ¬ free e x
-  → ¬ freeT B x
-  → Γ ⊢a B ⇛ e ⇛ C
 ⊢a-strengthen (⊢a-lit ≤) nf nft = ⊢a-lit (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-var ∋ ≤) nf nft = ⊢a-var (∋-strengthen ∋ {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
-⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!})
-⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} {!!})
+⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!}) -- trivial
+⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
-⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ {!⊢a-strengthen ⊢!} -- strengthen should be more general or a swap lemma
+⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap {!!} ⊢) {!!} {!!}) -- strengthen should be more general or a swap lemma (proved); others are trivial lemmas
 
 -- inversion lemmas
 
@@ -288,15 +295,21 @@ x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
 
 --------------------- Lemmas for algo typing -----------------
 
--- Two lemmas should be unified
+-- aux lemma
 
+
+⊢a-hint-chk : ∀ {Γ e₁ e₂ A B C}
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ B ⇒ C
+  → Γ ⊢a h B ⇛ e₂ ⇛ B
+
+-- Two lemmas should be unified
 
 ⊢a-hint-self : ∀ {Γ A e}
   → Γ ⊢a Hop ⇛ e ⇛ A
   → Γ ⊢a h A ⇛ e ⇛ A
 
 ⊢a-hint-self-1 : ∀ {Γ B C e₁ e₂}
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ B ⇒ C
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ B ⇒ C -- <- this premise can introduce a checking rule for e₂
   → Γ ⊢a ⟦ e₂ ⟧ *⇒ h C ⇛ e₁ ⇛ B ⇒ C
 ⊢a-hint-self-1 {e₁ = ` x} (⊢a-var x₁ (≤a-arr x₂ x₃)) = ⊢a-var x₁ (≤a-arr x₂ ≤a-refl-h)
 ⊢a-hint-self-1 {e₁ = ƛ x ⇒ e₁} ⊢ = {!!}
@@ -312,10 +325,14 @@ x₁  : Γ , x₂ ⦂ A ⊢a Hnt ⇛ x ⇛ B
 {-
 work around: ⊢a-to-≤a
 
-1. strengthening lemma <-- find the correct lemma, and simplify the proof
+rule change: not free condition in lam rule
+
+1. strengthening lemma <-- find the correct lemma, and simplify the proof (solved?)
 
    problems with rename lemma
 
 2. ⊢a-hint-self: <-- find the correct with lemma intuituion
+
+  perhaps it's the same lemma
 
 -}
