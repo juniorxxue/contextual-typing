@@ -263,7 +263,7 @@ r-}
 ≤-strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (≤-strengthen ≤₁ {!!} {!!}) (≤-strengthen ≤₂ {!!} {!!}) -- trivial
 ≤-strengthen {C = ⟦ x ⟧} ≤a-top nf₁ nf₂ = ≤a-top
-≤-strengthen {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole {!!}
+≤-strengthen {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole (⊢a-strengthen ⊢ {!!} {!!})
 
 ⊢a-strengthen (⊢a-lit ≤) nf nft = ⊢a-lit (≤-strengthen ≤ {!!} nft) -- trivial
 ⊢a-strengthen (⊢a-var ∋ ≤) nf nft = ⊢a-var (∋-strengthen ∋ {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
