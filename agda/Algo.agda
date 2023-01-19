@@ -80,16 +80,15 @@ data _⊢a_⇛_⇛_ where
   ⊢a-lam₁ : ∀ {Γ e₁ e x A B C}
     → Γ ⊢a Hop ⇛ e₁ ⇛ A
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
-    → ¬ (freeT B x)
     → Γ ⊢a ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
   ⊢a-lam₂ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
-    → Γ ⊢a h A *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+    → Γ ⊢a (h A) *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
 
 _ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) λ ())
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top))
 
 _ : ∀ {x} → ¬ freeT Hop x
 _ = λ ()
@@ -130,8 +129,8 @@ _ = Z
 
 
 ≤a-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
+  → (∀ {x A} →      Γ ∋ x ⦂ A    →     Δ ∋ x ⦂ A)
+  → (∀ {A B} →    Γ ⊢a A ≤ B →    Δ ⊢a A ≤ B)
 
 ⊢a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
@@ -146,7 +145,7 @@ _ = Z
 ⊢a-rename ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (≤a-rename ρ ∋x)
 ⊢a-rename ρ (⊢a-app ⊢a) = ⊢a-app (⊢a-rename ρ ⊢a)
 ⊢a-rename ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (⊢a-rename ρ ⊢a) (≤a-rename ρ ≤a)
-⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂) nf
+⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂)
 ⊢a-rename ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a)
 
 -- weakening
@@ -257,6 +256,11 @@ r-}
   → ¬ freeT B x
   → Γ ⊢a B ⇛ e ⇛ C
 
+≤-strengthen = {!!}
+⊢a-strengthen = {!!}
+
+
+{-
 ≤-strengthen {B = Hnt} {C = Hnt} ≤ nf₁ nf₂ = ≤a-int
 ≤-strengthen {B = Hop} {C = Hnt} ≤ nf₁ nf₂ = ≤a-top
 ≤-strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
@@ -275,7 +279,8 @@ r-}
 ⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
 ⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap {!!} ⊢) {!!} {!!})
 -- strengthen should be more general or a swap lemma (proved); others are trivial lemmas-- inversion lemmas
- 
+-}
+
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
@@ -290,7 +295,7 @@ r-}
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ nf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 -- lemmas about algo typing
@@ -303,12 +308,15 @@ r-}
 ⊢a-hint-chk : ∀ {Γ e₁ e₂ A B C}
   → Γ ⊢a ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ B ⇒ C
   → Γ ⊢a h B ⇛ e₂ ⇛ B
+⊢a-hint-chk = {!!}  
 
 -- Two lemmas should be unified
 
 ⊢a-hint-self : ∀ {Γ A e}
   → Γ ⊢a Hop ⇛ e ⇛ A
   → Γ ⊢a h A ⇛ e ⇛ A
+
+{-
 
 ⊢a-hint-self-1 : ∀ {Γ B C e₁ e₂}
   → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ B ⇒ C -- <- this premise can introduce a checking rule for e₂
@@ -317,11 +325,13 @@ r-}
 ⊢a-hint-self-1 {e₁ = ƛ x ⇒ e₁} ⊢ = {!!}
 ⊢a-hint-self-1 {e₁ = e₁ · e₂} ⊢ = {!!}
 ⊢a-hint-self-1 {e₁ = e₁ ⦂ x} ⊢ = {!!}
+-}
 
 ⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
-⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app (⊢a-hint-self-1 ⊢a)
+⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!!}
 ⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
+
 
 
 {-

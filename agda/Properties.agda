@@ -26,43 +26,43 @@ f : Mode → Type → Type
 f ⇛ A = Top
 f ⇚ A = A
 
-{-
-fun-with-hint : ∀ {Γ e₁ e₂ A B}
-  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
+sound₁ : ∀ {Γ e A B}
+  → Γ ⊢a A ⇛ e ⇛ B
+  → Γ ⊢d e ∙ ⇚ ∙ B
+sound₁ (⊢a-lit ≤) = ⊢d-sub ⊢d-int ≤d-int
+sound₁ (⊢a-var ∋ ≤) = ⊢d-sub (⊢d-var ∋) ≤d-refl
+sound₁ (⊢a-app ⊢a) = {!!}
+sound₁ (⊢a-ann ⊢a x) = ⊢d-sub (⊢d-ann (sound₁ ⊢a)) ≤d-refl
+sound₁ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢d-lam (sound₁ ⊢a₂)
+sound₁ (⊢a-lam₂ ⊢a) = ⊢d-lam (sound₁ ⊢a)
+
+sound₂ : ∀ {Γ e A}
+  → Γ ⊢a Hop ⇛ e ⇛ A
+  → Γ ⊢d e ∙ ⇛ ∙ A
+sound₂ ⊢a = {!!}
+
+output : Hype → Hype
+output Hop = Hop
+output (A *⇒ B) = B
+output _ = Hop
+
+≤a-output : ∀ {Γ A B C}
+  → Γ ⊢a h A *⇒ h B ≤ C
+  → Γ ⊢a h B ≤ output C
+≤a-output ≤a-top = ≤a-top
+≤a-output (≤a-arr ≤₁ ≤₂) = ≤₂
+
+
+-- this is a wrong lemma
+fun-hint : ∀ {Γ e₁ e₂ A B C}
+  → Γ ⊢a C ⇛ e₁ ⇛ A ⇒ B
   → Γ ⊢a h A ⇛ e₂ ⇛ A
-  → ∃[ C ] Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ C ⇒ B
-fun-with-hint {A = A} (⊢a-var x x₁) ⊢a = ⟨ A , ⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top) ⟩
-fun-with-hint (⊢a-app ⊢f) ⊢a = {!!}
-fun-with-hint (⊢a-ann ⊢f x) ⊢a = {!!}
--}
-
--- maybe the existential C is fixed for A
-
-fun-with-hint : ∀ {Γ e₁ e₂ A B}
-  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a h A ⇛ e₂ ⇛ A
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ A ⇒ B
-fun-with-hint (⊢a-var x x₁) ⊢a = ⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top)
-fun-with-hint (⊢a-app ⊢f) ⊢a = {!!}
-fun-with-hint (⊢a-ann ⊢f x) ⊢a = ⊢a-ann ⊢f (≤a-arr (≤a-hole ⊢a) ≤a-top)
-
--- generlize a bit
-
-fun-with-hint1 : ∀ {Γ e₁ e₂ A B}
-  → Γ ⊢a Hop ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a h A ⇛ e₂ ⇛ A
-  → Γ ⊢a Hop ⇛ e₁ · e₂ ⇛ B
-fun-with-hint1 (⊢a-var x x₁) ⊢a = ⊢a-app (⊢a-var x (≤a-arr (≤a-hole ⊢a) ≤a-top))
-fun-with-hint1 (⊢a-app ⊢f) ⊢a = ⊢a-app {!!}
-fun-with-hint1 (⊢a-ann ⊢f x) ⊢a = ⊢a-app (⊢a-ann ⊢f (≤a-arr (≤a-hole ⊢a) ≤a-top))
-
------------------------------------------------------------
-
-sound : ∀ {Γ e A ⇔}
-  → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
-  → Γ ⊢d e ∙ ⇔ ∙ A
-sound ⊢a = {!!}
--- ? 
+  → Γ ⊢a ⟦ e₂ ⟧ *⇒ output C ⇛ e₁ ⇛ A ⇒ B
+fun-hint (⊢a-var ∋ ≤) ⊢₂ = ⊢a-var ∋ (≤a-arr (≤a-hole ⊢₂) (≤a-output ≤))
+fun-hint (⊢a-app ⊢₁) ⊢₂ = {!!}
+fun-hint (⊢a-ann ⊢₁ x) ⊢₂ = {!!}
+fun-hint (⊢a-lam₁ ⊢₁ ⊢₃) ⊢₂ = {!!}
+fun-hint (⊢a-lam₂ ⊢₁) ⊢₂ = {!!}
 
 complete : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
@@ -85,27 +85,12 @@ Two observations:
 1st try:
 abstract a lemma out of here
 -}
-complete (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-with-hint (complete ⊢df) (complete ⊢da)!}
-complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!} {!!})
+complete (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-hint (complete ⊢df) (complete ⊢da)!}
+complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!})
 complete (⊢d-app₂ (⊢d-sub ⊢df ≤d) ⊢da) = ⊢a-app {!!}
 complete (⊢d-ann ⊢d) = ⊢a-ann (complete ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure
 complete (⊢d-sub ⊢d ≤d) = {!!}
-
-output : Hype → Hype
-output Hop = Hop
-output (A *⇒ B) = B
-output _ = Hop
-
-fun-with-hint2 : ∀ {Γ e₁ e₂ A B C}
-  → Γ ⊢a C ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a h A ⇛ e₂ ⇛ A
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ output C ⇛ e₁ ⇛ A ⇒ B
-fun-with-hint2 (⊢a-var x x₁) ⊢a = ⊢a-var x (≤a-arr (≤a-hole ⊢a) {!!})
-fun-with-hint2 (⊢a-app ⊢f) ⊢a = ⊢a-app {! !}
-fun-with-hint2 (⊢a-ann ⊢f x) ⊢a = {!!}
-fun-with-hint2 (⊢a-lam₁ ⊢f ⊢f₁ nf) ⊢a = {!!}
-fun-with-hint2 (⊢a-lam₂ ⊢f) ⊢a = {!!}
 
 -- in application
 -- if we know nothing (Top)
