@@ -18,21 +18,30 @@ data Hype : Set where
   _*⇒_  : Hype → Hype → Hype
   ⟦_⟧ : Term → Hype
 
-data free : Term → Id → Set where
-  free-var : ∀ {x} → free (` x) x
-  free-lam : ∀ {x₁ x₂ e} → free e x₁ → x₁ ≢ x₂ → free (ƛ x₂ ⇒ e) x₁
-  free-app-l : ∀ {e₁ e₂ x} → free e₁ x → free (e₁ · e₂) x
-  free-app-r : ∀ {e₁ e₂ x} → free e₂ x → free (e₁ · e₂) x
-  free-ann : ∀ {e A x} → free e x → free (e ⦂ A) x
-
-data freeT : Hype → Id → Set where
-  free-hole : ∀ {e x} → free e x → freeT (⟦ e ⟧) x
-
 infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
 
 data _⊢a_≤_ : Context → Hype → Hype → Set
 data _⊢a_⇛_⇛_ : Context → Hype → Term → Type → Set
+
+infix 5 _⊢a_
+
+data _⊢a_ : Context → Hype → Set where
+  wf-int : ∀ {Γ}
+    → Γ ⊢a Hnt
+
+  wf-top : ∀ {Γ}
+    → Γ ⊢a Hop
+
+  wf-arr : ∀ {Γ A B}
+    → Γ ⊢a A
+    → Γ ⊢a B
+    → Γ ⊢a A *⇒ B
+
+  wf-hole : ∀ {Γ e}
+    → Γ ⊢ e
+    → Γ ⊢a ⟦ e ⟧
+
 
 h : Type → Hype
 h Int = Hnt
@@ -61,40 +70,45 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-lit : ∀ {Γ A n}
     → Γ ⊢a Hnt ≤ A
+    -----------------------
     → Γ ⊢a A ⇛ lit n ⇛ Int
 
   ⊢a-var : ∀ {Γ A B x}
     → Γ ∋ x ⦂ B
     → Γ ⊢a h B ≤ A
+    -------------------
     → Γ ⊢a A ⇛ ` x ⇛ B
 
   ⊢a-app : ∀ {Γ e₁ e₂ A C D}
     → Γ ⊢a ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ (C ⇒ D)
+    ----------------------------------
     → Γ ⊢a A ⇛ e₁ · e₂ ⇛ D
 
   ⊢a-ann : ∀ {Γ e A B}
     → Γ ⊢a h B ⇛ e ⇛ B
     → Γ ⊢a h B ≤ A
+    ---------------------
     → Γ ⊢a A ⇛ e ⦂ B ⇛ B
 
   ⊢a-lam₁ : ∀ {Γ e₁ e x A B C}
     → Γ ⊢a Hop ⇛ e₁ ⇛ A
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+    → Γ ⊢a B
+    -------------------------------------
     → Γ ⊢a ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
   ⊢a-lam₂ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
+    → Γ ⊢a B
+    ------------------------------------
     → Γ ⊢a (h A) *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
 
 _ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top))
-
-_ : ∀ {x} → ¬ freeT Hop x
-_ = λ ()
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) wf-top)
 
 _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int)))) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int))) ≤a-top))
+_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int))) wf-int) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int) wf-int)) ≤a-top))
 
 
 ------------ Properties of Algorithmic System ---------------
@@ -128,9 +142,26 @@ _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
 
 
+⊢-rename : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {e} → Γ ⊢ e → Δ ⊢ e)
+⊢-rename ρ wf-lit = wf-lit
+⊢-rename ρ (wf-var x) = wf-var (ρ x)
+⊢-rename ρ (wf-lam ⊢) = wf-lam (⊢-rename (ext ρ) ⊢)
+⊢-rename ρ (wf-app ⊢₁ ⊢₂) = wf-app (⊢-rename ρ ⊢₁) (⊢-rename ρ ⊢₂)
+⊢-rename ρ (wf-ann ⊢) = wf-ann (⊢-rename ρ ⊢)
+
+wf-rename : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {A} → Γ ⊢a A → Δ ⊢a A)
+wf-rename ρ wf-int = wf-int
+wf-rename ρ wf-top = wf-top
+wf-rename ρ (wf-arr ⊢₁ ⊢₂) = wf-arr (wf-rename ρ ⊢₁) (wf-rename ρ ⊢₂)
+wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
+
 ≤a-rename : ∀ {Γ Δ}
-  → (∀ {x A} →      Γ ∋ x ⦂ A    →     Δ ∋ x ⦂ A)
-  → (∀ {A B} →    Γ ⊢a A ≤ B →    Δ ⊢a A ≤ B)
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+  → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
 
 ⊢a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
@@ -145,8 +176,8 @@ _ = Z
 ⊢a-rename ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (≤a-rename ρ ∋x)
 ⊢a-rename ρ (⊢a-app ⊢a) = ⊢a-app (⊢a-rename ρ ⊢a)
 ⊢a-rename ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (⊢a-rename ρ ⊢a) (≤a-rename ρ ≤a)
-⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂)
-⊢a-rename ρ (⊢a-lam₂ ⊢a) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a)
+⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂) (wf-rename ρ wf)
+⊢a-rename ρ (⊢a-lam₂ ⊢a wf) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a) (wf-rename ρ wf)
 
 -- weakening
 
@@ -188,55 +219,6 @@ _ = Z
     ρ (S z≢x Z)           =  Z
     ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
 
--- strengthening
-
-≤-strengthen-r : ∀ {Γ x A B C}
-  → (Γ , x ⦂ A) ⊢a C ≤ B
-  → ¬ freeT C x
-  → ¬ freeT B x
-  → Γ ⊢a C ≤ B
-≤-strengthen-r {Γ} {x} {A} {B} {C} ≤ nf₁ nf₂ = ≤a-rename {!!} ≤
-
-{-
-  where
-    ρ : ∀ {z D}
-      → Γ , x ⦂ A ∋ z ⦂ D
-      → Γ ∋ z ⦂ D
-    ρ = {!!}
--}    
-
-{-
-
-Goal: Γ ⊢a h C ≤ B
-Have: (Γ , x ⦂ A) ⊢a h C ≤ B
-————————————————————————————————————————————————————————————
-⊢a₂ : Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
-⊢a₁ : Γ ⊢a Hop ⇛ e₁ ⇛ A
-
-Intuitively we know that this lemma holds, since x ⦂ A shouldn't appear in B type
-
-1st try: fix the rule
-2nd try: de bruijn or something else <- i don't think it solves the problem
-
--}
-
-{-
-strengthen : ∀ {Γ x A B C}
-  → (Γ , x ⦂ A) ⊢a h C ≤ B
-  → ¬ freeT B x
-  → Γ ⊢a h C ≤ B
-strengthen {B = Hnt} {C = Int} ≤ nf = ≤a-int
-strengthen {B = Hop} {C = Int} ≤ nf = ≤a-top
-strengthen {B = Hop} {C = Top} ≤ nf = ≤a-top
-strengthen {B = .Hop} {C = C₁ ⇒ C₂} ≤a-top nf = ≤a-top
-strengthen {B = .(_ *⇒ _)} {C = C₁ ⇒ C₂} (≤a-arr ≤ ≤₁) nf = ≤a-arr {!!} {!!}
-
-the problem here is that arrow type is contra
-Just notice that the free shouldn't be baised on each side
-so
-
-r-}
-
 ∋-strengthen : ∀ {Γ x y A B}
   → Γ , y ⦂ A ∋ x ⦂ B
   → y ≢ x
@@ -246,41 +228,12 @@ r-}
 
 ≤-strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a C ≤ B
-  → ¬ freeT C x
-  → ¬ freeT B x
   → Γ ⊢a C ≤ B
 
 ⊢a-strengthen : ∀ {Γ e x A B C}
   → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
-  → ¬ free e x
-  → ¬ freeT B x
   → Γ ⊢a B ⇛ e ⇛ C
-
-≤-strengthen = {!!}
-⊢a-strengthen = {!!}
-
-
-{-
-≤-strengthen {B = Hnt} {C = Hnt} ≤ nf₁ nf₂ = ≤a-int
-≤-strengthen {B = Hop} {C = Hnt} ≤ nf₁ nf₂ = ≤a-top
-≤-strengthen {B = Hop} {C = Hop} ≤ nf₁ nf₂ = ≤a-top
-≤-strengthen {B = Hop} {C = C₁ *⇒ C₂} ≤ nf₁ nf₂ = ≤a-top
-≤-strengthen {B = B₁ *⇒ B₂} {C = C₁ *⇒ C₂} (≤a-arr ≤₁ ≤₂) nf₁ nf₂ = ≤a-arr (≤-strengthen ≤₁ {!!} {!!}) (≤-strengthen ≤₂ {!!} {!!}) -- trivial
-≤-strengthen {C = ⟦ x ⟧} ≤a-top nf₁ nf₂ = ≤a-top
-≤-strengthen {x = y} {C = ⟦ x ⟧} (≤a-hole ⊢) nf₁ nf₂ = ≤a-hole (⊢a-strengthen ⊢ ~f nf₂)
-  where
-    ~f : ¬ free x y
-    ~f = λ z → nf₁ (free-hole z)
-
-⊢a-strengthen (⊢a-lit ≤) nf nft = ⊢a-lit (≤-strengthen ≤ {!!} nft) -- trivial
-⊢a-strengthen (⊢a-var ∋ ≤) nf nft = ⊢a-var (∋-strengthen ∋ {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
-⊢a-strengthen (⊢a-app ⊢) nf nft = ⊢a-app (⊢a-strengthen ⊢ {!!} {!!}) -- trivial
-⊢a-strengthen (⊢a-ann ⊢ ≤) nf nft = ⊢a-ann (⊢a-strengthen ⊢ {!!} {!!}) (≤-strengthen ≤ {!!} nft) -- trivial
-⊢a-strengthen (⊢a-lam₁ ⊢₁ ⊢₂ nfx) nf nft = ⊢a-lam₁ {!!} {!!} nfx
-⊢a-strengthen (⊢a-lam₂ ⊢) nf nft = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap {!!} ⊢) {!!} {!!})
--- strengthen should be more general or a swap lemma (proved); others are trivial lemmas-- inversion lemmas
--}
-
+  
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
@@ -295,57 +248,16 @@ r-}
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
-⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₂ ⊢a wf) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 -- lemmas about algo typing
-
---------------------- Lemmas for algo typing -----------------
-
--- aux lemma
-
-
-⊢a-hint-chk : ∀ {Γ e₁ e₂ A B C}
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ A ⇛ e₁ ⇛ B ⇒ C
-  → Γ ⊢a h B ⇛ e₂ ⇛ B
-⊢a-hint-chk = {!!}  
-
--- Two lemmas should be unified
 
 ⊢a-hint-self : ∀ {Γ A e}
   → Γ ⊢a Hop ⇛ e ⇛ A
   → Γ ⊢a h A ⇛ e ⇛ A
 
-{-
-
-⊢a-hint-self-1 : ∀ {Γ B C e₁ e₂}
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ Hop ⇛ e₁ ⇛ B ⇒ C -- <- this premise can introduce a checking rule for e₂
-  → Γ ⊢a ⟦ e₂ ⟧ *⇒ h C ⇛ e₁ ⇛ B ⇒ C
-⊢a-hint-self-1 {e₁ = ` x} (⊢a-var x₁ (≤a-arr x₂ x₃)) = ⊢a-var x₁ (≤a-arr x₂ ≤a-refl-h)
-⊢a-hint-self-1 {e₁ = ƛ x ⇒ e₁} ⊢ = {!!}
-⊢a-hint-self-1 {e₁ = e₁ · e₂} ⊢ = {!!}
-⊢a-hint-self-1 {e₁ = e₁ ⦂ x} ⊢ = {!!}
--}
-
 ⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
 ⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!!}
-⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann ⊢a ≤a-refl-h
-
-
-
-{-
-
-work around: ⊢a-to-≤a
-
-rule change: not free condition in lam rule
-
-1. strengthening lemma <-- find the correct lemma, and simplify the proof (solved?)
-
-   problems with rename lemma
-
-2. ⊢a-hint-self: <-- find the correct with lemma intuituion
-
-  perhaps it's the same lemma
-
--}
+⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann {!!} {!!}

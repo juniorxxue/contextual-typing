@@ -44,3 +44,27 @@ data _∋_⦂_ : Context → Id → Type → Set where
     → Γ ∋ x ⦂ A
       ------------------
     → Γ , y ⦂ B ∋ x ⦂ A
+
+infix 4 _⊢_
+
+data _⊢_ : Context → Term → Set where
+
+  wf-lit : ∀ {Γ n}
+    → Γ ⊢ (lit n)
+  
+  wf-var : ∀ {Γ x A}
+    → Γ ∋ x ⦂ A
+    → Γ ⊢ ` x
+
+  wf-lam : ∀ {Γ x A e}
+    → Γ , x ⦂ A ⊢ e
+    → Γ ⊢ ƛ x ⇒ e
+
+  wf-app : ∀ {Γ e₁ e₂}
+    → Γ ⊢ e₁
+    → Γ ⊢ e₂
+    → Γ ⊢ e₁ · e₂
+
+  wf-ann : ∀ {Γ e A}
+    → Γ ⊢ e
+    → Γ ⊢ e ⦂ A
