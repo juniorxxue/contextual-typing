@@ -103,6 +103,12 @@ data _⊢a_⇛_⇛_ where
     ------------------------------------
     → Γ ⊢a (h A) *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
+----------------------------------------------------------------------
+--                                                                  --
+--                             Examples                             --
+--                                                                  --
+----------------------------------------------------------------------
+
 
 _ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
 _ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) wf-top)
@@ -111,7 +117,11 @@ _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) �
 _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int))) wf-int) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int) wf-int)) ≤a-top))
 
 
------------- Properties of Algorithmic System ---------------
+----------------------------------------------------------------------
+--                                                                  --
+--                            Subtyping                             --
+--                                                                  --
+----------------------------------------------------------------------
 
 ≤a-refl-h : ∀ {A Γ}
   → Γ ⊢a h A ≤ h A
@@ -119,15 +129,11 @@ _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (
 ≤a-refl-h {A = Top} = ≤a-top
 ≤a-refl-h {A = A ⇒ A₁} = ≤a-arr ≤a-refl-h ≤a-refl-h
 
--- renaming
-
-{-
-according to https://plfa.github.io/Properties/
-three corollaries follow this lemma
-1. weakening lemma
-2. drop lemma: drop shadowed occurrence
-3. swap lemma
--}
+----------------------------------------------------------------------
+--                                                                  --
+--                         Weakening Lemma                          --
+--                                                                  --
+----------------------------------------------------------------------
 
 ext : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
@@ -219,6 +225,14 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
     ρ (S z≢x Z)           =  Z
     ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
 
+
+----------------------------------------------------------------------
+--                                                                  --
+--                       Strengthening Lemma                        --
+--                                                                  --
+----------------------------------------------------------------------
+
+
 ∋-strengthen : ∀ {Γ x y A B}
   → Γ , y ⦂ A ∋ x ⦂ B
   → y ≢ x
@@ -234,12 +248,17 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
   → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
   → Γ ⊢a B ⇛ e ⇛ C
   
+
+----------------------------------------------------------------------
+--                                                                  --
+--                        Typing & Subtyping                        --
+--                                                                  --
+----------------------------------------------------------------------
+
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
   → (Γ ⊢a C ≤ A) × (Γ ⊢a B ≤ D)
 ≤a-arr-inv (≤a-arr ≤a₁ ≤a₂) = ⟨ ≤a₁ , ≤a₂ ⟩
-
--- lemmas about typing and subtyping
 
 ⊢a-to-≤a : ∀ {Γ e A B}
   → Γ ⊢a B ⇛ e ⇛ A
@@ -250,8 +269,6 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
 ⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a wf) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
-
--- lemmas about algo typing
 
 ⊢a-hint-self : ∀ {Γ A e}
   → Γ ⊢a Hop ⇛ e ⇛ A
