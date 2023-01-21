@@ -232,7 +232,6 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 --                                                                  --
 ----------------------------------------------------------------------
 
-
 ∋-strengthen : ∀ {Γ x y A B}
   → Γ , y ⦂ A ∋ x ⦂ B
   → y ≢ x
@@ -240,14 +239,29 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ∋-strengthen Z neq = ⊥-elim (neq refl)
 ∋-strengthen (S x ∋) neq = ∋
 
-≤-strengthen : ∀ {Γ x A B C}
-  → (Γ , x ⦂ A) ⊢a C ≤ B
-  → Γ ⊢a C ≤ B
-
 ⊢a-strengthen : ∀ {Γ e x A B C}
   → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
+  → Γ ⊢a B
+  → Γ ⊢ e
   → Γ ⊢a B ⇛ e ⇛ C
+
+≤-strengthen : ∀ {Γ x A B C}
+  → (Γ , x ⦂ A) ⊢a C ≤ B
+  → Γ ⊢a C
+  → Γ ⊢a B
+  → Γ ⊢a C ≤ B
   
+≤-strengthen ≤a-int _ _ = ≤a-int
+≤-strengthen ≤a-top _ _ = ≤a-top
+≤-strengthen (≤a-arr hsub hsub₁) (wf-arr hwfC hwfC₁) (wf-arr hwfB hwfB₁) = ≤a-arr (≤-strengthen hsub hwfB hwfC) (≤-strengthen hsub₁ hwfC₁ hwfB₁)
+≤-strengthen (≤a-hole x) (wf-hole x₁) hwfB = ≤a-hole (⊢a-strengthen x hwfB x₁)
+
+⊢a-strengthen (⊢a-lit x) hwfB hwfe = ⊢a-lit (≤-strengthen x wf-int hwfB)
+⊢a-strengthen (⊢a-var x x₁) hwfB hwfe = ⊢a-var {!   !} {!   !}
+⊢a-strengthen (⊢a-app h₁) hwfB hwfe = {!   !}
+⊢a-strengthen (⊢a-ann h₁ x) hwfB hwfe = {!   !}
+⊢a-strengthen (⊢a-lam₁ h₁ h₂ x) hwfB hwfe = {!   !}
+⊢a-strengthen (⊢a-lam₂ h₁ x) hwfB hwfe = {!   !}
 
 ----------------------------------------------------------------------
 --                                                                  --
