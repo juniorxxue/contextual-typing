@@ -117,6 +117,12 @@ _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) �
 _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int))) wf-int) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int) wf-int)) ≤a-top))
 
 
+wf-type : ∀ {Γ A}
+  → Γ ⊢a h A
+wf-type {A = Int} = wf-int
+wf-type {A = Top} = wf-top
+wf-type {A = A ⇒ A₁} = wf-arr wf-type wf-type
+
 ----------------------------------------------------------------------
 --                                                                  --
 --                            Subtyping                             --
@@ -257,11 +263,11 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ≤-strengthen (≤a-hole x) (wf-hole x₁) hwfB = ≤a-hole (⊢a-strengthen x hwfB x₁)
 
 ⊢a-strengthen (⊢a-lit x) hwfB hwfe = ⊢a-lit (≤-strengthen x wf-int hwfB)
-⊢a-strengthen (⊢a-var x x₁) hwfB hwfe = ⊢a-var {!   !} {!   !}
-⊢a-strengthen (⊢a-app h₁) hwfB hwfe = {!   !}
-⊢a-strengthen (⊢a-ann h₁ x) hwfB hwfe = {!   !}
+⊢a-strengthen (⊢a-var x x₁) hwfB hwfe = ⊢a-var {!   !} (≤-strengthen x₁ {!   !} hwfB)
+⊢a-strengthen (⊢a-app h₁) hwfB (wf-app hwfe hwfe₁) = ⊢a-app  (⊢a-strengthen h₁ (wf-arr (wf-hole hwfe₁) hwfB) hwfe)
+⊢a-strengthen (⊢a-ann h₁ x) hwfB (wf-ann hwfe) = ⊢a-ann (⊢a-strengthen h₁ wf-type hwfe) (≤-strengthen x wf-type hwfB)
 ⊢a-strengthen (⊢a-lam₁ h₁ h₂ x) hwfB hwfe = {!   !}
-⊢a-strengthen (⊢a-lam₂ h₁ x) hwfB hwfe = {!   !}
+⊢a-strengthen (⊢a-lam₂ h₁ x) hwfB hwfe = ⊢a-lam₂ (⊢a-strengthen {!   !} {!   !} {!   !}) {!   !}
 
 ----------------------------------------------------------------------
 --                                                                  --
