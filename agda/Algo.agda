@@ -119,6 +119,19 @@ _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (
 
 ----------------------------------------------------------------------
 --                                                                  --
+--                           Well-formed                            --
+--                                                                  --
+----------------------------------------------------------------------
+
+
+⊢a-to-wf : ∀ {Γ B e A}
+  → Γ ⊢a B ⇛ e ⇛ A
+  → Γ ⊢a B × Γ ⊢ e
+⊢a-to-wf = {!!}  
+
+
+----------------------------------------------------------------------
+--                                                                  --
 --                            Subtyping                             --
 --                                                                  --
 ----------------------------------------------------------------------
@@ -146,7 +159,6 @@ _ = Z
 
 _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
-
 
 ⊢-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
@@ -211,7 +223,6 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
     ρ (S z≢x Z)           =  Z
     ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
 
-
 ⊢a-swap : ∀ {Γ x y e A B C D}
   → x ≢ y
   → Γ , y ⦂ B , x ⦂ A ⊢a C ⇛ e ⇛ D
@@ -242,18 +253,32 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 
 ≤-strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a C ≤ B
+  → Γ ⊢a C
+  → Γ ⊢a B
   → Γ ⊢a C ≤ B
-
 ⊢a-strengthen : ∀ {Γ e x A B C}
   → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
+  → Γ ⊢a B
+  → Γ ⊢ e
   → Γ ⊢a B ⇛ e ⇛ C
-  
+
+
+
+≤-strengthen ≤a-int wf₁ wf₂ = ≤a-int
+≤-strengthen ≤a-top wf₁ wf₂ = ≤a-top
+≤-strengthen (≤a-arr C≤A B≤D) (wf-arr wf₁ wf₃) (wf-arr wf₂ wf₄) = ≤a-arr (≤-strengthen C≤A wf₂ wf₁) (≤-strengthen B≤D wf₃ wf₄)
+≤-strengthen (≤a-hole ⊢e) (wf-hole x) wf₂ = ≤a-hole (⊢a-strengthen ⊢e wf₂ x)
+
+⊢a-strengthen ⊢ wf-B wf-e = {!!}
+
 
 ----------------------------------------------------------------------
 --                                                                  --
 --                        Typing & Subtyping                        --
 --                                                                  --
 ----------------------------------------------------------------------
+
+
 
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
@@ -267,7 +292,7 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ⊢a-to-≤a (⊢a-var ∋x ≤a) = ≤a
 ⊢a-to-≤a (⊢a-app ⊢a) = proj₂ (≤a-arr-inv (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-ann ⊢a ≤a) = ≤a
-⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ≤a-arr (≤a-hole {!!}) {!⊢a-to-≤a ⊢a₂!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ≤a-arr (≤a-hole {!!}) (≤-strengthen (⊢a-to-≤a ⊢a₂) {!!} wf)
 ⊢a-to-≤a (⊢a-lam₂ ⊢a wf) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 ⊢a-hint-self : ∀ {Γ A e}
@@ -276,5 +301,5 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 
 ⊢a-hint-self (⊢a-lit ≤) = ⊢a-lit ≤a-int
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
-⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!!}
-⊢a-hint-self (⊢a-ann ⊢a ≤) = ⊢a-ann {!!} {!!}
+⊢a-hint-self (⊢a-app ⊢e) = ⊢a-app {!!}
+⊢a-hint-self (⊢a-ann ⊢e ≤) = ⊢a-ann ⊢e ≤a-refl-h

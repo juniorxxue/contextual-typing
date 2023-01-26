@@ -12,6 +12,7 @@ open import Dec
 open import Algo
 
 
+
 -- complete-chk : ∀ {Γ e A}
 --   → Γ ⊢d e ∙ ⇚ ∙ A
 --   → Γ ⊢a h A ⇛ e ⇛ A
@@ -31,7 +32,7 @@ sound₁ : ∀ {Γ e A B}
   → Γ ⊢d e ∙ ⇚ ∙ B
 sound₁ (⊢a-lit ≤) = ⊢d-sub ⊢d-int ≤d-int
 sound₁ (⊢a-var ∋ ≤) = ⊢d-sub (⊢d-var ∋) ≤d-refl
-sound₁ (⊢a-app ⊢a) = {!!}
+sound₁ (⊢a-app ⊢a) = ⊢d-sub {!!} ≤d-refl
 sound₁ (⊢a-ann ⊢a x) = ⊢d-sub (⊢d-ann (sound₁ ⊢a)) ≤d-refl
 sound₁ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢d-lam (sound₁ ⊢a₂)
 sound₁ (⊢a-lam₂ ⊢a) = ⊢d-lam (sound₁ ⊢a)
