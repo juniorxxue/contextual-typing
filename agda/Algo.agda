@@ -2,11 +2,11 @@
 module Algo where
 
 open import Data.Nat using (ℕ)
-open import Data.String using (String)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Data.String using (String; _≟_)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym)
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Relation.Nullary using (¬_)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Common
 
 infixr 8 _*⇒_
@@ -123,7 +123,6 @@ _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (
 --                                                                  --
 ----------------------------------------------------------------------
 
-
 ⊢a-to-wf : ∀ {Γ B e A}
   → Γ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a B × Γ ⊢ e
@@ -198,7 +197,6 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ⊢a-rename ρ (⊢a-lam₂ ⊢a wf) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a) (wf-rename ρ wf)
 
 -- weakening
-
 ⊢a-weaken : ∀ {Γ e A B}
   → ∅ ⊢a B ⇛ e ⇛ A
   → Γ ⊢a B ⇛ e ⇛ A
@@ -208,6 +206,43 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
     → ∅ ∋ z ⦂ C
     → Γ ∋ z ⦂ C
   ρ = λ ()
+
+-- this isn't able to be followed by rename lemma
+-- just found rename lemma has some drawbacks:
+-- for standard weakening lemma, we need to be careful when introducing new vars into a context
+
+wfe-weaken : ∀ {Γ x e A}
+  → Γ ⊢ e
+  → Γ , x ⦂ A ⊢ e
+wfe-weaken wf-lit = wf-lit
+wfe-weaken {x = x} (wf-var {x = y} ∋) with x ≟ y
+... | yes x≡y rewrite x≡y = wf-var Z
+... | no x≢y = wf-var (S (λ y≢x → x≢y (sym y≢x)) ∋)
+wfe-weaken (wf-lam wf) = wf-lam {!!}
+wfe-weaken (wf-app wf wf₁) = wf-app (wfe-weaken wf) (wfe-weaken wf₁)
+wfe-weaken (wf-ann wf) = wf-ann (wfe-weaken wf)
+
+wf-weaken : ∀ {Γ x A B}
+  → Γ ⊢a B
+  → (Γ , x ⦂ A) ⊢a B
+-- straight induction on wf
+wf-weaken wf-int = wf-int
+wf-weaken wf-top = wf-top
+wf-weaken (wf-arr wf wf₁) = wf-arr (wf-weaken wf) (wf-weaken wf₁)
+wf-weaken (wf-hole x) = wf-hole {!!}
+
+-- drop
+⊢a-drop : ∀ {Γ e x A B C D}
+  → Γ , x ⦂ A , x ⦂ B ⊢a C ⇛ e ⇛ D
+  → Γ , x ⦂ B ⊢a C ⇛ e ⇛ D
+⊢a-drop {Γ} {e} {x} {A} {B} {C} {D} ⊢a = ⊢a-rename ρ ⊢a
+  where
+  ρ : ∀ {z E}
+    → Γ , x ⦂ A , x ⦂ B ∋ z ⦂ E
+    → Γ , x ⦂ B ∋ z ⦂ E
+  ρ Z = Z
+  ρ (S x≢x Z) = ⊥-elim (x≢x refl)
+  ρ (S z≢x (S _ ∋)) = S z≢x ∋
 
 -- swap
 ≤a-swap : ∀ {Γ x y A B C D}
@@ -262,16 +297,22 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
   → Γ ⊢ e
   → Γ ⊢a B ⇛ e ⇛ C
 
-
-
 ≤-strengthen ≤a-int wf₁ wf₂ = ≤a-int
 ≤-strengthen ≤a-top wf₁ wf₂ = ≤a-top
 ≤-strengthen (≤a-arr C≤A B≤D) (wf-arr wf₁ wf₃) (wf-arr wf₂ wf₄) = ≤a-arr (≤-strengthen C≤A wf₂ wf₁) (≤-strengthen B≤D wf₃ wf₄)
 ≤-strengthen (≤a-hole ⊢e) (wf-hole x) wf₂ = ≤a-hole (⊢a-strengthen ⊢e wf₂ x)
 
-⊢a-strengthen ⊢ wf-B wf-e = {!!}
-
-
+⊢a-strengthen (⊢a-lit x) wf-B wf-e = ⊢a-lit (≤-strengthen x wf-int wf-B)
+⊢a-strengthen (⊢a-var x x₁) wf-B wf-e = ⊢a-var {!!} {!!}
+⊢a-strengthen (⊢a-app ⊢) wf-B wf-e = {!!}
+⊢a-strengthen (⊢a-ann ⊢ x) wf-B wf-e = {!!}
+⊢a-strengthen (⊢a-lam₁ ⊢ ⊢₁ x) wf-B wf-e = {!!}
+⊢a-strengthen {x = x} (⊢a-lam₂ {x = y} ⊢ wf) (wf-arr wf-B wf-B₁) wf-e with (x ≟ y)
+... | yes x≡y rewrite x≡y = ⊢a-lam₂ (⊢a-drop ⊢) wf-B₁
+... | no x≢y = ⊢a-lam₂ (⊢a-strengthen ( ⊢a-swap y≢x ⊢) (wf-weaken wf-B₁) {!!}) wf-B₁
+  where y≢x : ¬ y ≡ x
+        y≢x y≡x = x≢y (sym y≡x)
+        
 ----------------------------------------------------------------------
 --                                                                  --
 --                        Typing & Subtyping                        --
