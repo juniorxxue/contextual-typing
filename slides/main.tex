@@ -1,0 +1,188 @@
+\documentclass[compress,12pt,aspectratio=169]{beamer}
+
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{mathtools}
+
+\usetheme[sans]{Arguelles}
+
+\title{Contextual Type Inference}
+
+\author{Xu Xue}
+
+\begin{document}
+
+\frame[plain]{\titlepage}
+
+\begin{frame} 
+\tableofcontents
+\end{frame}
+
+\section{Declarative System}
+
+\begin{frame}{Syntax}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B\\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}
+
+\end{frame}
+
+\begin{frame}{Bidirectional Typing: \boxed{\Gamma \vdash e \Leftrightarrow A}}
+\begin{mathpar}
+\inferrule*[lab=T-Lit]
+{ }
+{\Gamma \vdash n \Rightarrow Int}
+
+\inferrule*[lab=T-Var]
+{x : A \in \Gamma}
+{\Gamma \vdash x \Rightarrow A}
+
+\inferrule*[lab=T-Lam]
+{\Gamma, x : A \vdash e \Leftarrow B}
+{\Gamma \vdash \lambda x.~e \Leftarrow A \rightarrow B}
+
+\inferrule*[lab=T-App1]
+{\Gamma \vdash e_1 \Rightarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Leftarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+
+\inferrule*[lab=T-App2]
+{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Rightarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash e \Leftarrow A}
+{\Gamma \vdash e : A \Rightarrow A}
+
+\inferrule*[lab=T-Sub]
+{\Gamma \vdash e \Rightarrow B \\ B <: A}
+{\Gamma \vdash e \Leftarrow A}
+\end{mathpar}
+\end{frame}
+
+\begin{frame}{Subtyping: \boxed{A <: B}}
+\begin{mathpar}
+\inferrule*[lab=S-Int]
+{ }
+{Int <: Int}
+
+\inferrule*[lab=S-Top]
+{ }
+{A <: Top}
+
+\inferrule*[lab=S-Arr]
+{C <: A \\ B <: D}
+{A \rightarrow B <: C \rightarrow D}
+\end{mathpar}
+    
+\end{frame}
+
+\section{Algorithmic System}
+\begin{frame}{Syntax}
+\begin{align*}
+&\text{Types with Holes}\quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \mid \boxed{e}\\
+&\text{Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B\\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A
+\end{align*}    
+\end{frame}
+
+\begin{frame}{Typing: \boxed{\Gamma \vdash A* \Rightarrow e \Rightarrow A}}
+\begin{mathpar}
+\small
+\inferrule*[lab=T-Lit]
+{\Gamma \vdash \mathtt{Int} <: A*}
+{\Gamma \vdash A* \Rightarrow i \Rightarrow \mathsf{Int}}
+
+\inferrule*[lab=T-Var]
+{x : B \in \Gamma \\
+ \Gamma \vdash B <: A*}
+{\Gamma \vdash A* \Rightarrow x \Rightarrow B}
+
+\inferrule*[lab=T-App]
+{\Gamma \vdash \boxed{e_2} \rightarrow A* \Rightarrow e_1 \Rightarrow C \rightarrow D}
+{\Gamma \vdash A* \Rightarrow e_1~e_2 \Rightarrow D}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
+ \Gamma \vdash B <: A*}
+{\Gamma \vdash A* \Rightarrow e : B \Rightarrow B}
+
+\inferrule*[lab=T-Lam1]
+{\Gamma \vdash \mathtt{Top} \Rightarrow e_1 \Rightarrow A \\
+ \Gamma, x : A \vdash B* \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{e_1} \rightarrow B* \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
+
+\inferrule*[lab=T-Lam2]
+{\Gamma, x : A \vdash B* \Rightarrow e \Rightarrow C}
+{\Gamma \vdash A \rightarrow B* \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
+\end{mathpar}    
+\end{frame}
+
+\begin{frame}{Subtyping: \boxed{\Gamma \vdash A* <: B*}}
+\begin{mathpar}
+\inferrule*[lab=S-Refl]	
+{ }
+{\Gamma \vdash \mathtt{Int} <: \mathtt{Int}}
+
+\inferrule*[lab=S-Top]
+{ }
+{\Gamma \vdash A* <: \mathtt{Top}}
+
+\inferrule*[lab=S-Arr]
+{\Gamma \vdash C* <: A* \\
+ \Gamma \vdash B* <: D*}
+{\Gamma \vdash A* \rightarrow B* <: C* \rightarrow D*}
+
+\inferrule*[lab=S-Tele]
+{\Gamma \vdash A* \Rightarrow e \Rightarrow A}
+{\Gamma \vdash \boxed{e} <: A*}
+\end{mathpar}    
+\end{frame}
+
+\section{Metatheory}
+
+\begin{frame}{Soundness}
+\begin{theorem}
+If $\Gamma \vdash A* \Rightarrow e \Rightarrow B$, then $\Gamma \vdash e \Leftarrow B.$
+\begin{proof}
+Induction on algo typing:
+\end{proof}
+\end{theorem}
+\end{frame}
+
+\begin{frame}{Proof of Soundness (1/3)}
+\textbf{case lit}
+\begin{itemize}
+    \item goal: $\Gamma \vdash n \Leftarrow Int$
+    \item apply T-Lit
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
+\textbf{case var}
+\begin{itemize}
+    \item goal: $\Gamma \vdash x \Leftarrow B$, given $x : B \in \Gamma$
+    \item apply T-Sub and S-Refl
+    \item apply T-Var
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Proof of Soundness (2/3)}
+\textbf{case app}
+\begin{itemize}
+    \item goal: $\Gamma \vdash e_1~e_2 \Leftarrow B$, given $\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow B$
+    \item which is $\Gamma \vdash \boxed{e_2} \rightarrow A \Rightarrow e_1 \Rightarrow C \rightarrow B$
+    \item by induction hypo, we know that $\Gamma \vdash e_1 \Leftarrow C \rightarrow B$
+    \item by subtyping property of algo typing, we know that $\Gamma \vdash \boxed{e_2} <: C$
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
+\begin{lemma}
+If $\Gamma \vdash e_1 \Leftarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$, then $\Gamma \vdash e_1~e_2 \Leftarrow B$.
+\end{lemma}
+\end{frame}
+
+
+\end{document}

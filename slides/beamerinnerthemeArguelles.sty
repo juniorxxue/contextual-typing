@@ -1,0 +1,93 @@
+% arguelles v2.0.0
+% author: Michele Piazzai
+% contact: michele.piazzai@uc3m.es
+% license: MIT
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerinnerthemeArguelles}[2022/12/10 Argüelles]
+
+\mode<presentation>
+
+% additional title page fields
+\def\insertevent{}
+\newcommand{\event}[1]{
+  \def\insertevent{#1}
+}
+\def\insertemail{}
+\newcommand{\email}[1]{
+  \def\insertemail{\href{mailto:#1}{\raisebox{-.1em}{\faIcon{envelope}}\hspace{.3em}#1}}
+}
+
+% title page
+\defbeamertemplate*{title page}{Arguelles}{
+ \vfill\begin{beamercolorbox}{inverted text}
+  {\usebeamerfont{title}\inserttitle}\par
+  {\usebeamerfont{subtitle}\insertsubtitle}\par\bigskip
+  {\usebeamerfont{event}\insertevent}\par
+  {\usebeamerfont{date}\insertdate}\par\bigskip
+  {\usebeamerfont{author}\insertauthor}\par\smallskip
+  {\usebeamerfont{institute}\insertinstitute}\par
+  {\usebeamerfont{email}\insertemail}
+ \end{beamercolorbox}
+}
+
+% lists
+\setlist{nosep,leftmargin=*}
+\setlist[1]{labelindent=\parindent,itemsep=.5em}
+\setlist[2]{before=\small}
+\setlist[itemize,1]{label=$\bullet$}
+\setlist[itemize,2]{label=$\circ$}
+\setlist[itemize,3]{label=$\cdot$}
+\setlist[enumerate,1]{label=\arabic*.}
+\setlist[enumerate,2]{label=\theenumi\arabic*.}
+\setlist[enumerate,3]{label=\theenumii\arabic*.}
+\setlist[description]{font=\normalfont\itshape,style=multiline}
+
+% blocks
+\setbeamertemplate{blocks}[rounded]
+
+% background
+\BeforeBeginEnvironment{frame}{
+ \setbeamertemplate{background}{
+  \begin{tikzpicture}
+   \useasboundingbox (0,0) rectangle (\paperwidth,\paperheight);
+   \ifnum\thepage>1\relax
+    \fill[structure.bg] (0,.01\paperheight) rectangle (\paperwidth,.99\paperheight);
+   \fi
+  \end{tikzpicture}
+ }
+}
+
+% fullscreen image
+\newcommand{\fillpicture}[1]{
+    \centering
+    \ifbeamer@plainframe
+    \tikz[remember picture,overlay] \node[inner sep=0pt] at (current page.center) {
+        \includegraphics[width=\paperwidth,height=.98\paperheight]{#1}
+        };
+    \else
+    \tikz[remember picture,overlay] \node[inner sep=0pt] at ($(current page.north)-(0,.526\paperheight)$) {
+        \includegraphics[width=\paperwidth,height=.929\paperheight]{#1}
+        };
+    \fi
+}
+
+% standout frame
+\providebool{Arguelles@standout}
+\define@key{beamerframe}{standout}[true]{
+ \booltrue{Arguelles@standout}
+ \begingroup
+ \setbeamertemplate{background}{}
+ \beamer@frametopskip=0pt plus 1fill\relax%
+ \beamer@framebottomskip=0pt plus 1.25fill\relax%
+ \color{structure.bg}
+ \large
+}
+\pretocmd{\beamer@reseteecodes}{
+ \ifbool{Arguelles@standout}{
+  \endgroup\boolfalse{Arguelles@standout}
+ }{}
+}{}{}
+
+\mode<all>
+\endinput

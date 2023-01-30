@@ -45,26 +45,26 @@ data _∋_⦂_ : Context → Id → Type → Set where
       ------------------
     → Γ , y ⦂ B ∋ x ⦂ A
 
-infix 4 _⊢_
+infix 4 _⊨e_
 
-data _⊢_ : Context → Term → Set where
+data _⊨e_ : Context → Term → Set where
 
-  wf-lit : ∀ {Γ n}
-    → Γ ⊢ (lit n)
+  ⊨e-lit : ∀ {Γ n}
+    → Γ ⊨e (lit n)
   
-  wf-var : ∀ {Γ x A}
+  ⊨e-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
-    → Γ ⊢ ` x
+    → Γ ⊨e ` x
 
-  wf-lam : ∀ {Γ x A e}
-    → Γ , x ⦂ A ⊢ e
-    → Γ ⊢ ƛ x ⇒ e
+  ⊨e-lam : ∀ {Γ x A e}
+    → Γ , x ⦂ A ⊨e e
+    → Γ ⊨e ƛ x ⇒ e
 
-  wf-app : ∀ {Γ e₁ e₂}
-    → Γ ⊢ e₁
-    → Γ ⊢ e₂
-    → Γ ⊢ e₁ · e₂
+  ⊨e-app : ∀ {Γ e₁ e₂}
+    → Γ ⊨e e₁
+    → Γ ⊨e e₂
+    → Γ ⊨e e₁ · e₂
 
-  wf-ann : ∀ {Γ e A}
-    → Γ ⊢ e
-    → Γ ⊢ e ⦂ A
+  ⊨e-ann : ∀ {Γ e A}
+    → Γ ⊨e e
+    → Γ ⊨e e ⦂ A

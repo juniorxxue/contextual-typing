@@ -11,36 +11,45 @@ open import Common
 open import Dec
 open import Algo
 
-
-
--- complete-chk : ∀ {Γ e A}
---   → Γ ⊢d e ∙ ⇚ ∙ A
---   → Γ ⊢a h A ⇛ e ⇛ A
-
--- complete : ∀ {Γ e A}
---   → Γ ⊢d e ∙ ⇛ ∙ A
---   → Γ ⊢a Hop ⇛ e ⇛ A
-
--- generlized to
-
-f : Mode → Type → Type
-f ⇛ A = Top
-f ⇚ A = A
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Soundness                            +--
+--+                                                                +--
+----------------------------------------------------------------------
 
 sound₁ : ∀ {Γ e A B}
   → Γ ⊢a A ⇛ e ⇛ B
   → Γ ⊢d e ∙ ⇚ ∙ B
 sound₁ (⊢a-lit ≤) = ⊢d-sub ⊢d-int ≤d-int
 sound₁ (⊢a-var ∋ ≤) = ⊢d-sub (⊢d-var ∋) ≤d-refl
-sound₁ (⊢a-app ⊢a) = ⊢d-sub {!!} ≤d-refl
+{-
+==>lam1   1 ⇒ Int
+==>app  [1] → Top ⇒ (λx. x) ⇒ Int → Int
+∅ ⊢ Top ⇒ (λx. x) 1 ⇒ Int
+----------------------------
+∅ ⊢ (λx. x) 1 ⇐ Int
+<==sub   (λx. x) 1 ⇒ Int    Int ≤ Int
+<==app2  (λx. x) ⇐ Int → Int   1 ⇒ Int
+-}
+sound₁ (⊢a-app ⊢a) = {!!}
 sound₁ (⊢a-ann ⊢a x) = ⊢d-sub (⊢d-ann (sound₁ ⊢a)) ≤d-refl
-sound₁ (⊢a-lam₁ ⊢a₁ ⊢a₂) = ⊢d-lam (sound₁ ⊢a₂)
-sound₁ (⊢a-lam₂ ⊢a) = ⊢d-lam (sound₁ ⊢a)
+sound₁ (⊢a-lam₁ ⊢a₁ ⊢a₂ ⊨) = ⊢d-lam (sound₁ ⊢a₂)
+sound₁ (⊢a-lam₂ ⊢a ⊨) = ⊢d-lam (sound₁ ⊢a)
 
 sound₂ : ∀ {Γ e A}
   → Γ ⊢a Hop ⇛ e ⇛ A
   → Γ ⊢d e ∙ ⇛ ∙ A
 sound₂ ⊢a = {!!}
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                          Completeness                          +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+f : Mode → Type → Type
+f ⇛ A = Top
+f ⇚ A = A
 
 output : Hype → Hype
 output Hop = Hop
@@ -62,15 +71,15 @@ fun-hint : ∀ {Γ e₁ e₂ A B C}
 fun-hint (⊢a-var ∋ ≤) ⊢₂ = ⊢a-var ∋ (≤a-arr (≤a-hole ⊢₂) (≤a-output ≤))
 fun-hint (⊢a-app ⊢₁) ⊢₂ = {!!}
 fun-hint (⊢a-ann ⊢₁ x) ⊢₂ = {!!}
-fun-hint (⊢a-lam₁ ⊢₁ ⊢₃) ⊢₂ = {!!}
-fun-hint (⊢a-lam₂ ⊢₁) ⊢₂ = {!!}
+fun-hint (⊢a-lam₁ ⊢₁ ⊢₃ ⊨) ⊢₂ = {!!}
+fun-hint (⊢a-lam₂ ⊢₁ ⊨) ⊢₂ = {!!}
 
 complete : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → Γ ⊢a h (f ⇔ A) ⇛ e ⇛ A
 complete ⊢d-int = ⊢a-lit ≤a-top
 complete (⊢d-var x) = ⊢a-var x ≤a-top
-complete (⊢d-lam ⊢d) = ⊢a-lam₂ (complete ⊢d)
+complete (⊢d-lam ⊢d) = ⊢a-lam₂ (complete ⊢d) {!!}
 -- app rules require some intuition
 
 {-
@@ -87,7 +96,7 @@ Two observations:
 abstract a lemma out of here
 -}
 complete (⊢d-app₁ ⊢df ⊢da) = ⊢a-app {!fun-hint (complete ⊢df) (complete ⊢da)!}
-complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!})
+complete (⊢d-app₂ (⊢d-lam ⊢df) ⊢da) = ⊢a-app (⊢a-lam₁ (complete ⊢da) {!complete ⊢df!} {!!})
 complete (⊢d-app₂ (⊢d-sub ⊢df ≤d) ⊢da) = ⊢a-app {!!}
 complete (⊢d-ann ⊢d) = ⊢a-ann (complete ⊢d) ≤a-top
 -- sub rule, the naive idea is to do case analysis, not sure

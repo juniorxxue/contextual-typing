@@ -24,23 +24,23 @@ infix 4 _⊢a_⇛_⇛_
 data _⊢a_≤_ : Context → Hype → Hype → Set
 data _⊢a_⇛_⇛_ : Context → Hype → Term → Type → Set
 
-infix 5 _⊢a_
+infix 5 _⊨_
 
-data _⊢a_ : Context → Hype → Set where
-  wf-int : ∀ {Γ}
-    → Γ ⊢a Hnt
+data _⊨_ : Context → Hype → Set where
+  ⊨-int : ∀ {Γ}
+    → Γ ⊨ Hnt
 
-  wf-top : ∀ {Γ}
-    → Γ ⊢a Hop
+  ⊨-top : ∀ {Γ}
+    → Γ ⊨ Hop
 
-  wf-arr : ∀ {Γ A B}
-    → Γ ⊢a A
-    → Γ ⊢a B
-    → Γ ⊢a A *⇒ B
+  ⊨-arr : ∀ {Γ A B}
+    → Γ ⊨ A
+    → Γ ⊨ B
+    → Γ ⊨ A *⇒ B
 
-  wf-hole : ∀ {Γ e}
-    → Γ ⊢ e
-    → Γ ⊢a ⟦ e ⟧
+  ⊨-hole : ∀ {Γ e}
+    → Γ ⊨e e
+    → Γ ⊨ ⟦ e ⟧
 
 
 h : Type → Hype
@@ -93,13 +93,13 @@ data _⊢a_⇛_⇛_ where
   ⊢a-lam₁ : ∀ {Γ e₁ e x A B C}
     → Γ ⊢a Hop ⇛ e₁ ⇛ A
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
-    → Γ ⊢a B
+    → Γ ⊨ B
     -------------------------------------
     → Γ ⊢a ⟦ e₁ ⟧ *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
   ⊢a-lam₂ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢a B ⇛ e ⇛ C
-    → Γ ⊢a B
+    → Γ ⊨ B
     ------------------------------------
     → Γ ⊢a (h A) *⇒ B ⇛ ƛ x ⇒ e ⇛ A ⇒ C
 
@@ -111,10 +111,10 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a Hop ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) wf-top)
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top) ⊨-top)
 
 _ : ∅ ⊢a Hop ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int))) wf-int) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int) wf-int)) ≤a-top))
+_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (⊢a-lit ≤a-int)) ≤a-int))) ⊨-int) (≤a-arr (≤a-hole (⊢a-lam₂ {A = Int} (⊢a-var Z ≤a-int) ⊨-int)) ≤a-top))
 
 
 ----------------------------------------------------------------------
@@ -125,7 +125,7 @@ _ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z (≤a-arr (≤a-hole (
 
 ⊢a-to-wf : ∀ {Γ B e A}
   → Γ ⊢a B ⇛ e ⇛ A
-  → Γ ⊢a B × Γ ⊢ e
+  → Γ ⊨ B × Γ ⊨e e
 ⊢a-to-wf = {!!}  
 
 
@@ -159,23 +159,6 @@ _ = Z
 _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
 
-⊢-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {e} → Γ ⊢ e → Δ ⊢ e)
-⊢-rename ρ wf-lit = wf-lit
-⊢-rename ρ (wf-var x) = wf-var (ρ x)
-⊢-rename ρ (wf-lam ⊢) = wf-lam (⊢-rename (ext ρ) ⊢)
-⊢-rename ρ (wf-app ⊢₁ ⊢₂) = wf-app (⊢-rename ρ ⊢₁) (⊢-rename ρ ⊢₂)
-⊢-rename ρ (wf-ann ⊢) = wf-ann (⊢-rename ρ ⊢)
-
-wf-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {A} → Γ ⊢a A → Δ ⊢a A)
-wf-rename ρ wf-int = wf-int
-wf-rename ρ wf-top = wf-top
-wf-rename ρ (wf-arr ⊢₁ ⊢₂) = wf-arr (wf-rename ρ ⊢₁) (wf-rename ρ ⊢₂)
-wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
-
 ≤a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
@@ -189,12 +172,7 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 ≤a-rename ρ (≤a-arr ≤a₁ ≤a₂) = ≤a-arr (≤a-rename ρ ≤a₁) (≤a-rename ρ ≤a₂)
 ≤a-rename ρ (≤a-hole ⊢a) = ≤a-hole (⊢a-rename ρ ⊢a)
 
-⊢a-rename ρ (⊢a-lit ⊢a) = ⊢a-lit (≤a-rename ρ ⊢a)
-⊢a-rename ρ (⊢a-var ≤a ∋x) = ⊢a-var (ρ ≤a) (≤a-rename ρ ∋x)
-⊢a-rename ρ (⊢a-app ⊢a) = ⊢a-app (⊢a-rename ρ ⊢a)
-⊢a-rename ρ (⊢a-ann ⊢a ≤a) = ⊢a-ann (⊢a-rename ρ ⊢a) (≤a-rename ρ ≤a)
-⊢a-rename ρ (⊢a-lam₁ ⊢a₁ ⊢a₂ wf) = ⊢a-lam₁ (⊢a-rename ρ ⊢a₁) (⊢a-rename (ext ρ) ⊢a₂) (wf-rename ρ wf)
-⊢a-rename ρ (⊢a-lam₂ ⊢a wf) = ⊢a-lam₂ (⊢a-rename (ext ρ) ⊢a) (wf-rename ρ wf)
+⊢a-rename = {!!}
 
 -- weakening
 ⊢a-weaken : ∀ {Γ e A B}
@@ -212,24 +190,15 @@ wf-rename ρ (wf-hole x) = wf-hole (⊢-rename ρ x)
 -- for standard weakening lemma, we need to be careful when introducing new vars into a context
 
 wfe-weaken : ∀ {Γ x e A}
-  → Γ ⊢ e
-  → Γ , x ⦂ A ⊢ e
-wfe-weaken wf-lit = wf-lit
-wfe-weaken {x = x} (wf-var {x = y} ∋) with x ≟ y
-... | yes x≡y rewrite x≡y = wf-var Z
-... | no x≢y = wf-var (S (λ y≢x → x≢y (sym y≢x)) ∋)
-wfe-weaken (wf-lam wf) = wf-lam {!!}
-wfe-weaken (wf-app wf wf₁) = wf-app (wfe-weaken wf) (wfe-weaken wf₁)
-wfe-weaken (wf-ann wf) = wf-ann (wfe-weaken wf)
+  → Γ ⊨e e
+  → Γ , x ⦂ A ⊨e e
+wfe-weaken = {!!}
 
 wf-weaken : ∀ {Γ x A B}
-  → Γ ⊢a B
-  → (Γ , x ⦂ A) ⊢a B
+  → Γ ⊨ B
+  → (Γ , x ⦂ A) ⊨ B
 -- straight induction on wf
-wf-weaken wf-int = wf-int
-wf-weaken wf-top = wf-top
-wf-weaken (wf-arr wf wf₁) = wf-arr (wf-weaken wf) (wf-weaken wf₁)
-wf-weaken (wf-hole x) = wf-hole {!!}
+wf-weaken = {!!}
 
 -- drop
 ⊢a-drop : ∀ {Γ e x A B C D}
@@ -278,7 +247,6 @@ wf-weaken (wf-hole x) = wf-hole {!!}
 --                                                                  --
 ----------------------------------------------------------------------
 
-
 ∋-strengthen : ∀ {Γ x y A B}
   → Γ , y ⦂ A ∋ x ⦂ B
   → y ≢ x
@@ -288,38 +256,36 @@ wf-weaken (wf-hole x) = wf-hole {!!}
 
 ≤-strengthen : ∀ {Γ x A B C}
   → (Γ , x ⦂ A) ⊢a C ≤ B
-  → Γ ⊢a C
-  → Γ ⊢a B
+  → Γ ⊨ C
+  → Γ ⊨ B
   → Γ ⊢a C ≤ B
 ⊢a-strengthen : ∀ {Γ e x A B C}
   → (Γ , x ⦂ A) ⊢a B ⇛ e ⇛ C
-  → Γ ⊢a B
-  → Γ ⊢ e
+  → Γ ⊨ B
+  → Γ ⊨e e
   → Γ ⊢a B ⇛ e ⇛ C
 
 ≤-strengthen ≤a-int wf₁ wf₂ = ≤a-int
 ≤-strengthen ≤a-top wf₁ wf₂ = ≤a-top
-≤-strengthen (≤a-arr C≤A B≤D) (wf-arr wf₁ wf₃) (wf-arr wf₂ wf₄) = ≤a-arr (≤-strengthen C≤A wf₂ wf₁) (≤-strengthen B≤D wf₃ wf₄)
-≤-strengthen (≤a-hole ⊢e) (wf-hole x) wf₂ = ≤a-hole (⊢a-strengthen ⊢e wf₂ x)
+≤-strengthen (≤a-arr C≤A B≤D) (⊨-arr wf₁ wf₃) (⊨-arr wf₂ wf₄) = ≤a-arr (≤-strengthen C≤A wf₂ wf₁) (≤-strengthen B≤D wf₃ wf₄)
+≤-strengthen (≤a-hole ⊢e) (⊨-hole x) wf₂ = ≤a-hole (⊢a-strengthen ⊢e wf₂ x)
 
-⊢a-strengthen (⊢a-lit x) wf-B wf-e = ⊢a-lit (≤-strengthen x wf-int wf-B)
+⊢a-strengthen (⊢a-lit x) wf-B wf-e = ⊢a-lit (≤-strengthen x ⊨-int wf-B)
 ⊢a-strengthen (⊢a-var x x₁) wf-B wf-e = ⊢a-var {!!} {!!}
 ⊢a-strengthen (⊢a-app ⊢) wf-B wf-e = {!!}
 ⊢a-strengthen (⊢a-ann ⊢ x) wf-B wf-e = {!!}
 ⊢a-strengthen (⊢a-lam₁ ⊢ ⊢₁ x) wf-B wf-e = {!!}
-⊢a-strengthen {x = x} (⊢a-lam₂ {x = y} ⊢ wf) (wf-arr wf-B wf-B₁) wf-e with (x ≟ y)
+⊢a-strengthen {x = x} (⊢a-lam₂ {x = y} ⊢ wf) (⊨-arr wf-B wf-B₁) wf-e with (x ≟ y)
 ... | yes x≡y rewrite x≡y = ⊢a-lam₂ (⊢a-drop ⊢) wf-B₁
-... | no x≢y = ⊢a-lam₂ (⊢a-strengthen ( ⊢a-swap y≢x ⊢) (wf-weaken wf-B₁) {!!}) wf-B₁
+... | no x≢y = ⊢a-lam₂ (⊢a-strengthen (⊢a-swap y≢x ⊢) {!!} {!!}) wf-B₁
   where y≢x : ¬ y ≡ x
         y≢x y≡x = x≢y (sym y≡x)
-        
+     
 ----------------------------------------------------------------------
 --                                                                  --
 --                        Typing & Subtyping                        --
 --                                                                  --
 ----------------------------------------------------------------------
-
-
 
 ≤a-arr-inv : ∀ {Γ A B C D}
   → Γ ⊢a A *⇒ B ≤ C *⇒ D
