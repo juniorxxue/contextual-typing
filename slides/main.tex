@@ -147,7 +147,7 @@
 \section{Metatheory}
 
 \begin{frame}{Soundness}
-\begin{theorem}
+\begin{theorem}[Soundness]
 If $\Gamma \vdash A* \Rightarrow e \Rightarrow B$, then $\Gamma \vdash e \Leftarrow B.$
 \begin{proof}
 Induction on algo typing:
@@ -179,10 +179,45 @@ Induction on algo typing:
     \item by subtyping property of algo typing, we know that $\Gamma \vdash \boxed{e_2} <: C$
 \end{itemize}
 \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
-\begin{lemma}
+\begin{lemma}[Check Application]
 If $\Gamma \vdash e_1 \Leftarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$, then $\Gamma \vdash e_1~e_2 \Leftarrow B$.
+\end{lemma}
+\begin{lemma}[Hole Subtyping and Check]
+If 	$\Gamma \vdash \boxed{e} <: C$ ($C$ is a type), then $\Gamma \vdash e \Leftarrow C$.
 \end{lemma}
 \end{frame}
 
+\begin{frame}{Proof of Lemma Check Application}
+\begin{lemma}[Check Application]
+If $\Gamma \vdash e_1 \Leftarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$, then $\Gamma \vdash e_1~e_2 \Leftarrow B$.
+\end{lemma}
+\begin{proof}
+Induction on $\Gamma \vdash e_1 \Leftarrow A \rightarrow B$.
+\end{proof}
+\end{frame}
+
+\begin{frame}{Proof of Lemma Check Application (Cont.)}
+\textbf{case lam:}
+\begin{itemize}
+	\item goal: $\Gamma \vdash (\lambda x.~e)~e_2 \Leftarrow B$, given $\Gamma \vdash \lambda x. ~e \Leftarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$
+	\item \textcolor{oc-red-8}{failed:} $\Gamma \vdash (\lambda x.~x)~(\lambda x.~x) \Leftarrow (Int \rightarrow Int)$
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Proof of Lemma Check Application (Cont.)}
+\textbf{case sub:}
+\begin{itemize}
+	\item goal: $\Gamma \vdash e_1~e_2 \Leftarrow B$, given $\Gamma \vdash e_1 \Rightarrow C$, $C <: A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$.
+	\item that is $\Gamma \vdash e_1 \Rightarrow C_1 \rightarrow C_2$ and $C_1 \rightarrow C_2 <: A \rightarrow B$
+	\item then we have $A <: C_1$ and $C_2 <: B$
+	\item by lemma of check subsumption (?), we can have $\Gamma \vdash e_2 \Leftarrow C_1$
+	\item apply T-App1, we get that $\Gamma \vdash e_1~e_2 \Leftarrow C_2$
+	\item by lemma of check subsumption, we can prove the goal. 
+\end{itemize}
+
+\begin{lemma}[Check Subsumption]
+If $\Gamma \vdash e \Leftarrow A$	and $A <: B$, then $\Gamma \vdash e \Leftarrow B$.
+\end{lemma}
+\end{frame}
 
 \end{document}
