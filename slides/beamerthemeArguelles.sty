@@ -31,11 +31,15 @@
 \newif\if@optSans
 \@optSansfalse
 \DeclareOption{sans}{\@optSanstrue}
+\newif\if@optFrameno
+\@optFramenofalse
+\DeclareOption{frameno}{\@optFramenotrue}
 \newif\if@optMp
 \@optMpfalse
 \DeclareOption{mp}{\@optMptrue}
 \ProcessOptions
 
+% sans font
 \if@optSans
 \usefonttheme[onlymath]{serif}
 \newcommand\mediumfont{\AlegreyaSansMedium}
@@ -44,7 +48,17 @@
 \newcommand\mediumfont{\AlegreyaMedium}
 \fi
 
+% frame numbers
+\if@optFrameno
+\defbeamertemplate*{footline}{Arguelles}{
+ \usebeamerfont{footline section}\hfill\raisebox{.025\paperheight}{
+    \insertframenumber\hspace{.01\paperwidth}
+    }
+}
+\fi
+
 \if@optMp
+% extra packages
 \RequirePackage[normalem]{ulem}
 \RequirePackage{booktabs}
 \RequirePackage{dcolumn}
