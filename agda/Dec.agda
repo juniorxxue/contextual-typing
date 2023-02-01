@@ -67,10 +67,3 @@ _ = ⊢d-app₂ (⊢d-lam (⊢d-sub (⊢d-var Z) ≤d-int)) ⊢d-int
 
 _ : ∅ ⊢d ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
 _ = ⊢d-app₁ (⊢d-ann (⊢d-lam (⊢d-sub (⊢d-app₁ (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-int)) ≤d-int))) (⊢d-lam (⊢d-sub (⊢d-var Z) ≤d-int))
-
-⊢d-chk-app : ∀ {Γ e₁ e₂ A B}
-  → Γ ⊢d e₁ ∙ ⇚ ∙ A ⇒ B
-  → Γ ⊢d e₂ ∙ ⇚ ∙ A
-  → Γ ⊢d e₁ · e₂ ∙ ⇚ ∙ B
-⊢d-chk-app (⊢d-lam ⊢f) ⊢a = {!!}
-⊢d-chk-app (⊢d-sub ⊢f x) ⊢a = {!!}

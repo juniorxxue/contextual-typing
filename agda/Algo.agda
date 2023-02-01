@@ -62,9 +62,9 @@ data _⊢a_≤_ where
     → Γ ⊢a C ≤ A
     → Γ ⊢a B ≤ D
     → Γ ⊢a (A *⇒ B) ≤ (C *⇒ D)
-  ≤a-hole : ∀ {Γ A B e}
-    → Γ ⊢a A ⇛ e ⇛ B
-    → Γ ⊢a ⟦ e ⟧ ≤ A
+  ≤a-hole : ∀ {Γ A e}
+    → Γ ⊢a h A ⇛ e ⇛ A
+    → Γ ⊢a ⟦ e ⟧ ≤ h A
 
 data _⊢a_⇛_⇛_ where
 
@@ -310,3 +310,8 @@ wf-weaken = {!!}
 ⊢a-hint-self (⊢a-var ∋ ≤) = ⊢a-var ∋ ≤a-refl-h
 ⊢a-hint-self (⊢a-app ⊢e) = ⊢a-app {!!}
 ⊢a-hint-self (⊢a-ann ⊢e ≤) = ⊢a-ann ⊢e ≤a-refl-h
+
+wrong : ∀ {x y} → ∅ ⊢a Hop ⇛ (ƛ x ⇒ ` x) · (ƛ y ⇒ ` y) ⇛ (Int ⇒ Int)
+      → ⊥
+wrong (⊢a-app wr) = {!wr!}
+
