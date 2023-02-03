@@ -9,7 +9,6 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Common
 
-infixr 8 _*⇒_
 infixr 8 ⟦_⟧
 
 data Hype : Set where
