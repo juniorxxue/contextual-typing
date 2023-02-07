@@ -213,18 +213,18 @@ I don't think so, since there're several ways to modify the hint
 {\Gamma \vdash H \Rightarrow i \Rightarrow \mathsf{Int}}
 
 \inferrule*[lab=T-Var]
-{x : B \in \Gamma \\
- \Gamma \vdash B <: H}
-{\Gamma \vdash H \Rightarrow x \Rightarrow B}
+{x : A \in \Gamma \\
+ \Gamma \vdash A <: H}
+{\Gamma \vdash H \Rightarrow x \Rightarrow A}
 
 \inferrule*[lab=T-App]
 {\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B}
 {\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
 
 \inferrule*[lab=T-Ann]
-{\Gamma \vdash B \Rightarrow e \Rightarrow B \\
- \Gamma \vdash B <: H}
-{\Gamma \vdash H \Rightarrow e : B \Rightarrow B}
+{\Gamma \vdash A \Rightarrow e \Rightarrow A \\
+ \Gamma \vdash A <: H}
+{\Gamma \vdash H \Rightarrow e : A \Rightarrow A}
 
 \inferrule*[lab=T-Lam1]
 {\Gamma \vdash \mathtt{Top} \Rightarrow e_1 \Rightarrow A \\
@@ -237,7 +237,7 @@ I don't think so, since there're several ways to modify the hint
 \end{mathpar}    
 \end{frame}
 
-\begin{frame}{Subtyping: \boxed{\Gamma \vdash H_1 <: H_2}}
+\begin{frame}{Subtyping: \boxed{\Gamma \vdash A <: H}}
 \begin{mathpar}
 \inferrule*[lab=S-Refl]	
 { }
@@ -253,13 +253,9 @@ I don't think so, since there're several ways to modify the hint
 {\Gamma \vdash A \rightarrow B <: C \rightarrow D}
 
 \inferrule*[lab=S-Chain]
-{\Gamma \vdash \boxed{e} <: A	 \\
+{\Gamma \vdash A \Rightarrow e \Rightarrow A	 \\
  \Gamma \vdash B <: H}
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \mapsto H}
-
-\inferrule*[lab=S-Hole]
-{\Gamma \vdash A \Rightarrow e \Rightarrow A}
-{\Gamma \vdash \boxed{e} <: A}
 \end{mathpar}    
 \end{frame}
 
