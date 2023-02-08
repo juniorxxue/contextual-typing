@@ -138,15 +138,26 @@ _ = Z
 --+                                                                +--
 ----------------------------------------------------------------------
 
-⊢a-transform : ∀ {Γ H A B C e e'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a τ B ⇛ e' ⇛ C
-⊢a-transform {H = τ x} ⊢a = {!!}
-⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-var x₁ x₂) = {!!}
-⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-app ⊢a) = {!!}
-⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-ann ⊢a x₁) = {!!}
-⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+infix 3 _~~_
 
+data _~~_ : Set → Set → Set where
+  refl : ∀ {Γ e A B}
+    → Γ ⊢a τ A ⇛ e ⇛ B ~~ Γ ⊢a τ A ⇛ e ⇛ B
+    
+  unapp : ∀ {Γ e₁ e₂ H A B}
+    → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ (A ⇒ B) ~~ (Γ ⊢a H ⇛ e₁ · e₂ ⇛ B)
+
+-- trivial lemmas (eaily abandaned)
+
+iso1 : ∀ {Γ H e₁ e₂ A}
+  → Γ ⊢a H ⇛ e₁ · e₂ ⇛ A
+  → ∃[ B ] Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ B ⇒ A
+iso1 (⊢a-app {A = A} ⊢a) = ⟨ A , ⊢a ⟩
+
+iso2 : ∀ {Γ H e₁ e₂ A B}
+  → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
+iso2 ⊢a = ⊢a-app ⊢a
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -187,6 +198,3 @@ _ = Z
 ⊢a-to-≤a (⊢a-ann ⊢a x) = x
 ⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
-
-
-

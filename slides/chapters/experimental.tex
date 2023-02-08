@@ -15,7 +15,7 @@ I don't think so, since there're several ways to modify the hint
 
 \begin{itemize}
 	\item Lambda, only eliminate the head
-	\item Ann, replace the whole hint by a normal type (annotation)
+	\item Ann, replace the whole hint with a normal type (annotation)
 	\item App, chain/append a hole on top of a hint
 \end{itemize}
 
@@ -115,7 +115,7 @@ The tricky case is app:
 If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
 \end{lemma}
 
-We generlize it to the max; the app case will be
+We generalize it to the max; the app case will be
 \begin{itemize}
 	\item goal: $\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow A$, given $\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow A$;
 	\item that is to prove $\Gamma \vdash \boxed{e_2} \mapsto A \Rightarrow e_1 \Rightarrow \Delta \rightarrow A$;
@@ -129,6 +129,23 @@ We still get stuck at the proof; continue to study a transform lemma
 \begin{frame}{Transform Lemma}
 \begin{lemma}[Transform (Sketch)]
 If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash B \Rightarrow e' \Rightarrow	C$.
+\end{lemma}
+
+Finding the ultimate form gives me the feeling that we are actually reducing (back) a typing judgment: \boxed{\Gamma \vdash H \Rightarrow e \Rightarrow A \longmapsto \Gamma \vdash H' \Rightarrow e' \Rightarrow A'}. A small step rule would be
+\begin{mathpar}
+\inferrule*[lab=unapp]
+{ }
+{\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B
+\longmapsto
+\Gamma \vdash H \Rightarrow e_1 ~ e_1 \Rightarrow B}
+\end{mathpar}
+
+We have to prove that in finite multiple steps, it can be reduced to a normal form $\Gamma \vdash A \Rightarrow e \Rightarrow B$.
+
+Or defining an equational/isomorphic relation, we can reason that any typing judgment is equivalent to a normal form.
+
+\begin{lemma}{Equational typing}
+	
 \end{lemma}
 	
 \end{frame}
