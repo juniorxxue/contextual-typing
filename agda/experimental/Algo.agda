@@ -29,10 +29,12 @@ data _⊢a_≤_ where
   ≤a-arr : ∀ {Γ A B C D}
     → Γ ⊢a C ≤ τ A
     → Γ ⊢a B ≤ τ D
+    ---------------------------
     → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D)
   ≤a-hint : ∀ {Γ A B H e}
     → Γ ⊢a τ A ⇛ e ⇛ A
     → Γ ⊢a B ≤ H
+    ------------------------
     → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
 
 data _⊢a_⇛_⇛_ where
@@ -129,3 +131,62 @@ _ = Z
 
 ≤a-rename = {!!}
 ⊢a-rename = {!!}
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Transform                            +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+⊢a-transform : ∀ {Γ H A B C e e'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a τ B ⇛ e' ⇛ C
+⊢a-transform {H = τ x} ⊢a = {!!}
+⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-var x₁ x₂) = {!!}
+⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-app ⊢a) = {!!}
+⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-ann ⊢a x₁) = {!!}
+⊢a-transform {H = ⟦ x ⟧⇒ H} (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                       Typing & Subtyping                       +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+{-
+
+⊢a-hint-self : ∀ {Γ e A}
+  → Γ ⊢a τ Top ⇛ e ⇛ A
+  → Γ ⊢a τ A ⇛ e ⇛ A
+⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
+⊢a-hint-self (⊢a-var x x₁) = ⊢a-var x ≤a-refl-h
+⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!!}
+⊢a-hint-self (⊢a-ann ⊢a x) = ⊢a-ann ⊢a ≤a-refl-h
+
+-}
+
+-- a general version
+⊢a-hint-self : ∀ {Γ e H A}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a τ A ⇛ e ⇛ A
+⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
+⊢a-hint-self (⊢a-var x x₁) = ⊢a-var x ≤a-refl-h
+⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!⊢a-hint-self ⊢a!}
+⊢a-hint-self (⊢a-ann ⊢a x) = ⊢a-ann ⊢a ≤a-refl-h
+⊢a-hint-self (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+⊢a-hint-self (⊢a-lam₂ ⊢a) = {!!}
+
+
+⊢a-to-≤a : ∀ {Γ e A H}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a A ≤ H
+⊢a-to-≤a (⊢a-lit x) = x
+⊢a-to-≤a (⊢a-var x x₁) = x₁
+⊢a-to-≤a (⊢a-app ⊢a) = {!⊢a-to-≤a ⊢a!}
+⊢a-to-≤a (⊢a-ann ⊢a x) = x
+⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
+
+
+
