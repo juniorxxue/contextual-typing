@@ -68,7 +68,7 @@ If $\Gamma \vdash e \Leftarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarr
 %%%%%%%%%% Proof of Completeness %%%%%%%%%%
 
 \begin{frame}{Proof of Completeness}
-\begin{lemma}[Completeness]
+\begin{theorem}[Completeness]
 If $\Gamma \vdash e \Leftrightarrow A$, then $\exists B, \Gamma \vdash (f \Leftrightarrow A) \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
 \begin{align*}
 f \Leftarrow  A = & ~A \\
@@ -77,5 +77,35 @@ f \Rightarrow A  =& ~Top
 \begin{proof}
 Induction on $\Gamma \vdash e \Leftrightarrow A$;
 \end{proof}
+\end{theorem}
+
+Note: we can further simplify the theorem If we have the property that 
+\begin{lemma}[Typing Implies Subtyping]
+If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
 \end{lemma}
+\end{frame}
+
+\begin{frame}{Proof of Completeness (Cont.)}
+\textbf{case lit:}
+\begin{itemize}
+	\item given: $\Gamma \vdash n \Rightarrow Int$;
+	\item goal: $\exists B, \Gamma \vdash Top \Rightarrow n \Rightarrow B$ and $\Gamma \vdash B <: Int$;
+	\item $\exists Int$ and proof is trivial.
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\textbf{case var:}
+\begin{itemize}
+	\item given: $\Gamma \vdash x \Rightarrow A$
+	\item goal: $\exists B, \Gamma \vdash Top \Rightarrow x \Rightarrow B$ and $\Gamma \vdash B <: A$
+	\item $\exists A$ and proof is trivial.
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\textbf{case lam:}
+\begin{itemize}
+	\item given: $\Gamma \vdash \lambda x.~e \Leftarrow A \rightarrow B$; that is $\Gamma, x : A \vdash e \Leftarrow B$;
+	\item goal: $\exists C, \Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e  \Rightarrow C$ and $\Gamma \vdash C <: A \rightarrow B$;
+	\item by ind hypo, we have $\exists C, \Gamma, x : A \vdash B \Rightarrow e \Rightarrow C$ and $\Gamma, x : A \vdash C <: B$
+\end{itemize}
 \end{frame}

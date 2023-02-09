@@ -4,6 +4,8 @@
 \usepackage{amsmath}
 \usepackage{mathtools}
 
+\usepackage{comment}
+
 \usetheme[frameno,sans]{Arguelles}
 
 \title{Contextual Type Inference}
@@ -81,7 +83,7 @@
     
 \end{frame}
 
-\section{Algorithmic System}
+\section{Algo Sys (Deprecated)}
 \begin{frame}{Syntax}
 \begin{align*}
 &\text{Types with Holes}\quad\quad &A*, B* ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A* \rightarrow B* \mid \boxed{e}\\
@@ -183,8 +185,9 @@ Sorry, this is a wrong observation..
 \include{chapters/experimental.tex}
 \include{chapters/sound.tex}
 
+\begin{comment}
 \section{Metatheory}
-
+	
 \begin{frame}{Soundness}
 \begin{theorem}[Soundness]
 If $\Gamma \vdash A* \Rightarrow e \Rightarrow B$, then $\Gamma \vdash e \Leftarrow B.$
@@ -278,6 +281,8 @@ Then for applications, the well-typed will be $e^- ~ e^+$ or $e^+ ~ e^+$ or $e^+
 
 Known issues: (1) explicit subsumption
 \end{frame}
+
+\end{comment}
 
 \section{Cases}
 

@@ -1,6 +1,6 @@
-\section{Alternative Algo}
+\section{Algo Sys}
 
-\begin{frame}{Syntax}
+\begin{frame}{Syntax \footnote{We reserve $A, B, C, D$ for normal types, and $H$ for hints}}
 \begin{align*}
 &\text{Hints}\quad\quad &H ::=&~ A \mid \boxed{e} \mapsto H\\
 &\text{Normal Types} \quad\quad &A, B ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B
@@ -39,7 +39,7 @@ I don't think so, since there're several ways to modify the hint
 {\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
 
 \inferrule*[lab=T-Ann]
-{\Gamma \vdash A \Rightarrow e \Rightarrow A \\
+{\Gamma \vdash A \Rightarrow e \Rightarrow B \\
  \Gamma \vdash A <: H}
 {\Gamma \vdash H \Rightarrow e : A \Rightarrow A}
 
@@ -70,7 +70,7 @@ I don't think so, since there're several ways to modify the hint
 {\Gamma \vdash A \rightarrow B <: C \rightarrow D}
 
 \inferrule*[lab=S-Chain]
-{\Gamma \vdash A \Rightarrow e \Rightarrow A	 \\
+{\Gamma \vdash A \Rightarrow e \Rightarrow C	 \\
  \Gamma \vdash B <: H}
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \mapsto H}
 \end{mathpar}    
@@ -148,4 +148,10 @@ Or defining an equational/isomorphic relation, we can reason that any typing jud
 	
 \end{lemma}
 	
+\end{frame}
+
+\begin{frame}{Several updates of the rules}
+\begin{itemize}
+	\item Replace all $\Gamma \vdash A \Rightarrow e \Rightarrow A$ with $\Gamma \vdash A \Rightarrow e \Rightarrow B$.
+\end{itemize}
 \end{frame}

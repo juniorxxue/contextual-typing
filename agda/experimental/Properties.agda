@@ -17,23 +17,19 @@ open import Algo
 --+                                                                +--
 ----------------------------------------------------------------------
 
-sound : ∀ {Γ e A}
-  → Γ ⊢a τ A ⇛ e ⇛ A
+sound : ∀ {Γ e A B}
+  → Γ ⊢a τ A ⇛ e ⇛ B
   → Γ ⊢d e ∙ ⇚ ∙ A
-sound (⊢a-lit x) = ⊢d-sub ⊢d-int ≤d-int
-sound (⊢a-var x x₁) = ⊢d-sub (⊢d-var x) ≤d-refl
+sound (⊢a-lit x) = ⊢d-sub ⊢d-int {!!}
+sound (⊢a-var x x₁) = ⊢d-sub (⊢d-var x) {!!}
 sound (⊢a-app ⊢a) = {!!}
-sound (⊢a-ann ⊢a x) = ⊢d-sub (⊢d-ann (sound ⊢a)) ≤d-refl
+sound (⊢a-ann ⊢a x) = ⊢d-sub (⊢d-ann (sound ⊢a)) {!!}
 sound (⊢a-lam₂ ⊢a) = ⊢d-lam (sound ⊢a)
 
 sound-inf : ∀ {Γ e A}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢d e ∙ ⇛ ∙ A
-sound-inf (⊢a-lit x) = ⊢d-int
-sound-inf (⊢a-var x x₁) = ⊢d-var x
-sound-inf (⊢a-app ⊢a) = {!!}
-sound-inf (⊢a-ann ⊢a x) = ⊢d-ann {!!}
-
+sound-inf = {!!}
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                          Completeness                          +--
@@ -44,24 +40,13 @@ f : Mode → Type → Type
 f ⇛ A = Top
 f ⇚ A = A
 
--- looks like we fail the completeness
-
--- 1 <= Top
--- Top => 1 => Top
-
--- ex <= Top
--- Top => e => Top
-
--- A => e => A
-
 complete : ∀ {Γ e A ⇔}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → ∃[ B ] (Γ ⊢a τ (f ⇔ A) ⇛ e ⇛ B × Γ ⊢a B ≤ τ A)
 complete ⊢d-int = ⟨ Int , ⟨ (⊢a-lit ≤a-top) , ≤a-int ⟩ ⟩
 complete {A = A} (⊢d-var x) = ⟨ A , ⟨ (⊢a-var x ≤a-top) , ≤a-refl-h ⟩ ⟩
-complete (⊢d-lam ⊢d) = {!!}
+complete (⊢d-lam ⊢d) = {!complete ⊢d!}
 complete (⊢d-app₁ ⊢d ⊢d₁) = {!!}
 complete (⊢d-app₂ ⊢d ⊢d₁) = {!!}
 complete (⊢d-ann ⊢d) = {!!}
 complete (⊢d-sub ⊢d x) = {!!}
-
