@@ -9,3 +9,73 @@ If $A$ is a $Top$, we are doing an inference;
 if $A$ is not a $Top$, we are doing a check.
 	
 \end{frame}
+
+\section{Completeness}
+
+\begin{frame}{Completeness}
+
+We first draw a relational table:
+
+\begin{tabular}{|c|c|c|}
+\hline
+    & Dec. & Algo. \\ 
+\hline
+    Infer & $\Gamma \vdash e \Rightarrow A$ &  $\Gamma \vdash Top \Rightarrow e \Rightarrow A$\\ 
+\hline
+   Check & $\Gamma \vdash e \Leftarrow A$ & $\Gamma \vdash A \Rightarrow e \Rightarrow A$\\
+\hline
+\end{tabular}
+
+\begin{lemma}[Completeness (Inf)]
+If $\Gamma \vdash e \Rightarrow A$, then $\Gamma \vdash Top \Rightarrow e \Rightarrow A$
+\end{lemma}
+
+\begin{lemma}[Completeness (Chk)]
+If $\Gamma \vdash e \Leftarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
+\end{lemma}
+
+It can be easily generalised, but we now separate it for justification.
+
+\end{frame}
+
+\begin{frame}{Completeness (Cont.)}
+
+I think the main issues are around the rule T-App2: For example, $(\lambda x . ~x)~1$.
+\begin{mathpar}
+\inferrule*[lab=T-App2]
+{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
+ \Gamma \vdash e_2 \Rightarrow A}
+{\Gamma \vdash e_1~e_2 \Rightarrow B}
+
+\inferrule*[lab=T-App2]
+{\Gamma \vdash \lambda x. ~x \Leftarrow Int \rightarrow Top \\
+ \Gamma \vdash 1 \Rightarrow Int}
+{\Gamma \vdash (\lambda x . ~x)~1 \Rightarrow Top}
+\end{mathpar}
+
+The $B$ in rule T-App2 is too relaxed; we may include a \emph{minimal typing}.
+
+\begin{lemma}[Completeness (Inf)]
+If $\Gamma \vdash e \Rightarrow A$, then $\Gamma \vdash Top \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+\end{lemma}
+
+\begin{lemma}[Completeness (Chk)]
+If $\Gamma \vdash e \Leftarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+\end{lemma}
+
+\end{frame}
+
+%%%%%%%%%% Proof of Completeness %%%%%%%%%%
+
+\begin{frame}{Proof of Completeness}
+\begin{lemma}[Completeness]
+If $\Gamma \vdash e \Leftrightarrow A$, then $\exists B, \Gamma \vdash (f \Leftrightarrow A) \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+\begin{align*}
+f \Leftarrow  A = & ~A \\
+f \Rightarrow A  =& ~Top
+\end{align*}
+\begin{proof}
+Induction on $\Gamma \vdash e \Leftrightarrow A$;
+\end{proof}
+\end{lemma}
+\end{frame}
