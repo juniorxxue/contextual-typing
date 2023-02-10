@@ -2,14 +2,41 @@
 
 \begin{frame}{Soundness}
 
-I think we can state that for any typing $\Gamma \vdash H \Rightarrow e \Rightarrow A$, we normalise it into $\Gamma \vdash A \Rightarrow e \Rightarrow B$. 
+I think we can state that for any typing $\Gamma \vdash H \Rightarrow e \Rightarrow A$, we normalise it into $\Gamma \vdash A \Rightarrow e \Rightarrow B$.
 
-If $A$ is a $Top$, we are doing an inference; 
+If $A$ is a $Top$, we are doing an inference;
 
 if $A$ is not a $Top$, we are doing a check.
-	
+
 \end{frame}
 
+\begin{frame}{Naive Soundness}
+\begin{theorem}[Soundness (Chk)]
+If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash e \Leftarrow A$.
+\end{theorem}
+
+other cases are easy, \textbf{case app:}
+\begin{itemize}
+	\item given: $\Gamma \vdash \boxed{e_2} \mapsto A \Rightarrow e_1 \Rightarrow B \rightarrow C$;
+	\item goal: $\Gamma \vdash e_1 ~ e_2 \Leftarrow A$
+\end{itemize}
+
+\begin{theorem}[Soundness (Inf)]
+If $\Gamma \vdash Top \Rightarrow e \Rightarrow A$, then $\Gamma \vdash e \Rightarrow A$.
+\end{theorem}
+
+other cases are easy, \textbf{case ann} is dependent on the above theorem;
+
+\textbf{case app:}
+
+\begin{itemize}
+	\item given: $\Gamma \vdash \boxed{e_2} \mapsto Top \Rightarrow e_1 \Rightarrow A \rightarrow B$;
+	\item goal: $\Gamma \vdash e_1 ~ e_2 \Rightarrow B$
+\end{itemize}
+
+\end{frame}
+
+% #region [rgba(0,196,25,0.15)]
 \section{Completeness}
 
 \begin{frame}{Completeness}
@@ -18,9 +45,9 @@ We first draw a relational table:
 
 \begin{tabular}{|c|c|c|}
 \hline
-    & Dec. & Algo. \\ 
+    & Dec. & Algo. \\
 \hline
-    Infer & $\Gamma \vdash e \Rightarrow A$ &  $\Gamma \vdash Top \Rightarrow e \Rightarrow A$\\ 
+    Infer & $\Gamma \vdash e \Rightarrow A$ &  $\Gamma \vdash Top \Rightarrow e \Rightarrow A$\\
 \hline
    Check & $\Gamma \vdash e \Leftarrow A$ & $\Gamma \vdash A \Rightarrow e \Rightarrow A$\\
 \hline
@@ -64,7 +91,9 @@ If $\Gamma \vdash e \Leftarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarr
 \end{lemma}
 
 \end{frame}
+%end region
 
+% #region [rgba(241,196,15,0.15)]
 %%%%%%%%%% Proof of Completeness %%%%%%%%%%
 
 \begin{frame}{Proof of Completeness}
@@ -79,7 +108,7 @@ Induction on $\Gamma \vdash e \Leftrightarrow A$;
 \end{proof}
 \end{theorem}
 
-Note: we can further simplify the theorem If we have the property that 
+Note: we can further simplify the theorem (check condition) If we have the property that
 \begin{lemma}[Typing Implies Subtyping]
 If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
 \end{lemma}
@@ -106,6 +135,53 @@ If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
 \begin{itemize}
 	\item given: $\Gamma \vdash \lambda x.~e \Leftarrow A \rightarrow B$; that is $\Gamma, x : A \vdash e \Leftarrow B$;
 	\item goal: $\exists C, \Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e  \Rightarrow C$ and $\Gamma \vdash C <: A \rightarrow B$;
-	\item by ind hypo, we have $\exists C, \Gamma, x : A \vdash B \Rightarrow e \Rightarrow C$ and $\Gamma, x : A \vdash C <: B$
+	\item by ind hypo, we have $\exists C, \Gamma, x : A \vdash B \Rightarrow e \Rightarrow C$ and $\Gamma, x : A \vdash C <: B$;
 \end{itemize}
 \end{frame}
+
+\begin{frame}{Proof of Completeness (Cont.)}
+	\begin{itemize}
+		\item that is we have $\Gamma, x : A \vdash B \Rightarrow e \Rightarrow B'$ and $\Gamma, x : A \vdash B' <: B$;
+		\item $\exists A \rightarrow B'$ and proof is obvious.
+	\end{itemize}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\textbf{case app1:}
+\begin{itemize}
+	\item given: $\Gamma \vdash e_1~e_2 \Rightarrow A$, that is $\Gamma \vdash e_1 \Rightarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Leftarrow A$;
+	\item goal: $\exists T, \Gamma \vdash Top \Rightarrow e_1~e_2 \Rightarrow T$ and $\Gamma \vdash T <: B$;
+	\item that is we want to prove $\Gamma \vdash \boxed{e_2} \mapsto Top \Rightarrow e_1 \Rightarrow \Delta \rightarrow T$;
+	\item  by ind hypo we know what $e_1$ is inferrable $\Gamma \vdash Top \Rightarrow e_1 \Rightarrow A' \rightarrow B'$ and $e_2$ is checkable $\Gamma \vdash A \Rightarrow e_2 \Rightarrow C$;
+	\item we want a new lemma (discussed before)
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\begin{lemma}
+If $e_1$ is inferrable to a arrow type (normalize it, and the hint is a $Top$), then pending an argument (checked by input type) doesn't affect its inferred type.
+\end{lemma}
+
+\end{frame}
+
+\begin{frame}{Proof of Completeness (Cont.)}
+\textbf{case app2:}
+\begin{itemize}
+	\item given: $\Gamma \vdash e_1~e_2 \Rightarrow A$, that is $\Gamma \vdash e_1 \Leftarrow A \rightarrow B$ and $\Gamma \vdash e_2 \Rightarrow A$;
+	\item goal: $\exists T, \Gamma \vdash Top \Rightarrow e_1~e_2 \Rightarrow T$ and $\Gamma \vdash T <: B$;
+		\item that is we want to prove $\Gamma \vdash \boxed{e_2} \mapsto Top \Rightarrow e_1 \Rightarrow \Delta \rightarrow T$;
+	\item  by ind hypo we know what $e_1$ is checkable $\Gamma \vdash A \rightarrow B \Rightarrow e_1 \Rightarrow A' \rightarrow B'$ and $e_2$ is inferrable $\Gamma \vdash Top \Rightarrow e_2 \Rightarrow A''$;
+\end{itemize}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\textbf{case ann:}
+\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+% ------------------------------------------------------
+\textbf{case sub:}
+\begin{itemize}
+	\item given: $\Gamma \vdash e \Rightarrow B$ and $B <: A$;
+	\item goal: $\exists C, \Gamma \vdash A \Rightarrow e \Rightarrow C$ and $\Gamma \vdash C <: A$;
+	\item by ind hypo, we have $\Gamma \vdash Top \Rightarrow e \Rightarrow B'$ and $\Gamma \vdash B' <: B$;
+	\item and we need a lemma (algo sys) to move from infer to check.
+\end{itemize}
+\end{frame}
+
+% #end region

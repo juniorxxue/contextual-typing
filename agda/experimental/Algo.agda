@@ -198,3 +198,13 @@ iso2 ⊢a = ⊢a-app ⊢a
 ⊢a-to-≤a (⊢a-ann ⊢a x) = x
 ⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
+
+ty-imp-sub : ∀ {Γ A e B}
+  → Γ ⊢a τ A ⇛ e ⇛ B
+  → Γ ⊢a B ≤ τ A
+ty-imp-sub (⊢a-lit x) = x
+ty-imp-sub (⊢a-var x x₁) = x₁
+ty-imp-sub (⊢a-app ⊢a) = {!!}
+ty-imp-sub (⊢a-ann ⊢a x) = x
+ty-imp-sub (⊢a-lam₂ ⊢a) = {!!} -- trivial
+

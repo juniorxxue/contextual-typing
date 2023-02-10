@@ -29,7 +29,10 @@ sound (⊢a-lam₂ ⊢a) = ⊢d-lam (sound ⊢a)
 sound-inf : ∀ {Γ e A}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢d e ∙ ⇛ ∙ A
-sound-inf = {!!}
+sound-inf (⊢a-lit x) = ⊢d-int
+sound-inf (⊢a-var x x₁) = ⊢d-var x
+sound-inf (⊢a-app ⊢a) = {!!}
+sound-inf (⊢a-ann ⊢a x) = ⊢d-ann {!!} -- sound
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                          Completeness                          +--
