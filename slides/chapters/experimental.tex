@@ -126,32 +126,8 @@ We generalize it to the max; the app case will be
 We still get stuck at the proof; continue to study a transform lemma
 \end{frame}
 
-\begin{frame}{Transform Lemma}
-\begin{lemma}[Transform (Sketch)]
-If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash B \Rightarrow e' \Rightarrow	C$.
-\end{lemma}
+\begin{frame}[Properties]
+We state a special subtyping relation between holes (read as "more informative").
 
-Finding the ultimate form gives me the feeling that we are actually reducing (back) a typing judgment: \boxed{\Gamma \vdash H \Rightarrow e \Rightarrow A \longmapsto \Gamma \vdash H' \Rightarrow e' \Rightarrow A'}. A small step rule would be
-\begin{mathpar}
-\inferrule*[lab=unapp]
-{ }
-{\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B
-\longmapsto
-\Gamma \vdash H \Rightarrow e_1 ~ e_1 \Rightarrow B}
-\end{mathpar}
 
-We have to prove that in finite multiple steps, it can be reduced to a normal form $\Gamma \vdash A \Rightarrow e \Rightarrow B$.
-
-Or defining an equational/isomorphic relation, we can reason that any typing judgment is equivalent to a normal form.
-
-\begin{lemma}{Equational typing}
-	
-\end{lemma}
-	
-\end{frame}
-
-\begin{frame}{Several updates of the rules}
-\begin{itemize}
-	\item Replace all $\Gamma \vdash A \Rightarrow e \Rightarrow A$ with $\Gamma \vdash A \Rightarrow e \Rightarrow B$.
-\end{itemize}
 \end{frame}

@@ -7,6 +7,9 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; con
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+
+open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
+
 open import Common
 
 infixr 8 ⟦_⟧⇒_
@@ -138,26 +141,37 @@ _ = Z
 --+                                                                +--
 ----------------------------------------------------------------------
 
-infix 3 _~~_
+f : Hint → Type → List Term × Type × Type
+f (τ A) B = ⟨ [] , ⟨ A , B ⟩ ⟩
+f (⟦ e ⟧⇒ H) (A ⇒ B) with f H B
+... | ⟨ es , ⟨  A' , B' ⟩ ⟩ = ⟨ (e ∷ es) , ⟨ A' , B' ⟩ ⟩
+f (⟦ e ⟧⇒ H) Int = ⟨ [] , ⟨ Top , Top ⟩ ⟩ -- by inversion of algo, we will never reach the following results
+f (⟦ e ⟧⇒ H) Top = ⟨ [] , ⟨ Top , Top ⟩ ⟩
 
-data _~~_ : Set → Set → Set where
-  refl : ∀ {Γ e A B}
-    → Γ ⊢a τ A ⇛ e ⇛ B ~~ Γ ⊢a τ A ⇛ e ⇛ B
-    
-  unapp : ∀ {Γ e₁ e₂ H A B}
-    → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ (A ⇒ B) ~~ (Γ ⊢a H ⇛ e₁ · e₂ ⇛ B)
+_▻_ : Term → List Term → Term
+e ▻ [] = e
+e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
--- trivial lemmas (eaily abandaned)
+transform : ∀ {Γ H e A}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a τ (proj₁ (proj₂ (f H A))) ⇛ e ▻ proj₁ (f H A) ⇛ proj₂ (proj₂ (f H A))
 
-iso1 : ∀ {Γ H e₁ e₂ A}
-  → Γ ⊢a H ⇛ e₁ · e₂ ⇛ A
-  → ∃[ B ] Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ B ⇒ A
-iso1 (⊢a-app {A = A} ⊢a) = ⟨ A , ⊢a ⟩
+data split : Hint → Type → List Term → Type → Type → Set where
+  none : ∀ {A B}
+    → split (τ A) B [] A B
 
-iso2 : ∀ {Γ H e₁ e₂ A B}
-  → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
-iso2 ⊢a = ⊢a-app ⊢a
+  have : ∀ {e H A B es A' B'}
+    → split H B es A' B'
+    → split (⟦ e ⟧⇒ H) (A ⇒ B) (e ∷ es) A' B'
+
+split-true : ∀ {Γ H e A}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ∃[ es ] ∃[ B ] ∃[ A' ] split H A es B A'
+split-true {H = τ x} {A = A} ⊢a = ⟨ [] , ⟨ x , ⟨ A , none ⟩ ⟩ ⟩
+split-true {H = ⟦ x ⟧⇒ H} {A = Int} ⊢a = ⟨ {!!} , {!!} ⟩
+split-true {H = ⟦ x ⟧⇒ H} {A = Top} ⊢a = ⟨ {!!} , {!!} ⟩
+split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (⊢a-app ⊢a)
+... | ⟨ fst , ⟨ fst₁ , ⟨ fst₂ , snd ⟩ ⟩ ⟩ = ⟨  x ∷ fst , ⟨ fst₁ , ⟨ fst₂ ,  have {e = x} {A = A} snd ⟩ ⟩ ⟩
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -207,4 +221,6 @@ ty-imp-sub (⊢a-var x x₁) = x₁
 ty-imp-sub (⊢a-app ⊢a) = {!!}
 ty-imp-sub (⊢a-ann ⊢a x) = x
 ty-imp-sub (⊢a-lam₂ ⊢a) = {!!} -- trivial
+
+
 
