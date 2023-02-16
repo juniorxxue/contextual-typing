@@ -55,6 +55,7 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-app : ∀ {Γ e₁ e₂ H A B}
     → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
+    → Γ ⊢a B ≤ H
     ----------------------------------
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
 
@@ -83,10 +84,10 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a τ Top ⇛ (ƛ "x" ⇒ ` "x") · lit 1 ⇛ Int
-_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top))
+_ = ⊢a-app (⊢a-lam₁ (⊢a-lit ≤a-top) (⊢a-var Z ≤a-top)) {!!}
 
 _ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z proof-sub1))) proof-sub2)
+_ = ⊢a-app (⊢a-ann (⊢a-lam₂ (⊢a-app (⊢a-var Z proof-sub1) {!!})) proof-sub2) {!!}
   where
     proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
@@ -152,9 +153,12 @@ _▻_ : Term → List Term → Term
 e ▻ [] = e
 e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
+{-
+
 transform : ∀ {Γ H e A}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a τ (proj₁ (proj₂ (f H A))) ⇛ e ▻ proj₁ (f H A) ⇛ proj₂ (proj₂ (f H A))
+-}
 
 data split : Hint → Type → List Term → Type → Type → Set where
   none : ∀ {A B}
@@ -164,14 +168,31 @@ data split : Hint → Type → List Term → Type → Type → Set where
     → split H B es A' B'
     → split (⟦ e ⟧⇒ H) (A ⇒ B) (e ∷ es) A' B'
 
+absurd1 : ∀ {Γ x e} (H : Hint)
+  → Γ ⊢a ⟦ x ⟧⇒ H ⇛ e ⇛ Top
+  → ⊥
+absurd1 = {!!}
+
 split-true : ∀ {Γ H e A}
   → Γ ⊢a H ⇛ e ⇛ A
   → ∃[ es ] ∃[ B ] ∃[ A' ] split H A es B A'
 split-true {H = τ x} {A = A} ⊢a = ⟨ [] , ⟨ x , ⟨ A , none ⟩ ⟩ ⟩
 split-true {H = ⟦ x ⟧⇒ H} {A = Int} ⊢a = ⟨ {!!} , {!!} ⟩
 split-true {H = ⟦ x ⟧⇒ H} {A = Top} ⊢a = ⟨ {!!} , {!!} ⟩
-split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (⊢a-app ⊢a)
+split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (⊢a-app ⊢a {!!})
 ... | ⟨ fst , ⟨ fst₁ , ⟨ fst₂ , snd ⟩ ⟩ ⟩ = ⟨  x ∷ fst , ⟨ fst₁ , ⟨ fst₂ ,  have {e = x} {A = A} snd ⟩ ⟩ ⟩
+
+▻-fold : ∀ {e₁ e₂ : Term} {es : List Term}
+  → (e₁ · e₂) ▻ es ≡ e₁ ▻ (e₂ ∷ es)
+▻-fold = refl
+
+
+transform : ∀ {Γ H e A es B A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → split H A es B A'
+  → Γ ⊢a τ B ⇛ e ▻ es ⇛ A'
+transform ⊢a none = ⊢a
+transform ⊢a (have spl) =  transform ⊢a {!split-true ⊢a!}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -179,48 +200,44 @@ split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (�
 --+                                                                +--
 ----------------------------------------------------------------------
 
-{-
+-- define a relation describing the "information level"
+-- A -> B
+-- ⊂ A
+-- ⊂ A -> Top
+-- ⊂ ⟦ e ⟧ -> Top
+-- ⊂ Top
 
-⊢a-hint-self : ∀ {Γ e A}
-  → Γ ⊢a τ Top ⇛ e ⇛ A
-  → Γ ⊢a τ A ⇛ e ⇛ A
-⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
-⊢a-hint-self (⊢a-var x x₁) = ⊢a-var x ≤a-refl-h
-⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!!}
-⊢a-hint-self (⊢a-ann ⊢a x) = ⊢a-ann ⊢a ≤a-refl-h
+data _⊂_ : Hint → Hint → Set where
 
--}
+  
+
 
 -- a general version
 ⊢a-hint-self : ∀ {Γ e H A}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a τ A ⇛ e ⇛ A
-⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
-⊢a-hint-self (⊢a-var x x₁) = ⊢a-var x ≤a-refl-h
-⊢a-hint-self (⊢a-app ⊢a) = ⊢a-app {!⊢a-hint-self ⊢a!}
-⊢a-hint-self (⊢a-ann ⊢a x) = ⊢a-ann ⊢a ≤a-refl-h
+⊢a-hint-self (⊢a-lit x) = {!!}
+⊢a-hint-self (⊢a-var x x₁) = {!!}
+⊢a-hint-self (⊢a-app ⊢a x) = ⊢a-app {!!} {!!}
+⊢a-hint-self (⊢a-ann ⊢a x) = {!!}
 ⊢a-hint-self (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
 ⊢a-hint-self (⊢a-lam₂ ⊢a) = {!!}
 
+-- less information
 
 ⊢a-to-≤a : ∀ {Γ e A H}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
 ⊢a-to-≤a (⊢a-lit x) = x
 ⊢a-to-≤a (⊢a-var x x₁) = x₁
-⊢a-to-≤a (⊢a-app ⊢a) = {!⊢a-to-≤a ⊢a!}
+⊢a-to-≤a (⊢a-app ⊢a ≤) = ≤
 ⊢a-to-≤a (⊢a-ann ⊢a x) = x
-⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
+⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = ≤a-hint {!!} {!⊢a-to-≤a ⊢a₁!}
 ⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
 
 ty-imp-sub : ∀ {Γ A e B}
   → Γ ⊢a τ A ⇛ e ⇛ B
   → Γ ⊢a B ≤ τ A
-ty-imp-sub (⊢a-lit x) = x
-ty-imp-sub (⊢a-var x x₁) = x₁
-ty-imp-sub (⊢a-app ⊢a) = {!!}
-ty-imp-sub (⊢a-ann ⊢a x) = x
-ty-imp-sub (⊢a-lam₂ ⊢a) = {!!} -- trivial
-
+ty-imp-sub = {!!}
 
 
