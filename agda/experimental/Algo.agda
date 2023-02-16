@@ -209,9 +209,6 @@ transform ⊢a (have spl) =  transform ⊢a {!split-true ⊢a!}
 
 data _⊂_ : Hint → Hint → Set where
 
-  
-
-
 -- a general version
 ⊢a-hint-self : ∀ {Γ e H A}
   → Γ ⊢a H ⇛ e ⇛ A

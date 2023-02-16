@@ -51,7 +51,7 @@ I don't think so, since there're several ways to modify the hint
 \inferrule*[lab=T-Lam2]
 {\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
 {\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
-\end{mathpar}    
+\end{mathpar} 
 \end{frame}
 
 \begin{frame}{Subtyping: \boxed{\Gamma \vdash A <: H}}
@@ -76,60 +76,49 @@ I don't think so, since there're several ways to modify the hint
 \end{mathpar}    
 \end{frame}
 
-\begin{frame}{Properties}
-\begin{lemma}[$\vdash$ to $<:$]
+\begin{frame}{Split: \boxed{(H , A) \rightarrowtail (\bar{e} , T, A')}\footnote{Observation: we know that $\Gamma \vdash \boxed{e} \mapsto H \Rightarrow e \Rightarrow A \rightarrow B$ is always true, thus it covers all cases.}}
+\begin{mathpar}
+\inferrule*[lab=none]	
+{ }
+{(T, A) \rightarrowtail ([], T, A)}
+
+\inferrule*[lab=have]
+{(H, B) \rightarrowtail (\bar{e}, T', B')}
+{(\boxed{e} \mapsto H,  (A \rightarrow B)) \rightarrowtail (e :: \bar{e}, T', B')}
+\end{mathpar}
+\end{frame}
+
+\begin{frame}{Applications: $e \triangleright \bar{e} = e'$}
+
+\begin{mathpar}
+\inferrule*[lab=empty]
+{ }
+{e \triangleright [] = e}
+
+\inferrule*[lab=cons]
+{ }
+{e_1 \triangleright (e_2 :: \bar{e}) = (e_1~e_2) :: \bar{e}}
+
+\end{mathpar}
+\end{frame}
+
+\begin{frame}{Transform Lemma}
+\begin{lemma}[Transform]
+If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ and $(H, A) \rightarrowtail (\bar{e}, T, A')$, then $\Gamma \vdash T \Rightarrow e \triangleright \bar{e} \Rightarrow A'$.
+\end{lemma}
+
+\begin{lemma}[Split]
+If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\exists (\bar{e}, T, A'), (H , A) \rightarrowtail (\bar{e} , T, A')$.
+\end{lemma}
+
+\end{frame}
+
+\begin{frame}{Properties of Algo.}
+\begin{lemma}[Typing implies Subtyping]
 If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ then $\Gamma \vdash A <: H$.
 \end{lemma}
-\begin{proof}
-Induction on $\Gamma \vdash H \Rightarrow e \Rightarrow A$; other cases are trivial, we only focus on first case of lambda
-\end{proof}
 
-\begin{itemize}
-	\item \textbf{case lam1:} goal: $\Gamma \vdash A \rightarrow B <: \boxed{e_1} \mapsto H$, given $\Gamma \vdash Top \Rightarrow e_1 \Rightarrow A$ and $\Gamma, x : A \vdash H \Rightarrow e \Rightarrow B$;
-	\item that is to prove $\Gamma \vdash A \Rightarrow e \Rightarrow A$ and $\Gamma \vdash B <: H$;
-	\item with ind hypo, we can have $\Gamma, x : A \vdash B <: H$;
-\end{itemize}
-
-\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}
-
-\begin{lemma}[No hint and full hint]
-If $\Gamma \vdash Top \Rightarrow e \Rightarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
-\end{lemma}
-
-\end{frame}
-
-\begin{frame}{Proof of No hint and full hint}
-\begin{lemma}[No hint and full hint]
-If $\Gamma \vdash Top \Rightarrow e \Rightarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
-\end{lemma}
-The tricky case is app:
-\begin{itemize}
-	\item goal: $\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow A$, given $\Gamma \vdash Top \Rightarrow e_1~e_2 \Rightarrow A$;
-	\item that is to prove $\Gamma \vdash \boxed{e_2} \mapsto A \Rightarrow e_1 \Rightarrow \Delta \rightarrow A$;
-	\item and we have $\Gamma \vdash \boxed{e_2} \rightarrow Top \Rightarrow e_1 \Rightarrow \Pi \rightarrow A$;
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Proof of No hint and full hint (Cont.)}
-\begin{lemma}[No hint and full hint (Gen)]
+\begin{lemma}[Hint Self]
 If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
 \end{lemma}
-
-We generalize it to the max; the app case will be
-\begin{itemize}
-	\item goal: $\Gamma \vdash A \Rightarrow e_1~e_2 \Rightarrow A$, given $\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow A$;
-	\item that is to prove $\Gamma \vdash \boxed{e_2} \mapsto A \Rightarrow e_1 \Rightarrow \Delta \rightarrow A$;
-	\item and we have $\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow e_1 \Rightarrow \Pi \rightarrow A$;
-	\item by ind hypo, we have $\Gamma \vdash \Pi \rightarrow A \Rightarrow e_1 \Rightarrow \Pi \rightarrow A$
-\end{itemize}
-
-We still get stuck at the proof; continue to study a transform lemma
-\end{frame}
-
-\begin{frame}{Properties}
-We state a special subtyping relation between holes (read as "more informative").
-\end{frame}
-
-\begin{frame}
-$\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow Top$ is absurd.
 \end{frame}

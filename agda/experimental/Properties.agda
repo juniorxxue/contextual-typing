@@ -21,26 +21,22 @@ open import Algo
 
 -- induction on spl is a wrong start
 
-sound-aux : ∀ {Γ B e A}
-  → Γ ⊢a τ B ⇛ e ⇛ A
-  → Γ ⊢d e ∙ ⇚ ∙ A
-sound-aux (⊢a-lit x) = ⊢d-sub ⊢d-int ≤d-int
-sound-aux (⊢a-var x x₁) = ⊢d-sub (⊢d-var x) ≤d-refl
-sound-aux (⊢a-app ⊢a x) = ⊢d-sub {!!} {!!}
-sound-aux (⊢a-ann ⊢a x) = {!!}
-sound-aux (⊢a-lam₂ ⊢a) = {!!}
-
 sound : ∀ {Γ e H A es B A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → split H A es B A'
   → Γ ⊢d e ▻ es ∙ ⇚ ∙ A'
+sound ⊢a none = {!!}
+sound ⊢a (have spl) = sound (⊢a-app ⊢a {!⊢a-to-≤a ⊢a!}) spl
+
+{-
 sound (⊢a-lit x) none = ⊢d-sub ⊢d-int ≤d-int
 sound (⊢a-var x x₁) none = ⊢d-sub (⊢d-var x) ≤d-refl
-sound (⊢a-var x (≤a-hint x₁ x₂)) (have spl) = sound (⊢a-app (⊢a-var x ((≤a-hint x₁ x₂))) x₂) spl
-sound (⊢a-app ⊢a x) spl = {!spl!}
+sound ty-var@(⊢a-var x (≤a-hint x₁ x₂)) (have spl) = sound (⊢a-app ty-var x₂) spl -- not sure if there's a termination issue
+sound (⊢a-app ⊢a x) spl = {!!}
 sound (⊢a-ann ⊢a x) spl = {!!}
 sound (⊢a-lam₁ ⊢a ⊢a₁) spl = {!!}
 sound (⊢a-lam₂ ⊢a) spl = {!!}
+-}
 
 {-
 
