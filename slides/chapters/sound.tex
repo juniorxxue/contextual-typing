@@ -13,19 +13,17 @@ Induction on \cancel{algo typing} split.
 
 \begin{frame}{Proof of Soundness}
 
-\textbf{case Int: $\Gamma \vdash H \Rightarrow n \Rightarrow Int$}
+\textbf{case none: $\Gamma \vdash B \Rightarrow e \Rightarrow A$}
 \begin{itemize}
-	\item goal: $\Gamma \vdash n \Leftarrow Int$, trivial
+	\item goal: $\Gamma \vdash e \Leftarrow A$
 \end{itemize}
 
 \noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
  % ------------------------------------------------------
  
- \textbf{case var: $\Gamma \vdash H \Rightarrow x \Rightarrow A$}
+ \textbf{case have: $\Gamma \vdash H \Rightarrow x \Rightarrow A$}
  
 \begin{itemize}
-	\item case analysis on $H$;
-	\item If $H$ is $T$, then goal is $\Gamma \vdash T \Rightarrow x \Rightarrow A$; trivial;
 	\item if $H$ is $\boxed{e} \mapsto H'$; we have $\Gamma \vdash \boxed{e} \mapsto H' \Rightarrow x \Rightarrow B \rightarrow C$ and $(\boxed{e} \mapsto H', B \rightarrow C)\rightarrowtail (\bar{e}, T, A')$;
 	\item destruct the split; we have $(H', C)  \rightarrowtail (\bar{e}', T, A')$;
 	\item the goal is $\Gamma \vdash x \triangleright \bar{e} \Leftarrow A'$;

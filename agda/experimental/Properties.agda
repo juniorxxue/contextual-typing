@@ -19,15 +19,37 @@ open import Algo
 --+                                                                +--
 ----------------------------------------------------------------------
 
--- induction on spl is a wrong start
+sound-base : ∀ {Γ e A B}
+  → Γ ⊢a τ B ⇛ e ⇛ A
+  → Γ ⊢a A ≤ τ B
+  → Γ ⊢d e ∙ ⇚ ∙ A
+sound-base ⊢a ≤a-int = {!⊢a!}
+sound-base ⊢a ≤a-top = {!!}
+sound-base ⊢a (≤a-arr ≤a ≤a₁) = {!!}
+
+sound : ∀ {Γ e H A es B A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → split H A es B A'
+  → Γ ⊢d e ▻ es ∙ ⇚ ∙ A'
+sound (⊢a-lit x) spl = {!!}
+sound (⊢a-var x x₁) spl = {!!}
+sound (⊢a-app ⊢a x) spl = sound ⊢a {!!}
+sound (⊢a-ann ⊢a x) spl = {!!}
+sound (⊢a-lam₁ ⊢a ⊢a₁) spl = {!!}
+sound (⊢a-lam₂ ⊢a) spl = {!!}
+
+{-
+
 
 sound : ∀ {Γ e H A es B A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → split H A es B A'
   → Γ ⊢d e ▻ es ∙ ⇚ ∙ A'
 sound ⊢a none = {!!}
-sound ⊢a (have spl) = sound (⊢a-app ⊢a {!⊢a-to-≤a ⊢a!}) spl
+sound ⊢a (have spl) with (⊢a-to-≤a ⊢a)
+... | ≤a-hint x ≤ = sound (⊢a-app ⊢a ≤) spl
 
+-}
 {-
 sound (⊢a-lit x) none = ⊢d-sub ⊢d-int ≤d-int
 sound (⊢a-var x x₁) none = ⊢d-sub (⊢d-var x) ≤d-refl

@@ -192,7 +192,7 @@ transform : ∀ {Γ H e A es B A'}
   → split H A es B A'
   → Γ ⊢a τ B ⇛ e ▻ es ⇛ A'
 transform ⊢a none = ⊢a
-transform ⊢a (have spl) =  transform ⊢a {!split-true ⊢a!}
+transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -207,15 +207,22 @@ transform ⊢a (have spl) =  transform ⊢a {!split-true ⊢a!}
 -- ⊂ ⟦ e ⟧ -> Top
 -- ⊂ Top
 
-data _⊂_ : Hint → Hint → Set where
+-- unapp from a normal type
+
+{-
+unapp-1 : ∀ {Γ A B C D e₁ e₂}
+  → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
+  → Γ ⊢a τ A ⇛ e₁ ⇛ A
+  → Γ ⊢a τ B ⇛ e₁ · e₂ ⇛ D
+-}
 
 -- a general version
 ⊢a-hint-self : ∀ {Γ e H A}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a τ A ⇛ e ⇛ A
-⊢a-hint-self (⊢a-lit x) = {!!}
+⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
 ⊢a-hint-self (⊢a-var x x₁) = {!!}
-⊢a-hint-self (⊢a-app ⊢a x) = ⊢a-app {!!} {!!}
+⊢a-hint-self (⊢a-app ⊢a x) = {!!}
 ⊢a-hint-self (⊢a-ann ⊢a x) = {!!}
 ⊢a-hint-self (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
 ⊢a-hint-self (⊢a-lam₂ ⊢a) = {!!}
@@ -238,3 +245,16 @@ ty-imp-sub : ∀ {Γ A e B}
 ty-imp-sub = {!!}
 
 
+-- type preseveration under subtyping
+
+ty-pres : ∀ {Γ H e A B}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a B ≤ H
+  → Γ ⊢a τ B ⇛ e ⇛ A
+ty-pres (⊢a-lit x) ≤a-int = ⊢a-lit x
+ty-pres (⊢a-lit x) ≤a-top = ⊢a-lit {!!}
+ty-pres (⊢a-var x x₁) ≤ = {!!}
+ty-pres (⊢a-app ⊢a x) ≤ = {!!}
+ty-pres (⊢a-ann ⊢a x) ≤ = {!!}
+ty-pres (⊢a-lam₁ ⊢a ⊢a₁) ≤ = {!!}
+ty-pres (⊢a-lam₂ ⊢a) ≤ = {!!}

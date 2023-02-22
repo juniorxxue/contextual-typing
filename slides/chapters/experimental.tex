@@ -35,7 +35,8 @@ I don't think so, since there're several ways to modify the hint
 {\Gamma \vdash H \Rightarrow x \Rightarrow A}
 
 \inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B}
+{\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B
+\\ \Gamma \vdash B <: H}
 {\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
 
 \inferrule*[lab=T-Ann]
@@ -121,4 +122,24 @@ If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ then $\Gamma \vdash A <: H$.
 \begin{lemma}[Hint Self]
 If $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash A \Rightarrow e \Rightarrow A$.
 \end{lemma}
+\end{frame}
+
+\begin{frame}{Refining a Hole: \boxed{\Gamma \vdash H_1 \subset H_2}}
+
+Motivation: we encountered one case that given $\Gamma \vdash Top \Rightarrow e \Rightarrow A \rightarrow B$, we want to prove $\Gamma \vdash \boxed{e} \mapsto Top \Rightarrow e \Rightarrow \Delta \rightarrow B$.
+
+We are expecting
+$$
+A \subset A \mapsto Top \subset \boxed{e} \mapsto Top \subset Top
+$$
+Actually, the inferred result should exactly match the hint, (e.g., if the hint is $Int \rightarrow Int$, we can have inferred type $A$ which is smaller than $Int \rightarrow Int$.
+
+However, the specialness of $Top$ makes it harder, since we can have a hint is $Top$. We then conclude that inferred type $A$ is smaller than $Top$, which gives us anything.
+
+If the hint is $\boxed{e} \rightarrow Top$, it gives us that at least we can have one arrow in the inferred type.
+
+\begin{lemma}[Refining a Hole\footnote{One observation is that the inferred type seems always the same even the hint is refined}]
+If $\Gamma \vdash H_1 \subset H_2$ and $\Gamma \vdash H \Rightarrow e \Rightarrow A$, then $\Gamma \vdash H'  \Rightarrow e \Rightarrow A$.
+\end{lemma}
+
 \end{frame}
