@@ -19,24 +19,23 @@ open import Algo
 --+                                                                +--
 ----------------------------------------------------------------------
 
-sound-base : ∀ {Γ e A B}
-  → Γ ⊢a τ B ⇛ e ⇛ A
-  → Γ ⊢a A ≤ τ B
-  → Γ ⊢d e ∙ ⇚ ∙ A
-sound-base ⊢a ≤a-int = {!⊢a!}
-sound-base ⊢a ≤a-top = {!!}
-sound-base ⊢a (≤a-arr ≤a ≤a₁) = {!!}
+⊢d-fun-elim : ∀ {Γ e es A A'}
+  → Γ ⊢d e ∙ ⇛ ∙ A
+  → Γ ⊢d e ▻ es ∙ ⇛ ∙ A' -- A' is the output part of A
+  -- but we need es to be well-typed, 
 
-sound : ∀ {Γ e H A es B A'}
+
+
+sound : ∀ {Γ e H A es T A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → split H A es B A'
+  → split H A es T A'
   → Γ ⊢d e ▻ es ∙ ⇚ ∙ A'
-sound (⊢a-lit x) spl = {!!}
-sound (⊢a-var x x₁) spl = {!!}
-sound (⊢a-app ⊢a x) spl = sound ⊢a {!!}
-sound (⊢a-ann ⊢a x) spl = {!!}
-sound (⊢a-lam₁ ⊢a ⊢a₁) spl = {!!}
-sound (⊢a-lam₂ ⊢a) spl = {!!}
+sound (⊢a-lit x) none = ⊢d-sub ⊢d-int ≤d-int
+sound (⊢a-var ∋ ≤) spl = {!⊢d-var!}
+sound (⊢a-app ⊢a x) spl = sound ⊢a (have spl)
+sound (⊢a-ann ⊢a x) spl = {!sound ⊢a !}
+sound (⊢a-lam₁ ⊢f ⊢e) (have spl) = {!sound ⊢e spl!}
+sound (⊢a-lam₂ ⊢a) none = ⊢d-lam (sound ⊢a none)
 
 {-
 

@@ -2,104 +2,161 @@
 
 \begin{frame}{Soundness}
 
-\begin{lemma}[Soundness]
-If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ and  $(H, A) \rightarrowtail (\bar{e}, T, A')$, then $\Gamma \vdash e \vartriangleright \bar{e} \Leftarrow A'$.
-\end{lemma}
+	\begin{lemma}[Soundness]
+		If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ and  $(H, A) \rightarrowtail (\bar{e}, T, A')$, then $\Gamma \vdash e \vartriangleright \bar{e} \Leftarrow A'$.
+	\end{lemma}
 
-\begin{proof}
-Induction on \cancel{algo typing} split.
-\end{proof}
+	\begin{proof}
+		Induction on \cancel{algo typing} \cancel{split} algo typing.
+	\end{proof}
+
+	\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+	% ------------------------------------------------------
+
+	Justification of the statement: $\Leftarrow$ only accounts for the case $\Gamma \vdash Int \rightarrow Int \Rightarrow \lambda x. ~x \Rightarrow Int \rightarrow Int$. (it is only one of the base case, the most other cases is proved by $\Rightarrow$ by using T-Sub and reflexivity.)
+
 \end{frame}
 
 \begin{frame}{Proof of Soundness}
 
-\textbf{case none: $\Gamma \vdash B \Rightarrow e \Rightarrow A$}
-\begin{itemize}
-	\item goal: $\Gamma \vdash e \Leftarrow A$
-\end{itemize}
-
-\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
- % ------------------------------------------------------
- 
- \textbf{case have: $\Gamma \vdash H \Rightarrow x \Rightarrow A$}
- 
-\begin{itemize}
-	\item if $H$ is $\boxed{e} \mapsto H'$; we have $\Gamma \vdash \boxed{e} \mapsto H' \Rightarrow x \Rightarrow B \rightarrow C$ and $(\boxed{e} \mapsto H', B \rightarrow C)\rightarrowtail (\bar{e}, T, A')$;
-	\item destruct the split; we have $(H', C)  \rightarrowtail (\bar{e}', T, A')$;
-	\item the goal is $\Gamma \vdash x \triangleright \bar{e} \Leftarrow A'$;
-	\item we know that $\bar{e}$ is $e :: \bar{e}'$; that is we just prove $\Gamma \vdash x \triangleright (e :: \bar{e}') \Leftarrow A'$; that is also $\Gamma \vdash x~e \triangleright \bar{e}' \Leftarrow A'$;
-\end{itemize}
+	\textbf{case lit:} $\Gamma \vdash H \Rightarrow n \Rightarrow Int$ and $(H, Int) \rightarrowtail ([], H, Int)$
+	\begin{itemize}
+		\item goal: $\Gamma \vdash e \Leftarrow Int$;
+		\item by T-Sub and T-Lit
+	\end{itemize}
 
 \end{frame}
 
+\begin{frame}{Proof of Soundness (Cont.)}
+	\textbf{case var:} $\Gamma \vdash H \Rightarrow x \Rightarrow A$ and $(H, A) \rightarrowtail (\bar{e}, T, A')$
 
-% #region [rgba(0,196,25,0.15)]
+	\begin{itemize}
+		\item goal: $\Gamma \vdash x \triangleright \bar{e} \Leftarrow A'$;
+		\item given: $x : A \in \Gamma$ and $\Gamma \vdash A <: H$;
+		\item by T-Var, we then know $\Gamma \vdash x \Rightarrow A$;
+		\item further proved by the following proposed lemmas
+	\end{itemize}
+
+	\noindent\makebox[\linewidth]{\rule{0.9\paperwidth}{0.4pt}}
+	% ------------------------------------------------------
+
+	\begin{lemma}[Function Type Elimination]
+		If $\Gamma \vdash e \Rightarrow A$ and $A \rightharpoonup ^n A'$ and $\bar{e}$ is checkable by its arguments, then $\Gamma \vdash e \triangleright ^{n} \bar{e} \Rightarrow A'$ .
+	\end{lemma}
+
+	\begin{lemma}[Checkable Arguments]
+		If $\Gamma \vdash A <: H$, then each hole in $H$ is checkable by the corresponding input type of $A$.
+	\end{lemma}
+
+\end{frame}
+
+\begin{frame}{Proof of Soundness (Cont.)}
+	\textbf{case app:} $\Gamma \vdash H \Rightarrow e_1 ~ e_2 \Rightarrow A$ and $(H, A) \rightarrowtail (\bar{e}, T, A')$
+
+	\begin{itemize}
+		\item goal: $\Gamma \vdash e_1 ~ e_2 \triangleright \bar{e} \Leftarrow A'$;
+		\item given: $\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow \Delta \rightarrow A$;
+		\item which is to prove $\Gamma \vdash e_1 \triangleright (e_2 :: \bar{e}) \Leftarrow A'$;
+		\item by ind hypo, we can prove the goal if we have $(e_2 \mapsto H, \Delta \rightarrow A) \rightarrowtail (\bar{e}, T, A')$;
+		\item proved by rule \textsc{Have}.
+	\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Proof of Soundness (Cont.)}
+	\textbf{case ann:} $\Gamma \vdash H \Rightarrow e : A \Rightarrow A$ and $(H, A) \rightarrowtail (\bar{e}, T, A')$
+	
+	\begin{itemize}
+		\item goal: $\Gamma \vdash (e : A) \triangleright \bar{e} \Leftarrow A'$;
+		\item given: $\Gamma \vdash A \Rightarrow e \Rightarrow B$ and $\Gamma \vdash A <: H$;
+		\item by ind hypo, we can have $\Gamma \vdash e \Leftarrow B$;
+		\item by \textcolor{oc-red-8}{Check Subsumption}, we can conclude $\Gamma \vdash e \Leftarrow A$, which is $\Gamma \vdash e : A \Rightarrow A$;
+		\item use the \textcolor{oc-red-8}{Function Type Elimination} lemma, we can prove this case.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Proof of Soundness (Cont.)}
+	\textbf{case lam 1:} $\Gamma \vdash \boxed{e_1} \mapsto H \Rightarrow \lambda x .~e \Rightarrow A \rightarrow B$ and $(\boxed{e_1} \mapsto H, A \rightarrow B) \rightarrowtail (\bar{e}, T, A')$
+	\begin{itemize}
+		\item by inversion, we have $(H, B) \rightarrowtail (\bar{e}, T, A')$ and $\Gamma \vdash Top \Rightarrow e_1 \Rightarrow A$;
+		\item goal: $(\Gamma \vdash (\lambda x~.e) ~ e_1) \triangleright \bar{e} \Leftarrow A'$;
+		\item by ind typo, we have $\Gamma , x : A \vdash e \triangleright \bar{e} \Leftarrow A'$ and $\Gamma \vdash e_1 \Leftarrow A$;
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Proof of Soundness (Cont.)}
+	\textbf{case lam 2:}	$\Gamma \vdash A \rightarrow B \Rightarrow e \Rightarrow A \rightarrow C$
+	\begin{itemize}
+		\item goal: $\Gamma \vdash e \Leftarrow A \rightarrow C$;
+		\item proved by apply ind hypo.
+	\end{itemize}
+\end{frame}
+
 \section{Completeness}
 
 \begin{frame}{Completeness}
 
-I think the main issues are around the rule T-App2: For example, $(\lambda x . ~x)~1$.
+	I think the main issues are around the rule T-App2: For example, $(\lambda x . ~x)~1$.
 
-\begin{mathpar}
-\inferrule*[lab=T-App2]
-{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
- \Gamma \vdash e_2 \Rightarrow A}
-{\Gamma \vdash e_1~e_2 \Rightarrow B}
+	\begin{mathpar}
+		\inferrule*[lab=T-App2]
+		{\Gamma \vdash e_1 \Leftarrow A \rightarrow B \\
+			\Gamma \vdash e_2 \Rightarrow A}
+		{\Gamma \vdash e_1~e_2 \Rightarrow B}
 
-\inferrule*[lab=T-App2]
-{\Gamma \vdash \lambda x. ~x \Leftarrow Int \rightarrow Top \\
- \Gamma \vdash 1 \Rightarrow Int}
-{\Gamma \vdash (\lambda x . ~x)~1 \Rightarrow Top}
-\end{mathpar}
+		\inferrule*[lab=T-App2]
+		{\Gamma \vdash \lambda x. ~x \Leftarrow Int \rightarrow Top \\
+			\Gamma \vdash 1 \Rightarrow Int}
+		{\Gamma \vdash (\lambda x . ~x)~1 \Rightarrow Top}
+	\end{mathpar}
 
-The $B$ in rule T-App2 is too relaxed; we may include a \emph{minimal typing}.
+	The $B$ in rule T-App2 is too relaxed; we may include a \emph{minimal typing}.
 
-\begin{lemma}[Completeness (Inf)]
-If $\Gamma \vdash e \Rightarrow A$, then $\exists B, \Gamma \vdash Top \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
-\end{lemma}
+	\begin{lemma}[Completeness (Inf)]
+		If $\Gamma \vdash e \Rightarrow A$, then $\exists B, \Gamma \vdash Top \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+	\end{lemma}
 
-\begin{lemma}[Completeness (Chk)]
-If $\Gamma \vdash e \Leftarrow A$, then $\exists B, \Gamma \vdash A \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
-\end{lemma}
+	\begin{lemma}[Completeness (Chk)]
+		If $\Gamma \vdash e \Leftarrow A$, then $\exists B, \Gamma \vdash A \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+	\end{lemma}
 
 \end{frame}
 %end region
 
 \begin{frame}{Completeness (Gen)}
-\begin{theorem}[Completeness]
-If $\Gamma \vdash e \Leftrightarrow A$, then $\exists B, \Gamma \vdash (f \Leftrightarrow A) \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
-\begin{align*}
-f \Leftarrow  A = & ~A \\
-f \Rightarrow A  =& ~Top
-\end{align*}
-\begin{proof}
-Induction on $\Gamma \vdash e \Leftrightarrow A$;
-\end{proof}
-\end{theorem}
-Note: we can further simplify the theorem (check condition) If we have the property that
-\begin{lemma}[Typing Implies Subtyping]
-If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
-\end{lemma}
+	\begin{theorem}[Completeness]
+		If $\Gamma \vdash e \Leftrightarrow A$, then $\exists B, \Gamma \vdash (f \Leftrightarrow A) \Rightarrow e \Rightarrow B$ and $\Gamma \vdash B <: A$.
+		\begin{align*}
+			f \Leftarrow  A =  & ~A   \\
+			f \Rightarrow A  = & ~Top
+		\end{align*}
+		\begin{proof}
+			Induction on $\Gamma \vdash e \Leftrightarrow A$;
+		\end{proof}
+	\end{theorem}
+	Note: we can further simplify the theorem (check condition) If we have the property that
+	\begin{lemma}[Typing Implies Subtyping]
+		If $\Gamma \vdash A \Rightarrow e \Rightarrow B$, then $\Gamma \vdash B <: A$.
+	\end{lemma}
 \end{frame}
 
 \begin{frame}{Main issues}
 
-\begin{mathpar}
-\inferrule*[Right=T-App2]
-{\emptyset \vdash \lambda x. ~(\lambda y. ~y) \Leftarrow Int \rightarrow (Int \rightarrow Int) \\ \emptyset \vdash 1 \Rightarrow Int}
-{\emptyset \vdash (\lambda x. ~(\lambda y. ~y))~1 \Rightarrow Int \rightarrow Int}
-\end{mathpar}
+	\begin{mathpar}
+		\inferrule*[Right=T-App2]
+		{\emptyset \vdash \lambda x. ~(\lambda y. ~y) \Leftarrow Int \rightarrow (Int \rightarrow Int) \\ \emptyset \vdash 1 \Rightarrow Int}
+		{\emptyset \vdash (\lambda x. ~(\lambda y. ~y))~1 \Rightarrow Int \rightarrow Int}
+	\end{mathpar}
 
-\begin{mathpar}
-\inferrule*[Right=T-App]
-{
-\inferrule*[Right=T-Lam1]
-{\emptyset \vdash Top \Rightarrow 1 \Rightarrow Int \\
- x : Int ~\cancel{\vdash} Top \Rightarrow (\lambda y. ~y) \Rightarrow Int \rightarrow Int}
-{\emptyset ~\cancel{\vdash} \boxed{1} \mapsto Top \Rightarrow \lambda x. ~(\lambda y. ~y) \Rightarrow Int \rightarrow Int}
-}
-{\emptyset ~\cancel{\vdash} Top \Rightarrow (\lambda x. ~(\lambda y. ~y))~1 \Rightarrow Int \rightarrow Int}	
-\end{mathpar}
-
+	\begin{mathpar}
+		\inferrule*[Right=T-App]
+		{
+			\inferrule*[Right=T-Lam1]
+			{\emptyset \vdash Top \Rightarrow 1 \Rightarrow Int \\
+				x : Int ~\cancel{\vdash} Top \Rightarrow (\lambda y. ~y) \Rightarrow Int \rightarrow Int}
+			{\emptyset ~\cancel{\vdash} \boxed{1} \mapsto Top \Rightarrow \lambda x. ~(\lambda y. ~y) \Rightarrow Int \rightarrow Int}
+		}
+		{\emptyset ~\cancel{\vdash} Top \Rightarrow (\lambda x. ~(\lambda y. ~y))~1 \Rightarrow Int \rightarrow Int}
+	\end{mathpar}
 
 \end{frame}
