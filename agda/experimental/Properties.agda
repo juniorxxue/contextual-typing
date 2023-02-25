@@ -56,8 +56,10 @@ sound-i (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-int
 sound-i (⊢a-lit ≤a-top) none = ⊢d-int
 sound-i (⊢a-var x x₁) spl = {!!}
 sound-i (⊢a-app ⊢e x) spl = sound-i ⊢e (have spl)
-sound-i (⊢a-ann ⊢e x) spl = {!!}
-sound-i (⊢a-lam₁ ⊢e ⊢e₁) (have spl) = {!sound-i ⊢e₁ spl!}
+sound-i (⊢a-ann ⊢e x) spl = {!sound-i ⊢e none!}
+sound-i {T = Int} (⊢a-lam₁ ⊢e ⊢e₁) (have spl) = {!sound-i ⊢e none!}
+sound-i {T = Top} (⊢a-lam₁ ⊢e ⊢e₁) (have spl) = {!sound-i ⊢e₁ spl!}
+sound-i {T = T ⇒ T₁} (⊢a-lam₁ ⊢e ⊢e₁) (have spl) = {!!}
 sound-i (⊢a-lam₂ {B = Int} ⊢e) none = ⊢d-lam (sound-i ⊢e none)
 sound-i (⊢a-lam₂ {B = Top} ⊢e) none = ⊢d-lam (⊢d-sub (sound-i ⊢e none) ≤d-top)
 sound-i (⊢a-lam₂ {B = B ⇒ B₁} ⊢e) none = ⊢d-lam (sound-i ⊢e none)
