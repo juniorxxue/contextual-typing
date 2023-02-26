@@ -27,11 +27,11 @@ open import Algo
 
 sound : ∀ {Γ e H A es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → split H A es T As A'
+  → ⦅ H , A ⦆↣⦅ es , T , As , A' ⦆
   → (T ≡ Top → Γ ⊢d e ▻ es ∙ ⇛ ∙ A') × (Γ ⊢d e ▻ es ∙ ⇚ ∙ T)
 sound (⊢a-lit ≤a-int) none = {!!}
 sound (⊢a-lit ≤a-top) none = {!!}
-sound (⊢a-var x x₁) spl = {!!}
+sound (⊢a-var x x₁) spl = ⟨ (λ x₃ → {!⊢d-var x!}) , {!!} ⟩
 sound (⊢a-app ⊢a x) spl = sound ⊢a (have spl)
 sound (⊢a-ann ⊢a x) spl = {!!}
 sound (⊢a-lam₁ ⊢a ⊢a₁) spl = {!!}
