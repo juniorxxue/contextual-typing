@@ -3,7 +3,7 @@
 \begin{frame}{Soundness}
 
 	\begin{lemma}[Soundness]
-		If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ and  $(H, A) \rightarrowtail (\bar{e}, T, A')$, then $\Gamma \vdash e \vartriangleright \bar{e} \Leftarrow A'$.
+		If $\Gamma \vdash H \Rightarrow e \Rightarrow A$ and  $(H, A) \rightarrowtail (\bar{e}, T, \bar{A}, A')$, then $\Gamma \vdash e \vartriangleright \bar{e} \Leftarrow A'$.
 	\end{lemma}
 
 	\begin{proof}
@@ -14,6 +14,10 @@
 	% ------------------------------------------------------
 
 	Justification of the statement: $\Leftarrow$ only accounts for the case $\Gamma \vdash Int \rightarrow Int \Rightarrow \lambda x. ~x \Rightarrow Int \rightarrow Int$. (it is only one of the base case, the most other cases is proved by $\Rightarrow$ by using T-Sub and reflexivity.)
+	
+	\begin{lemma}[Soundness (<:)]
+	If $\Gamma \vdash A <: H$ and $(H, A) \rightarrowtail (\bar{e}, T, \bar{A}, A')$, then $T <: A'$ and $\Gamma \vdash e_i \Leftarrow A_i$.
+	\end{lemma}
 
 \end{frame}
 

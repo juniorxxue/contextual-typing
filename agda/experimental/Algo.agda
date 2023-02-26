@@ -160,18 +160,20 @@ transform : ∀ {Γ H e A}
   → Γ ⊢a τ (proj₁ (proj₂ (f H A))) ⇛ e ▻ proj₁ (f H A) ⇛ proj₂ (proj₂ (f H A))
 -}
 
-data split : Hint → Type → List Term → Type → Type → Set where
+data split : Hint → Type → List Term → Type → List Type → Type → Set where
   none : ∀ {A B}
-    → split (τ A) B [] A B
+    → split (τ A) B [] A [] B
 
-  have : ∀ {e H A B es A' B'}
-    → split H B es A' B'
-    → split (⟦ e ⟧⇒ H) (A ⇒ B) (e ∷ es) A' B'
+  have : ∀ {e H A B es A' B' Bs}
+    → split H B es A' Bs B'
+    → split (⟦ e ⟧⇒ H) (A ⇒ B) (e ∷ es) A' (A ∷ Bs) B'
 
 absurd1 : ∀ {Γ x e} (H : Hint)
   → Γ ⊢a ⟦ x ⟧⇒ H ⇛ e ⇛ Top
   → ⊥
 absurd1 = {!!}
+
+{-
 
 split-true : ∀ {Γ H e A}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -182,10 +184,13 @@ split-true {H = ⟦ x ⟧⇒ H} {A = Top} ⊢a = ⟨ {!!} , {!!} ⟩
 split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (⊢a-app ⊢a {!!})
 ... | ⟨ fst , ⟨ fst₁ , ⟨ fst₂ , snd ⟩ ⟩ ⟩ = ⟨  x ∷ fst , ⟨ fst₁ , ⟨ fst₂ ,  have {e = x} {A = A} snd ⟩ ⟩ ⟩
 
+-}
+
 ▻-fold : ∀ {e₁ e₂ : Term} {es : List Term}
   → (e₁ · e₂) ▻ es ≡ e₁ ▻ (e₂ ∷ es)
 ▻-fold = refl
 
+{-
 
 transform : ∀ {Γ H e A es B A'}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -193,6 +198,8 @@ transform : ∀ {Γ H e A es B A'}
   → Γ ⊢a τ B ⇛ e ▻ es ⇛ A'
 transform ⊢a none = ⊢a
 transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
+
+-}
 
 ----------------------------------------------------------------------
 --+                                                                +--
