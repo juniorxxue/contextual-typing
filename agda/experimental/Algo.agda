@@ -155,20 +155,31 @@ e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
 {-
 
+--------------
+e ▻ [] ~> e
+
+
+(e₁ · e₂) ▻ es ~> e
+----------------------
+e₁ ▻ (e₂ ∷ es) ~> e
+
+-}
+
+{-
 transform : ∀ {Γ H e A}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a τ (proj₁ (proj₂ (f H A))) ⇛ e ▻ proj₁ (f H A) ⇛ proj₂ (proj₂ (f H A))
 -}
 
-infix 4 ⦅_,_⦆↣⦅_,_,_,_⦆
+infix 4 ❪_,_❫↣❪_,_,_,_❫
 
-data ⦅_,_⦆↣⦅_,_,_,_⦆ : Hint → Type → List Term → Type → List Type → Type → Set where
+data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List Type → Type → Set where
   none : ∀ {A B}
-    → ⦅ τ A , B ⦆↣⦅ [] , A , [] , B ⦆
+    → ❪ τ A , B ❫↣❪ [] , A , [] , B ❫
 
   have : ∀ {e H A B es A' B' Bs}
-    → ⦅ H , B ⦆↣⦅ es , A' , Bs , B' ⦆
-    → ⦅ ⟦ e ⟧⇒ H , A ⇒ B ⦆↣⦅ e ∷ es , A' , A ∷ Bs , B' ⦆
+    → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
+    → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
 
 absurd1 : ∀ {Γ x e} (H : Hint)
   → Γ ⊢a ⟦ x ⟧⇒ H ⇛ e ⇛ Top
