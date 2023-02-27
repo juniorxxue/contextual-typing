@@ -20,6 +20,13 @@ open import Algo
 --+                                                                +--
 ----------------------------------------------------------------------
 
+subst : ∀ {Γ e es A B ⇔ x e'}
+  → Γ , x ⦂ A ⊢d e ▻ es ∙ ⇔ ∙ B
+  → Γ ⊢d e' ∙ ⇛ ∙ A
+  → Γ ⊢d ((ƛ x ⇒ e) · e') ▻ es ∙ ⇔ ∙ B
+subst {e = e} {es} ⊢b ⊢a = {!!}
+
+
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
   ⊩-empty : ∀ {Γ}
