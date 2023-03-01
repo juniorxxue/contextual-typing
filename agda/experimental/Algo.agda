@@ -181,11 +181,6 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
 
-absurd1 : ∀ {Γ x e} (H : Hint)
-  → Γ ⊢a ⟦ x ⟧⇒ H ⇛ e ⇛ Top
-  → ⊥
-absurd1 = {!!}
-
 {-
 
 split-true : ∀ {Γ H e A}
@@ -220,61 +215,8 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                                                                +--
 ----------------------------------------------------------------------
 
--- define a relation describing the "information level"
--- A -> B
--- ⊂ A
--- ⊂ A -> Top
--- ⊂ ⟦ e ⟧ -> Top
--- ⊂ Top
-
--- unapp from a normal type
-
 {-
-unapp-1 : ∀ {Γ A B C D e₁ e₂}
-  → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
-  → Γ ⊢a τ A ⇛ e₁ ⇛ A
-  → Γ ⊢a τ B ⇛ e₁ · e₂ ⇛ D
--}
-
--- a general version
-⊢a-hint-self : ∀ {Γ e H A}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a τ A ⇛ e ⇛ A
-⊢a-hint-self (⊢a-lit x) = ⊢a-lit ≤a-int
-⊢a-hint-self (⊢a-var x x₁) = {!!}
-⊢a-hint-self (⊢a-app ⊢a x) = {!!}
-⊢a-hint-self (⊢a-ann ⊢a x) = {!!}
-⊢a-hint-self (⊢a-lam₁ ⊢a ⊢a₁) = {!!}
-⊢a-hint-self (⊢a-lam₂ ⊢a) = {!!}
-
--- less information
-
 ⊢a-to-≤a : ∀ {Γ e A H}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
-⊢a-to-≤a (⊢a-lit x) = x
-⊢a-to-≤a (⊢a-var x x₁) = x₁
-⊢a-to-≤a (⊢a-app ⊢a ≤) = ≤
-⊢a-to-≤a (⊢a-ann ⊢a x) = x
-⊢a-to-≤a (⊢a-lam₁ ⊢a ⊢a₁) = ≤a-hint {!!} {!⊢a-to-≤a ⊢a₁!}
-⊢a-to-≤a (⊢a-lam₂ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!}
-
-ty-imp-sub : ∀ {Γ A e B}
-  → Γ ⊢a τ A ⇛ e ⇛ B
-  → Γ ⊢a B ≤ τ A
-ty-imp-sub = {!!}
-
-
--- type preseveration under subtyping
-
-ty-pres : ∀ {Γ H e A B}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a B ≤ H
-  → Γ ⊢a τ B ⇛ e ⇛ A
-ty-pres (⊢a-lit x) ≤a-int = ⊢a-lit x
-ty-pres (⊢a-lit x) ≤a-top = ⊢a-lit {!!}
-ty-pres (⊢a-var x x₁) ≤ = {!!}
-ty-pres (⊢a-app ⊢a x) ≤ = {!!}
-ty-pres (⊢a-ann ⊢a x) ≤ = {!!}
-ty-pres (⊢a-lam₁ ⊢a ⊢a₁) ≤ = {!!}
-ty-pres (⊢a-lam₂ ⊢a) ≤ = {!!}
+-}
