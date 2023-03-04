@@ -55,11 +55,11 @@ sound-≤ (≤a-hint ⊢e ≤a) (have spl) = ⟨ proj₁ (sound-≤ ≤a spl) , 
 
 sound (⊢a-lit ≤a-int) none = ⟨ (λ ()) , ⊢d-sub ⊢d-int ≤d-refl ⟩
 sound (⊢a-lit ≤a-top) none = ⟨ (λ _ → ⊢d-int) , ⊢d-sub ⊢d-int ≤d-top ⟩
-sound (⊢a-var Γ∋x A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl) ,
-                               ⊢d-sub (⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl) (proj₁ (sound-≤ A≤H spl)) ⟩
+sound (⊢a-var Γ∋x A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl)
+                             , ⊢d-sub (⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl) (proj₁ (sound-≤ A≤H spl)) ⟩
 sound (⊢a-app ⊢a x) spl = sound ⊢a (have spl)
-sound (⊢a-ann ⊢a A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl) ,
-                            ⊢d-sub (⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl) ((proj₁ (sound-≤ A≤H spl))) ⟩
+sound (⊢a-ann ⊢a A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl)
+                            , ⊢d-sub (⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl) ((proj₁ (sound-≤ A≤H spl))) ⟩
 sound (⊢a-lam ⊢a) none = ⟨ (λ ()) , ⊢d-lam (proj₂ (sound ⊢a none)) ⟩
 
 -- Corollary
@@ -80,13 +80,51 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+infix 4 _⊩a_⇛_⇛_
+
+-- note that we use Type instead of Hint here
+data _⊩a_⇛_⇛_ : Context → List Type → List Term → List Type → Set where
+
+  ⊩a-empty : ∀ {Γ}
+    → Γ ⊩a [] ⇛ [] ⇛ []
+
+  ⊩a-cons : ∀ {Γ es As Bs e A B}
+    → Γ ⊩a As ⇛ es ⇛ Bs
+    → Γ ⊢a τ A ⇛ e ⇛ B
+    → Γ ⊩a (A ∷ As) ⇛ (e ∷ es) ⇛ (B ∷ Bs)
+
+infix 6 _↦_
+
+_↦_ : List Type → Type → Type
+[] ↦ A = A
+(A ∷ As) ↦ B = A ⇒ (As ↦ B)
+
+algon : ∀ {Γ e es As B Cs}
+  → Γ ⊢a τ Top ⇛ e ⇛ As ↦ B
+  → Γ ⊩a As ⇛ es ⇛ Cs
+  → Γ ⊢a τ Top ⇛ e ▻ es ⇛ B
+algon = {!!}
+
+algo1 : ∀ {Γ e₁ e₂ A B C}
+  → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a τ A ⇛ e₂ ⇛ C
+  → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
+algo1 ⊢f ⊢e = algon ⊢f (⊩a-cons ⊩a-empty ⊢e)
+
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → ((⇔ ≡ ⇚) → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)) × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
 complete ⊢d-int = ⟨ (λ ()) , (λ _ → ⊢a-lit ≤a-top) ⟩
 complete (⊢d-var x) = ⟨ (λ ()) , (λ _ → ⊢a-var x ≤a-top) ⟩
-complete (⊢d-lam ⊢d) = ⟨ (λ _ → {!!}) , (λ ()) ⟩
-complete (⊢d-app₁ ⊢d ⊢d₁) = ⟨ (λ ()) , {!!} ⟩
-complete (⊢d-app₂ ⊢d ⊢d₁) = ⟨ {!!} , (λ ()) ⟩
-complete (⊢d-ann ⊢d) = ⟨ (λ ()) , {!!} ⟩
-complete (⊢d-sub ⊢d x) = ⟨ {!!} , (λ ()) ⟩
+
+complete (⊢d-lam {A = A} {B = B} ⊢d) with (proj₁ (complete ⊢d)) refl
+... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩) , (λ ()) ⟩
+
+complete (⊢d-app₁ ⊢f ⊢a) = ⟨ (λ ()) , (λ _ → {!!}) ⟩
+
+complete (⊢d-app₂ ⊢d ⊢d₁) = ⟨ (λ _ → ⟨ {!!} , {!!} ⟩) , (λ ()) ⟩
+
+complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
+... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
+
+complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ → {!!}) , (λ ()) ⟩
