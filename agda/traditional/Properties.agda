@@ -111,6 +111,25 @@ algo1 : ∀ {Γ e₁ e₂ A B C}
   → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
 algo1 ⊢f ⊢e = algon ⊢f (⊩a-cons ⊩a-empty ⊢e)
 
+{-
+
+subsumption : ∀ {Γ H e A H'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a A ≤ H'
+  → ∃[ B ] Γ ⊢a H' ⇛ e ⇛ B
+subsumption (⊢a-lit x) A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
+subsumption {A = A} (⊢a-var x x₁) A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
+subsumption {Γ = Γ} {H = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) B≤H' = {!!} -- solved
+  where sub-ins : Γ ⊢a A ⇒ B ≤ ⟦ e₂ ⟧⇒ H'
+        sub-ins = {!!}
+subsumption {A = A} (⊢a-ann ⊢e x) A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
+subsumption (⊢a-lam ⊢e) A≤H' = {!subsumption ⊢e!}
+
+problems with lam case, seems not provable
+
+-}
+
+
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
   → ((⇔ ≡ ⇚) → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)) × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
@@ -124,7 +143,7 @@ complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl
 ... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → algo1 ind-f ⊢a-e) ⟩
   where ind-f = proj₂ (complete ⊢f) refl
 
-complete (⊢d-app₂ ⊢d ⊢d₁) = ⟨ (λ _ → ⟨ {!!} , {!!} ⟩) , (λ ()) ⟩
+complete (⊢d-app₂ ⊢e₁ ⊢e₂) = ⟨ (λ _ → ⟨ {!!} , {!!} ⟩) , (λ ()) ⟩
 
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩

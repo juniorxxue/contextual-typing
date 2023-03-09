@@ -205,9 +205,19 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                       Typing & Subtyping                       +--
 --+                                                                +--
 ----------------------------------------------------------------------
+≤a-τ-weaken : ∀ {Γ x A B C}
+  → Γ , x ⦂ A ⊢a B ≤ τ C
+  → Γ ⊢a B ≤ τ C
+≤a-τ-weaken ≤a-int = ≤a-int
+≤a-τ-weaken ≤a-top = ≤a-top
+≤a-τ-weaken (≤a-arr B≤C B≤C₁) = ≤a-arr (≤a-τ-weaken B≤C) (≤a-τ-weaken B≤C₁)
 
-{-
 ⊢a-to-≤a : ∀ {Γ e A H}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
--}
+⊢a-to-≤a (⊢a-lit x) = x
+⊢a-to-≤a (⊢a-var x x₁) = x₁
+⊢a-to-≤a (⊢a-app ⊢e x) = x
+⊢a-to-≤a (⊢a-ann ⊢e x) = x
+⊢a-to-≤a (⊢a-lam ⊢e) = ≤a-arr ≤a-refl-h (≤a-τ-weaken ind-e)
+  where ind-e = ⊢a-to-≤a ⊢e
