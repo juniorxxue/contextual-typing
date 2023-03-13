@@ -65,16 +65,10 @@ data _⊢a_⇛_⇛_ where
     ---------------------
     → Γ ⊢a H ⇛ e ⦂ A ⇛ A
 
-  ⊢a-lam₁ : ∀ {Γ x e A B C}
+  ⊢a-lam : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢a τ B ⇛ e ⇛ C
     ------------------------------------
     → Γ ⊢a τ (A ⇒ B) ⇛ ƛ x ⇒ e ⇛ A ⇒ C
-
-  ⊢a-lam₂ : ∀ {Γ e₁ e x A B H}
-    → Γ ⊢a τ Top ⇛ e₁ ⇛ A
-    → Γ , x ⦂ A ⊢a H ⇛ e ⇛ B
-    -------------------------------------
-    → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ x ⇒ e ⇛ A ⇒ B
     
 ----------------------------------------------------------------------
 --                                                                  --
@@ -96,12 +90,12 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam₁ (⊢a-app (⊢a-var Z proof-sub1) ≤a-refl-h)) proof-sub2) ≤a-top
+_ = ⊢a-app (⊢a-ann (⊢a-lam (⊢a-app (⊢a-var Z proof-sub1) ≤a-refl-h)) proof-sub2) ≤a-top
   where
     proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
     proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ "x" ⇒ ` "x" ⟧⇒ τ Top
-    proof-sub2 = ≤a-hint (⊢a-lam₁ (⊢a-var Z ≤a-int)) ≤a-top
+    proof-sub2 = ≤a-hint (⊢a-lam (⊢a-var Z ≤a-int)) ≤a-top
 
 
 ----------------------------------------------------------------------
@@ -225,6 +219,5 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 ⊢a-to-≤a (⊢a-var x x₁) = x₁
 ⊢a-to-≤a (⊢a-app ⊢e x) = x
 ⊢a-to-≤a (⊢a-ann ⊢e x) = x
-⊢a-to-≤a (⊢a-lam₁ ⊢e) = ≤a-arr ≤a-refl-h (≤a-τ-weaken ind-e)
+⊢a-to-≤a (⊢a-lam ⊢e) = ≤a-arr ≤a-refl-h (≤a-τ-weaken ind-e)
   where ind-e = ⊢a-to-≤a ⊢e
-⊢a-to-≤a (⊢a-lam₂ ⊢e ⊢f) = {!!}

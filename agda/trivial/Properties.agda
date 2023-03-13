@@ -36,7 +36,7 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
   → ❪ H , A ❫↣❪ es , T , As , A' ❫ 
   → Γ ⊢d e ▻ es ∙ ⇛ ∙ A'
 ⊩-elim ⊢d ⊩-empty none = ⊢d
-⊩-elim ⊢d (⊩-cons ⊩es ⊢e) (have spl) = ⊩-elim (⊢d-app₁ ⊢d ⊢e) ⊩es spl
+⊩-elim ⊢d (⊩-cons ⊩es ⊢e) (have spl) = ⊩-elim (⊢d-app ⊢d ⊢e) ⊩es spl
 
 sound-≤ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≤ H
@@ -60,8 +60,7 @@ sound (⊢a-var Γ∋x A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-var Γ∋
 sound (⊢a-app ⊢a x) spl = sound ⊢a (have spl)
 sound (⊢a-ann ⊢a A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl)
                             , ⊢d-sub (⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl) ((proj₁ (sound-≤ A≤H spl))) ⟩
-sound (⊢a-lam₁ ⊢a) none = ⟨ (λ ()) , ⊢d-lam (proj₂ (sound ⊢a none)) ⟩
-sound (⊢a-lam₂ ⊢e ⊢f) spl = {!!}
+sound (⊢a-lam ⊢a) none = ⟨ (λ ()) , ⊢d-lam (proj₂ (sound ⊢a none)) ⟩
 
 -- Corollary
 
@@ -112,24 +111,49 @@ algo1 : ∀ {Γ e₁ e₂ A B C}
   → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
 algo1 ⊢f ⊢e = algon ⊢f (⊩a-cons ⊩a-empty ⊢e)
 
-{-
+≤a-hint-inv : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
+≤a-hint-inv (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
 
-subsumption : ∀ {Γ H e A H'}
+subsumption : ∀ {Γ H e A H' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
   → Γ ⊢a A ≤ H'
   → ∃[ B ] Γ ⊢a H' ⇛ e ⇛ B
-subsumption (⊢a-lit x) A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
-subsumption {A = A} (⊢a-var x x₁) A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
-subsumption {Γ = Γ} {H = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) B≤H' = {!!} -- solved
+subsumption (⊢a-lit x) spl A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
+subsumption {A = A} (⊢a-var x x₁) spl A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
+subsumption {Γ = Γ} {H' = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) spl B≤H' = {!subsumption ⊢e (have spl) sub-ins!} -- solved
   where sub-ins : Γ ⊢a A ⇒ B ≤ ⟦ e₂ ⟧⇒ H'
-        sub-ins = {!!}
-subsumption {A = A} (⊢a-ann ⊢e x) A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
-subsumption (⊢a-lam ⊢e) A≤H' = {!subsumption ⊢e!}
+        sub-ins = ≤a-hint (proj₂ (≤a-hint-inv (⊢a-to-≤a ⊢e))) B≤H'
+subsumption {A = A} (⊢a-ann ⊢e x) spl A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
+subsumption (⊢a-lam ⊢e) () A≤H'
 
-problems with lam case, seems not provable
+subsumption-trans : ∀ {Γ H e A es As A' B}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
+  → Γ ⊢a A' ≤ τ B
+  → ∃[ C ] Γ ⊢a τ B ⇛ e ▻ es ⇛ C
+subsumption-trans (⊢a-lit x) none A'≤B = ⟨ Int , ⊢a-lit A'≤B ⟩
+subsumption-trans (⊢a-var Γ∋x A≤H) spl A'≤B = {!!}
+subsumption-trans (⊢a-app ⊢a x) spl A'≤B = subsumption-trans ⊢a (have spl) A'≤B
+subsumption-trans (⊢a-ann ⊢a x) spl A'≤B = {!!}
 
--}
+sub-case : ∀ {Γ e A B}
+  → Γ ⊢a τ Top ⇛ e ⇛ A
+  → Γ ⊢a A ≤ τ B
+  → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
+sub-case ⊢a A≤B = subsumption-trans ⊢a none A≤B
 
+subsumption' : ∀ {Γ H e A T}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a A ≤ τ T
+  → ∃[ B ] Γ ⊢a τ T ⇛ e ⇛ B
+subsumption' (⊢a-lit x) A≤T = ⟨ Int , ⊢a-lit A≤T ⟩
+subsumption' {A = A} (⊢a-var x x₁) A≤T = ⟨ A , ⊢a-var x A≤T ⟩
+subsumption' (⊢a-app ⊢a x) A≤T = {!subsumption' ⊢a ?!}
+subsumption' {A = A} (⊢a-ann ⊢a x) A≤T = ⟨ A , ⊢a-ann ⊢a A≤T ⟩
+subsumption' (⊢a-lam ⊢a) A≤T = {!subsumption' ⊢a ?!}
 
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
@@ -138,15 +162,13 @@ complete ⊢d-int = ⟨ (λ ()) , (λ _ → ⊢a-lit ≤a-top) ⟩
 complete (⊢d-var x) = ⟨ (λ ()) , (λ _ → ⊢a-var x ≤a-top) ⟩
 
 complete (⊢d-lam {A = A} {B = B} ⊢d) with (proj₁ (complete ⊢d)) refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam₁ ⊢a-e ⟩) , (λ ()) ⟩
+... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩) , (λ ()) ⟩
 
-complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl
+complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
 ... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → algo1 ind-f ⊢a-e) ⟩
   where ind-f = proj₂ (complete ⊢f) refl
-
-complete (⊢d-app₂ ⊢e₁ ⊢e₂) = ⟨ (λ _ → ⟨ {!!} , {!!} ⟩) , (λ ()) ⟩
 
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
 
-complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ → {!!}) , (λ ()) ⟩
+complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  sub-case ((proj₂ (complete ⊢d)) refl) {!!}) , (λ ()) ⟩ -- trivial subtyping
