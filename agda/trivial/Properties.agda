@@ -80,6 +80,13 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+≤d-to-≤a : ∀ {Γ A B}
+  → B ≤d A
+  → Γ ⊢a B ≤ τ A
+≤d-to-≤a ≤d-int = ≤a-int
+≤d-to-≤a ≤d-top = ≤a-top
+≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
+
 infix 4 _⊩a_⇛_⇛_
 
 -- note that we use Type instead of Hint here
@@ -111,10 +118,15 @@ algo1 : ∀ {Γ e₁ e₂ A B C}
   → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
 algo1 ⊢f ⊢e = algon ⊢f (⊩a-cons ⊩a-empty ⊢e)
 
-≤a-hint-inv : ∀ {Γ H A B e}
+≤a-hint-inv₁ : ∀ {Γ H A B e}
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
   → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
-≤a-hint-inv (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
+≤a-hint-inv₁ (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
+
+≤a-hint-inv₂ : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → Γ ⊢a B ≤ H
+≤a-hint-inv₂ (≤a-hint x ≤) = ≤
 
 subsumption : ∀ {Γ H e A H' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -123,37 +135,23 @@ subsumption : ∀ {Γ H e A H' es As A'}
   → ∃[ B ] Γ ⊢a H' ⇛ e ⇛ B
 subsumption (⊢a-lit x) spl A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
 subsumption {A = A} (⊢a-var x x₁) spl A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
-subsumption {Γ = Γ} {H' = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) spl B≤H' = {!subsumption ⊢e (have spl) sub-ins!} -- solved
-  where sub-ins : Γ ⊢a A ⇒ B ≤ ⟦ e₂ ⟧⇒ H'
-        sub-ins = ≤a-hint (proj₂ (≤a-hint-inv (⊢a-to-≤a ⊢e))) B≤H'
+subsumption {Γ = Γ} {H' = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) spl B≤H' with subsumption ⊢e (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢e))) B≤H')
+... | ⟨ A ⇒ C , ⊢e₁ ⟩ = ⟨ C , (⊢a-app ⊢e₁ (≤a-hint-inv₂ (⊢a-to-≤a ⊢e₁))) ⟩
+... | ⟨ Top , ⊢a-var x () ⟩
+... | ⟨ Top , ⊢a-app ⊢e₁ () ⟩
+... | ⟨ Top , ⊢a-ann ⊢e₁ () ⟩
+... | ⟨ Int , ⊢a-lit () ⟩
+... | ⟨ Int , ⊢a-var x () ⟩
+... | ⟨ Int , ⊢a-app ⊢e₁ () ⟩
+... | ⟨ Int , ⊢a-ann ⊢e₁ () ⟩
 subsumption {A = A} (⊢a-ann ⊢e x) spl A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
 subsumption (⊢a-lam ⊢e) () A≤H'
-
-subsumption-trans : ∀ {Γ H e A es As A' B}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
-  → Γ ⊢a A' ≤ τ B
-  → ∃[ C ] Γ ⊢a τ B ⇛ e ▻ es ⇛ C
-subsumption-trans (⊢a-lit x) none A'≤B = ⟨ Int , ⊢a-lit A'≤B ⟩
-subsumption-trans (⊢a-var Γ∋x A≤H) spl A'≤B = {!!}
-subsumption-trans (⊢a-app ⊢a x) spl A'≤B = subsumption-trans ⊢a (have spl) A'≤B
-subsumption-trans (⊢a-ann ⊢a x) spl A'≤B = {!!}
 
 sub-case : ∀ {Γ e A B}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢a A ≤ τ B
   → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
-sub-case ⊢a A≤B = subsumption-trans ⊢a none A≤B
-
-subsumption' : ∀ {Γ H e A T}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a A ≤ τ T
-  → ∃[ B ] Γ ⊢a τ T ⇛ e ⇛ B
-subsumption' (⊢a-lit x) A≤T = ⟨ Int , ⊢a-lit A≤T ⟩
-subsumption' {A = A} (⊢a-var x x₁) A≤T = ⟨ A , ⊢a-var x A≤T ⟩
-subsumption' (⊢a-app ⊢a x) A≤T = {!subsumption' ⊢a ?!}
-subsumption' {A = A} (⊢a-ann ⊢a x) A≤T = ⟨ A , ⊢a-ann ⊢a A≤T ⟩
-subsumption' (⊢a-lam ⊢a) A≤T = {!subsumption' ⊢a ?!}
+sub-case ⊢a A≤B = subsumption ⊢a none A≤B
 
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
@@ -171,4 +169,4 @@ complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
 
-complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  sub-case ((proj₂ (complete ⊢d)) refl) {!!}) , (λ ()) ⟩ -- trivial subtyping
+complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  sub-case ((proj₂ (complete ⊢d)) refl) (≤d-to-≤a B≤A)) , (λ ()) ⟩
