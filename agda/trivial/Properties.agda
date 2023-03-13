@@ -87,37 +87,6 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 ≤d-to-≤a ≤d-top = ≤a-top
 ≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
 
-infix 4 _⊩a_⇛_⇛_
-
--- note that we use Type instead of Hint here
-data _⊩a_⇛_⇛_ : Context → List Type → List Term → List Type → Set where
-
-  ⊩a-empty : ∀ {Γ}
-    → Γ ⊩a [] ⇛ [] ⇛ []
-
-  ⊩a-cons : ∀ {Γ es As Bs e A B}
-    → Γ ⊩a As ⇛ es ⇛ Bs
-    → Γ ⊢a τ A ⇛ e ⇛ B
-    → Γ ⊩a (A ∷ As) ⇛ (e ∷ es) ⇛ (B ∷ Bs)
-
-infix 6 _↦_
-
-_↦_ : List Type → Type → Type
-[] ↦ A = A
-(A ∷ As) ↦ B = A ⇒ (As ↦ B)
-
-algon : ∀ {Γ e es As B Cs}
-  → Γ ⊢a τ Top ⇛ e ⇛ As ↦ B
-  → Γ ⊩a As ⇛ es ⇛ Cs
-  → Γ ⊢a τ Top ⇛ e ▻ es ⇛ B
-algon = {!!}
-
-algo1 : ∀ {Γ e₁ e₂ A B C}
-  → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a τ A ⇛ e₂ ⇛ C
-  → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
-algo1 ⊢f ⊢e = algon ⊢f (⊩a-cons ⊩a-empty ⊢e)
-
 ≤a-hint-inv₁ : ∀ {Γ H A B e}
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
   → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
@@ -135,7 +104,7 @@ subsumption : ∀ {Γ H e A H' es As A'}
   → ∃[ B ] Γ ⊢a H' ⇛ e ⇛ B
 subsumption (⊢a-lit x) spl A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
 subsumption {A = A} (⊢a-var x x₁) spl A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
-subsumption {Γ = Γ} {H' = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B≤H) spl B≤H' with subsumption ⊢e (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢e))) B≤H')
+subsumption (⊢a-app {A = A} ⊢e B≤H) spl B≤H' with subsumption ⊢e (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢e))) B≤H')
 ... | ⟨ A ⇒ C , ⊢e₁ ⟩ = ⟨ C , (⊢a-app ⊢e₁ (≤a-hint-inv₂ (⊢a-to-≤a ⊢e₁))) ⟩
 ... | ⟨ Top , ⊢a-var x () ⟩
 ... | ⟨ Top , ⊢a-app ⊢e₁ () ⟩
@@ -145,13 +114,34 @@ subsumption {Γ = Γ} {H' = H'} (⊢a-app {e₂ = e₂} {A = A} {B = B} ⊢e B�
 ... | ⟨ Int , ⊢a-app ⊢e₁ () ⟩
 ... | ⟨ Int , ⊢a-ann ⊢e₁ () ⟩
 subsumption {A = A} (⊢a-ann ⊢e x) spl A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
-subsumption (⊢a-lam ⊢e) () A≤H'
+
+subsumption-strong : ∀ {Γ H e A H' es As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
+  → Γ ⊢a A ≤ H'
+  → Γ ⊢a H' ⇛ e ⇛ A
+subsumption-strong (⊢a-lit x) spl A≤H' = ⊢a-lit A≤H'
+subsumption-strong (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
+subsumption-strong (⊢a-app ⊢f x) spl A≤H' = ⊢a-app (subsumption-strong ⊢f (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢f))) A≤H')) A≤H'
+subsumption-strong (⊢a-ann ⊢f x) spl A≤H' = ⊢a-ann ⊢f A≤H'
 
 sub-case : ∀ {Γ e A B}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢a A ≤ τ B
   → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
 sub-case ⊢a A≤B = subsumption ⊢a none A≤B
+
+sub-args : ∀ {Γ e A H}
+  → Γ ⊢a τ Top ⇛ e ⇛ A
+  → Γ ⊢a A ≤ H
+  → Γ ⊢a H ⇛ e ⇛ A
+sub-args ⊢a A≤H = subsumption-strong ⊢a none A≤H
+
+algo1'' : ∀ {Γ e₁ e₂ A B C}
+  → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
+  → Γ ⊢a τ A ⇛ e₂ ⇛ C
+  → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
+algo1'' ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top)) ≤a-top
 
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
@@ -163,7 +153,7 @@ complete (⊢d-lam {A = A} {B = B} ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩) , (λ ()) ⟩
 
 complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → algo1 ind-f ⊢a-e) ⟩
+... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → algo1'' ind-f ⊢a-e) ⟩
   where ind-f = proj₂ (complete ⊢f) refl
 
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl

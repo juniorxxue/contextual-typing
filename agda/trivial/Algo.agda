@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Algo where
 
 open import Data.Nat using (ℕ)
@@ -116,6 +115,10 @@ _ = Z
 _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
 
+{-
+
+do we need it?
+
 ≤a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
@@ -126,6 +129,8 @@ _ = Z
 
 ≤a-rename = {!!}
 ⊢a-rename = {!!}
+
+-}
 
 ----------------------------------------------------------------------
 --+                                                                +--
