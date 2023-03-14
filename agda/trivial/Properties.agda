@@ -80,12 +80,16 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+-- subtyping complete
+
 ≤d-to-≤a : ∀ {Γ A B}
   → B ≤d A
   → Γ ⊢a B ≤ τ A
 ≤d-to-≤a ≤d-int = ≤a-int
 ≤d-to-≤a ≤d-top = ≤a-top
 ≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
+
+-- inversion lemmas
 
 ≤a-hint-inv₁ : ∀ {Γ H A B e}
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
@@ -96,6 +100,8 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
   → Γ ⊢a B ≤ H
 ≤a-hint-inv₂ (≤a-hint x ≤) = ≤
+
+-- subsumption lemma ans its following corollaries
 
 subsumption : ∀ {Γ H e A H' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -125,23 +131,13 @@ subsumption-strong (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
 subsumption-strong (⊢a-app ⊢f x) spl A≤H' = ⊢a-app (subsumption-strong ⊢f (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢f))) A≤H')) A≤H'
 subsumption-strong (⊢a-ann ⊢f x) spl A≤H' = ⊢a-ann ⊢f A≤H'
 
-sub-case : ∀ {Γ e A B}
-  → Γ ⊢a τ Top ⇛ e ⇛ A
-  → Γ ⊢a A ≤ τ B
-  → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
-sub-case ⊢a A≤B = subsumption ⊢a none A≤B
-
 sub-args : ∀ {Γ e A H}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
   → Γ ⊢a H ⇛ e ⇛ A
 sub-args ⊢a A≤H = subsumption-strong ⊢a none A≤H
 
-algo1'' : ∀ {Γ e₁ e₂ A B C}
-  → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
-  → Γ ⊢a τ A ⇛ e₂ ⇛ C
-  → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
-algo1'' ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top)) ≤a-top
+-- completeness theorem
 
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
@@ -153,10 +149,22 @@ complete (⊢d-lam {A = A} {B = B} ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩) , (λ ()) ⟩
 
 complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → algo1'' ind-f ⊢a-e) ⟩
-  where ind-f = proj₂ (complete ⊢f) refl
+... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → complete-app ind-f ⊢a-e) ⟩
+  where
+    complete-app : ∀ {Γ e₁ e₂ A B C}
+      → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
+      → Γ ⊢a τ A ⇛ e₂ ⇛ C
+      → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
+    complete-app ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top)) ≤a-top                 
+    ind-f = proj₂ (complete ⊢f) refl
 
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
 ... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
 
-complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  sub-case ((proj₂ (complete ⊢d)) refl) (≤d-to-≤a B≤A)) , (λ ()) ⟩
+complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  complete-sub ((proj₂ (complete ⊢d)) refl) (≤d-to-≤a B≤A)) , (λ ()) ⟩
+  where
+    complete-sub : ∀ {Γ e A B}
+      → Γ ⊢a τ Top ⇛ e ⇛ A
+      → Γ ⊢a A ≤ τ B
+      → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
+    complete-sub ⊢a A≤B = subsumption ⊢a none A≤B

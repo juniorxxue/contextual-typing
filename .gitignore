@@ -34,3 +34,5 @@ live.*
 *.bbl
 *.blg
 
+
+html/
