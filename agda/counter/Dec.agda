@@ -72,11 +72,11 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
 
   ⊢d-lam₁ : ∀ {Γ x e A B }
     → Γ , x ⦂ A ⊢d ∘ ╏ e ∙ ⇚ ∙ B
-    → Γ ⊢d ∘ ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
+    → Γ ⊢d ∘ ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B -- full information, we are safe to use
 
   ⊢d-lam₂ : ∀ {Γ x e A B n}
     → Γ , x ⦂ A ⊢d c n ╏ e ∙ ⇚ ∙ B
-    → Γ ⊢d c (suc n) ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
+    → Γ ⊢d c (suc n) ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
   ⊢d-app₁ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d j ╏ e₁ ∙ ⇛ ∙ A ⇒ B
