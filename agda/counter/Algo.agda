@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Algo where
 
 open import Data.Nat using (ℕ)
@@ -65,10 +64,17 @@ data _⊢a_⇛_⇛_ where
     ---------------------
     → Γ ⊢a H ⇛ e ⦂ A ⇛ A
 
-  ⊢a-lam : ∀ {Γ x e A B C}
+  ⊢a-lam₁ : ∀ {Γ x e A B C}
     → Γ , x ⦂ A ⊢a τ B ⇛ e ⇛ C
     ------------------------------------
     → Γ ⊢a τ (A ⇒ B) ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+
+  ⊢a-lam₂ : ∀ {Γ e₁ e x A B H}
+    → Γ ⊢a τ Top ⇛ e₁ ⇛ A
+    → Γ , x ⦂ A ⊢a H ⇛ e ⇛ B
+    → Γ ⊢a B ≤ H
+    -------------------------------------
+    → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ x ⇒ e ⇛ A ⇒ B
     
 ----------------------------------------------------------------------
 --                                                                  --
@@ -90,12 +96,12 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam (⊢a-app (⊢a-var Z proof-sub1) ≤a-refl-h)) proof-sub2) ≤a-top
+_ = ⊢a-app (⊢a-ann (⊢a-lam₁ (⊢a-app (⊢a-var Z proof-sub1) ≤a-refl-h)) proof-sub2) ≤a-top
   where
     proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
     proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ "x" ⇒ ` "x" ⟧⇒ τ Top
-    proof-sub2 = ≤a-hint (⊢a-lam (⊢a-var Z ≤a-int)) ≤a-top
+    proof-sub2 = ≤a-hint (⊢a-lam₁ (⊢a-var Z ≤a-int)) ≤a-top
 
 
 ----------------------------------------------------------------------
@@ -116,6 +122,10 @@ _ = Z
 _ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
 _ = Z
 
+{-
+
+do we need it?
+
 ≤a-rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
   → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
@@ -126,6 +136,8 @@ _ = Z
 
 ≤a-rename = {!!}
 ⊢a-rename = {!!}
+
+-}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -206,8 +218,21 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                                                                +--
 ----------------------------------------------------------------------
 
-{-
-⊢a-to-≤a : ∀ {Γ e A H}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a A ≤ H
--}
+≤a-τ-weaken : ∀ {Γ x A B C}
+  → Γ , x ⦂ A ⊢a B ≤ τ C
+  → Γ ⊢a B ≤ τ C
+≤a-τ-weaken ≤a-int = ≤a-int
+≤a-τ-weaken ≤a-top = ≤a-top
+≤a-τ-weaken (≤a-arr B≤C B≤C₁) = ≤a-arr (≤a-τ-weaken B≤C) (≤a-τ-weaken B≤C₁)
+
+-- inversion lemmas
+
+≤a-hint-inv₁ : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
+≤a-hint-inv₁ (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
+
+≤a-hint-inv₂ : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → Γ ⊢a B ≤ H
+≤a-hint-inv₂ (≤a-hint x ≤) = ≤

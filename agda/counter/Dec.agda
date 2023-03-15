@@ -41,14 +41,14 @@ data Counter : Set where
   ∘ : Counter
   c_ : ℕ → Counter
 
-pred : ℕ → ℕ
-pred zero = zero
-pred (suc n) = n
+{-
 
 dec : Counter → Counter
 dec ∘ = ∘
 -- dec (c zero) = c zero
 dec (c (suc n)) = dec (c n)
+
+-}
 
 succ : Counter → Counter
 succ ∘ = ∘
@@ -68,10 +68,15 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
     → Γ ∋ x ⦂ A
     → Γ ⊢d j ╏ ` x ∙ ⇛ ∙ A
 
-  ⊢d-lam : ∀ {Γ x e A B j}
-    → Γ , x ⦂ A ⊢d (dec j) ╏ e ∙ ⇚ ∙ B
-    → Γ ⊢d j ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
+  -- in presentation, we can merge two lam rules with a "dec" operation
 
+  ⊢d-lam₁ : ∀ {Γ x e A B }
+    → Γ , x ⦂ A ⊢d ∘ ╏ e ∙ ⇚ ∙ B
+    → Γ ⊢d ∘ ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
+
+  ⊢d-lam₂ : ∀ {Γ x e A B n}
+    → Γ , x ⦂ A ⊢d c n ╏ e ∙ ⇚ ∙ B
+    → Γ ⊢d c (suc n) ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
 
   ⊢d-app₁ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d j ╏ e₁ ∙ ⇛ ∙ A ⇒ B
@@ -80,15 +85,27 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
 
   ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d (succ j) ╏ e₁ ∙ ⇚ ∙ A ⇒ B
-    → Γ ⊢d (c zero) ╏ e₂ ∙ ⇛ ∙ A
-    → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇚ ∙ B
+    → Γ ⊢d (c 0) ╏ e₂ ∙ ⇛ ∙ A
+    → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
   ⊢d-ann : ∀ {Γ e A j}
     → Γ ⊢d ∘ ╏ e ∙ ⇚ ∙ A
     → Γ ⊢d j ╏ e ⦂ A ∙ ⇛ ∙ A
 
   ⊢d-sub : ∀ {Γ e A B j}
-    → Γ ⊢d j ╏ e ∙ ⇛ ∙ B
+    → Γ ⊢d c 0 ╏ e ∙ ⇛ ∙ B
     → B ≤d A
     → Γ ⊢d j ╏ e ∙ ⇚ ∙ A
 
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                            Examples                            +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+_ : ∅ ⊢d (c 0) ╏ (ƛ "x" ⇒ ` "x") · lit 1 ∙ ⇛ ∙ Int
+_ = ⊢d-app₂ (⊢d-lam₂ (⊢d-sub (⊢d-var Z) ≤d-refl)) ⊢d-int
+
+_ : ∅ ⊢d (c 0) ╏ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
+_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-app₁ (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-refl)) ≤d-refl))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
