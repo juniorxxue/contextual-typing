@@ -54,7 +54,6 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-app : ∀ {Γ e₁ e₂ H A B}
     → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
-    → Γ ⊢a B ≤ H
     ----------------------------------
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
 
@@ -89,7 +88,7 @@ data _⊢a_⇛_⇛_ where
 
 
 _ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
-_ = ⊢a-app (⊢a-ann (⊢a-lam (⊢a-app (⊢a-var Z proof-sub1) ≤a-refl-h)) proof-sub2) ≤a-top
+_ = ⊢a-app (⊢a-ann (⊢a-lam (⊢a-app (⊢a-var Z proof-sub1))) proof-sub2)
   where
     proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
@@ -210,6 +209,18 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                       Typing & Subtyping                       +--
 --+                                                                +--
 ----------------------------------------------------------------------
+-- inversion lemmas
+
+≤a-hint-inv₁ : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
+≤a-hint-inv₁ (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
+
+≤a-hint-inv₂ : ∀ {Γ H A B e}
+  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
+  → Γ ⊢a B ≤ H
+≤a-hint-inv₂ (≤a-hint x ≤) = ≤
+
 ≤a-τ-weaken : ∀ {Γ x A B C}
   → Γ , x ⦂ A ⊢a B ≤ τ C
   → Γ ⊢a B ≤ τ C
@@ -222,7 +233,7 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
   → Γ ⊢a A ≤ H
 ⊢a-to-≤a (⊢a-lit x) = x
 ⊢a-to-≤a (⊢a-var x x₁) = x₁
-⊢a-to-≤a (⊢a-app ⊢e x) = x
+⊢a-to-≤a (⊢a-app ⊢e) = ≤a-hint-inv₂ (⊢a-to-≤a ⊢e)
 ⊢a-to-≤a (⊢a-ann ⊢e x) = x
 ⊢a-to-≤a (⊢a-lam ⊢e) = ≤a-arr ≤a-refl-h (≤a-τ-weaken ind-e)
   where ind-e = ⊢a-to-≤a ⊢e

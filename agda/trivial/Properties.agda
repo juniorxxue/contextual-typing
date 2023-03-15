@@ -57,7 +57,7 @@ sound (⊢a-lit ≤a-int) none = ⟨ (λ ()) , ⊢d-sub ⊢d-int ≤d-refl ⟩
 sound (⊢a-lit ≤a-top) none = ⟨ (λ _ → ⊢d-int) , ⊢d-sub ⊢d-int ≤d-top ⟩
 sound (⊢a-var Γ∋x A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl)
                              , ⊢d-sub (⊩-elim (⊢d-var Γ∋x) (proj₂ (sound-≤ A≤H spl)) spl) (proj₁ (sound-≤ A≤H spl)) ⟩
-sound (⊢a-app ⊢a x) spl = sound ⊢a (have spl)
+sound (⊢a-app ⊢a) spl = sound ⊢a (have spl)
 sound (⊢a-ann ⊢a A≤H) spl = ⟨ (λ T≡Top → ⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl)
                             , ⊢d-sub (⊩-elim (⊢d-ann ( proj₂ (sound ⊢a none))) ( proj₂ (sound-≤ A≤H spl)) spl) ((proj₁ (sound-≤ A≤H spl))) ⟩
 sound (⊢a-lam ⊢a) none = ⟨ (λ ()) , ⊢d-lam (proj₂ (sound ⊢a none)) ⟩
@@ -89,53 +89,22 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 ≤d-to-≤a ≤d-top = ≤a-top
 ≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
 
--- inversion lemmas
-
-≤a-hint-inv₁ : ∀ {Γ H A B e}
-  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
-  → ∃[ C ] Γ ⊢a τ A ⇛ e ⇛ C
-≤a-hint-inv₁ (≤a-hint {C = C} x ≤a) = ⟨ C , x ⟩
-
-≤a-hint-inv₂ : ∀ {Γ H A B e}
-  → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
-  → Γ ⊢a B ≤ H
-≤a-hint-inv₂ (≤a-hint x ≤) = ≤
-
 -- subsumption lemma ans its following corollaries
-
 subsumption : ∀ {Γ H e A H' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , Top , As , A' ❫
   → Γ ⊢a A ≤ H'
-  → ∃[ B ] Γ ⊢a H' ⇛ e ⇛ B
-subsumption (⊢a-lit x) spl A≤H' = ⟨ Int , ⊢a-lit A≤H' ⟩
-subsumption {A = A} (⊢a-var x x₁) spl A≤H' = ⟨ A , ⊢a-var x A≤H' ⟩
-subsumption (⊢a-app {A = A} ⊢e B≤H) spl B≤H' with subsumption ⊢e (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢e))) B≤H')
-... | ⟨ A ⇒ C , ⊢e₁ ⟩ = ⟨ C , (⊢a-app ⊢e₁ (≤a-hint-inv₂ (⊢a-to-≤a ⊢e₁))) ⟩
-... | ⟨ Top , ⊢a-var x () ⟩
-... | ⟨ Top , ⊢a-app ⊢e₁ () ⟩
-... | ⟨ Top , ⊢a-ann ⊢e₁ () ⟩
-... | ⟨ Int , ⊢a-lit () ⟩
-... | ⟨ Int , ⊢a-var x () ⟩
-... | ⟨ Int , ⊢a-app ⊢e₁ () ⟩
-... | ⟨ Int , ⊢a-ann ⊢e₁ () ⟩
-subsumption {A = A} (⊢a-ann ⊢e x) spl A≤H' = ⟨ A , ⊢a-ann ⊢e A≤H' ⟩
-
-subsumption-strong : ∀ {Γ H e A H' es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
-  → Γ ⊢a A ≤ H'
   → Γ ⊢a H' ⇛ e ⇛ A
-subsumption-strong (⊢a-lit x) spl A≤H' = ⊢a-lit A≤H'
-subsumption-strong (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
-subsumption-strong (⊢a-app ⊢f x) spl A≤H' = ⊢a-app (subsumption-strong ⊢f (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢f))) A≤H')) A≤H'
-subsumption-strong (⊢a-ann ⊢f x) spl A≤H' = ⊢a-ann ⊢f A≤H'
+subsumption (⊢a-lit x) spl A≤H' = ⊢a-lit A≤H'
+subsumption (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
+subsumption (⊢a-app ⊢f) spl A≤H' = ⊢a-app (subsumption ⊢f (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢f))) A≤H'))
+subsumption (⊢a-ann ⊢f x) spl A≤H' = ⊢a-ann ⊢f A≤H'
 
 sub-args : ∀ {Γ e A H}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
   → Γ ⊢a H ⇛ e ⇛ A
-sub-args ⊢a A≤H = subsumption-strong ⊢a none A≤H
+sub-args ⊢a A≤H = subsumption ⊢a none A≤H
 
 -- completeness theorem
 
@@ -155,7 +124,7 @@ complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
       → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
       → Γ ⊢a τ A ⇛ e₂ ⇛ C
       → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
-    complete-app ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top)) ≤a-top                 
+    complete-app ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top))              
     ind-f = proj₂ (complete ⊢f) refl
 
 complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
@@ -167,4 +136,6 @@ complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  complete-sub ((proj₂ (complete
       → Γ ⊢a τ Top ⇛ e ⇛ A
       → Γ ⊢a A ≤ τ B
       → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
-    complete-sub ⊢a A≤B = subsumption ⊢a none A≤B
+    complete-sub {A = A} ⊢a A≤B with subsumption ⊢a none A≤B
+    ... | ⊢e = ⟨ A , ⊢e ⟩
+
