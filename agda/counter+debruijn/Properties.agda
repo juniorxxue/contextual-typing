@@ -47,7 +47,7 @@ sound-≤ : ∀ {Γ H A es T As A'}
 sound : ∀ {Γ e H A es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → (T ≡ Top → Γ ⊢d c 0 ╏ e ▻ es ∙ ⇛ ∙ A') × (Γ ⊢d ∘ ╏ e ▻ es ∙ ⇚ ∙ T)
+    → (T ≡ Top → Γ ⊢d cw 0 ╏ e ▻ es ∙ ⇛ ∙ A') × (Γ ⊢d ∘ ╏ e ▻ es ∙ ⇚ ∙ T)
 
 sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩-empty ⟩
 sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩-empty ⟩
