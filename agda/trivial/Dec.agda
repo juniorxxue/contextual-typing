@@ -31,9 +31,9 @@ data _⊢d_∙_∙_ : Context → Term → Mode → Type → Set where
     → Γ ∋ x ⦂ A
     → Γ ⊢d ` x ∙ ⇛ ∙ A
 
-  ⊢d-lam : ∀ {Γ x e A B}
-    → Γ , x ⦂ A ⊢d e ∙ ⇚ ∙ B
-    → Γ ⊢d (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B
+  ⊢d-lam : ∀ {Γ e A B}
+    → Γ , A ⊢d e ∙ ⇚ ∙ B
+    → Γ ⊢d (ƛ e) ∙ ⇚ ∙ A ⇒ B
 
   ⊢d-app : ∀ {Γ e₁ e₂ A B}
     → Γ ⊢d e₁ ∙ ⇛ ∙ A ⇒ B
@@ -57,5 +57,5 @@ _ = ≤d-arr ≤d-int ≤d-top
 ≤d-refl {Top} = ≤d-top
 ≤d-refl {A ⇒ B} = ≤d-arr ≤d-refl ≤d-refl
 
-_ : ∅ ⊢d ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
+_ : ∅ ⊢d ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ∙ ⇛ ∙ Int
 _ = ⊢d-app (⊢d-ann (⊢d-lam (⊢d-sub (⊢d-app (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-int)) ≤d-int))) (⊢d-lam (⊢d-sub (⊢d-var Z) ≤d-int))

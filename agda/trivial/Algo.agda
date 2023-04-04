@@ -63,10 +63,10 @@ data _⊢a_⇛_⇛_ where
     ---------------------
     → Γ ⊢a H ⇛ e ⦂ A ⇛ A
 
-  ⊢a-lam : ∀ {Γ x e A B C}
-    → Γ , x ⦂ A ⊢a τ B ⇛ e ⇛ C
+  ⊢a-lam : ∀ {Γ e A B C}
+    → Γ , A ⊢a τ B ⇛ e ⇛ C
     ------------------------------------
-    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ C
     
 ----------------------------------------------------------------------
 --                                                                  --
@@ -87,49 +87,14 @@ data _⊢a_⇛_⇛_ where
 ----------------------------------------------------------------------
 
 
-_ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
+_ : ∅ ⊢a τ Top ⇛ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⇛ Int
 _ = ⊢a-app (⊢a-ann (⊢a-lam (⊢a-app (⊢a-var Z proof-sub1))) proof-sub2)
   where
-    proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
+    proof-sub1 : ∅ , Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
-    proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ "x" ⇒ ` "x" ⟧⇒ τ Top
+    proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ ` 0 ⟧⇒ τ Top
     proof-sub2 = ≤a-hint (⊢a-lam (⊢a-var Z ≤a-int)) ≤a-top
 
-
-----------------------------------------------------------------------
---                                                                  --
---                         Weakening Lemma                          --
---                                                                  --
-----------------------------------------------------------------------
-
-ext : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {x y A B} → Γ , y ⦂ B ∋ x ⦂ A → Δ , y ⦂ B ∋ x ⦂ A)
-ext ρ Z           =  Z
-ext ρ (S x≢y ∋x)  =  S x≢y (ρ ∋x)
-
-_ : ∅ , "x" ⦂ Int ∋ "x" ⦂ Int
-_ = Z
-
-_ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
-_ = Z
-
-{-
-
-do we need it?
-
-≤a-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
-
-⊢a-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {e A B} → Γ ⊢a B ⇛ e ⇛ A → Δ ⊢a B ⇛ e ⇛ A)
-
-≤a-rename = {!!}
-⊢a-rename = {!!}
-
--}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -137,34 +102,10 @@ do we need it?
 --+                                                                +--
 ----------------------------------------------------------------------
 
-f : Hint → Type → List Term × Type × Type
-f (τ A) B = ⟨ [] , ⟨ A , B ⟩ ⟩
-f (⟦ e ⟧⇒ H) (A ⇒ B) with f H B
-... | ⟨ es , ⟨  A' , B' ⟩ ⟩ = ⟨ (e ∷ es) , ⟨ A' , B' ⟩ ⟩
-f (⟦ e ⟧⇒ H) Int = ⟨ [] , ⟨ Top , Top ⟩ ⟩ -- by inversion of algo, we will never reach the following results
-f (⟦ e ⟧⇒ H) Top = ⟨ [] , ⟨ Top , Top ⟩ ⟩
 
 _▻_ : Term → List Term → Term
 e ▻ [] = e
 e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
-
-{-
-
---------------
-e ▻ [] ~> e
-
-
-(e₁ · e₂) ▻ es ~> e
-----------------------
-e₁ ▻ (e₂ ∷ es) ~> e
-
--}
-
-{-
-transform : ∀ {Γ H e A}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a τ (proj₁ (proj₂ (f H A))) ⇛ e ▻ proj₁ (f H A) ⇛ proj₂ (proj₂ (f H A))
--}
 
 infix 4 ❪_,_❫↣❪_,_,_,_❫
 
@@ -176,39 +117,16 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
 
-{-
-
-split-true : ∀ {Γ H e A}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ∃[ es ] ∃[ B ] ∃[ A' ] split H A es B A'
-split-true {H = τ x} {A = A} ⊢a = ⟨ [] , ⟨ x , ⟨ A , none ⟩ ⟩ ⟩
-split-true {H = ⟦ x ⟧⇒ H} {A = Int} ⊢a = ⟨ {!!} , {!!} ⟩
-split-true {H = ⟦ x ⟧⇒ H} {A = Top} ⊢a = ⟨ {!!} , {!!} ⟩
-split-true {H = ⟦ x ⟧⇒ H} {e = e} {A = A ⇒ A₁} ⊢a with split-true (⊢a-app ⊢a {!!})
-... | ⟨ fst , ⟨ fst₁ , ⟨ fst₂ , snd ⟩ ⟩ ⟩ = ⟨  x ∷ fst , ⟨ fst₁ , ⟨ fst₂ ,  have {e = x} {A = A} snd ⟩ ⟩ ⟩
-
--}
-
 ▻-fold : ∀ {e₁ e₂ : Term} {es : List Term}
   → (e₁ · e₂) ▻ es ≡ e₁ ▻ (e₂ ∷ es)
 ▻-fold = refl
-
-{-
-
-transform : ∀ {Γ H e A es B A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → split H A es B A'
-  → Γ ⊢a τ B ⇛ e ▻ es ⇛ A'
-transform ⊢a none = ⊢a
-transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
-
--}
 
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                       Typing & Subtyping                       +--
 --+                                                                +--
 ----------------------------------------------------------------------
+
 -- inversion lemmas
 
 ≤a-hint-inv₁ : ∀ {Γ H A B e}
@@ -221,8 +139,8 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
   → Γ ⊢a B ≤ H
 ≤a-hint-inv₂ (≤a-hint x ≤) = ≤
 
-≤a-τ-weaken : ∀ {Γ x A B C}
-  → Γ , x ⦂ A ⊢a B ≤ τ C
+≤a-τ-weaken : ∀ {Γ A B C}
+  → Γ , A ⊢a B ≤ τ C
   → Γ ⊢a B ≤ τ C
 ≤a-τ-weaken ≤a-int = ≤a-int
 ≤a-τ-weaken ≤a-top = ≤a-top

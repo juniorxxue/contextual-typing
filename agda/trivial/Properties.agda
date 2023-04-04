@@ -100,21 +100,6 @@ subsumption (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
 subsumption (⊢a-app ⊢f) spl A≤H' = ⊢a-app (subsumption ⊢f (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢f))) A≤H'))
 subsumption (⊢a-ann ⊢f x) spl A≤H' = ⊢a-ann ⊢f A≤H'
 
-build-H : List Term → Hint → Hint
-build-H [] H = H
-build-H (e ∷ es) H = build-H es (⟦ e ⟧⇒ H)
-
-subsumption' : ∀ {Γ H e A H' es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
-  → Γ ⊢a A ≤ (build-H es H')
-  → Γ ⊢a (build-H es H') ⇛ e ⇛ A
-subsumption' (⊢a-lit x) spl A≤H' = ⊢a-lit A≤H'
-subsumption' (⊢a-var x x₁) spl A≤H' = ⊢a-var x A≤H'
-subsumption' (⊢a-app ⊢e) spl A≤H' = ⊢a-app (subsumption ⊢e (have spl) (≤a-hint (proj₂ (≤a-hint-inv₁ (⊢a-to-≤a ⊢e))) A≤H'))
-subsumption' (⊢a-ann ⊢e x) spl A≤H' = ⊢a-ann ⊢e A≤H'
-
-
 sub-args : ∀ {Γ e A H}
   → Γ ⊢a τ Top ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
@@ -153,4 +138,3 @@ complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  complete-sub ((proj₂ (complete
       → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
     complete-sub {A = A} ⊢a A≤B with subsumption ⊢a none A≤B
     ... | ⊢e = ⟨ A , ⊢e ⟩
-

@@ -17,6 +17,12 @@ infixr 8 ⟦_⟧⇒_
 data Hint : Set where
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
+
+_↥_ : ℕ → Hint → Hint
+d ↥ τ Int = τ Int
+d ↥ τ Top = τ Top
+d ↥ τ (A ⇒ B) = τ (A ⇒ B)
+d ↥ (⟦ e ⟧⇒ H) = ⟦ d ↑ e ⟧⇒ H
   
 infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
@@ -55,7 +61,6 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-app : ∀ {Γ e₁ e₂ H A B}
     → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
---     → Γ ⊢a B ≤ H
     ----------------------------------
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
 
@@ -65,16 +70,16 @@ data _⊢a_⇛_⇛_ where
     ---------------------
     → Γ ⊢a H ⇛ e ⦂ A ⇛ A
 
-  ⊢a-lam₁ : ∀ {Γ x e A B C}
-    → Γ , x ⦂ A ⊢a τ B ⇛ e ⇛ C
+  ⊢a-lam₁ : ∀ {Γ e A B C}
+    → Γ , A ⊢a τ B ⇛ e ⇛ C
     ------------------------------------
-    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ x ⇒ e ⇛ A ⇒ C
+    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ C
 
-  ⊢a-lam₂ : ∀ {Γ e₁ e x A B H}
+  ⊢a-lam₂ : ∀ {Γ e₁ e A B H}
     → Γ ⊢a τ Top ⇛ e₁ ⇛ A
-    → Γ , x ⦂ A ⊢a H ⇛ e ⇛ B
+    → Γ , A ⊢a (1 ↥ H) ⇛ e ⇛ B
       -------------------------------------
-    → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ x ⇒ e ⇛ A ⇒ B
+    → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ e ⇛ A ⇒ B
     
 ----------------------------------------------------------------------
 --                                                                  --
@@ -95,49 +100,13 @@ data _⊢a_⇛_⇛_ where
 ----------------------------------------------------------------------
 
 
-_ : ∅ ⊢a τ Top ⇛ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ⇛ Int
+_ : ∅ ⊢a τ Top ⇛ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⇛ Int
 _ = ⊢a-app (⊢a-ann (⊢a-lam₁ (⊢a-app (⊢a-var Z proof-sub1))) proof-sub2)
   where
-    proof-sub1 : ∅ , "f" ⦂ Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
+    proof-sub1 : ∅ , Int ⇒ Int ⊢a Int ⇒ Int ≤ ⟦ lit 1 ⟧⇒ τ Int
     proof-sub1 = ≤a-hint (⊢a-lit ≤a-int) ≤a-int
-    proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ "x" ⇒ ` "x" ⟧⇒ τ Top
+    proof-sub2 : ∅ ⊢a (Int ⇒ Int) ⇒ Int ≤ ⟦ ƛ ` 0 ⟧⇒ τ Top
     proof-sub2 = ≤a-hint (⊢a-lam₁ (⊢a-var Z ≤a-int)) ≤a-top
-
-
-----------------------------------------------------------------------
---                                                                  --
---                         Weakening Lemma                          --
---                                                                  --
-----------------------------------------------------------------------
-
-ext : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {x y A B} → Γ , y ⦂ B ∋ x ⦂ A → Δ , y ⦂ B ∋ x ⦂ A)
-ext ρ Z           =  Z
-ext ρ (S x≢y ∋x)  =  S x≢y (ρ ∋x)
-
-_ : ∅ , "x" ⦂ Int ∋ "x" ⦂ Int
-_ = Z
-
-_ : ∅ , "x" ⦂ Int , "y" ⦂ Int , "x" ⦂ Top ∋ "x" ⦂ Top
-_ = Z
-
-{-
-
-do we need it?
-
-≤a-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {A B} → Γ ⊢a A ≤ B → Δ ⊢a A ≤ B)
-
-⊢a-rename : ∀ {Γ Δ}
-  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
-  → (∀ {e A B} → Γ ⊢a B ⇛ e ⇛ A → Δ ⊢a B ⇛ e ⇛ A)
-
-≤a-rename = {!!}
-⊢a-rename = {!!}
-
--}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -218,12 +187,18 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                                                                +--
 ----------------------------------------------------------------------
 
-≤a-τ-weaken : ∀ {Γ x A B C}
-  → Γ , x ⦂ A ⊢a B ≤ τ C
-  → Γ ⊢a B ≤ τ C
-≤a-τ-weaken ≤a-int = ≤a-int
-≤a-τ-weaken ≤a-top = ≤a-top
-≤a-τ-weaken (≤a-arr B≤C B≤C₁) = ≤a-arr (≤a-τ-weaken B≤C) (≤a-τ-weaken B≤C₁)
+⊢a-weaken : ∀ {Γ e A B C}
+  → Γ , B ⊢a τ A ⇛ 1 ↑ e ⇛ C
+  → Γ ⊢a τ A ⇛ e ⇛ C
+⊢a-weaken ⊢a = {!!}
+
+≤a-weaken : ∀ {Γ A B H}
+  → Γ , A ⊢a B ≤ (1 ↥ H)
+  → Γ ⊢a B ≤ H
+≤a-weaken {H = τ Int} ≤ = {!!}
+≤a-weaken {H = τ Top} ≤ = {!!}
+≤a-weaken {H = τ (x ⇒ x₁)} ≤ = {!!}
+≤a-weaken {H = ⟦ e ⟧⇒ H} (≤a-hint ⊢e ≤) = {!!}
 
 -- inversion lemmas
 
