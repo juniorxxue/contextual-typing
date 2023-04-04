@@ -5,9 +5,6 @@ open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Common
 
-
-
-
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Subtyping                            +--
@@ -38,20 +35,11 @@ data _≤d_ : Type → Type → Set where
 ----------------------------------------------------------------------
 
 data Counter : Set where
-  ∘ : Counter
+  ∞ : Counter
   c_ : ℕ → Counter
 
-{-
-
-dec : Counter → Counter
-dec ∘ = ∘
--- dec (c zero) = c zero
-dec (c (suc n)) = dec (c n)
-
--}
-
 succ : Counter → Counter
-succ ∘ = ∘
+succ ∞ = ∞
 succ (c n) = c (suc n)
 
 data Mode : Set where
@@ -70,17 +58,17 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
 
   -- in presentation, we can merge two lam rules with a "dec" operation
 
-  ⊢d-lam₁ : ∀ {Γ x e A B }
-    → Γ , x ⦂ A ⊢d ∘ ╏ e ∙ ⇚ ∙ B
-    → Γ ⊢d ∘ ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B -- full information, we are safe to use
+  ⊢d-lam₁ : ∀ {Γ e A B }
+    → Γ , A ⊢d ∞ ╏ e ∙ ⇚ ∙ B
+    → Γ ⊢d ∞ ╏ (ƛ e) ∙ ⇚ ∙ A ⇒ B -- full information, we are safe to use
 
-  ⊢d-lam₂ : ∀ {Γ x e A B n}
-    → Γ , x ⦂ A ⊢d c n ╏ e ∙ ⇚ ∙ B
-    → Γ ⊢d c (suc n) ╏ (ƛ x ⇒ e) ∙ ⇚ ∙ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
+  ⊢d-lam₂ : ∀ {Γ e A B n}
+    → Γ , A ⊢d c n ╏ e ∙ ⇚ ∙ B
+    → Γ ⊢d c (suc n) ╏ (ƛ e) ∙ ⇚ ∙ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
   ⊢d-app₁ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d j ╏ e₁ ∙ ⇛ ∙ A ⇒ B
-    → Γ ⊢d ∘ ╏ e₂ ∙ ⇚ ∙ A
+    → Γ ⊢d ∞ ╏ e₂ ∙ ⇚ ∙ A
     → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
   ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
@@ -89,7 +77,7 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
     → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
   ⊢d-ann : ∀ {Γ e A j}
-    → Γ ⊢d ∘ ╏ e ∙ ⇚ ∙ A
+    → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
     → Γ ⊢d j ╏ e ⦂ A ∙ ⇛ ∙ A
 
   ⊢d-sub : ∀ {Γ e A B j}
@@ -104,8 +92,8 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
 --+                                                                +--
 ----------------------------------------------------------------------
 
-_ : ∅ ⊢d (c 0) ╏ (ƛ "x" ⇒ ` "x") · lit 1 ∙ ⇛ ∙ Int
+_ : ∅ ⊢d (c 0) ╏ (ƛ (` 0)) · lit 1 ∙ ⇛ ∙ Int
 _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-sub (⊢d-var Z) ≤d-refl)) ⊢d-int
 
-_ : ∅ ⊢d (c 0) ╏ ((ƛ "f" ⇒ ` "f" · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ "x" ⇒ ` "x") ∙ ⇛ ∙ Int
+_ : ∅ ⊢d (c 0) ╏ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ∙ ⇛ ∙ Int
 _ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-app₁ (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-refl)) ≤d-refl))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
