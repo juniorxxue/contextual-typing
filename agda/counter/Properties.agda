@@ -179,17 +179,16 @@ complete : ∀ {Γ e ⇔ A cc}
 complete ⊢d-int = ⟨ (λ ()) , (λ _ → ⊢a-lit ≤a-top) ⟩
 complete (⊢d-var ∋) = ⟨ (λ ()) , (λ _ → ⊢a-var ∋ ≤a-top) ⟩
 
-complete (⊢d-lam₁ {A = A} {B = B} ⊢e) with (proj₁ (complete ⊢e)) refl
+complete (⊢d-lam₁ {A = A} {B = B} ⊢e) with (proj₁ (complete ⊢e)) refl refl
 ... | ⟨ C , ⊢e' ⟩ = ⟨ (λ _ _ → ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩) , (λ ()) ⟩
 
-complete (⊢d-lam₂ {A = A} {B = B} ⊢e) with (proj₁ (complete ⊢e)) refl
-... | ⟨ C , ⊢e' ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩) , (λ ()) ⟩
+complete (⊢d-lam₂ {A = A} {B = B} ⊢e) = ⟨ (λ _ ()) , (λ ()) ⟩
 
 -- the lam1 and lam2 share the same proof,
 -- I'm concerned with that why it doesn't include reasoning of counters
 -- perhaps it should happen in the soundness proof
 
-complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl
+complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl refl
 ... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → complete-app ind-f ⊢a-e) ⟩
   where
     complete-app : ∀ {Γ e₁ e₂ A B C}
@@ -199,10 +198,10 @@ complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl
     complete-app ⊢f ⊢e = ⊢a-app (sub ⊢f none ch-none {!!}) --trivial
     ind-f = proj₂ (complete ⊢f) refl
 
-complete (⊢d-app₂ ⊢f ⊢e) = ⟨ (λ ()) , (λ _ → {!proj₁ (complete ⊢f)!}) ⟩
+complete (⊢d-app₂ ⊢f ⊢e) = ⟨ (λ ()) , (λ _ → {!!}) ⟩
 
-complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
+complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl refl
 ... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
 
 complete (⊢d-sub {B = B} ⊢d x) with (proj₂ (complete ⊢d)) refl
-... | ⊢e = ⟨ (λ _ → ⟨ B , sub-top ⊢e {!!} ⟩) , (λ ()) ⟩ -- trivial
+... | ⊢e = ⟨ (λ _ _ → ⟨ B , sub-top ⊢e {!!} ⟩) , (λ ()) ⟩ -- trivial
