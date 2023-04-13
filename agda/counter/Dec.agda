@@ -50,17 +50,23 @@ data Mode : Set where
 
 infix 4 _⊢d_╏_∙_∙_
 
-data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set where
-  ⊢d-int : ∀ {Γ n j}
-    → Γ ⊢d j ╏ (lit n) ∙ ⇛ ∙ Int
+-- is Γ ⊢∞ e ⇒ A allowed?
+-- one counter example is
+-- Γ ⊢∞ (λx. x) 1 ⇒ Top
+-- it happens in reasoning, no corresponding algo cases
+-- (perhaps let Top appears in hint is okay, but it complicates the infer mode)
 
-  ⊢d-var : ∀ {Γ x A j}
+data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set where
+  ⊢d-int : ∀ {Γ n m}
+    → Γ ⊢d (c n) ╏ (lit m) ∙ ⇛ ∙ Int
+
+  ⊢d-var : ∀ {Γ x A n}
     → Γ ∋ x ⦂ A
-    → Γ ⊢d j ╏ ` x ∙ ⇛ ∙ A
+    → Γ ⊢d (c n) ╏ ` x ∙ ⇛ ∙ A
 
   -- in presentation, we can merge two lam rules with a "dec" operation
 
-  ⊢d-lam₁ : ∀ {Γ e A B }
+  ⊢d-lam₁ : ∀ {Γ e A B}
     → Γ , A ⊢d ∞ ╏ e ∙ ⇚ ∙ B
     → Γ ⊢d ∞ ╏ (ƛ e) ∙ ⇚ ∙ A ⇒ B -- full information, we are safe to use
 
@@ -68,19 +74,19 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
     → Γ , A ⊢d c n ╏ e ∙ ⇚ ∙ B
     → Γ ⊢d c (suc n) ╏ (ƛ e) ∙ ⇚ ∙ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B j}
-    → Γ ⊢d j ╏ e₁ ∙ ⇛ ∙ A ⇒ B
+  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B n}
+    → Γ ⊢d (c n) ╏ e₁ ∙ ⇛ ∙ A ⇒ B
     → Γ ⊢d ∞ ╏ e₂ ∙ ⇚ ∙ A
-    → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇛ ∙ B
+    → Γ ⊢d (c n) ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
-  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
-    → Γ ⊢d (succ j) ╏ e₁ ∙ ⇚ ∙ A ⇒ B
+  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B n}
+    → Γ ⊢d (c (suc n)) ╏ e₁ ∙ ⇚ ∙ A ⇒ B
     → Γ ⊢d (c 0) ╏ e₂ ∙ ⇛ ∙ A
-    → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇛ ∙ B
+    → Γ ⊢d (c n) ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
-  ⊢d-ann : ∀ {Γ e A j}
+  ⊢d-ann : ∀ {Γ e A n}
     → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
-    → Γ ⊢d j ╏ e ⦂ A ∙ ⇛ ∙ A
+    → Γ ⊢d (c n) ╏ e ⦂ A ∙ ⇛ ∙ A
 
   ⊢d-sub : ∀ {Γ e A B j}
     → Γ ⊢d c 0 ╏ e ∙ ⇛ ∙ B

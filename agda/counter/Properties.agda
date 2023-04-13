@@ -120,6 +120,16 @@ data chain : List Term → Hint → Hint → Set where
     → chain es H H'
     → chain (e ∷ es) H (⟦ e ⟧⇒ H')
 
+infix 4 _⇴_≗_
+
+data _⇴_≗_ : List Type → Type → Type → Set where
+  cht-none : ∀ {T}
+    → [] ⇴ T ≗ T
+
+  cht-cons : ∀ {A As T T'}
+    → As ⇴ T ≗ T'
+    → (A ∷ As) ⇴ T ≗ (A ⇒ T')
+
 subsumption : ∀ {Γ H e A H' H'' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → (Γ ⊢a A ≤ H)
@@ -170,38 +180,43 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
     → (A ⇒ B) ↪ (suc n) ❪ A ∷ Bs , T ❫
 
   
-complete : ∀ {Γ e ⇔ A cc}
+complete : ∀ {Γ e ⇔ A cc n As T J K}
   → Γ ⊢d cc ╏ e ∙ ⇔ ∙ A
-  → ((⇔ ≡ ⇚) → (cc ≡ ∞) → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B))
---  × ((⇔ ≡ ⇚) → (cc ≡ c n) → (A ↪ n ❪ As , T ❫) → ∃[ B ] (Γ ⊢a τ Top ⇛ e ⇛ B))
+  → ((⇔ ≡ ⇚) → (cc ≡ ∞
+              → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B))
+             × (cc ≡ c n
+              → A ↪ n ❪ As , T ❫
+              → As ⇴ Top ≗ J
+              → ∃[ B ] (As ⇴ B ≗ K → Γ ⊢a τ J ⇛ e ⇛ K)))
   × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
+complete ⊢d = {!!} -- believe that complete can be splitted into 3 lemmas, they're mutually recursive
 
-complete ⊢d-int = ⟨ (λ ()) , (λ _ → ⊢a-lit ≤a-top) ⟩
-complete (⊢d-var ∋) = ⟨ (λ ()) , (λ _ → ⊢a-var ∋ ≤a-top) ⟩
+complete-inf : ∀ {Γ e A cc}
+  → Γ ⊢d cc ╏ e ∙ ⇛ ∙ A
+  → Γ ⊢a τ Top ⇛ e ⇛ A
+  
+complete-chk∞ : ∀ {Γ e A}
+  → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
+  → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)
 
-complete (⊢d-lam₁ {A = A} {B = B} ⊢e) with (proj₁ (complete ⊢e)) refl refl
-... | ⟨ C , ⊢e' ⟩ = ⟨ (λ _ _ → ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩) , (λ ()) ⟩
+complete-chkn : ∀ {Γ e A n As T J K}
+  → Γ ⊢d (c n) ╏ e ∙ ⇚ ∙ A
+  → A ↪ n ❪ As , T ❫
+  → As ⇴ Top ≗ J
+  → ∃[ B ] (As ⇴ B ≗ K → Γ ⊢a τ J ⇛ e ⇛ K)
 
-complete (⊢d-lam₂ {A = A} {B = B} ⊢e) = ⟨ (λ _ ()) , (λ ()) ⟩
 
--- the lam1 and lam2 share the same proof,
--- I'm concerned with that why it doesn't include reasoning of counters
--- perhaps it should happen in the soundness proof
+complete-inf ⊢d-int = {!!}
+complete-inf (⊢d-var x) = {!!}
 
-complete (⊢d-app₁ ⊢f ⊢e) with proj₁ (complete ⊢e) refl refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → complete-app ind-f ⊢a-e) ⟩
-  where
-    complete-app : ∀ {Γ e₁ e₂ A B C}
-      → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
-      → Γ ⊢a τ A ⇛ e₂ ⇛ C
-      → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
-    complete-app ⊢f ⊢e = ⊢a-app (sub ⊢f none ch-none {!!}) --trivial
-    ind-f = proj₂ (complete ⊢f) refl
+complete-inf (⊢d-app₁ ⊢d ⊢d₁) = {!!}
 
-complete (⊢d-app₂ ⊢f ⊢e) = ⟨ (λ ()) , (λ _ → {!!}) ⟩
+complete-inf (⊢d-app₂ ⊢d ⊢d₁) = {!!}
 
-complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl refl
-... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
+complete-inf (⊢d-ann ⊢d) = {!!}
 
-complete (⊢d-sub {B = B} ⊢d x) with (proj₂ (complete ⊢d)) refl
-... | ⊢e = ⟨ (λ _ _ → ⟨ B , sub-top ⊢e {!!} ⟩) , (λ ()) ⟩ -- trivial
+complete-chk∞ (⊢d-lam₁ ⊢d) = {!!}
+complete-chk∞ (⊢d-sub ⊢d x) = {!!}
+
+complete-chkn (⊢d-lam₂ ⊢d) spl AJ = {!!}
+complete-chkn (⊢d-sub ⊢d x) spl AJ = {!!}
