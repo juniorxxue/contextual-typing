@@ -108,29 +108,32 @@ sub-args ⊢a A≤H = subsumption ⊢a none A≤H
 
 -- completeness theorem
 
-complete : ∀ {Γ e ⇔ A}
-  → Γ ⊢d e ∙ ⇔ ∙ A
-  → ((⇔ ≡ ⇚) → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)) × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
-complete ⊢d-int = ⟨ (λ ()) , (λ _ → ⊢a-lit ≤a-top) ⟩
-complete (⊢d-var x) = ⟨ (λ ()) , (λ _ → ⊢a-var x ≤a-top) ⟩
+complete-inf : ∀ {Γ e A}
+  → Γ ⊢d e ∙ ⇛ ∙ A
+  → Γ ⊢a τ Top ⇛ e ⇛ A
 
-complete (⊢d-lam {A = A} {B = B} ⊢d) with (proj₁ (complete ⊢d)) refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ _ → ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩) , (λ ()) ⟩
+complete-chk : ∀ {Γ e A}
+  → Γ ⊢d e ∙ ⇚ ∙ A
+  → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)
 
-complete (⊢d-app ⊢f ⊢e) with proj₁ (complete ⊢e) refl
-... | ⟨ C , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → complete-app ind-f ⊢a-e) ⟩
+complete-inf ⊢d-int = ⊢a-lit ≤a-top
+complete-inf (⊢d-var x) = ⊢a-var x ≤a-top
+complete-inf (⊢d-app ⊢f ⊢e) with complete-chk ⊢e
+... |  ⟨ C , ⊢a-e ⟩ =  complete-app (complete-inf ⊢f) ⊢a-e
   where
     complete-app : ∀ {Γ e₁ e₂ A B C}
       → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
       → Γ ⊢a τ A ⇛ e₂ ⇛ C
       → Γ ⊢a τ Top ⇛ e₁ · e₂ ⇛ B
-    complete-app ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top))              
-    ind-f = proj₂ (complete ⊢f) refl
+    complete-app ⊢f ⊢e = ⊢a-app (sub-args ⊢f (≤a-hint ⊢e ≤a-top))    
 
-complete (⊢d-ann ⊢d) with (proj₁ (complete ⊢d)) refl
-... | ⟨ B , ⊢a-e ⟩ = ⟨ (λ ()) , (λ _ → ⊢a-ann ⊢a-e ≤a-top) ⟩
+complete-inf (⊢d-ann ⊢d) with complete-chk ⊢d
+... | ⟨ B , ⊢a-e ⟩ = ⊢a-ann ⊢a-e ≤a-top
 
-complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  complete-sub ((proj₂ (complete ⊢d)) refl) (≤d-to-≤a B≤A)) , (λ ()) ⟩
+complete-chk (⊢d-lam {A = A} ⊢d) with complete-chk ⊢d
+... | ⟨ C , ⊢a-e ⟩ = ⟨ A ⇒ C , ⊢a-lam ⊢a-e ⟩
+
+complete-chk (⊢d-sub ⊢d B≤A) = complete-sub (complete-inf ⊢d) (≤d-to-≤a B≤A)
   where
     complete-sub : ∀ {Γ e A B}
       → Γ ⊢a τ Top ⇛ e ⇛ A
@@ -138,3 +141,9 @@ complete (⊢d-sub ⊢d B≤A) = ⟨ (λ _ →  complete-sub ((proj₂ (complete
       → ∃[ C ] Γ ⊢a τ B ⇛ e ⇛ C
     complete-sub {A = A} ⊢a A≤B with subsumption ⊢a none A≤B
     ... | ⊢e = ⟨ A , ⊢e ⟩
+
+complete : ∀ {Γ e ⇔ A}
+  → Γ ⊢d e ∙ ⇔ ∙ A
+  → ((⇔ ≡ ⇚) → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)) × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
+complete {⇔ = ⇛} ⊢d = ⟨ (λ ()) , (λ _ → complete-inf ⊢d) ⟩
+complete {⇔ = ⇚} ⊢d = ⟨ (λ _ → complete-chk ⊢d) , (λ ()) ⟩
