@@ -84,14 +84,19 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
     → Γ ⊢d (c 0) ╏ e₂ ∙ ⇛ ∙ A
     → Γ ⊢d (c n) ╏ e₁ · e₂ ∙ ⇛ ∙ B
 
+  ⊢d-app₃ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢d j ╏ e₁ ∙ ⇚ ∙ A ⇒ B
+    → Γ ⊢d (c 0) ╏ e₂ ∙ ⇛ ∙ A
+    → Γ ⊢d j ╏ e₁ · e₂ ∙ ⇚ ∙ B
+
   ⊢d-ann : ∀ {Γ e A n}
     → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
     → Γ ⊢d (c n) ╏ e ⦂ A ∙ ⇛ ∙ A
 
-  ⊢d-sub : ∀ {Γ e A B j}
+  ⊢d-sub₁ : ∀ {Γ e A B}
     → Γ ⊢d c 0 ╏ e ∙ ⇛ ∙ B
     → B ≤d A
-    → Γ ⊢d j ╏ e ∙ ⇚ ∙ A
+    → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
 
 
 ----------------------------------------------------------------------
@@ -101,11 +106,15 @@ data _⊢d_╏_∙_∙_ : Context → Counter → Term → Mode → Type → Set
 ----------------------------------------------------------------------
 
 _ : ∅ ⊢d (c 0) ╏ (ƛ (` 0)) · lit 1 ∙ ⇛ ∙ Int
-_ = ⊢d-app₂ (⊢d-lam₂ (⊢d-sub (⊢d-var Z) ≤d-refl)) ⊢d-int
+_ = {!!}
 
 _ : ∅ ⊢d (c 0) ╏ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ∙ ⇛ ∙ Int
-_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-app₁ (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-refl)) ≤d-refl))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
+_ = {!!}
 
 -- we want it to reject |-0 (\x . \y. y) 1
 failed :  ∅ ⊢d (c 0) ╏ (ƛ (ƛ ` 0)) · (lit 1) ∙ ⇛ ∙ (Int ⇒ Int) → ⊥
-failed (⊢d-app₂ (⊢d-lam₂ (⊢d-sub () x)) ⊢e₁)
+failed = {!!}
+
+-- let count to be 1, the cases should be okay,
+_ : ∅ ⊢d (c 1) ╏ (ƛ (ƛ ` 0)) · (lit 1) ∙ ⇛ ∙ (Int ⇒ Int)
+_ = {!!}

@@ -191,32 +191,12 @@ complete : ∀ {Γ e ⇔ A cc n As T J K}
   × ((⇔ ≡ ⇛) → Γ ⊢a τ Top ⇛ e ⇛ A)
 complete ⊢d = {!!} -- believe that complete can be splitted into 3 lemmas, they're mutually recursive
 
-complete-inf : ∀ {Γ e A cc}
-  → Γ ⊢d cc ╏ e ∙ ⇛ ∙ A
-  → Γ ⊢a τ Top ⇛ e ⇛ A
-  
-complete-chk∞ : ∀ {Γ e A}
-  → Γ ⊢d ∞ ╏ e ∙ ⇚ ∙ A
+complete-chk : ∀ {Γ e A cc}
+  → Γ ⊢d cc ╏ e ∙ ⇚ ∙ A
   → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)
 
-complete-chkn : ∀ {Γ e A n As T J K}
-  → Γ ⊢d (c n) ╏ e ∙ ⇚ ∙ A
+complete-inf : ∀ {Γ e A n As T J}
+  → Γ ⊢d c n ╏ e ∙ ⇛ ∙ A
   → A ↪ n ❪ As , T ❫
   → As ⇴ Top ≗ J
-  → ∃[ B ] (As ⇴ B ≗ K → Γ ⊢a τ J ⇛ e ⇛ K)
-
-
-complete-inf ⊢d-int = {!!}
-complete-inf (⊢d-var x) = {!!}
-
-complete-inf (⊢d-app₁ ⊢d ⊢d₁) = {!!}
-
-complete-inf (⊢d-app₂ ⊢d ⊢d₁) = {!!}
-
-complete-inf (⊢d-ann ⊢d) = {!!}
-
-complete-chk∞ (⊢d-lam₁ ⊢d) = {!!}
-complete-chk∞ (⊢d-sub ⊢d x) = {!!}
-
-complete-chkn (⊢d-lam₂ ⊢d) spl AJ = {!!}
-complete-chkn (⊢d-sub ⊢d x) spl AJ = {!!}
+  → Γ ⊢a τ J ⇛ e ⇛ A
