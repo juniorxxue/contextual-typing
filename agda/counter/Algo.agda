@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Algo where
 
 open import Data.Nat using (ℕ)
@@ -187,19 +186,6 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
 --+                                                                +--
 ----------------------------------------------------------------------
 
-⊢a-weaken : ∀ {Γ e A B C}
-  → Γ , B ⊢a τ A ⇛ 1 ↑ e ⇛ C
-  → Γ ⊢a τ A ⇛ e ⇛ C
-⊢a-weaken ⊢a = {!!}
-
-≤a-weaken : ∀ {Γ A B H}
-  → Γ , A ⊢a B ≤ (1 ↥ H)
-  → Γ ⊢a B ≤ H
-≤a-weaken {H = τ Int} ≤ = {!!}
-≤a-weaken {H = τ Top} ≤ = {!!}
-≤a-weaken {H = τ (x ⇒ x₁)} ≤ = {!!}
-≤a-weaken {H = ⟦ e ⟧⇒ H} (≤a-hint ⊢e ≤) = {!!}
-
 -- inversion lemmas
 
 ≤a-hint-inv₁ : ∀ {Γ H A B e}
@@ -211,26 +197,4 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
   → Γ ⊢a B ≤ H
 ≤a-hint-inv₂ (≤a-hint x ≤) = ≤
-
-data chain : List Term → Hint → Hint → Set where
-  ch-none : ∀ {H}
-    → chain [] H H
-
-  ch-cons : ∀ {H e es H'}
-    → chain es H H'
-    → chain (e ∷ es) H (⟦ e ⟧⇒ H')
-
-subsumption : ∀ {Γ H e A H' H'' es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → (Γ ⊢a A ≤ H) × (❪ H , A ❫↣❪ es , Top , As , A' ❫ → chain es H'' H' → Γ ⊢a A ≤ H' → Γ ⊢a H' ⇛ e ⇛ A)
-subsumption (⊢a-lit x) = ⟨ x , (λ x x₁ → ⊢a-lit) ⟩
-subsumption (⊢a-var x x₁) = ⟨ x₁ , (λ _ _ → ⊢a-var x) ⟩
-
-subsumption {H' = H'} {H''} {es} {As} {A'} (⊢a-app ⊢e) with (≤a-hint-inv₁ (proj₁ (subsumption {H' = H'} {H'' = H''} {es = es} {As = As} {A' = A'} ⊢e)))
-... | ⟨ fst , snd ⟩ = ⟨ ≤a-hint-inv₂ (proj₁ (subsumption {H' = H'} {H'' = H''} {es = es} {As = As} {A' = A'} ⊢e)) , (λ spl ch A≤H' → ⊢a-app ((proj₂ (subsumption ⊢e)) (have spl) (ch-cons ch) (≤a-hint snd A≤H'))) ⟩
-
-
-subsumption (⊢a-ann ⊢e x) = {!!}
-subsumption (⊢a-lam₁ ⊢e) = {!!}
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) = ⟨ ≤a-hint ((proj₂ (subsumption ⊢e)) none ch-none ≤a-refl-h ) {!!} , (λ spl ch A≤H' → {!!}) ⟩
 

@@ -3,6 +3,8 @@ module Dec where
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Data.Empty using (⊥; ⊥-elim)
+
 open import Common
 
 ----------------------------------------------------------------------
@@ -97,3 +99,7 @@ _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-sub (⊢d-var Z) ≤d-refl)) ⊢d-int
 
 _ : ∅ ⊢d (c 0) ╏ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ∙ ⇛ ∙ Int
 _ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-app₁ (⊢d-var Z) (⊢d-sub ⊢d-int ≤d-refl)) ≤d-refl))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
+
+-- we want it to reject |-0 (\x . \y. y) 1
+failed :  ∅ ⊢d (c 0) ╏ (ƛ (ƛ ` 0)) · (lit 1) ∙ ⇛ ∙ (Int ⇒ Int) → ⊥
+failed (⊢d-app₂ (⊢d-lam₂ (⊢d-sub () x)) ⊢e₁)
