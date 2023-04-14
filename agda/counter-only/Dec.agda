@@ -89,7 +89,7 @@ data _⊢d_╏_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ∞ ╏ e ⦂ A
     → Γ ⊢d (c n) ╏ (e ⦂ A) ⦂ A
 
-  ⊢d-sub₁ : ∀ {Γ e A B}
+  ⊢d-sub : ∀ {Γ e A B}
     → Γ ⊢d c 0 ╏ e ⦂ B
     → B ≤d A
     → Γ ⊢d ∞ ╏ e ⦂ A
@@ -105,7 +105,7 @@ _ : ∅ ⊢d (c 0) ╏ (ƛ (` 0)) · lit 1 ⦂ Int
 _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-var Z)) ⊢d-int
 
 _ : ∅ ⊢d (c 0) ╏ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⦂ Int
-_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-app₃ (⊢d-sub₁ (⊢d-var Z) (≤d-arr ≤d-int ≤d-int)) ⊢d-int))) (⊢d-lam₁ (⊢d-sub₁ (⊢d-var Z) ≤d-int))
+_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-app₃ (⊢d-sub (⊢d-var Z) (≤d-arr ≤d-int ≤d-int)) ⊢d-int))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int))
 
 -- we want it to reject |-0 (\x . \y. y) 1
 failed : ∅ ⊢d (c 0) ╏ (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int) → ⊥
