@@ -21,7 +21,7 @@ _↥_ : ℕ → Hint → Hint
 d ↥ τ Int = τ Int
 d ↥ τ Top = τ Top
 d ↥ τ (A ⇒ B) = τ (A ⇒ B)
-d ↥ (⟦ e ⟧⇒ H) = ⟦ d ↑ e ⟧⇒ H
+d ↥ (⟦ e ⟧⇒ H) = ⟦ d ↑ e ⟧⇒ (d ↥ H)
   
 infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 

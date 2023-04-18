@@ -37,17 +37,54 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
   → Γ ⊢d c 0 ╏ e ▻ es ⦂ A'
 ⊩-elim ⊢d ⊩-empty none = ⊢d
 ⊩-elim ⊢d (⊩-cons ⊩es ⊢e) (have spl) = ⊩-elim (⊢d-app₁ ⊢d ⊢e) ⊩es spl
-  
 
 sound-≤ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≤ H
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → (A' ≤d T) × (Γ ⊩ es ⇚ As)
 
-sound : ∀ {Γ e H A es T As A'}
+sound-inf : ∀ {Γ e H A es As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
+  → Γ ⊢d c 0 ╏ e ▻ es ⦂ A'
+
+sound-chk : ∀ {Γ e H A es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → (T ≡ Top → Γ ⊢d c 0 ╏ e ▻ es ⦂ A') × (Γ ⊢d ∞ ╏ e ▻ es ⦂ T)
+  → Γ ⊢d ∞ ╏ e ▻ es ⦂ T
+
+-- looks like we haven't used new 2 apps rules in soundness proof so far (1 essential case left)
+
+sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩-empty ⟩
+sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩-empty ⟩
+sound-≤ (≤a-arr C≤A B≤D) none = ⟨ (≤d-arr ΓC≤A ΓB≤D) , ⊩-empty ⟩
+  where ΓB≤D = proj₁ (sound-≤ B≤D none)
+        ΓC≤A = proj₁ (sound-≤ C≤A none)
+sound-≤ (≤a-hint ⊢e A≤H) (have spl) = ⟨ (proj₁ (sound-≤ A≤H spl)) , ⊩-cons (proj₂ (sound-≤ A≤H spl)) (sound-chk ⊢e none) ⟩
+
+sound-inf (⊢a-lit _) none = ⊢d-int
+sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
+  where arg-chks = proj₂ (sound-≤ A≤H spl)
+sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
+sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
+  where arg-chks = proj₂ (sound-≤ A≤H spl)
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
+
+sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
+sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
+sound-chk (⊢a-var ∋ A≤H) spl = ⊢d-sub elims A'≤T
+  where arg-chks = proj₂ (sound-≤ A≤H spl)
+        elims = ⊩-elim (⊢d-var ∋) arg-chks spl
+        A'≤T = proj₁ (sound-≤ A≤H spl)
+sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
+sound-chk (⊢a-ann ⊢e A≤H) spl = ⊢d-sub elims A'≤T
+  where arg-chks = proj₂ (sound-≤ A≤H spl)
+        elims = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
+        A'≤T = proj₁ (sound-≤ A≤H spl)        
+sound-chk (⊢a-lam₁ ⊢e) none = ⊢d-lam₁ (sound-chk ⊢e none)
+sound-chk (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!!}
+
+{-
 
 sound-inf : ∀ {Γ e A}
   → Γ ⊢a τ Top ⇛ e ⇛ A
@@ -58,6 +95,8 @@ sound-chk : ∀ {Γ e A B}
   → Γ ⊢a τ A ⇛ e ⇛ B
   → Γ ⊢d ∞ ╏ e ⦂ A
 sound-chk ⊢a = proj₂ (sound ⊢a none)
+
+-}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -76,19 +115,22 @@ sound-chk ⊢a = proj₂ (sound ⊢a none)
 
 -- weakening
 
+⊢a-strengthen : ∀ {Γ e H A B}
+  → Γ , A ⊢a 1 ↥ H ⇛ 1 ↑ e ⇛ B
+  → Γ ⊢a H ⇛ e ⇛ B
+⊢a-strengthen {e = lit x} ⊢e = {!!}
+⊢a-strengthen {e = ` x} ⊢e = {!!}
+⊢a-strengthen {e = ƛ e} ⊢e = {!!}
+⊢a-strengthen {e = e · e₁} (⊢a-app ⊢e) = ⊢a-app (⊢a-strengthen ⊢e)
+⊢a-strengthen {e = e ⦂ x} ⊢e = {!!}
 
-⊢a-weaken : ∀ {Γ e A B C}
-  → Γ , B ⊢a τ A ⇛ 1 ↑ e ⇛ C
-  → Γ ⊢a τ A ⇛ e ⇛ C
-⊢a-weaken ⊢a = {!!}
-
-≤a-weaken : ∀ {Γ A B H}
+≤a-strengthen : ∀ {Γ A B H}
   → Γ , A ⊢a B ≤ (1 ↥ H)
   → Γ ⊢a B ≤ H
-≤a-weaken {H = τ Int} ≤ = {!!}
-≤a-weaken {H = τ Top} ≤ = {!!}
-≤a-weaken {H = τ (x ⇒ x₁)} ≤ = {!!}
-≤a-weaken {H = ⟦ e ⟧⇒ H} (≤a-hint ⊢e ≤) = {!!}
+≤a-strengthen {H = τ Int} ≤ = {!!}
+≤a-strengthen {H = τ Top} ≤ = {!!}
+≤a-strengthen {H = τ (x ⇒ x₁)} ≤ = {!!}
+≤a-strengthen {H = ⟦ e ⟧⇒ H} (≤a-hint ⊢e ≤) = {!!}
 
 -- subsumption
 
@@ -110,27 +152,32 @@ data _⇴_≗_ : List Type → Type → Type → Set where
     → As ⇴ T ≗ T'
     → (A ∷ As) ⇴ T ≗ (A ⇒ T')
 
-subsumption : ∀ {Γ H e A H' H'' es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → (Γ ⊢a A ≤ H)
-  × (❪ H , A ❫↣❪ es , Top , As , A' ❫ → chain es H'' H' → Γ ⊢a A ≤ H' → Γ ⊢a H' ⇛ e ⇛ A)
-subsumption (⊢a-lit x) = ⟨ x , (λ x x₁ → ⊢a-lit) ⟩
-subsumption (⊢a-var x x₁) = ⟨ x₁ , (λ _ _ → ⊢a-var x) ⟩
-
-subsumption {H' = H'} {H''} {es} {As} {A'} (⊢a-app ⊢e) with (≤a-hint-inv₁ (proj₁ (subsumption {H' = H'} {H'' = H''} {es = es} {As = As} {A' = A'} ⊢e)))
-... | ⟨ fst , snd ⟩ = ⟨ ≤a-hint-inv₂ (proj₁ (subsumption {H' = H'} {H'' = H''} {es = es} {As = As} {A' = A'} ⊢e))
-                      , (λ spl ch A≤H' → ⊢a-app ((proj₂ (subsumption ⊢e)) (have spl) (ch-cons ch) (≤a-hint snd A≤H'))) ⟩
-
-
-subsumption (⊢a-ann ⊢e x) = {!!}
-subsumption (⊢a-lam₁ ⊢e) = {!!}
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) = ⟨ ≤a-hint ((proj₂ (subsumption ⊢e)) none ch-none ≤a-refl-h ) {!!} , (λ spl ch A≤H' → {!!}) ⟩
-
--- several corollaries
 ⊢a-to-≤a : ∀ {Γ e H A}
   → Γ ⊢a H ⇛ e ⇛ A
   → Γ ⊢a A ≤ H
-⊢a-to-≤a ⊢e = proj₁ (subsumption {H' = τ Top} {H'' = τ Top} {es = []} {As = []} {A' = Top} ⊢e)
+
+subsumption : ∀ {Γ H e A H' H'' es As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
+  → chain es H'' H'
+  → Γ ⊢a A ≤ H'
+  → Γ ⊢a H' ⇛ e ⇛ A
+  
+⊢a-to-≤a (⊢a-lit x) = x
+⊢a-to-≤a (⊢a-var x x₁) = x₁
+⊢a-to-≤a (⊢a-app ⊢a) with ⊢a-to-≤a ⊢a
+... | ≤a-hint x A≤H = A≤H
+⊢a-to-≤a (⊢a-ann ⊢a x) = x
+⊢a-to-≤a (⊢a-lam₁ ⊢a) = ≤a-arr ≤a-refl-h {!⊢a-to-≤a ⊢a!} -- trivial
+⊢a-to-≤a (⊢a-lam₂ ⊢a ⊢a₁) = ≤a-hint (subsumption ⊢a none ch-none ≤a-refl-h) {!⊢a-to-≤a ⊢a₁!} -- depends on above shift-reasoning lemma
+
+subsumption (⊢a-lit x) spl ch sub = ⊢a-lit sub
+subsumption (⊢a-var x x₁) spl ch sub = ⊢a-var x sub
+subsumption (⊢a-app ⊢e) spl ch sub = {!!}
+subsumption (⊢a-ann ⊢e x) spl ch sub = {!!}
+subsumption (⊢a-lam₂ ⊢e ⊢e₁) spl ch sub = {!!}
+
+-- several corollaries
 
 sub : ∀ {Γ H e A H' H'' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -169,7 +216,6 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
   n-cons : ∀ {A B T n Bs}
     → B ↪ n ❪ Bs , T ❫
     → (A ⇒ B) ↪ (suc n) ❪ A ∷ Bs , T ❫
-
   
 complete-chk : ∀ {Γ e A}
   → Γ ⊢d ∞ ╏ e ⦂ A
