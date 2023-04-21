@@ -38,6 +38,24 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
 ⊩-elim ⊢d ⊩-empty none = ⊢d
 ⊩-elim ⊢d (⊩-cons ⊩es ⊢e) (have spl) = ⊩-elim (⊢d-app₁ ⊢d ⊢e) ⊩es spl
 
+infix 4 _⊩_⇛_
+data _⊩_⇛_ : Context → List Term → List Type → Set where
+  ⊩-empty' : ∀ {Γ}
+    → Γ ⊩ [] ⇛ []
+
+  ⊩-cons' : ∀ {Γ es As e A}
+    → Γ ⊩ es ⇛ As
+    → Γ ⊢d c 0 ╏ e ⦂ A
+    → Γ ⊩ (e ∷ es) ⇛ (A ∷ As)
+
+⊩-elim' : ∀ {Γ e H A es T As A'}
+  → Γ ⊢d ∞ ╏ e ⦂ A
+  → Γ ⊩ es ⇛ As
+  → ❪ H , A ❫↣❪ es , T , As , A' ❫ 
+  → Γ ⊢d ∞ ╏ e ▻ es ⦂ T
+⊩-elim' ⊢d ⊩-empty' none = {!!}
+⊩-elim' ⊢d (⊩-cons' ⊩es ⊢e) (have spl) = ⊩-elim' (⊢d-app₃ ⊢d ⊢e) ⊩es spl 
+
 sound-≤ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≤ H
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -68,7 +86,7 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!!}
 
 sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
 sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
