@@ -70,10 +70,10 @@ data _⊢d_╏_⦂_ : Context → Counter → Term → Type → Set where
     → Γ , A ⊢d c n ╏ e ⦂ B
     → Γ ⊢d c (suc n) ╏ (ƛ e) ⦂ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B n}
+  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
     → Γ ⊢d (c 0) ╏ e₁ ⦂ A ⇒ B
     → Γ ⊢d ∞ ╏ e₂ ⦂ A
-    → Γ ⊢d (c n) ╏ e₁ · e₂ ⦂ B
+    → Γ ⊢d (c 0) ╏ e₁ · e₂ ⦂ B -- concern about this one
 
   ⊢d-app₂ : ∀ {Γ e₁ e₂ A B n}
     → Γ ⊢d (c (suc n)) ╏ e₁ ⦂ A ⇒ B
@@ -114,3 +114,6 @@ failed (⊢d-app₂ (⊢d-lam₂ ()) ⊢d₁)
 -- let count to be 1, the cases should be okay,
 _ : ∅ ⊢d (c 1) ╏ (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int)
 _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-lam₂ (⊢d-var Z))) ⊢d-int
+
+_ : ∅ ⊢d (c 0) ╏ (ƛ ((ƛ ` 0) ⦂ (Int ⇒ Int) ⇒ Int ⇒ Int)) · (lit 2) · (ƛ ` 0) ⦂ Int ⇒ Int
+_ = ⊢d-app₁ (⊢d-app₂ (⊢d-lam₂ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl)))) ⊢d-int) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
