@@ -86,7 +86,8 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have none) = ⊢d-app₂ (⊢d-lam₂ (sound-inf ⊢f none)) (sound-inf ⊢e none)
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have (have spl)) = {!sound-inf ⊢f ?!}
 
 sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
 sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
@@ -191,9 +192,11 @@ subsumption : ∀ {Γ H e A H' H'' es As A'}
 
 subsumption (⊢a-lit x) spl ch sub = ⊢a-lit sub
 subsumption (⊢a-var x x₁) spl ch sub = ⊢a-var x sub
-subsumption (⊢a-app ⊢e) spl ch sub = {!!}
-subsumption (⊢a-ann ⊢e x) spl ch sub = {!!}
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) spl ch sub = {!!}
+subsumption (⊢a-app ⊢e) spl ch sub with ⊢a-to-≤a ⊢e
+... | ≤a-hint ⊢e₂ res = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≤a-hint ⊢e₂ sub))
+
+subsumption (⊢a-ann ⊢e x) spl ch sub = ⊢a-ann ⊢e sub
+subsumption (⊢a-lam₂ ⊢e ⊢f) (have spl) (ch-cons ch) sub = ⊢a-lam₂ ⊢e (subsumption ⊢f {!!} {!!} {!!})
 
 -- several corollaries
 
@@ -248,7 +251,9 @@ complete-inf : ∀ {Γ e A n As T J}
 complete-chk (⊢d-lam₁ {A = A} ⊢d) with complete-chk ⊢d
 ... | ⟨ C , ⊢e ⟩ = ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
 
-complete-chk (⊢d-app₃ ⊢f ⊢e) = {!!}
+complete-chk (⊢d-app₃ ⊢f ⊢e) with complete-chk ⊢f
+... | ⟨ C ⇒ D , ind-f ⟩ = ⟨ {!!} , (⊢a-app (subsumption ind-f {!!} {!!} {!!})) ⟩
+-- needs a sumsumption not limited to Top
 
 complete-chk (⊢d-sub {B = B} ⊢e B≤A) = ⟨ B , sub-top (complete-inf ⊢e n-none cht-none) {!!} ⟩
 
