@@ -1,11 +1,11 @@
 module Common where
 
 open import Data.Nat
+open import Data.Nat.Properties
 open import Data.String
 open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary
 open import Function.Base using (case_of_; case_return_of_)
-open import Data.Nat.Properties as ℕp
 open import Data.Empty
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 

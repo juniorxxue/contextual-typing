@@ -1,12 +1,12 @@
 module Completeness where
 
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_)
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_)
 open import Data.String using (String)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Binary.PropositionalEquality
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Relation.Nullary using (¬_)
+open import Relation.Nullary
 
 open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
 
@@ -56,49 +56,64 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 --+                             Shift                              +--
 --+                                                                +--
 ----------------------------------------------------------------------
+
+τ-shift-eq : ∀ {A n}
+  → τ A ≡ (τ A) ⇧ n
+τ-shift-eq {Int} = refl
+τ-shift-eq {Top} = refl
+τ-shift-eq {A ⇒ B} = refl
+
 postulate
 
   ⊢a-strengthen : ∀ {Γ e H A B}
-    → Γ , A ⊢a 1 ↥ H ⇛ 1 ↑ e ⇛ B
+    → Γ , A ⊢a H ⇧ 1 ⇛ e ↑ 0 ⇛ B
     → Γ ⊢a H ⇛ e ⇛ B
     
   ≤a-strengthen : ∀ {Γ A B H}
-    → Γ , A ⊢a B ≤ (1 ↥ H)
+    → Γ , A ⊢a B ≤ (H ⇧ 0)
     → Γ ⊢a B ≤ H
 
-  ⊢a-shift-τ : ∀ {Γ T e A}
-    → Γ ⊢a τ T ⇛ e ⇛ A
-    → Γ ⊢a 1 ↥ τ T ⇛ e ⇛ A    
+≤a-weaken : ∀ {Γ A B H}
+  → Γ ⊢a B ≤ H
+  → Γ , A ⊢a B ≤ (H ⇧ 0)
 
-  ≤a-weaken : ∀ {Γ A B H}
-    → Γ ⊢a B ≤ H
-    → Γ , A ⊢a B ≤ (1 ↥ H)
+⊢a-weaken : ∀ {Γ e H A B}
+  → Γ ⊢a H ⇛ e ⇛ B
+  → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
 
-  ⊢a-weaken : ∀ {Γ e H A B}
-    → Γ ⊢a H ⇛ e ⇛ B
-    → Γ , A ⊢a 1 ↥ H ⇛ 1 ↑ e ⇛ B
+-- we need to gen the weakening
 
-  ≤a-strengthen-τ : ∀ {Γ A B C}
-    → Γ , A ⊢a B ≤ τ C
-    → Γ ⊢a B ≤ τ C
+≤a-weaken ≤a-int = ≤a-int
+≤a-weaken ≤a-top = ≤a-top
+≤a-weaken (≤a-arr {A = A} C≤A B≤D) = ≤a-arr (≤a-weaken C≤A) (≤a-weaken B≤D)
+≤a-weaken (≤a-hint {A = A} ⊢e B≤H) = ≤a-hint (⊢a-weaken ⊢e) (≤a-weaken B≤H)
 
-  spl-weaken : ∀ {H A es T As A'}
-    → ❪ H , A ❫↣❪ es , T , As , A' ❫
-    → ❪ 1 ↥ H , A ❫↣❪ map (_↑_ 1) es , T , As , A' ❫
+⊢a-weaken (⊢a-lit ≤a-int) = ⊢a-lit ≤a-int
+⊢a-weaken (⊢a-lit ≤a-top) = ⊢a-lit ≤a-top
+⊢a-weaken (⊢a-var {x = x} x∈Γ B≤H) = ⊢a-var (S x∈Γ) (≤a-weaken B≤H)
+⊢a-weaken (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken ⊢e)
+⊢a-weaken (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken ⊢e) (≤a-weaken B≤H)
+⊢a-weaken (⊢a-lam₁ ⊢e) = ⊢a-lam₁ {!⊢a-weaken ⊢e!}
+⊢a-weaken (⊢a-lam₂ ⊢e ⊢f) = ⊢a-lam₂ (⊢a-weaken ⊢e) {!⊢a-weaken ⊢e!}
 
-  ch-weaken : ∀ {es H' H}
-    → chain es H' H
-    → chain (map (_↑_ 1) es) (1 ↥ H') (1 ↥ H)
+spl-weaken : ∀ {H A es T As A' n}
+  → ❪ H , A ❫↣❪ es , T , As , A' ❫
+  → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
+spl-weaken {T = T} none = none
+spl-weaken (have spl) = have (spl-weaken spl)
 
-
-↑-injective : ∀ {e₁ e₂ n}
-  → n ↑ e₁ ≡ n ↑ e₂
-  → e₁ ≡ e₂
-↑-injective {lit _} {lit _} refl = refl
-↑-injective {` x} {` x₁} ne = {!ne!}
-↑-injective {ƛ e₁} {e₂} ne = {!!}
-↑-injective {e₁ · e₃} {e₂} ne = {!!}
-↑-injective {e₁ ⦂ x} {e₂} ne = {!!}
+ch-weaken : ∀ {es H' H n}
+  → chain es H' H
+  → chain (map (_↑ n) es) (H' ⇧ n) (H ⇧ n)
+ch-weaken ch-none = ch-none
+ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
+    
+≤a-strengthen-τ : ∀ {Γ A B C}
+  → Γ , A ⊢a B ≤ τ C
+  → Γ ⊢a B ≤ τ C
+≤a-strengthen-τ ≤a-int = ≤a-int
+≤a-strengthen-τ ≤a-top = ≤a-top
+≤a-strengthen-τ (≤a-arr C≤A B≤D) = ≤a-arr (≤a-strengthen-τ C≤A) (≤a-strengthen-τ B≤D)
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -166,8 +181,8 @@ rebase-gen (⊢a-lit ()) none ⊢e ch-none
 rebase-gen (⊢a-var x∈Γ A≤H) spl ⊢e ch = ⊢a-var x∈Γ (rebase-≤ A≤H spl ch ⊢e)
 rebase-gen (⊢a-app ⊢f) spl ⊢e ch = ⊢a-app (rebase-gen ⊢f (have spl) ⊢e (ch-cons ch))
 rebase-gen (⊢a-ann ⊢f A≤H) spl ⊢e ch = ⊢a-ann ⊢f (rebase-≤ A≤H spl ch ⊢e)
-rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e (⊢a-shift-τ ⊢f)
-rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f {!!}
+rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e ⊢f
+rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f (rebase-gen ⊢a (spl-weaken spl) (⊢a-weaken ⊢e) (ch-weaken ch))
 
 rebase-gen-1 : ∀ {Γ e₁ e₂ A B C D}
   → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D

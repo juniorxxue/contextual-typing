@@ -17,11 +17,11 @@ data Hint : Set where
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
 
-_↥_ : ℕ → Hint → Hint
-d ↥ τ Int = τ Int
-d ↥ τ Top = τ Top
-d ↥ τ (A ⇒ B) = τ (A ⇒ B)
-d ↥ (⟦ e ⟧⇒ H) = ⟦ d ↑ e ⟧⇒ (d ↥ H)
+
+infix 7 _⇧_
+_⇧_ : Hint → ℕ → Hint
+τ A ⇧ n = τ A
+(⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)
   
 infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
@@ -76,7 +76,7 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-lam₂ : ∀ {Γ e₁ e A B H}
     → Γ ⊢a τ Top ⇛ e₁ ⇛ A
-    → Γ , A ⊢a (1 ↥ H) ⇛ e ⇛ B
+    → Γ , A ⊢a (H ⇧ 0) ⇛ e ⇛ B
       -------------------------------------
     → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ e ⇛ A ⇒ B
     
@@ -197,4 +197,3 @@ transform ⊢a (have spl) = transform ⊢a {!split-true ⊢a!}
   → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H
   → Γ ⊢a B ≤ H
 ≤a-hint-inv₂ (≤a-hint x ≤) = ≤
-
