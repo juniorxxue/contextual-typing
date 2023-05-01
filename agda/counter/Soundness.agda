@@ -59,6 +59,13 @@ sound-chk : ∀ {Γ e H A es T As A'}
 
 -- looks like we haven't used new 2 apps rules in soundness proof so far (1 essential case left)
 
+subst :  ∀ {Γ A B e es e₁}
+  → Γ , A ⊢d c 0 ╏ e ▻ es ⦂ B
+  → Γ ⊢d c 0 ╏ e₁ ⦂ A
+  → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
+subst {es = []} ⊢e ⊢e₁ = ⊢d-app₂ (⊢d-lam₂ ⊢e) ⊢e₁
+subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
+
 sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩none⇚ ⟩
 sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩none⇚ ⟩
 sound-≤ (≤a-arr C≤A B≤D) none = ⟨ (≤d-arr ΓC≤A ΓB≤D) , ⊩none⇚ ⟩
@@ -72,8 +79,9 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have none) = ⊢d-app₂ (⊢d-lam₂ (sound-inf ⊢f none)) (sound-inf ⊢e none)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have (have spl)) = {!sound-inf ⊢f ?!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
+-- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have none) = ⊢d-app₂ (⊢d-lam₂ (sound-inf ⊢f none)) (sound-inf ⊢e none)
+-- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have (have spl)) = {!!}
 
 sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
 sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top

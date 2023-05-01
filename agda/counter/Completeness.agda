@@ -66,9 +66,17 @@ postulate
     → Γ , A ⊢a B ≤ (1 ↥ H)
     → Γ ⊢a B ≤ H
 
+  ⊢a-shift-τ : ∀ {Γ T e A}
+    → Γ ⊢a τ T ⇛ e ⇛ A
+    → Γ ⊢a 1 ↥ τ T ⇛ e ⇛ A    
+
   ≤a-weaken : ∀ {Γ A B H}
     → Γ ⊢a B ≤ H
     → Γ , A ⊢a B ≤ (1 ↥ H)
+
+  ⊢a-weaken : ∀ {Γ e H A B}
+    → Γ ⊢a H ⇛ e ⇛ B
+    → Γ , A ⊢a 1 ↥ H ⇛ 1 ↑ e ⇛ B
 
   ≤a-strengthen-τ : ∀ {Γ A B C}
     → Γ , A ⊢a B ≤ τ C
@@ -81,6 +89,16 @@ postulate
   ch-weaken : ∀ {es H' H}
     → chain es H' H
     → chain (map (_↑_ 1) es) (1 ↥ H') (1 ↥ H)
+
+
+↑-injective : ∀ {e₁ e₂ n}
+  → n ↑ e₁ ≡ n ↑ e₂
+  → e₁ ≡ e₂
+↑-injective {lit _} {lit _} refl = refl
+↑-injective {` x} {` x₁} ne = {!ne!}
+↑-injective {ƛ e₁} {e₂} ne = {!!}
+↑-injective {e₁ · e₃} {e₂} ne = {!!}
+↑-injective {e₁ ⦂ x} {e₂} ne = {!!}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -122,6 +140,22 @@ subsumption (⊢a-app ⊢e) spl ch sub with ⊢a-to-≤a ⊢e
 subsumption (⊢a-ann ⊢e x) spl ch sub = ⊢a-ann ⊢e sub
 subsumption (⊢a-lam₂ ⊢e ⊢f) (have spl) (ch-cons ch) (≤a-hint x sub) = ⊢a-lam₂ ⊢e (subsumption ⊢f (spl-weaken spl) (ch-weaken ch) (≤a-weaken sub))
 
+rebase-≤ : ∀ {Γ A A' As H H' e es T₁ T₂}
+  → Γ ⊢a A ≤ H
+  → ❪ H , A ❫↣❪ es , T₁ ⇒ T₂ , As , A' ❫
+  → chain es (⟦ e ⟧⇒ τ T₂) H'
+  → Γ ⊢a τ Top ⇛ e ⇛ T₁
+  → Γ ⊢a A ≤ H'
+rebase-≤ (≤a-arr A≤H A≤H₁) none ch-none ⊢e = ≤a-hint (rebase ⊢e A≤H) A≤H₁
+    where
+       rebase : ∀ {Γ e A B}
+         → Γ ⊢a τ Top ⇛ e ⇛ B
+         → Γ ⊢a B ≤ τ A
+         → Γ ⊢a τ A ⇛ e ⇛ B
+       rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
+      
+rebase-≤ (≤a-hint x A≤H) (have spl) (ch-cons ch) ⊢e = ≤a-hint x (rebase-≤ A≤H spl ch ⊢e)
+
 rebase-gen : ∀ {Γ e₁ e₂ H A es T₁ T₂ As A' H'}
   → Γ ⊢a H ⇛ e₁ ⇛ A
   → ❪ H , A ❫↣❪ es , T₁ ⇒ T₂ , As , A' ❫
@@ -129,11 +163,11 @@ rebase-gen : ∀ {Γ e₁ e₂ H A es T₁ T₂ As A' H'}
   → chain es (⟦ e₂ ⟧⇒ (τ T₂)) H'
   → Γ ⊢a H' ⇛ e₁ ⇛ A
 rebase-gen (⊢a-lit ()) none ⊢e ch-none
-rebase-gen (⊢a-var x∈Γ A≤H) spl ⊢e ch = ⊢a-var x∈Γ {!!} -- require a infer to chk
+rebase-gen (⊢a-var x∈Γ A≤H) spl ⊢e ch = ⊢a-var x∈Γ (rebase-≤ A≤H spl ch ⊢e)
 rebase-gen (⊢a-app ⊢f) spl ⊢e ch = ⊢a-app (rebase-gen ⊢f (have spl) ⊢e (ch-cons ch))
-rebase-gen (⊢a-ann ⊢f A≤H) spl ⊢e ch = ⊢a-ann ⊢f {!!} -- requires a infer to chk
-rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e {!!} -- doable
-rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f {!!} -- doable
+rebase-gen (⊢a-ann ⊢f A≤H) spl ⊢e ch = ⊢a-ann ⊢f (rebase-≤ A≤H spl ch ⊢e)
+rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e (⊢a-shift-τ ⊢f)
+rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f {!!}
 
 rebase-gen-1 : ∀ {Γ e₁ e₂ A B C D}
   → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
@@ -157,6 +191,8 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
   n-cons : ∀ {A B T n Bs}
     → B ↪ n ❪ Bs , T ❫
     → (A ⇒ B) ↪ (suc n) ❪ A ∷ Bs , T ❫
+
+
   
 complete-chk : ∀ {Γ e A}
   → Γ ⊢d ∞ ╏ e ⦂ A
