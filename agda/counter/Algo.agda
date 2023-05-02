@@ -18,7 +18,7 @@ data Hint : Set where
   ⟦_⟧⇒_ : Term → Hint → Hint
 
 
-infix 7 _⇧_
+infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
 τ A ⇧ n = τ A
 (⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)

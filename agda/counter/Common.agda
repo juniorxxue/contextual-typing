@@ -1,10 +1,10 @@
 module Common where
 
-open import Data.Nat
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_; _≤_; s≤s)
 open import Data.Nat.Properties
-open import Data.String
+open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality
-open import Relation.Nullary
+open import Relation.Nullary using (yes; no)
 open import Function.Base using (case_of_; case_return_of_)
 open import Data.Empty
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
@@ -128,3 +128,19 @@ app-injective refl = ⟨ refl , refl ⟩
   
 ↑-injective {e₁ ⦂ A} {e₂ ⦂ B} {n} eq with ⦂-injective eq
 ... | ⟨ eq₁ , eq₂ ⟩ = cong₂ _⦂_ (↑-injective eq₁) eq₂
+
+postulate
+
+  ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
+
+{-
+↑-↑-comm (lit _) m n m≤n = refl
+↑-↑-comm (` x) m n m≤n with n ≤? x | m ≤? x
+... | yes n≤x | yes m≤x = {!!}
+... | yes n≤x | no  m>x = {!!}
+... | no  n>x | yes m≤x = {!!}
+... | no  n>x | no  m>x = {!!} 
+↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
+↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
+↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
+-}

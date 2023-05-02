@@ -13,6 +13,7 @@ open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr;
 open import Common
 open import Dec
 open import Algo
+open import Completeness
 
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
@@ -57,14 +58,26 @@ sound-chk : ∀ {Γ e H A es T As A'}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → Γ ⊢d ∞ ╏ e ▻ es ⦂ T
 
--- looks like we haven't used new 2 apps rules in soundness proof so far (1 essential case left)
-
 subst :  ∀ {Γ A B e es e₁}
-  → Γ , A ⊢d c 0 ╏ e ▻ es ⦂ B
+  → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d c 0 ╏ e₁ ⦂ A
   → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
 subst {es = []} ⊢e ⊢e₁ = ⊢d-app₂ (⊢d-lam₂ ⊢e) ⊢e₁
-subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
+subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
+
+-- possibly the right shape would be
+{-
+subst :
+  → Γ ~. As 
+  → Γ ⊢ es ⦂ As
+  → Γ ⊢ 
+-}
+
+subst' :  ∀ {Γ A B e es e₁}
+  → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d c 0 ╏ e₁ ⦂ A
+  → Γ ⊢d c 0 ╏ (ƛ e) ▻ (e₁ ∷ es) ⦂ B
+subst' = {!!}  
 
 sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩none⇚ ⟩
 sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩none⇚ ⟩
@@ -79,7 +92,7 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f (spl-weaken spl)!}
 -- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have none) = ⊢d-app₂ (⊢d-lam₂ (sound-inf ⊢f none)) (sound-inf ⊢e none)
 -- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have (have spl)) = {!!}
 

@@ -1,6 +1,6 @@
 module Completeness where
 
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_)
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_; z≤n; s≤s) renaming (_≤_ to _≤n_)
 open import Data.String using (String)
 open import Relation.Binary.PropositionalEquality
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
@@ -8,7 +8,7 @@ open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary
 
-open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
+open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom)
 
 open import Common
 open import Dec
@@ -57,11 +57,34 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
-τ-shift-eq : ∀ {A n}
-  → τ A ≡ (τ A) ⇧ n
-τ-shift-eq {Int} = refl
-τ-shift-eq {Top} = refl
-τ-shift-eq {A ⇒ B} = refl
+length : Context → ℕ
+length ∅        =  zero
+length (Γ , _)  =  suc (length Γ)
+
+↑Γ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Context
+↑Γ Γ 0 n≤l T = Γ , T
+↑Γ ∅ (suc n) () T
+↑Γ (Γ , A) (suc n) (s≤s n≤l) T = (↑Γ Γ n n≤l T) , A
+
+↑Γ-var₁ : ∀ {Γ n A B x n≤l}
+  → Γ ∋ x ⦂ B
+  → n ≤n x
+  → ↑Γ Γ n n≤l A ∋ suc x ⦂ B
+↑Γ-var₁ {n = zero} x∈Γ n≤x = S x∈Γ
+↑Γ-var₁ {n = suc n} {n≤l = s≤s n≤l} (S x∈Γ) (s≤s n≤x) = S (↑Γ-var₁ x∈Γ n≤x)
+
+↑Γ-var₂ : ∀ {Γ n A B x n≤l}
+  → Γ ∋ x ⦂ B
+  → ¬ n ≤n x
+  → ↑Γ Γ n n≤l A ∋ x ⦂ B
+↑Γ-var₂ {n = zero} {x = zero} x∈Γ n>x = ⊥-elim (n>x z≤n)
+↑Γ-var₂ {n = zero} {x = suc x} x∈Γ n>x = ⊥-elim (n>x z≤n)
+↑Γ-var₂ {n = suc n} {x = zero} {s≤s n≤l} Z n>x = Z
+↑Γ-var₂ {n = suc n} {x = suc x} {s≤s n≤l} (S x∈Γ) n>x = {!!} --
+
+⇧-⇧-comm : ∀ H m n → m ≤n n → H ⇧ m ⇧ suc n ≡ H ⇧ n ⇧ m
+⇧-⇧-comm (τ A) m n m≤n = refl
+⇧-⇧-comm (⟦ e ⟧⇒ H) m n m≤n rewrite ↑-↑-comm e m n m≤n | ⇧-⇧-comm H m n m≤n = refl
 
 postulate
 
@@ -73,15 +96,44 @@ postulate
     → Γ , A ⊢a B ≤ (H ⇧ 0)
     → Γ ⊢a B ≤ H
 
-≤a-weaken : ∀ {Γ A B H}
+  ≤a-weaken : ∀ {Γ A B H}
+    → Γ ⊢a B ≤ H
+    → Γ , A ⊢a B ≤ (H ⇧ 0)
+
+  ⊢a-weaken : ∀ {Γ e H A B}
+    → Γ ⊢a H ⇛ e ⇛ B
+    → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
+
+≤a-weaken-gen : ∀ {Γ A B H n n≤l}
   → Γ ⊢a B ≤ H
-  → Γ , A ⊢a B ≤ (H ⇧ 0)
-
-⊢a-weaken : ∀ {Γ e H A B}
+  → ↑Γ Γ n n≤l A ⊢a B ≤ (H ⇧ n)
+  
+⊢a-weaken-gen : ∀ {Γ e H A B n n≤l}
   → Γ ⊢a H ⇛ e ⇛ B
-  → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
+  → ↑Γ Γ n n≤l A ⊢a H ⇧ n ⇛ e ↑ n ⇛ B
 
--- we need to gen the weakening
+≤a-weaken-gen ≤a-int = ≤a-int
+≤a-weaken-gen ≤a-top = ≤a-top
+≤a-weaken-gen (≤a-arr B≤H B≤H₁) = ≤a-arr (≤a-weaken-gen B≤H) (≤a-weaken-gen B≤H₁)
+≤a-weaken-gen (≤a-hint ⊢e B≤H) = ≤a-hint (⊢a-weaken-gen ⊢e) (≤a-weaken-gen B≤H)
+
+eq-sample : ∀ H n
+  → H ⇧ n ⇧ 0 ≡ H ⇧ 0 ⇧ (suc n)
+eq-sample H n rewrite ⇧-⇧-comm H 0 n z≤n = refl
+
+⊢a-weaken-gen (⊢a-lit B≤H) = ⊢a-lit (≤a-weaken-gen B≤H)
+⊢a-weaken-gen {n = n} (⊢a-var {x = x} x∈Γ B≤H) with n ≤? x
+... | yes n≤x = ⊢a-var (↑Γ-var₁ x∈Γ n≤x) (≤a-weaken-gen B≤H)
+... | no  n>x = ⊢a-var (↑Γ-var₂ x∈Γ n>x) (≤a-weaken-gen B≤H)
+⊢a-weaken-gen (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken-gen ⊢e)
+⊢a-weaken-gen (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken-gen ⊢e) (≤a-weaken-gen B≤H)
+⊢a-weaken-gen {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken-gen {n≤l = s≤s n≤l} ⊢e)
+⊢a-weaken-gen {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken-gen {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
+... | ind-f rewrite sym (eq-sample H n) = ⊢a-lam₂ (⊢a-weaken-gen ⊢e) ind-f
+
+{-
+
+-- we need to gen the weakening, possibly to alter context into a list
 
 ≤a-weaken ≤a-int = ≤a-int
 ≤a-weaken ≤a-top = ≤a-top
@@ -95,6 +147,8 @@ postulate
 ⊢a-weaken (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken ⊢e) (≤a-weaken B≤H)
 ⊢a-weaken (⊢a-lam₁ ⊢e) = ⊢a-lam₁ {!⊢a-weaken ⊢e!}
 ⊢a-weaken (⊢a-lam₂ ⊢e ⊢f) = ⊢a-lam₂ (⊢a-weaken ⊢e) {!⊢a-weaken ⊢f!}
+
+-}
 
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -120,7 +174,6 @@ ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
 --+                          Subsumption                           +--
 --+                                                                +--
 ----------------------------------------------------------------------
-
 
 ⊢a-to-≤a : ∀ {Γ e H A}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -294,4 +347,3 @@ complete-inf (⊢d-ann ⊢e) spl JA = ⊢a-ann (proj₂ (complete-chk ⊢e)) (�
       → A ≤d J
     ≤d-n-spl n-none cht-none = ≤d-top
     ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
-
