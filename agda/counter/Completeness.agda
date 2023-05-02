@@ -94,7 +94,7 @@ postulate
 ⊢a-weaken (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken ⊢e)
 ⊢a-weaken (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken ⊢e) (≤a-weaken B≤H)
 ⊢a-weaken (⊢a-lam₁ ⊢e) = ⊢a-lam₁ {!⊢a-weaken ⊢e!}
-⊢a-weaken (⊢a-lam₂ ⊢e ⊢f) = ⊢a-lam₂ (⊢a-weaken ⊢e) {!⊢a-weaken ⊢e!}
+⊢a-weaken (⊢a-lam₂ ⊢e ⊢f) = ⊢a-lam₂ (⊢a-weaken ⊢e) {!⊢a-weaken ⊢f!}
 
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -223,8 +223,20 @@ complete-chk (⊢d-lam₁ {A = A} ⊢d) with complete-chk ⊢d
 ... | ⟨ C , ⊢e ⟩ = ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
 
 complete-chk (⊢d-app₃ ⊢f ⊢e) with complete-chk ⊢f
-... | ⟨ Int , ind-f ⟩ = {!!} -- absurd
-... | ⟨ Top , ind-f ⟩ = {!!} -- absurd
+... | ⟨ Int , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
+  where
+    inv-absurd : ∀ {Γ e A B}
+      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ Int → ⊥
+    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
+    ... | ()
+
+... | ⟨ Top , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
+  where
+    inv-absurd : ∀ {Γ e A B}
+      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ Top → ⊥
+    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
+    ... | ()
+    
 ... | ⟨ C ⇒ D , ind-f ⟩ = ⟨ D , ⊢a-app (rebase ind-f ind-e) ⟩
   where
     ind-e = complete-inf ⊢e n-none cht-none
@@ -282,3 +294,4 @@ complete-inf (⊢d-ann ⊢e) spl JA = ⊢a-ann (proj₂ (complete-chk ⊢e)) (�
       → A ≤d J
     ≤d-n-spl n-none cht-none = ≤d-top
     ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
+
