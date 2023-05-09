@@ -1,12 +1,17 @@
 module Common where
 
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_; _≤_; s≤s)
-open import Data.Nat.Properties
 open import Data.String using (String)
-open import Relation.Binary.PropositionalEquality
-open import Relation.Nullary using (yes; no)
+open import Data.Bool using (Bool; true; false; T; not)
+open import Data.Nat using (ℕ; zero; suc; pred; _+_; _*_; _^_; _∸_; _≤?_; _≤_; s≤s)
+open import Data.Nat.Properties using (m≤n⇒m≤1+n; ≤-pred)
+open import Relation.Nullary using (yes; no; Dec)
+open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 open import Function.Base using (case_of_; case_return_of_)
+open import Relation.Binary using (Decidable)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl; cong)
 open import Data.Empty
+
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 
 Id : Set
@@ -55,79 +60,46 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
+↑-var : ℕ → ℕ → ℕ
+↑-var n x with n ≤? x
+... | yes n≤x = suc x
+... | no  n>x = x
+
 infixl 7 _↑_
 _↑_ : Term → ℕ → Term
 lit i ↑ n = lit i
-` x ↑ n with n ≤? x
-... | yes n≤x = ` (suc x)
-... | no  n>x = ` x
+` x ↑ n = ` (↑-var n x)
 (ƛ e) ↑ n = ƛ (e ↑ (suc n))
 e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
 (e ⦂ A) ↑ n = (e ↑ n) ⦂ A
 
-↑-idx : ℕ → ℕ → ℕ
-↑-idx x n with n ≤? x
-... | yes p = suc x
-... | no ¬p = x
+↓-var : ℕ → ℕ → ℕ
+↓-var n x with (suc n) ≤? x
+... | yes n+1≤x = pred x
+... | no n+1>x   = x
 
-↑-var : ∀ x n → ` x ↑ n ≡ ` (↑-idx x n)
-↑-var x n with n ≤? x
-... | yes p = refl
-... | no ¬p = refl
+infixl 7 _↓_
+_↓_ : Term → ℕ → Term
+lit i ↓ n = lit i
+` x ↓ n = ` (↓-var n x)
+(ƛ e) ↓ n = ƛ (e ↓ (suc n))
+e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
+(e ⦂ A) ↓ n = (e ↓ n) ⦂ A
 
-ƛ-injective : ∀ {e₁ e₂}
-  → ƛ e₁ ≡ ƛ e₂
-  → e₁ ≡ e₂
-ƛ-injective refl = refl
+↓-↑-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
+↓-↑-var x n with n ≤? x
+...         | yes n≤x with suc n ≤? suc x
+...                   | yes n+1≤x+1 = pred-suc x
+                            where pred-suc : ∀ n → pred (suc n) ≡ n
+                                  pred-suc zero = refl
+                                  pred-suc (suc n) = refl
+...                   | no  n+1>x+1 = ⊥-elim (n+1>x+1 (s≤s n≤x))
+↓-↑-var x n | no n>x with suc n ≤? x
+...                   | yes n+1≤x = ⊥-elim (n>x (n+1≤x→n≤x n+1≤x))
+                            where n+1≤x→n≤x : ∀ {n x} → suc n ≤ x → n ≤ x
+                                  n+1≤x→n≤x n+1≤x = ≤-pred (m≤n⇒m≤1+n n+1≤x)
+...                   | no  n+1>x = refl
 
-app-injective : ∀ {e₁ e₂ e₃ e₄}
-  → e₁ · e₂ ≡ e₃ · e₄
-  → (e₁ ≡ e₃) × (e₂ ≡ e₄)
-app-injective refl = ⟨ refl , refl ⟩
-
-⦂-injective : ∀ {e₁ e₂ A B}
-  → (e₁ ⦂ A) ≡ (e₂ ⦂ B)
-  → (e₁ ≡ e₂) × (A ≡ B)
-⦂-injective refl = ⟨ refl , refl ⟩
-
-↑-injective : ∀ {e₁ e₂ n}
-  → e₁ ↑ n ≡ e₂ ↑ n
-  → e₁ ≡ e₂
-↑-injective {lit x} {lit .x} {n} refl = refl
-↑-injective {lit _} {` x} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-  
-↑-injective {` x} {lit _} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-  
-↑-injective {` x} {` y} {n} eq with n ≤? x | n ≤? y
-↑-injective {` x} {` y} {n} refl | yes n≤x | yes n≤y = refl
-↑-injective {` x} {` y} {n} refl | yes n≤x | no n>y = ⊥-elim (n>y (m≤n⇒m≤1+n n≤x))
-↑-injective {` x} {` y} {n} refl | no n>x | yes n≤y = ⊥-elim (n>x (m≤n⇒m≤1+n n≤y))
-↑-injective {` x} {` y} {n} refl | no n>x | no n>y = refl
-
-↑-injective {` x} {ƛ e} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-↑-injective {` x} {e₁ · e₂} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-↑-injective {` x} {e ⦂ A} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-  
-↑-injective {ƛ e} {` x} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-↑-injective {ƛ e₁} {ƛ e₂} {n} eq = cong ƛ_ (↑-injective (ƛ-injective eq))
-
-↑-injective {e₁ · e₂} {` x} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-  
-↑-injective {e₁ · e₂} {e₃ · e₄} {n} eq with app-injective eq
-... | ⟨ eq₁ , eq₂ ⟩ = cong₂ _·_ (↑-injective eq₁) (↑-injective eq₂)
-
-↑-injective {e ⦂ A} {` x} {n} eq
-  rewrite ↑-var x n = case eq of λ ()
-  
-↑-injective {e₁ ⦂ A} {e₂ ⦂ B} {n} eq with ⦂-injective eq
-... | ⟨ eq₁ , eq₂ ⟩ = cong₂ _⦂_ (↑-injective eq₁) eq₂
 
 postulate
 

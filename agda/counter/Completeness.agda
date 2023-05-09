@@ -80,7 +80,7 @@ length (Γ , _)  =  suc (length Γ)
 ↑Γ-var₂ {n = zero} {x = zero} x∈Γ n>x = ⊥-elim (n>x z≤n)
 ↑Γ-var₂ {n = zero} {x = suc x} x∈Γ n>x = ⊥-elim (n>x z≤n)
 ↑Γ-var₂ {n = suc n} {x = zero} {s≤s n≤l} Z n>x = Z
-↑Γ-var₂ {n = suc n} {x = suc x} {s≤s n≤l} (S x∈Γ) n>x = {!!} --
+↑Γ-var₂ {n = suc n} {x = suc x} {n≤l} x∈Γ n>x = {!!}
 
 ⇧-⇧-comm : ∀ H m n → m ≤n n → H ⇧ m ⇧ suc n ≡ H ⇧ n ⇧ m
 ⇧-⇧-comm (τ A) m n m≤n = refl
@@ -88,8 +88,14 @@ length (Γ , _)  =  suc (length Γ)
 
 postulate
 
+{-
+⊢a-strengthen : ∀ {Γ e A B n}
+  → Γ , A ⊢a H ⇛ e ⇛ B
+  → ¬ (e ≡ var n)
+  → Γ ⊢a H ⇩ n ⇛ e ↓ n ⇛ B
+-}
   ⊢a-strengthen : ∀ {Γ e H A B}
-    → Γ , A ⊢a H ⇧ 1 ⇛ e ↑ 0 ⇛ B
+    → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
     → Γ ⊢a H ⇛ e ⇛ B
     
   ≤a-strengthen : ∀ {Γ A B H}
@@ -103,6 +109,23 @@ postulate
   ⊢a-weaken : ∀ {Γ e H A B}
     → Γ ⊢a H ⇛ e ⇛ B
     → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
+
+≤a-strengthen-gen : ∀ {Γ A B H n n≤l}
+  → ↑Γ Γ n n≤l A ⊢a B ≤ (H ⇧ n)
+  → Γ ⊢a B ≤ H
+≤a-strengthen-gen B≤H = {!!}
+
+≤a-strengthen' : ∀ {Γ A B H}
+  → Γ , A ⊢a B ≤ (H ⇧ 0)
+  → Γ ⊢a B ≤ H
+≤a-strengthen' {H = τ x} B≤H = {!!}
+≤a-strengthen' {H = ⟦ e ⟧⇒ H} (≤a-hint x B≤H) = ≤a-hint {!!} (≤a-strengthen' B≤H)
+
+⊢a-strengthen' : ∀ {Γ e H A B}
+  → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
+  → Γ ⊢a H ⇛ e ⇛ B
+⊢a-strengthen' {e = e} {H = τ x} ⊢e = {!!}
+⊢a-strengthen' {e = e} {H = ⟦ x ⟧⇒ H} ⊢e = {!!}
 
 ≤a-weaken-gen : ∀ {Γ A B H n n≤l}
   → Γ ⊢a B ≤ H
@@ -122,9 +145,7 @@ eq-sample : ∀ H n
 eq-sample H n rewrite ⇧-⇧-comm H 0 n z≤n = refl
 
 ⊢a-weaken-gen (⊢a-lit B≤H) = ⊢a-lit (≤a-weaken-gen B≤H)
-⊢a-weaken-gen {n = n} (⊢a-var {x = x} x∈Γ B≤H) with n ≤? x
-... | yes n≤x = ⊢a-var (↑Γ-var₁ x∈Γ n≤x) (≤a-weaken-gen B≤H)
-... | no  n>x = ⊢a-var (↑Γ-var₂ x∈Γ n>x) (≤a-weaken-gen B≤H)
+⊢a-weaken-gen {n = n} (⊢a-var {x = x} x∈Γ B≤H) = {!!}
 ⊢a-weaken-gen (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken-gen ⊢e)
 ⊢a-weaken-gen (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken-gen ⊢e) (≤a-weaken-gen B≤H)
 ⊢a-weaken-gen {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken-gen {n≤l = s≤s n≤l} ⊢e)
