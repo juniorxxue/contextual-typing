@@ -101,18 +101,11 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ...                   | no  n+1>x = refl
 
 
-postulate
-
-  ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
-
-{-
+↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
 ↑-↑-comm (lit _) m n m≤n = refl
-↑-↑-comm (` x) m n m≤n with n ≤? x | m ≤? x
-... | yes n≤x | yes m≤x = {!!}
-... | yes n≤x | no  m>x = {!!}
-... | no  n>x | yes m≤x = {!!}
-... | no  n>x | no  m>x = {!!} 
+↑-↑-comm (` x) m n m≤n = {!!}
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
--}
+
+-- we also need a ↓-↑-comm lemma here

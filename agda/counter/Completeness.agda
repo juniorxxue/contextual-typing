@@ -66,6 +66,11 @@ length (Γ , _)  =  suc (length Γ)
 ↑Γ ∅ (suc n) () T
 ↑Γ (Γ , A) (suc n) (s≤s n≤l) T = (↑Γ Γ n n≤l T) , A
 
+↓Γ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
+↓Γ ∅ .zero z≤n = ∅
+↓Γ (Γ , A) zero n≤l = Γ
+↓Γ (Γ , A) (suc n) (s≤s n≤l) = ↓Γ Γ n n≤l
+
 ↑Γ-var₁ : ∀ {Γ n A B x n≤l}
   → Γ ∋ x ⦂ B
   → n ≤n x
@@ -115,17 +120,26 @@ postulate
   → Γ ⊢a B ≤ H
 ≤a-strengthen-gen B≤H = {!!}
 
-≤a-strengthen' : ∀ {Γ A B H}
-  → Γ , A ⊢a B ≤ (H ⇧ 0)
-  → Γ ⊢a B ≤ H
-≤a-strengthen' {H = τ x} B≤H = {!!}
-≤a-strengthen' {H = ⟦ e ⟧⇒ H} (≤a-hint x B≤H) = ≤a-hint {!!} (≤a-strengthen' B≤H)
+≤a-strengthen-gen' : ∀ {Γ A H n n≤l}
+  → Γ ⊢a A ≤ H
+  → ↓Γ Γ n n≤l ⊢a A ≤ (H ⇩ n)
+⊢a-strengthen-gen' : ∀ {Γ A H n n≤l e}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ↓Γ Γ n n≤l ⊢a (H ⇩ n) ⇛ e ↓ n ⇛ A
 
-⊢a-strengthen' : ∀ {Γ e H A B}
-  → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
-  → Γ ⊢a H ⇛ e ⇛ B
-⊢a-strengthen' {e = e} {H = τ x} ⊢e = {!!}
-⊢a-strengthen' {e = e} {H = ⟦ x ⟧⇒ H} ⊢e = {!!}
+≤a-strengthen-gen' ≤a-int = ≤a-int
+≤a-strengthen-gen' ≤a-top = ≤a-top
+≤a-strengthen-gen' (≤a-arr A≤H A≤H₁) = ≤a-arr (≤a-strengthen-gen' A≤H) (≤a-strengthen-gen' A≤H₁)
+≤a-strengthen-gen' (≤a-hint ⊢e A≤H) = ≤a-hint (⊢a-strengthen-gen' ⊢e) (≤a-strengthen-gen' A≤H)
+
+⊢a-strengthen-gen' (⊢a-lit x) = ⊢a-lit (≤a-strengthen-gen' x)
+⊢a-strengthen-gen' (⊢a-var x∈Γ A≤H) = ⊢a-var {!!} (≤a-strengthen-gen' A≤H)
+⊢a-strengthen-gen' (⊢a-app ⊢e) = {!!}
+⊢a-strengthen-gen' (⊢a-ann ⊢e x) = {!!}
+⊢a-strengthen-gen' (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-strengthen-gen' ⊢e)
+⊢a-strengthen-gen' (⊢a-lam₂ ⊢e ⊢e₁) = ⊢a-lam₂ (⊢a-strengthen-gen' ⊢e) {!⊢a-strengthen-gen' ⊢e₁!}
+
+
 
 ≤a-weaken-gen : ∀ {Γ A B H n n≤l}
   → Γ ⊢a B ≤ H

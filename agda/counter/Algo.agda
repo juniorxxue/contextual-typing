@@ -22,6 +22,11 @@ infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
 τ A ⇧ n = τ A
 (⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)
+
+infixl 7 _⇩_
+_⇩_ : Hint → ℕ → Hint
+τ A ⇩ n = τ A
+(⟦ e ⟧⇒ H) ⇩ n = ⟦ e ↓ n ⟧⇒ (H ⇩ n)
   
 infix 4 _⊢a_≤_
 infix 4 _⊢a_⇛_⇛_ 
