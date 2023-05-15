@@ -2,7 +2,7 @@ module Soundness where
 
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_)
 open import Data.String using (String)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym)
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
 open import Data.Empty using (⊥; ⊥-elim)
@@ -58,26 +58,57 @@ sound-chk : ∀ {Γ e H A es T As A'}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → Γ ⊢d ∞ ╏ e ▻ es ⦂ T
 
+subst-gen : ∀ {Γ A B e es e₁ es₁ es₂}
+  → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d c 0 ╏ e₁ ⦂ A
+  → es₁ ++ es₂ ≡ es
+  → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) es₁) · e₁) ▻ es₂ ⦂ B
+
+{-
+-- induction on es₂
+subst-gen {es = .(es₁ ++ [])} {es₁ = es₁} {es₂ = []} ⊢e ⊢e₁ refl = ⊢d-app₂ (⊢d-lam₂ {!!}) ⊢e₁
+subst-gen {es = .(es₁ ++ e' ∷ es₂)} {es₁ = es₁} {es₂ = e' ∷ es₂} ⊢e ⊢e₁ refl = {!subst-gen {es₁ = es₁} {es₂ = es₂} ? ? ?!}
+-}
+
+{-
+-- induction on es₁
+subst-gen {es = es} {es₁ = []} {es₂ = es₂} ⊢e ⊢e₁ eq = {!!}
+subst-gen {es = x ∷ .(es₁ ++ es₂)} {es₁ = .x ∷ es₁} {es₂ = es₂} ⊢e ⊢e₁ refl = subst-gen {es₁ = es₁} ⊢e ⊢e₁ refl
+-}
+
+subst-gen {es = es} {es₁ = es₁} {es₂ = es₂} ⊢e ⊢e₁ eq = {!!}
+
+subst-gen' : ∀ {Γ B e es e₁ es₁ es₂}
+  → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) es₁) · e₁) ▻ es₂ ⦂ B
+  → es₁ ++ es₂ ≡ es
+  → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
+subst-gen' = {!!}  
+
+{-
+subst-gen' {es = es} {es₁ = []} {es₂ = .es} ⊢e refl = ⊢e
+subst-gen' {es = es} {es₁ = e₂ ∷ es₁} {es₂ = es₂} ⊢e eq rewrite sym eq = {!subst-gen' {es₁ = es₁} {es₂ = es₂} ⊢e ?!}
+-}
+
+{-
+subst-gen {es = []} ⊢e ⊢e₁ eq = {!!}
+subst-gen {e = e} {es = e₂ ∷ es} {es₁ = []} {es₂ = .(e₂ ∷ es)} ⊢e ⊢e₁ refl = {!!}
+-- subst-gen {e = e} {es = e₂ ∷ es} {es₁ = []} {es₂ = .(e₂ ∷ es)} ⊢e ⊢e₁ refl = subst-gen {e = e · (e₂ ↑ 0)} {es = es} ⊢e ⊢e₁ refl
+subst-gen {e = e} {es = e₂ ∷ .(es₁ ++ es₂)} {es₁ = .e₂ ∷ es₁} {es₂ = es₂} ⊢e ⊢e₁ refl = subst-gen {e = e · (e₂ ↑ 0)} {es = es₁ ++ es₂} {es₁ = es₁} ⊢e ⊢e₁ refl
+-}
+  
 subst :  ∀ {Γ A B e es e₁}
   → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d c 0 ╏ e₁ ⦂ A
   → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
-subst {es = []} ⊢e ⊢e₁ = ⊢d-app₂ (⊢d-lam₂ ⊢e) ⊢e₁
-subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
+subst {es = []} ⊢e ⊢e₁ = {!!}
+subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
 
--- possibly the right shape would be
+-- subst-gen' {es₁ = es} {es₂ = []} (⊢d-app₂ (⊢d-lam₂ ⊢e) ⊢e₁) {!!}
+
 {-
-subst :
-  → Γ ~. As 
-  → Γ ⊢ es ⦂ As
-  → Γ ⊢ 
+subst {es = []} ⊢e ⊢e₁ = {!!}
+subst {es = e₂ ∷ es} ⊢e ⊢e₁ = {!subst {es = es} ⊢e ⊢e₁!}
 -}
-
-subst' :  ∀ {Γ A B e es e₁}
-  → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d c 0 ╏ e₁ ⦂ A
-  → Γ ⊢d c 0 ╏ (ƛ e) ▻ (e₁ ∷ es) ⦂ B
-subst' = {!!}  
 
 sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩none⇚ ⟩
 sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩none⇚ ⟩
@@ -92,7 +123,7 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f (spl-weaken spl)!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
 -- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have none) = ⊢d-app₂ (⊢d-lam₂ (sound-inf ⊢f none)) (sound-inf ⊢e none)
 -- sound-inf (⊢a-lam₂ ⊢e ⊢f) (have (have spl)) = {!!}
 

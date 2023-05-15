@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Common where
 
 open import Data.String using (String)
@@ -101,9 +102,16 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ...                   | no  n+1>x = refl
 
 
+postulate
+  -- proved in Coq
+  ↑-↑-var : ∀ m n x
+    → m ≤ n
+    → ↑-var (suc n) (↑-var m x) ≡ ↑-var m (↑-var n x)
+
+
 ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
 ↑-↑-comm (lit _) m n m≤n = refl
-↑-↑-comm (` x) m n m≤n = {!!}
+↑-↑-comm (` x) m n m≤n = cong `_ (↑-↑-var m n x m≤n)
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl

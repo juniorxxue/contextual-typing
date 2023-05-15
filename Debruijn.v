@@ -9,7 +9,6 @@ Inductive Term : Set :=
 | Lam (e : Term)
 | App (e1 e2 : Term)
 .
-
 Definition shift_var k :=
   fun x => if le_gt_dec k x then (x + 1) else x.
 
@@ -46,7 +45,45 @@ Proof.
     + lia.
     + reflexivity.
 Qed.
-    
+
+Lemma shift_shift_var :
+  forall m n x,
+    m <= n ->
+    shift_var (n + 1) (shift_var m x) = shift_var m (shift_var n x).
+Proof.
+  intros. unfold shift_var.
+  destruct (le_gt_dec m x).
+  - destruct (le_gt_dec (n + 1) (x + 1)).
+    + destruct (le_gt_dec n x).
+      * destruct (le_gt_dec m (x + 1)); lia.
+      * destruct (le_gt_dec m x); lia.
+    + destruct (le_gt_dec n x).
+      * destruct (le_gt_dec m (x + 1)); lia.
+      * destruct (le_gt_dec m x); lia.
+  - destruct (le_gt_dec (n + 1) x).
+    + destruct (le_gt_dec n x).
+      * destruct (le_gt_dec m (x + 1)); lia.
+      * destruct (le_gt_dec m x); lia.
+    + destruct (le_gt_dec n x).
+      * destruct (le_gt_dec m (x + 1)); lia.
+      * destruct (le_gt_dec m x); lia.
+Qed.
+
+(* ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m *)
+Lemma shift_shift_commute :
+  forall e m n,
+    m <= n ->
+    shift (n + 1) (shift m e) = shift m (shift n e).
+Proof.
+  intros e. induction e; intros; eauto.
+  - unfold shift. f_equal.
+    eapply shift_shift_var. assumption.
+  - simpl. f_equal. apply IHe. lia.
+  - simpl. f_equal; eauto.
+Qed.    
+  
+
+       
                  
 
 
