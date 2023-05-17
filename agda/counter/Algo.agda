@@ -1,14 +1,6 @@
 module Algo where
 
-open import Data.Nat using (ℕ)
-open import Data.String using (String; _≟_)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym)
-open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Relation.Nullary using (¬_; Dec; yes; no)
-
-open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
-
+open import Prelude
 open import Common
 
 infixr 8 ⟦_⟧⇒_
@@ -16,7 +8,6 @@ infixr 8 ⟦_⟧⇒_
 data Hint : Set where
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
-
 
 infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
@@ -91,11 +82,11 @@ data _⊢a_⇛_⇛_ where
 --                                                                  --
 ----------------------------------------------------------------------
 
-≤a-refl-h : ∀ {A Γ}
+≤a-refl-τ : ∀ {A Γ}
   → Γ ⊢a A ≤ τ A
-≤a-refl-h {A = Int} = ≤a-int
-≤a-refl-h {A = Top} = ≤a-top
-≤a-refl-h {A = A ⇒ A₁} = ≤a-arr ≤a-refl-h ≤a-refl-h
+≤a-refl-τ {A = Int} = ≤a-int
+≤a-refl-τ {A = Top} = ≤a-top
+≤a-refl-τ {A = _ ⇒ _} = ≤a-arr ≤a-refl-τ ≤a-refl-τ
 
 ----------------------------------------------------------------------
 --                                                                  --
@@ -117,13 +108,6 @@ _ = ⊢a-app (⊢a-ann (⊢a-lam₁ (⊢a-app (⊢a-var Z proof-sub1))) proof-su
 --+                           Transform                            +--
 --+                                                                +--
 ----------------------------------------------------------------------
-
-f : Hint → Type → List Term × Type × Type
-f (τ A) B = ⟨ [] , ⟨ A , B ⟩ ⟩
-f (⟦ e ⟧⇒ H) (A ⇒ B) with f H B
-... | ⟨ es , ⟨  A' , B' ⟩ ⟩ = ⟨ (e ∷ es) , ⟨ A' , B' ⟩ ⟩
-f (⟦ e ⟧⇒ H) Int = ⟨ [] , ⟨ Top , Top ⟩ ⟩ -- by inversion of algo, we will never reach the following results
-f (⟦ e ⟧⇒ H) Top = ⟨ [] , ⟨ Top , Top ⟩ ⟩
 
 _▻_ : Term → List Term → Term
 e ▻ [] = e

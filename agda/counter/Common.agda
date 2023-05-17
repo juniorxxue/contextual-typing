@@ -1,20 +1,9 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Common where
 
-open import Data.String using (String)
-open import Data.Bool using (Bool; true; false; T; not)
-open import Data.Nat using (ℕ; zero; suc; pred; _+_; _*_; _^_; _∸_; _≤?_; _≤_; s≤s)
-open import Data.Nat.Properties using (m≤n⇒m≤1+n; ≤-pred)
-open import Relation.Nullary using (yes; no; Dec)
-open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
-open import Function.Base using (case_of_; case_return_of_)
-open import Relation.Binary using (Decidable)
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; cong)
-open import Data.Empty
+open import Prelude hiding (_≤?_)
+open import Data.Nat.Tactic.RingSolver
 
-open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
-
+  
 Id : Set
 Id = String
 
@@ -60,6 +49,9 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 --+                             Shift                              +--
 --+                                                                +--
 ----------------------------------------------------------------------
+abstract
+  _≤?_ : (x y : ℕ) → Dec (x ≤ y)
+  _≤?_ = Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x
@@ -101,19 +93,69 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
                                   n+1≤x→n≤x n+1≤x = ≤-pred (m≤n⇒m≤1+n n+1≤x)
 ...                   | no  n+1>x = refl
 
-
-postulate
-  -- proved in Coq
-  ↑-↑-var : ∀ m n x
-    → m ≤ n
-    → ↑-var (suc n) (↑-var m x) ≡ ↑-var m (↑-var n x)
+↑-↑-comm-var : ∀ m n x
+  → m ≤ n
+  → ↑-var (suc n) (↑-var m x) ≡ ↑-var m (↑-var n x)
+↑-↑-comm-var m n x m≤n with m ≤? x | n ≤? x
+...               | yes m≤x | yes n≤x with suc n ≤? suc x | m ≤? suc x
+...                                   | yes n+1≤x+1 | yes m≤x+1 = refl
+...                                   | yes n+1≤x+1 | no  m≰x+1 = ⊥-elim (m≰x+1 (m≤n⇒m≤1+n m≤x))
+...                                   | no  n+1≰x+1 | yes m≤x+1 = ⊥-elim (n+1≰x+1 (s≤s n≤x))
+...                                   | no  n+1≰x+1 | no  m≰x+1 = refl
+↑-↑-comm-var m n x m≤n | yes m≤x | no n≰x  with suc n ≤? suc x | m ≤? x
+...                                   | yes n+1≤x+1 | yes m≤x = ⊥-elim (n≰x (≤-pred n+1≤x+1))
+...                                   | yes n+1≤x+1 | no  m≰x = ⊥-elim (m≰x m≤x)
+...                                   | no  n+1≰x+1 | yes m≤x = refl
+...                                   | no  n+1≰x+1 | no  m≰x = ⊥-elim (m≰x m≤x)
+↑-↑-comm-var m n x m≤n | no  m≰x | yes n≤x with suc n ≤? x | m ≤? suc x
+...                                   | yes n+1≤x | yes m≤x+1 = ⊥-elim (m≰x (≤-trans m≤n n≤x))
+...                                   | yes n+1≤x | no  m≰x+1 = refl
+...                                   | no  n+1≰x | yes m≤x+1 = ⊥-elim (m≰x (≤-trans m≤n n≤x))
+...                                   | no  n+1≰x | no  m≰x+1 = ⊥-elim (m≰x (≤-trans m≤n n≤x))
+↑-↑-comm-var m n x m≤n | no  m≰x | no n≰x  with suc n ≤? x | m ≤? x
+...                                   | yes n+1≤x | yes m≤x = refl
+...                                   | yes n+1≤x | no  m≰x = ⊥-elim (n≰x (m+1≤n→m≤n n+1≤x))
+...                                   | no  n+1≰x | yes m≤x = ⊥-elim (m≰x m≤x)
+...                                   | no  n+1≰x | no  m≰x = refl
 
 
 ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
 ↑-↑-comm (lit _) m n m≤n = refl
-↑-↑-comm (` x) m n m≤n = cong `_ (↑-↑-var m n x m≤n)
+↑-↑-comm (` x) m n m≤n = cong `_ (↑-↑-comm-var m n x m≤n)
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
 
--- we also need a ↓-↑-comm lemma here
+↓-↑-comm-var : ∀ m n x
+  → m ≤ n
+  → ↑-var m (↓-var n x) ≡ ↓-var (suc n) (↑-var m x)
+↓-↑-comm-var m n x m≤n with (suc n) ≤? x | m ≤? x
+...                    | yes n+1≤x | yes m≤x with m ≤? pred x | suc (suc n) ≤? suc x
+...                                          | yes m≤x-1 | yes n+2≤x+1 = n-1+1≡n+1-1 (m<n⇒0<n n+1≤x)
+...                                          | yes m≤x-1 | no  n+2≰x+1 = ⊥-elim (n+2≰x+1 (s≤s n+1≤x))
+...                                          | no  m≰x-1 | yes n+2≤x+1 = ⊥-elim (m≰x-1 (≤-trans m≤n (<⇒≤pred (n+1≤x))))
+...                                          | no  m≰x-1 | no  n+2≰x+1 = ⊥-elim (m≰x-1 (≤-trans m≤n (<⇒≤pred (n+1≤x))))
+↓-↑-comm-var m n x m≤n | yes n+1≤x | no  n≰x with m ≤? pred x | suc (suc n) ≤? x
+...                                          | yes m≤x-1 | yes n+2≤x = ⊥-elim (n≰x (≤pred⇒≤ (m≤x-1)))
+...                                          | yes m≤x-1 | no  n+2≰x = n-1+1≡n+1-1 (m<n⇒0<n n+1≤x)
+...                                          | no  m≰x-1 | yes n+2≤x = refl
+...                                          | no  m≰x-1 | no  n+2≰x = ⊥-elim (m≰x-1 (≤-trans m≤n (<⇒≤pred (n+1≤x))))
+↓-↑-comm-var m n x m≤n | no  n+1≰x | yes m≤x with m ≤? x | suc (suc n) ≤? suc x
+...                                          | yes m≤x | yes n+2≤x+1 = ⊥-elim (n+1≰x (≤-pred n+2≤x+1))
+...                                          | yes m≤x | no  n+2≰x+1 = refl
+...                                          | no  m≰x | yes n+2≤x+1 = refl
+...                                          | no  m≰x | no  n+2≰x+1 = ⊥-elim (m≰x m≤x)
+↓-↑-comm-var m n x m≤n | no  n+1≰x | no  m≰x with m ≤? x | suc (suc n) ≤? x
+...                                          | yes m≤x | yes n+2≤x = ⊥-elim (m≰x m≤x)
+...                                          | yes m≤x | no  n+2≰x = ⊥-elim (m≰x m≤x)
+...                                          | no  m≰x | yes n+2≤x = ⊥-elim (n+1≰x (m+1≤n→m≤n n+2≤x))
+...                                          | no  m≰x | no  n+2≰x = refl
+
+↓-↑-comm : ∀ e m n
+  → m ≤ n
+  → e ↓ n ↑ m ≡ e ↑ m ↓ (suc n)
+↓-↑-comm (lit x) m n m≤n = refl
+↓-↑-comm (` x) m n m≤n = cong `_ (↓-↑-comm-var m n x m≤n)
+↓-↑-comm (ƛ e) m n m≤n rewrite ↓-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
+↓-↑-comm (e₁ · e₂) m n m≤n rewrite ↓-↑-comm e₁ m n m≤n | ↓-↑-comm e₂ m n m≤n = refl
+↓-↑-comm (e ⦂ A) m n m≤n rewrite ↓-↑-comm e m n m≤n = refl

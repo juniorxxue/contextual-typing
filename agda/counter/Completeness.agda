@@ -1,15 +1,6 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Completeness where
 
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_; z≤n; s≤s) renaming (_≤_ to _≤n_)
-open import Data.String using (String)
-open import Relation.Binary.PropositionalEquality
-open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
-open import Data.Empty using (⊥; ⊥-elim)
-open import Relation.Nullary
-
-open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom)
+open import Prelude hiding (_≤?_; length) renaming (_≤_ to _≤n_)
 
 open import Common
 open import Dec
@@ -63,14 +54,14 @@ length ∅        =  zero
 length (Γ , _)  =  suc (length Γ)
 
 ↑Γ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Context
-↑Γ Γ 0 n≤l T = Γ , T
+↑Γ Γ zero n≤l T = Γ , T
 ↑Γ ∅ (suc n) () T
 ↑Γ (Γ , A) (suc n) (s≤s n≤l) T = (↑Γ Γ n n≤l T) , A
 
 ↓Γ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 ↓Γ ∅ .zero z≤n = ∅
 ↓Γ (Γ , A) zero n≤l = Γ
-↓Γ (Γ , A) (suc n) (s≤s n≤l) = ↓Γ Γ n n≤l
+↓Γ (Γ , A) (suc n) (s≤s n≤l) = (↓Γ Γ n n≤l) , A
 
 ↑Γ-var₁ : ∀ {Γ n A B x n≤l}
   → Γ ∋ x ⦂ B
@@ -86,7 +77,15 @@ length (Γ , _)  =  suc (length Γ)
 ↑Γ-var₂ {n = zero} {x = zero} x∈Γ n>x = ⊥-elim (n>x z≤n)
 ↑Γ-var₂ {n = zero} {x = suc x} x∈Γ n>x = ⊥-elim (n>x z≤n)
 ↑Γ-var₂ {n = suc n} {x = zero} {s≤s n≤l} Z n>x = Z
-↑Γ-var₂ {n = suc n} {x = suc x} {n≤l} x∈Γ n>x = {!!}
+↑Γ-var₂ {Γ , C} {n = suc n} {x = suc x} {s≤s n≤l} (S x∈Γ) n>x = S (↑Γ-var₂ x∈Γ λ n≤x → n>x (s≤s n≤x))
+
+∋-weaken : ∀ {Γ A n x B}
+  → Γ ∋ x ⦂ B
+  → (n≤l : n ≤n length Γ)
+  → ↑Γ Γ n n≤l A ∋ ↑-var n x ⦂ B
+∋-weaken {Γ = Γ} {n = n} {x = x} x∈Γ n≤l with n ≤? x
+... | yes p = ↑Γ-var₁ x∈Γ p
+... | no ¬p = ↑Γ-var₂ x∈Γ ¬p
 
 ⇧-⇧-comm : ∀ H m n → m ≤n n → H ⇧ m ⇧ suc n ≡ H ⇧ n ⇧ m
 ⇧-⇧-comm (τ A) m n m≤n = refl
@@ -124,6 +123,7 @@ postulate
 ≤a-strengthen-gen' : ∀ {Γ A H n n≤l}
   → Γ ⊢a A ≤ H
   → ↓Γ Γ n n≤l ⊢a A ≤ (H ⇩ n)
+  
 ⊢a-strengthen-gen' : ∀ {Γ A H n n≤l e}
   → Γ ⊢a H ⇛ e ⇛ A
   → ↓Γ Γ n n≤l ⊢a (H ⇩ n) ⇛ e ↓ n ⇛ A
@@ -140,7 +140,21 @@ postulate
 ⊢a-strengthen-gen' (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-strengthen-gen' ⊢e)
 ⊢a-strengthen-gen' (⊢a-lam₂ ⊢e ⊢e₁) = ⊢a-lam₂ (⊢a-strengthen-gen' ⊢e) {!⊢a-strengthen-gen' ⊢e₁!}
 
+↓Γ-var₁ : ∀ {Γ n x A n≤l}
+  → Γ ∋ x ⦂ A
+  → suc n ≤n x
+  → ↓Γ Γ n n≤l ∋ pred x ⦂ A
+↓Γ-var₁ {Γ , B} {zero} (S x∈Γ) (s≤s n+1≤x) = {!!}
+↓Γ-var₁ {Γ , B} {suc n} {n≤l = s≤s n≤l} (S x∈Γ) (s≤s n+1≤x) = {!↓Γ-var₁ x∈Γ n+1≤x!}
 
+
+∋-strenghthen : ∀ {Γ n x A}
+  → Γ ∋ x ⦂ A
+  → (n≤l : n ≤n length Γ)
+  → ↓Γ Γ n n≤l ∋ ↓-var n x ⦂ A
+∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ n≤l with suc n ≤? x
+... | yes p = {!!}
+... | no ¬p = {!!}
 
 ≤a-weaken-gen : ∀ {Γ A B H n n≤l}
   → Γ ⊢a B ≤ H
@@ -160,7 +174,7 @@ eq-sample : ∀ H n
 eq-sample H n rewrite ⇧-⇧-comm H 0 n z≤n = refl
 
 ⊢a-weaken-gen (⊢a-lit B≤H) = ⊢a-lit (≤a-weaken-gen B≤H)
-⊢a-weaken-gen {n = n} (⊢a-var {x = x} x∈Γ B≤H) = {!!}
+⊢a-weaken-gen {n = n} {n≤l} (⊢a-var {x = x} x∈Γ B≤H) = ⊢a-var (∋-weaken x∈Γ n≤l) (≤a-weaken-gen B≤H)
 ⊢a-weaken-gen (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken-gen ⊢e)
 ⊢a-weaken-gen (⊢a-ann ⊢e B≤H) = ⊢a-ann (⊢a-weaken-gen ⊢e) (≤a-weaken-gen B≤H)
 ⊢a-weaken-gen {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken-gen {n≤l = s≤s n≤l} ⊢e)
@@ -227,8 +241,8 @@ subsumption : ∀ {Γ H e A H' H'' es As A'}
 ⊢a-to-≤a (⊢a-app ⊢a) with ⊢a-to-≤a ⊢a
 ... | ≤a-hint x A≤H = A≤H
 ⊢a-to-≤a (⊢a-ann ⊢a x) = x
-⊢a-to-≤a (⊢a-lam₁ ⊢a) = ≤a-arr ≤a-refl-h (≤a-strengthen-τ (⊢a-to-≤a ⊢a))
-⊢a-to-≤a (⊢a-lam₂ ⊢a ⊢a₁) = ≤a-hint (rebase ⊢a ≤a-refl-h) (≤a-strengthen (⊢a-to-≤a ⊢a₁))
+⊢a-to-≤a (⊢a-lam₁ ⊢a) = ≤a-arr ≤a-refl-τ (≤a-strengthen-τ (⊢a-to-≤a ⊢a))
+⊢a-to-≤a (⊢a-lam₂ ⊢a ⊢a₁) = ≤a-hint (rebase ⊢a ≤a-refl-τ) (≤a-strengthen (⊢a-to-≤a ⊢a₁))
   where
     rebase : ∀ {Γ e A B}
       → Γ ⊢a τ Top ⇛ e ⇛ B

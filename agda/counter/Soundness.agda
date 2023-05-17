@@ -64,6 +64,12 @@ subst-gen : ∀ {Γ A B e es e₁ es₁ es₂}
   → es₁ ++ es₂ ≡ es
   → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) es₁) · e₁) ▻ es₂ ⦂ B
 
+subst-gen' : ∀ {Γ B e e₁ es₁ es₂ es₃}
+  → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) (es₁ ++ es₂)) · e₁) ▻ es₃ ⦂ B
+  → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) es₁) · e₁) ▻ (es₂ ++ es₃) ⦂ B
+subst-gen' {es₂ = []} ⊢e = {!!}
+subst-gen' {es₂ = e' ∷ es₂} ⊢e = {!subst-gen' {es₂ = es₂} ⊢e!}
+
 {-
 -- induction on es₂
 subst-gen {es = .(es₁ ++ [])} {es₁ = es₁} {es₂ = []} ⊢e ⊢e₁ refl = ⊢d-app₂ (⊢d-lam₂ {!!}) ⊢e₁
@@ -78,11 +84,13 @@ subst-gen {es = x ∷ .(es₁ ++ es₂)} {es₁ = .x ∷ es₁} {es₂ = es₂} 
 
 subst-gen {es = es} {es₁ = es₁} {es₂ = es₂} ⊢e ⊢e₁ eq = {!!}
 
+{-
 subst-gen' : ∀ {Γ B e es e₁ es₁ es₂}
   → Γ ⊢d c 0 ╏ ((ƛ e ▻ map (_↑ 0) es₁) · e₁) ▻ es₂ ⦂ B
   → es₁ ++ es₂ ≡ es
   → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
-subst-gen' = {!!}  
+subst-gen' = {!!}
+-}
 
 {-
 subst-gen' {es = es} {es₁ = []} {es₂ = .es} ⊢e refl = ⊢e
