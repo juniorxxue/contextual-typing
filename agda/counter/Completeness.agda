@@ -5,6 +5,7 @@ open import Prelude hiding (_≤?_; length) renaming (_≤_ to _≤n_)
 open import Common
 open import Dec
 open import Algo
+open import Algo.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -48,10 +49,6 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 --+                             Shift                              +--
 --+                                                                +--
 ----------------------------------------------------------------------
-
-length : Context → ℕ
-length ∅        =  zero
-length (Γ , _)  =  suc (length Γ)
 
 ↑Γ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Context
 ↑Γ Γ zero n≤l T = Γ , T

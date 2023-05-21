@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Completeness where
 
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_; _≤?_; z≤n; s≤s) renaming (_≤_ to _≤n_)

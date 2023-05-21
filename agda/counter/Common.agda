@@ -79,19 +79,27 @@ lit i ↓ n = lit i
 e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 (e ⦂ A) ↓ n = (e ↓ n) ⦂ A
 
-↓-↑-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
-↓-↑-var x n with n ≤? x
+↑-↓-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
+↑-↓-var x n with n ≤? x
 ...         | yes n≤x with suc n ≤? suc x
 ...                   | yes n+1≤x+1 = pred-suc x
                             where pred-suc : ∀ n → pred (suc n) ≡ n
                                   pred-suc zero = refl
                                   pred-suc (suc n) = refl
 ...                   | no  n+1>x+1 = ⊥-elim (n+1>x+1 (s≤s n≤x))
-↓-↑-var x n | no n>x with suc n ≤? x
+↑-↓-var x n | no n>x with suc n ≤? x
 ...                   | yes n+1≤x = ⊥-elim (n>x (n+1≤x→n≤x n+1≤x))
                             where n+1≤x→n≤x : ∀ {n x} → suc n ≤ x → n ≤ x
                                   n+1≤x→n≤x n+1≤x = ≤-pred (m≤n⇒m≤1+n n+1≤x)
 ...                   | no  n+1>x = refl
+
+↑-↓-id : ∀ e n
+  → e ↑ n ↓ n ≡ e
+↑-↓-id (lit _) n = refl
+↑-↓-id (` x) n = cong `_ (↑-↓-var x n)
+↑-↓-id (ƛ e) n rewrite ↑-↓-id e (suc n) = refl
+↑-↓-id (e₁ · e₂) n rewrite ↑-↓-id e₁ n | ↑-↓-id e₂ n = refl
+↑-↓-id (e ⦂ A) n rewrite ↑-↓-id e n = refl
 
 ↑-↑-comm-var : ∀ m n x
   → m ≤ n
