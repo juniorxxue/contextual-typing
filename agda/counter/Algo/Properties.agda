@@ -123,6 +123,32 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Con
 --+                                                                +--
 ----------------------------------------------------------------------
 
+data shifted : ℕ → Term → Set where
+
+  sd-lit : ∀ {n i}
+    → shifted n (lit i)
+
+  sd-var₁ : ∀ {n x}
+    → x < n
+    → shifted n (` x)
+
+  sd-var₂ : ∀ {n x}
+    → (suc n) ≤n x
+    → shifted n (` x)
+
+  sd-lam : ∀ {n e}
+    → shifted (suc n) e
+    → shifted n (ƛ e)
+
+  sd-app : ∀ {n e₁ e₂}
+    → shifted n e₁
+    → shifted n e₂
+    → shifted n (e₁ · e₂)
+
+  sd-ann : ∀ {n e A}
+    → shifted n e
+    → shifted n (e ⦂ A)
+
 infix 6 _↓_[_]
 
 _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
@@ -140,32 +166,33 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 
 ↓-var₂ : ∀ {Γ x A B n}
   → Γ , B ∋ x ⦂ A
-  → ¬ suc n ≤n x
+  → x < n
   → (n≤l : n ≤n suc (length Γ))
   → (Γ , B) ↓ n [ n≤l ] ∋ x ⦂ A
-↓-var₂ {x = .zero} {n = zero} Z n+1≰x n≤l = {!!}
-↓-var₂ {x = .(suc _)} {n = zero} (S x∈Γ) n+1≰x n≤l = {!!}
-↓-var₂ {x = x} {n = suc n} x∈Γ n+1≰x n≤l = {!!}
+↓-var₂ {x = .zero} {n = suc n} Z x<n (s≤s n≤l) = Z
+↓-var₂ {Γ , C} {x = .(suc _)} {n = .(suc _)} (S x∈Γ) (s≤s x<n) (s≤s n≤l) = S (↓-var₂ x∈Γ x<n n≤l)
 
 ∋-strenghthen : ∀ {Γ n x A}
+  → shifted n (` x)
   → Γ ∋ x ⦂ A
   → (n≤l : n ≤n length Γ)
   → Γ ↓ n [ n≤l ] ∋ ↓-var n x ⦂ A
-∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ n≤l with suc n ≤? x
+∋-strenghthen {Γ , B} {n} {x} {A} sd x∈Γ n≤l with suc n ≤? x
 ... | yes n+1≤x = ↓-var₁ x∈Γ n+1≤x n≤l
-... | no  n+1≰x = ↓-var₂ x∈Γ n+1≰x n≤l
+∋-strenghthen {Γ , B} {n} {x} {A} (sd-var₁ x<n) x∈Γ n≤l | no n+1≰x = ↓-var₂ x∈Γ x<n n≤l
+∋-strenghthen {Γ , B} {n} {x} {A} (sd-var₂ n+1≤x) x∈Γ n≤l | no n+1≰x = ⊥-elim (n+1≰x n+1≤x)
 
 ≤a-strengthen : ∀ {Γ A H n n≤l}
   → Γ ⊢a A ≤ H
   → Γ ↓ n [ n≤l ] ⊢a A ≤ (H ⇩ n)
   
 ⊢a-strengthen : ∀ {Γ A H n n≤l e}
-  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a H ⇛ e ⇛ A -- e is shifted
   → Γ ↓ n [ n≤l ] ⊢a (H ⇩ n) ⇛ e ↓ n ⇛ A
 
 ≤a-strengthen A≤H = {!!}
 ⊢a-strengthen (⊢a-lit x) = {!!}
-⊢a-strengthen {n≤l = n≤l} (⊢a-var x∈Γ A≤H) = ⊢a-var (∋-strenghthen x∈Γ n≤l) (≤a-strengthen A≤H)
+⊢a-strengthen {n≤l = n≤l} (⊢a-var x∈Γ A≤H) = ⊢a-var (∋-strenghthen {!!} x∈Γ n≤l) (≤a-strengthen A≤H)
 ⊢a-strengthen (⊢a-app ⊢e) = {!!}
 ⊢a-strengthen (⊢a-ann ⊢e x) = {!!}
 ⊢a-strengthen (⊢a-lam₁ ⊢e) = {!!}
