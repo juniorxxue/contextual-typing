@@ -45,6 +45,39 @@ open import Algo
 ⇧-⇩-id (τ A) n = refl
 ⇧-⇩-id (⟦ e ⟧⇒ H) n rewrite ↑-↓-id e n | ⇧-⇩-id H n = refl
 
+
+
+
+infix 4 _~⇧~_
+data _~⇧~_ : Hint → ℕ → Set where
+
+  sdh-τ : ∀ {n A}
+    → (τ A) ~⇧~ n
+
+  sdh-h : ∀ {n e H}
+    → e ~↑~ n
+    → H ~⇧~ n
+    → (⟦ e ⟧⇒ H) ~⇧~ n
+
+⇧-shiftedh : ∀ {H n}
+  → (H ⇧ n) ~⇧~ n
+⇧-shiftedh {τ A} = sdh-τ
+⇧-shiftedh {⟦ e ⟧⇒ H} = sdh-h ↑-shifted ⇧-shiftedh
+
+⇧-shiftedh-n : ∀ {H m n}
+  → m ≤n suc n
+  → H ~⇧~ n
+  → (H ⇧ m) ~⇧~ suc n
+⇧-shiftedh-n {τ A} m≤n sdh = sdh-τ
+⇧-shiftedh-n {⟦ e ⟧⇒ H} m≤n (sdh-h sd sdh) = sdh-h (↑-shifted-n m≤n sd) (⇧-shiftedh-n m≤n sdh)
+
+⇩-⇧-comm : ∀ H m n
+  → m ≤n n
+  → H ~⇧~ n
+  → H ⇩ n ⇧ m ≡ H ⇧ m ⇩ (suc n)
+⇩-⇧-comm (τ A) m n m≤n sdh = refl
+⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm H m n m≤n sdh = refl
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Weakening                            +--
@@ -117,32 +150,6 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Con
 --+                                                                +--
 ----------------------------------------------------------------------
 
-data shifted : ℕ → Term → Set where
-
-  sd-lit : ∀ {n i}
-    → shifted n (lit i)
-
-  sd-var₁ : ∀ {n x}
-    → x < n
-    → shifted n (` x)
-
-  sd-var₂ : ∀ {n x}
-    → (suc n) ≤n x
-    → shifted n (` x)
-
-  sd-lam : ∀ {n e}
-    → shifted (suc n) e
-    → shifted n (ƛ e)
-
-  sd-app : ∀ {n e₁ e₂}
-    → shifted n e₁
-    → shifted n e₂
-    → shifted n (e₁ · e₂)
-
-  sd-ann : ∀ {n e A}
-    → shifted n e
-    → shifted n (e ⦂ A)
-
 infix 6 _↓_[_]
 
 _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
@@ -150,14 +157,21 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 (Γ , A) ↓ zero [ n≤l ] = Γ
 (Γ , A) ↓ suc n [ s≤s n≤l ] = Γ ↓ n [ n≤l ] , A
 
+↓-var₁' : ∀ {Γ x A B n}
+  → Γ , B ∋ x ⦂ A
+  → suc n ≤n x
+  → (n≤l : n ≤n suc (length Γ))
+  → (Γ , B) ↓ n [ n≤l ] ∋ pred x ⦂ A
+↓-var₁' {n = zero} (S x∈Γ) (s≤s n+1≤x) n≤l = x∈Γ
+↓-var₁' {Γ , C} {n = suc n} (S (S x∈Γ)) (s≤s n+1≤x) (s≤s n≤l) = S (↓-var₁' (S x∈Γ) n+1≤x n≤l)
+
 ↓-var₁ : ∀ {Γ x A B n}
   → Γ , B ∋ x ⦂ A
+  → (` x) ~↑~ n
   → n ≤n x
   → (n≤l : n ≤n suc (length Γ))
   → (Γ , B) ↓ n [ n≤l ] ∋ pred x ⦂ A
-↓-var₁ {Γ} {n = zero} Z n≤x n≤l = {!!}
-↓-var₁ {Γ} {n = zero} (S x∈Γ) n≤x n≤l = x∈Γ
-↓-var₁ {Γ} {n = suc n} (S x∈Γ) (s≤s n≤x) (s≤s n≤l) = {!!}
+↓-var₁ {x = x} x∈Γ (sd-var n≢x) n≤x n≤l = ↓-var₁' x∈Γ (≤∧≢⇒< n≤x n≢x) n≤l
 
 ↓-var₂ : ∀ {Γ x A B n}
   → Γ , B ∋ x ⦂ A
@@ -169,40 +183,47 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 
 ∋-strenghthen : ∀ {Γ n x A}
   → Γ ∋ x ⦂ A
+  → (` x) ~↑~ n
   → (n≤l : n ≤n length Γ)
   → Γ ↓ n [ n≤l ] ∋ ↓-var n x ⦂ A
-∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ n≤l with n ≤? x
-... | yes n≤x = ↓-var₁ x∈Γ n≤x n≤l
+∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ sd n≤l with n ≤? x
+... | yes n≤x = ↓-var₁ x∈Γ sd n≤x n≤l
 ... | no  n≰x = ↓-var₂ x∈Γ (m≰n⇒n<m n≰x) n≤l
 
-≤a-strengthen : ∀ {Γ A H n n≤l}
+≤a-strengthen : ∀ {Γ A H n}
   → Γ ⊢a A ≤ H
+  → H ~⇧~ n
+  → (n≤l : n ≤n length Γ)
   → Γ ↓ n [ n≤l ] ⊢a A ≤ (H ⇩ n)
   
-⊢a-strengthen : ∀ {Γ A H n n≤l e}
-  → Γ ⊢a H ⇛ e ⇛ A -- e is shifted
+⊢a-strengthen : ∀ {Γ A H n e}
+  → Γ ⊢a H ⇛ e ⇛ A -- H, e is shifted
+  → e ~↑~ n
+  → H ~⇧~ n
+  → (n≤l : n ≤n length Γ)
   → Γ ↓ n [ n≤l ] ⊢a (H ⇩ n) ⇛ e ↓ n ⇛ A
 
-≤a-strengthen A≤H = {!!}
-⊢a-strengthen (⊢a-lit x) = {!!}
-⊢a-strengthen {n≤l = n≤l} (⊢a-var x∈Γ A≤H) = ⊢a-var (∋-strenghthen x∈Γ n≤l) (≤a-strengthen A≤H)
-⊢a-strengthen (⊢a-app ⊢e) = {!!}
-⊢a-strengthen (⊢a-ann ⊢e x) = {!!}
-⊢a-strengthen (⊢a-lam₁ ⊢e) = {!!}
-⊢a-strengthen (⊢a-lam₂ ⊢e ⊢e₁) = {!!}
+≤a-strengthen ≤a-int sdh n≤l = ≤a-int
+≤a-strengthen ≤a-top sdh n≤l = ≤a-top
+≤a-strengthen (≤a-arr A≤H A≤H₁) sdh n≤l = ≤a-arr (≤a-strengthen A≤H sdh-τ n≤l) (≤a-strengthen A≤H₁ sdh-τ n≤l)
+≤a-strengthen (≤a-hint ⊢e A≤H) (sdh-h sd sdh) n≤l = ≤a-hint (⊢a-strengthen ⊢e sd sdh-τ n≤l) (≤a-strengthen A≤H sdh n≤l)
+
+⊢a-strengthen (⊢a-lit B≤H) sd sdh n≤l = ⊢a-lit (≤a-strengthen B≤H sdh n≤l)
+⊢a-strengthen (⊢a-var x∈Γ B≤H) sd sdh n≤l = ⊢a-var (∋-strenghthen x∈Γ sd n≤l) (≤a-strengthen B≤H sdh n≤l)
+⊢a-strengthen (⊢a-app ⊢e) (sd-app sd₁ sd₂) sdh n≤l = ⊢a-app (⊢a-strengthen ⊢e sd₁ (sdh-h sd₂ sdh) n≤l)
+⊢a-strengthen (⊢a-ann ⊢e B≤H) (sd-ann sd) sdh n≤l = ⊢a-ann (⊢a-strengthen ⊢e sd sdh-τ n≤l) (≤a-strengthen B≤H sdh n≤l)
+⊢a-strengthen (⊢a-lam₁ ⊢e) (sd-lam sd) sdh n≤l = ⊢a-lam₁ (⊢a-strengthen ⊢e sd sdh-τ (s≤s n≤l))
+⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
+... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-τ n≤l) ind-f
+
+≤a-strengthen-0 : ∀ {Γ A B H}
+  → Γ , A ⊢a B ≤ H ⇧ 0
+  → Γ ⊢a B ≤ H
+≤a-strengthen-0 {H = H} B≤H with ≤a-strengthen {n = 0} B≤H ⇧-shiftedh z≤n
+... | ind-h rewrite ⇧-⇩-id H 0 = ind-h  
 
 ⊢a-strengthen-0 : ∀ {Γ H e A B}
   → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
   → Γ ⊢a H ⇛ e ⇛ B
-⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} {n≤l = z≤n} ⊢e
+⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
-
-↑-shifted : ∀ {e n}
-  → shifted n (e ↑ n)
-↑-shifted {lit i} {n} = sd-lit
-↑-shifted {` x} {n} with n ≤? x
-... | yes n≤x = sd-var₂ (s≤s n≤x)
-... | no  n≰x = sd-var₁ (m≰n⇒n<m n≰x)
-↑-shifted {ƛ e} {n} = sd-lam ↑-shifted
-↑-shifted {e₁ · e₂} {n} = sd-app ↑-shifted ↑-shifted
-↑-shifted {e ⦂ A} {n} = sd-ann ↑-shifted

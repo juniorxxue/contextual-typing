@@ -21,7 +21,7 @@ Fixpoint shift k tm {struct tm} :=
   end.
 
 Definition unshift_var k :=
-  fun x => if le_gt_dec (k+1) x then (x - 1) else x.
+  fun x => if le_gt_dec k x then (x - 1) else x.
 
 Goal forall x, x - 1 + 1 = x + 1 - 1.
 Proof.
@@ -43,10 +43,10 @@ Proof.
   intros x k.
   unfold unshift_var, shift_var.
   destruct (le_gt_dec k x).
-  - destruct (le_gt_dec (k + 1) (x + 1)).
+  - destruct (le_gt_dec k (x + 1)).
     + lia.
     + lia.
-  - destruct (le_gt_dec (k + 1) x).
+  - destruct (le_gt_dec k x).
     + lia.
     + reflexivity.
 Qed.
@@ -87,26 +87,17 @@ Proof.
   - simpl. f_equal; eauto.
 Qed.
 
-Lemma unshift_shift :
-  forall e m n,
+Lemma unshift_shift_var_comm :
+  forall x m n,
     m <= n ->
-    shift m (unshift n e) = unshift (n + 1) (shift m e).
+    x <> n ->
+    shift_var m (unshift_var n x) = unshift_var (n + 1) (shift_var m x).
 Proof.
-  intros e. induction e; intros; eauto.
-  - simpl. f_equal.
-    unfold shift_var. unfold unshift_var.
-    destruct (le_gt_dec (n + 1) x).
-    + destruct (le_gt_dec m (x - 1)).
-      * destruct (le_gt_dec m x).
-        ** destruct (le_gt_dec (n + 1 + 1) (x + 1)); lia.
-        ** destruct (le_gt_dec (n + 1 + 1) x); lia.
-      * destruct (le_gt_dec m x).
-        ** destruct (le_gt_dec (n + 1 + 1) (x + 1)); lia.
-        ** destruct (le_gt_dec (n + 1 + 1) x); lia.
-    + destruct (le_gt_dec m x).
-      ** destruct ( le_gt_dec (n + 1 + 1) (x + 1)); lia.
-      ** destruct (le_gt_dec (n + 1 + 1) x); lia.
-  - simpl. f_equal.
-    eapply IHe. lia.
-  - simpl. f_equal; eauto.
+  intros.
+  unfold shift_var. unfold unshift_var.
+  destruct (le_gt_dec n x); destruct (le_gt_dec m x).
+  - destruct (le_gt_dec m (x - 1)); destruct (le_gt_dec (n + 1) (x + 1)); lia.
+  - destruct (le_gt_dec m (x - 1)); destruct (le_gt_dec (n + 1) x); lia.
+  - destruct (le_gt_dec (n + 1) (x + 1)); lia.
+  - destruct ( le_gt_dec (n + 1) x); lia.
 Qed.

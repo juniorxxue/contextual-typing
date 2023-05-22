@@ -129,3 +129,87 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
+
+infix 4 _~↑~_
+
+data _~↑~_ : Term → ℕ → Set where
+
+  sd-lit : ∀ {n i}
+    → (lit i) ~↑~ n
+
+  sd-var : ∀ {n x}
+    → n ≢ x
+    → (` x) ~↑~ n
+
+  sd-lam : ∀ {n e}
+    → e ~↑~ (suc n)
+    → (ƛ e) ~↑~ n
+
+  sd-app : ∀ {n e₁ e₂}
+    → e₁ ~↑~ n
+    → e₂ ~↑~ n
+    → (e₁ · e₂) ~↑~ n
+
+  sd-ann : ∀ {n e A}
+    → e ~↑~ n
+    → (e ⦂ A) ~↑~ n
+
+↑-shifted : ∀ {e n}
+  → (e ↑ n) ~↑~ n
+↑-shifted {lit i} {n} = sd-lit
+↑-shifted {` x} {n} with n ≤? x
+... | yes p = sd-var (<⇒≢ (s≤s p))
+... | no ¬p = sd-var (>⇒≢ (≰⇒> ¬p))
+↑-shifted {ƛ e} {n} = sd-lam ↑-shifted
+↑-shifted {e₁ · e₂} {n} = sd-app ↑-shifted ↑-shifted
+↑-shifted {e ⦂ A} {n} = sd-ann ↑-shifted
+
+↓-↑-comm-var : ∀ m n x
+  → m ≤ n
+  → n ≢ x
+  → ↑-var m (↓-var n x) ≡ ↓-var (suc n) (↑-var m x)
+↓-↑-comm-var m n x m≤n n≢x with n ≤? x | m ≤? x
+...                        | yes n≤x | yes m≤x with m ≤? pred x | suc n ≤? suc x
+...                                            | yes m≤x-1 | yes n+1≤x+1 = n-1+1≡n+1-1 (m<n⇒0<n (≤∧≢⇒< n≤x n≢x))
+...                                            | yes m≤x-1 | no  n+1≰x+1 = ⊥-elim (n+1≰x+1 (s≤s n≤x))
+...                                            | no  m≰x-1 | yes n+1≤x+1 = ⊥-elim (m≰x-1 (<⇒≤pred m<x)) where m<x = <-transʳ m≤n (≤∧≢⇒< n≤x n≢x)
+...                                            | no  m≰x-1 | no  n+1≰x+1 = ⊥-elim (n+1≰x+1 (s≤s n≤x))
+↓-↑-comm-var m n x m≤n n≢x | yes n≤x | no  m≰x with m ≤? pred x | suc n ≤? x
+...                                            | yes m≤x-1 | yes n+1≤x = ⊥-elim (m≰x (≤-trans m≤n n≤x))
+...                                            | yes m≤x-1 | no  n+1≰x = n-1+1≡n+1-1 (m<n⇒0<n (≤∧≢⇒< n≤x n≢x))
+...                                            | no  m≰x-1 | yes n+1≤x = refl
+...                                            | no  m≰x-1 | no  n+1≰x = ⊥-elim (n+1≰x (≤∧≢⇒< n≤x n≢x))
+↓-↑-comm-var m n x m≤n n≢x | no  n≰x | yes m≤x with m ≤? x | suc n ≤? suc x
+...                                            | yes m≤x | yes n+1≤x+1 = ⊥-elim (n≰x (≤-pred n+1≤x+1))
+...                                            | yes m≤x | no  n+1≰x+1 = refl
+...                                            | no  m≰x | yes n+1≤x+1 = refl
+...                                            | no  m≰x | no  n+1≰x+1 = ⊥-elim (m≰x m≤x)
+↓-↑-comm-var m n x m≤n n≢x | no  n≰x | no  m≰x with m ≤? x | suc n ≤? x
+...                                            | yes m≤x | yes n+1≤x = ⊥-elim (m≰x m≤x)
+...                                            | yes m≤x | no  n+1≰x = ⊥-elim (m≰x m≤x)
+...                                            | no  m≰x | yes n+1≤x = ⊥-elim (n≰x (m+1≤n→m≤n n+1≤x))
+...                                            | no  m≰x | no  n+1≰x = refl
+  
+
+↓-↑-comm : ∀ e m n
+  → m ≤ n
+  → e ~↑~ n
+  → e ↓ n ↑ m ≡ e ↑ m ↓ (suc n)
+↓-↑-comm (lit x) m n m≤n sd = refl
+↓-↑-comm (` x) m n m≤n (sd-var n≢x) = cong `_ (↓-↑-comm-var m n x m≤n n≢x)
+↓-↑-comm (ƛ e) m n m≤n (sd-lam sd) rewrite ↓-↑-comm e (suc m) (suc n) (s≤s m≤n) sd = refl
+↓-↑-comm (e₁ · e₂) m n m≤n (sd-app sd₁ sd₂) rewrite ↓-↑-comm e₁ m n m≤n sd₁ | ↓-↑-comm e₂ m n m≤n sd₂ = refl
+↓-↑-comm (e ⦂ A) m n m≤n (sd-ann sd) rewrite ↓-↑-comm e m n m≤n sd = refl
+
+
+↑-shifted-n : ∀ {e m n}
+  → m ≤ suc n
+  → e ~↑~ n
+  → (e ↑ m) ~↑~ suc n
+↑-shifted-n {lit x} m≤n+1 sd = sd-lit
+↑-shifted-n {` x} {m} m≤n+1 (sd-var x₁) with m ≤? x
+... | yes p = sd-var λ n+1≡x+1 → x₁ (cong pred n+1≡x+1)
+... | no ¬p = sd-var (≢-sym (<⇒≢ (<-transˡ (m≰n⇒n<m ¬p) m≤n+1)))
+↑-shifted-n {ƛ e} m≤n+1 (sd-lam sd) = sd-lam (↑-shifted-n (s≤s m≤n+1) sd)
+↑-shifted-n {e · e₁} m≤n+1 (sd-app sd sd₁) = sd-app (↑-shifted-n m≤n+1 sd) (↑-shifted-n m≤n+1 sd₁)
+↑-shifted-n {e ⦂ x} m≤n+1 (sd-ann sd) = sd-ann (↑-shifted-n m≤n+1 sd)
