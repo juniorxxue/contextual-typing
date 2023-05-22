@@ -144,6 +144,13 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Type → Con
 ⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
 
+spl-weaken : ∀ {H A es T As A' n}
+  → ❪ H , A ❫↣❪ es , T , As , A' ❫
+  → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
+spl-weaken {T = T} none = none
+spl-weaken (have spl) = have (spl-weaken spl)
+
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                         Strengthening                          +--

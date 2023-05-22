@@ -44,12 +44,6 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 ≤d-to-≤a ≤d-top = ≤a-top
 ≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
 
-spl-weaken : ∀ {H A es T As A' n}
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
-spl-weaken {T = T} none = none
-spl-weaken (have spl) = have (spl-weaken spl)
-
 ch-weaken : ∀ {es H' H n}
   → chain es H' H
   → chain (map (_↑ n) es) (H' ⇧ n) (H ⇧ n)
