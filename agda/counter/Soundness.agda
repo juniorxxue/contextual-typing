@@ -58,29 +58,25 @@ rewrite-snoc₁ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' =
 ▻snoc₂ e [] e' = refl
 ▻snoc₂ e (x ∷ es') e' = ▻snoc₂ (e · x) es' e'
 
-rewrite-snoc₂ : ∀ {Γ e e₁ es' e' B}
-  → Γ ⊢d c 0 ╏ (((ƛ e) · e₁) ▻ es') · e' ⦂ B
-  → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
+rewrite-snoc₂ : ∀ {Γ e e₁ es' e' cc B}
+  → Γ ⊢d cc ╏ (((ƛ e) · e₁) ▻ es') · e' ⦂ B
+  → Γ ⊢d cc ╏ ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
 rewrite-snoc₂ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e  
 
-subst :  ∀ {Γ A B e e₁} (es : List Term)
-  → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
+subst :  ∀ {Γ A B e e₁ n} (es : List Term)
+  → Γ , A ⊢d c n ╏ e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d c 0 ╏ e₁ ⦂ A
-  → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B
-subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁}
-                     → Γ , A ⊢d c 0 ╏ e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d c n ╏ ((ƛ e) · e₁) ▻ es ⦂ B
+subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
+                     → Γ , A ⊢d c n ╏ e ▻ map (_↑ 0) es ⦂ B
                      → Γ ⊢d c 0 ╏ e₁ ⦂ A
-                     → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B)
-                     (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂) -- base
+                     → Γ ⊢d c n ╏ ((ƛ e) · e₁) ▻ es ⦂ B)
+                     (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂)
                      (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
                      {(⊢d-app₁ ⊢1 ⊢2) → ⊢d-app₁ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
-                     ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ {!!} {!!}
+                     ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
                      })) -- ind
                      es
-
--- rewrite-snoc₁ {es' = es'} ⊢e₁
-                     
-
 
 sound-≤ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≤ H
@@ -110,7 +106,7 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
+sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
 
 sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
 sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
