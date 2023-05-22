@@ -20,3 +20,16 @@ n-1+1≡n+1-1 : ∀ {n}
   → 0 < n
   → suc (pred n) ≡ pred (suc n)
 n-1+1≡n+1-1 (s≤s 0<n) = refl
+
+m+1≰n+1⇒m≰n : ∀ {m n}
+  → suc m ≰ suc n
+  → m ≰ n
+m+1≰n+1⇒m≰n m+1≰n+1 = λ m≤n → m+1≰n+1 (s≤s m≤n)  
+  
+m≰n⇒n<m : ∀ {m n}
+  → m ≰ n
+  → n < m
+m≰n⇒n<m {zero} {zero} m≰n = ⊥-elim (m≰n z≤n)
+m≰n⇒n<m {zero} {suc n} m≰n = ⊥-elim (m≰n z≤n)
+m≰n⇒n<m {suc m} {zero} m≰n = s≤s z≤n
+m≰n⇒n<m {suc m} {suc n} m≰n = s≤s (m≰n⇒n<m {m} {n} (m+1≰n+1⇒m≰n m≰n))

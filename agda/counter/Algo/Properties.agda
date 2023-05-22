@@ -40,12 +40,6 @@ open import Algo
 ⇧-⇧-comm (τ A) m n m≤n = refl
 ⇧-⇧-comm (⟦ e ⟧⇒ H) m n m≤n rewrite ↑-↑-comm e m n m≤n | ⇧-⇧-comm H m n m≤n = refl
 
-⇩-⇧-comm : ∀ H m n
-  → m ≤n n
-  → H ⇩ n ⇧ m ≡ H ⇧ m ⇩ (suc n)
-⇩-⇧-comm (τ x) m n m≤n = refl
-⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n rewrite ↓-↑-comm e m n m≤n | ⇩-⇧-comm H m n m≤n = refl
-
 ⇧-⇩-id : ∀ H n
   → H ⇧ n ⇩ n ≡ H
 ⇧-⇩-id (τ A) n = refl
@@ -158,11 +152,12 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 
 ↓-var₁ : ∀ {Γ x A B n}
   → Γ , B ∋ x ⦂ A
-  → suc n ≤n x
+  → n ≤n x
   → (n≤l : n ≤n suc (length Γ))
   → (Γ , B) ↓ n [ n≤l ] ∋ pred x ⦂ A
-↓-var₁ {n = zero} (S x∈Γ) (s≤s n+1≤x) n≤l = x∈Γ
-↓-var₁ {Γ , C} {n = suc n} (S (S x∈Γ)) (s≤s n+1≤x) (s≤s n≤l) = S (↓-var₁ (S x∈Γ) n+1≤x n≤l)
+↓-var₁ {Γ} {n = zero} Z n≤x n≤l = {!!}
+↓-var₁ {Γ} {n = zero} (S x∈Γ) n≤x n≤l = x∈Γ
+↓-var₁ {Γ} {n = suc n} (S x∈Γ) (s≤s n≤x) (s≤s n≤l) = {!!}
 
 ↓-var₂ : ∀ {Γ x A B n}
   → Γ , B ∋ x ⦂ A
@@ -173,14 +168,12 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 ↓-var₂ {Γ , C} {x = .(suc _)} {n = .(suc _)} (S x∈Γ) (s≤s x<n) (s≤s n≤l) = S (↓-var₂ x∈Γ x<n n≤l)
 
 ∋-strenghthen : ∀ {Γ n x A}
-  → shifted n (` x)
   → Γ ∋ x ⦂ A
   → (n≤l : n ≤n length Γ)
   → Γ ↓ n [ n≤l ] ∋ ↓-var n x ⦂ A
-∋-strenghthen {Γ , B} {n} {x} {A} sd x∈Γ n≤l with suc n ≤? x
-... | yes n+1≤x = ↓-var₁ x∈Γ n+1≤x n≤l
-∋-strenghthen {Γ , B} {n} {x} {A} (sd-var₁ x<n) x∈Γ n≤l | no n+1≰x = ↓-var₂ x∈Γ x<n n≤l
-∋-strenghthen {Γ , B} {n} {x} {A} (sd-var₂ n+1≤x) x∈Γ n≤l | no n+1≰x = ⊥-elim (n+1≰x n+1≤x)
+∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ n≤l with n ≤? x
+... | yes n≤x = ↓-var₁ x∈Γ n≤x n≤l
+... | no  n≰x = ↓-var₂ x∈Γ (m≰n⇒n<m n≰x) n≤l
 
 ≤a-strengthen : ∀ {Γ A H n n≤l}
   → Γ ⊢a A ≤ H
@@ -192,7 +185,7 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
 
 ≤a-strengthen A≤H = {!!}
 ⊢a-strengthen (⊢a-lit x) = {!!}
-⊢a-strengthen {n≤l = n≤l} (⊢a-var x∈Γ A≤H) = ⊢a-var (∋-strenghthen {!!} x∈Γ n≤l) (≤a-strengthen A≤H)
+⊢a-strengthen {n≤l = n≤l} (⊢a-var x∈Γ A≤H) = ⊢a-var (∋-strenghthen x∈Γ n≤l) (≤a-strengthen A≤H)
 ⊢a-strengthen (⊢a-app ⊢e) = {!!}
 ⊢a-strengthen (⊢a-ann ⊢e x) = {!!}
 ⊢a-strengthen (⊢a-lam₁ ⊢e) = {!!}
@@ -203,3 +196,13 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤n length Γ) → Context
   → Γ ⊢a H ⇛ e ⇛ B
 ⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} {n≤l = z≤n} ⊢e
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
+
+↑-shifted : ∀ {e n}
+  → shifted n (e ↑ n)
+↑-shifted {lit i} {n} = sd-lit
+↑-shifted {` x} {n} with n ≤? x
+... | yes n≤x = sd-var₂ (s≤s n≤x)
+... | no  n≰x = sd-var₁ (m≰n⇒n<m n≰x)
+↑-shifted {ƛ e} {n} = sd-lam ↑-shifted
+↑-shifted {e₁ · e₂} {n} = sd-app ↑-shifted ↑-shifted
+↑-shifted {e ⦂ A} {n} = sd-ann ↑-shifted
