@@ -3,6 +3,7 @@ module Soundness where
 open import Prelude
 open import Common
 open import Dec
+open import Dec.Properties
 open import Algo
 open import Algo.Properties
 
@@ -72,7 +73,7 @@ subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁}
                      → Γ ⊢d c 0 ╏ ((ƛ e) · e₁) ▻ es ⦂ B)
                      (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂) -- base
                      (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
-                     {(⊢d-app₁ ⊢1 ⊢2) → ⊢d-app₁ (IH ⊢1 ⊢e₂) {!!}
+                     {(⊢d-app₁ ⊢1 ⊢2) → ⊢d-app₁ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
                      ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ {!!} {!!}
                      })) -- ind
                      es
@@ -109,7 +110,7 @@ sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!!}
+sound-inf (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!sound-inf ⊢f ?!}
 
 sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
 sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
