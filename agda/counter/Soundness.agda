@@ -53,6 +53,11 @@ rewrite-snoc₁ : ∀ {Γ e e' es' A cc}
   → Γ ⊢d cc ╏ (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
 rewrite-snoc₁ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
 
+rewrite-snoc₄ : ∀ {Γ e e' es' A cc}
+  → Γ ⊢d cc ╏ (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
+  → Γ ⊢d cc ╏ e ▻ map (_↑ 0) (es' ++ e' ∷ []) ⦂ A
+rewrite-snoc₄ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
+
 ▻snoc₂ : ∀ e es' e'
   → e ▻ (es' ++ e' ∷ []) ≡  (e ▻ es') · e'
 ▻snoc₂ e [] e' = refl
@@ -61,12 +66,18 @@ rewrite-snoc₁ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' =
 rewrite-snoc₂ : ∀ {Γ e e₁ es' e' cc B}
   → Γ ⊢d cc ╏ (((ƛ e) · e₁) ▻ es') · e' ⦂ B
   → Γ ⊢d cc ╏ ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
-rewrite-snoc₂ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e  
+rewrite-snoc₂ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e
+
+rewrite-snoc₃ : ∀ {Γ e e₁ es' e' cc B}
+  → Γ ⊢d cc ╏ ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
+  → Γ ⊢d cc ╏ (((ƛ e) · e₁) ▻ es') · e' ⦂ B
+rewrite-snoc₃ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e  
 
 subst :  ∀ {Γ A B e e₁ n} (es : List Term)
   → Γ , A ⊢d c n ╏ e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d c 0 ╏ e₁ ⦂ A
   → Γ ⊢d c n ╏ ((ƛ e) · e₁) ▻ es ⦂ B
+
 subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
                      → Γ , A ⊢d c n ╏ e ▻ map (_↑ 0) es ⦂ B
                      → Γ ⊢d c 0 ╏ e₁ ⦂ A
@@ -77,6 +88,23 @@ subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
                      ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
                      })) -- ind
                      es
+
+subst-chk :  ∀ {Γ A B e e₁} (es : List Term)
+  → Γ , A ⊢d ∞ ╏ e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d c 0 ╏ e₁ ⦂ A
+  → Γ ⊢d ∞ ╏ ((ƛ e) · e₁) ▻ es ⦂ B
+
+subst-chk es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁}
+                         → Γ , A ⊢d ∞ ╏ e ▻ map (_↑ 0) es ⦂ B
+                         → Γ ⊢d c 0 ╏ e₁ ⦂ A
+                         → Γ ⊢d ∞ ╏ ((ƛ e) · e₁) ▻ es ⦂ B)
+                         (λ ⊢e₁ ⊢e₂ → ⊢d-app₃ (⊢d-lam₁ ⊢e₁) ⊢e₂)
+                         (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
+                         { (⊢d-app₃ ⊢1 ⊢2) → ⊢d-app₃ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
+                         ; (⊢d-sub ⊢1 A≤B) → ⊢d-sub (rewrite-snoc₃ {es' = es'} (subst (es' ++ e' ∷ []) (rewrite-snoc₄ {es' = es'} ⊢1) ⊢e₂)) A≤B
+                         }))
+                         es
+
 
 sound-≤ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≤ H
@@ -120,4 +148,4 @@ sound-chk (⊢a-ann ⊢e A≤H) spl = ⊢d-sub elims A'≤T
         elims = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
         A'≤T = proj₁ (sound-≤ A≤H spl)        
 sound-chk (⊢a-lam₁ ⊢e) none = ⊢d-lam₁ (sound-chk ⊢e none)
-sound-chk (⊢a-lam₂ ⊢e ⊢f) (have spl) = {!!}
+sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-chk es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
