@@ -1,6 +1,6 @@
 module Completeness where
 
-open import Prelude hiding (_≤?_; length) renaming (_≤_ to _≤n_)
+open import Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
 
 open import Common
 open import Dec
