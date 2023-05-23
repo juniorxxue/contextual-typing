@@ -1,4 +1,4 @@
-module Properties where
+module Simple.Properties where
 
 open import Data.Nat using (ℕ)
 open import Data.String using (String)
@@ -10,9 +10,9 @@ open import Relation.Nullary using (¬_)
 
 open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
 
-open import Common
-open import Dec
-open import Algo
+open import Simple.Common
+open import Simple.Dec
+open import Simple.Algo
 
 ----------------------------------------------------------------------
 --+                                                                +--

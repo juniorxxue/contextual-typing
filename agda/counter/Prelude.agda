@@ -1,4 +1,4 @@
-module Prelude where
+module Counter.Prelude where
 
 open import Data.Nat public
 open import Data.Nat.Properties public

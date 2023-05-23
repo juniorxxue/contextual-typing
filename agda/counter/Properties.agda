@@ -1,7 +1,7 @@
-module Properties where
+module Counter.Properties where
 
-open import Prelude hiding (_≤?_)
-open import Common
+open import Counter.Prelude hiding (_≤?_)
+open import Counter.Common
 
 length : Context → ℕ
 length ∅        =  zero

@@ -1,9 +1,9 @@
-module Dec.Properties where
+module Counter.Dec.Properties where
 
-open import Prelude
-open import Common
-open import Dec
-open import Properties
+open import Counter.Prelude
+open import Counter.Common
+open import Counter.Dec
+open import Counter.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--

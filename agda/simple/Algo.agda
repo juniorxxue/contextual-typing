@@ -1,4 +1,4 @@
-module Algo where
+module Simple.Algo where
 
 open import Data.Nat using (ℕ)
 open import Data.String using (String; _≟_)
@@ -9,7 +9,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
 
-open import Common
+open import Simple.Common
 
 infixr 8 ⟦_⟧⇒_
 

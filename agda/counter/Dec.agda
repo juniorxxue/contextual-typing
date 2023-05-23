@@ -1,7 +1,7 @@
-module Dec where
+module Counter.Dec where
 
-open import Prelude
-open import Common
+open import Counter.Prelude
+open import Counter.Common
 
 ----------------------------------------------------------------------
 --+                                                                +--

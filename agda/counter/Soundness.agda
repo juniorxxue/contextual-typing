@@ -1,11 +1,11 @@
-module Soundness where
+module Counter.Soundness where
 
-open import Prelude
-open import Common
-open import Dec
-open import Dec.Properties
-open import Algo
-open import Algo.Properties
+open import Counter.Prelude
+open import Counter.Common
+open import Counter.Dec
+open import Counter.Dec.Properties
+open import Counter.Algo
+open import Counter.Algo.Properties
 
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
@@ -35,6 +35,10 @@ data _⊩_⇛_ : Context → List Term → List Type → Set where
     → Γ ⊢d c 0 ╏ e ⦂ A
     → Γ ⊩ (e ∷ es) ⇛ (A ∷ As)
 
+f : Type → Term
+f Int = lit 1
+f Top = lit 1
+f (A ⇒ A₁) = ƛ (f A₁)
 
 postulate
 

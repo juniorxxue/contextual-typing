@@ -1,6 +1,6 @@
-module Common where
+module Counter.Common where
 
-open import Prelude hiding (_≤?_)
+open import Counter.Prelude hiding (_≤?_)
 open import Data.Nat.Tactic.RingSolver
 
   
@@ -51,7 +51,7 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 ----------------------------------------------------------------------
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
-  _≤?_ = Prelude._≤?_
+  _≤?_ = Counter.Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x

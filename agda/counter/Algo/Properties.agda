@@ -1,9 +1,9 @@
-module Algo.Properties where
+module Counter.Algo.Properties where
 
-open import Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
-open import Common
-open import Properties
-open import Algo
+open import Counter.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
+open import Counter.Common
+open import Counter.Properties
+open import Counter.Algo
 
 ----------------------------------------------------------------------
 --                                                                  --

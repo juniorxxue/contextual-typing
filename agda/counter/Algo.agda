@@ -1,7 +1,7 @@
-module Algo where
+module Counter.Algo where
 
-open import Prelude
-open import Common
+open import Counter.Prelude
+open import Counter.Common
 
 infixr 8 ⟦_⟧⇒_
 
