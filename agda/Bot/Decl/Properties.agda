@@ -11,10 +11,10 @@ open import Bot.Properties
 --+                                                                +--
 ----------------------------------------------------------------------
 
-⊢d-weaken : ∀ {Γ cc e A B n}
-  → Γ ⊢d cc ╏ e ⦂ B
+⊢d-weaken :
+    Γ ⊢d ∞/n ╏ e ⦂ B
   → (n≤l : n ≤ length Γ)
-  → Γ ↑ n [ n≤l ] A ⊢d cc ╏ (e ↑ n) ⦂ B
+  → Γ ↑ n [ n≤l ] A ⊢d ∞/n ╏ (e ↑ n) ⦂ B
 ⊢d-weaken ⊢d-int n≤l = ⊢d-int
 ⊢d-weaken (⊢d-var x∈Γ) n≤l = ⊢d-var (∋-weaken x∈Γ n≤l)
 ⊢d-weaken (⊢d-lam₁ ⊢e) n≤l = ⊢d-lam₁ (⊢d-weaken ⊢e (s≤s n≤l))
@@ -26,9 +26,9 @@ open import Bot.Properties
 ⊢d-weaken (⊢d-ann ⊢e) n≤l = ⊢d-ann (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-sub ⊢e A≤B) n≤l = ⊢d-sub (⊢d-weaken ⊢e n≤l) A≤B
 
-⊢d-weaken-0 : ∀ {Γ cc e A B}
-  → Γ ⊢d cc ╏ e ⦂ B
-  → Γ , A ⊢d cc ╏ e ↑ 0 ⦂ B
+⊢d-weaken-0 :
+    Γ ⊢d ∞/n ╏ e ⦂ B
+  → Γ , A ⊢d ∞/n ╏ e ↑ 0 ⦂ B
 ⊢d-weaken-0 ⊢e = ⊢d-weaken ⊢e z≤n  
 
 ----------------------------------------------------------------------

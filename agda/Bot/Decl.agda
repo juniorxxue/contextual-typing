@@ -9,21 +9,20 @@ open import Bot.Common
 --+                                                                +--
 ----------------------------------------------------------------------
 
-
 infix 5 _≤d_
 data _≤d_ : Type → Type → Set where
   ≤d-int :
       Int ≤d Int
-  ≤d-top : ∀ {A}
-    → A ≤d Top
-  ≤d-bot : ∀ {A}
-    → Bot ≤d A
-  ≤d-arr : ∀ {A B C D}
-    → C ≤d A
+  ≤d-top :
+      A ≤d Top
+  ≤d-bot :
+      Bot ≤d A
+  ≤d-arr :
+      C ≤d A
     → B ≤d D
     → A ⇒ B ≤d C ⇒ D
     
-≤d-refl : ∀ {A} → A ≤d A
+≤d-refl : A ≤d A
 ≤d-refl {Int} = ≤d-int
 ≤d-refl {Top} = ≤d-top
 ≤d-refl {Bot} = ≤d-bot
@@ -39,61 +38,54 @@ data Counter : Set where
   ∞ : Counter
   c_ : ℕ → Counter
 
-succ : Counter → Counter
-succ ∞ = ∞
-succ (c n) = c (suc n)
+variable
+  ∞/n : Counter
 
 infix 4 _⊢d_╏_⦂_
 
--- is Γ ⊢∞ e ⇒ A allowed?
--- one counter example is
--- Γ ⊢∞ (λx. x) 1 ⇒ Top
--- it happens in reasoning, no corresponding algo cases
--- (perhaps let Top appears in hint is okay, but it complicates the infer mode)
-
 data _⊢d_╏_⦂_ : Context → Counter → Term → Type → Set where
-  ⊢d-int : ∀ {Γ n i}
-    → Γ ⊢d (c n) ╏ (lit i) ⦂ Int
+  ⊢d-int :
+      Γ ⊢d (c n) ╏ (lit i) ⦂ Int
 
-  ⊢d-var : ∀ {Γ x A n}
-    → Γ ∋ x ⦂ A
+  ⊢d-var :
+      Γ ∋ x ⦂ A
     → Γ ⊢d (c n) ╏ ` x ⦂ A
 
   -- in presentation, we can merge two lam rules with a "dec" operation
 
-  ⊢d-lam₁ : ∀ {Γ e A B}
-    → Γ , A ⊢d ∞ ╏ e ⦂ B
+  ⊢d-lam₁ :
+      Γ , A ⊢d ∞ ╏ e ⦂ B
     → Γ ⊢d ∞ ╏ (ƛ e) ⦂ A ⇒ B -- full information, we are safe to use
 
-  ⊢d-lam₂ : ∀ {Γ e A B n}
-    → Γ , A ⊢d c n ╏ e ⦂ B
+  ⊢d-lam₂ :
+      Γ , A ⊢d c n ╏ e ⦂ B
     → Γ ⊢d c (suc n) ╏ (ƛ e) ⦂ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
-  ⊢d-lam₃ : ∀ {Γ e}
-    → Γ , Bot ⊢d ∞ ╏ e ⦂ Top
+  ⊢d-lam₃ :
+      Γ , Bot ⊢d ∞ ╏ e ⦂ Top
     → Γ ⊢d ∞ ╏ (ƛ e) ⦂ Top
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d (c 0) ╏ e₁ ⦂ A ⇒ B
+  ⊢d-app₁ :
+      Γ ⊢d (c 0) ╏ e₁ ⦂ A ⇒ B
     → Γ ⊢d ∞ ╏ e₂ ⦂ A
     → Γ ⊢d (c 0) ╏ e₁ · e₂ ⦂ B -- concern about this one
 
-  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B n}
-    → Γ ⊢d (c (suc n)) ╏ e₁ ⦂ A ⇒ B
+  ⊢d-app₂ :
+      Γ ⊢d (c (suc n)) ╏ e₁ ⦂ A ⇒ B
     → Γ ⊢d (c 0) ╏ e₂ ⦂ A
     → Γ ⊢d (c n) ╏ e₁ · e₂ ⦂ B
 
-  ⊢d-app₃ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d ∞ ╏ e₁ ⦂ A ⇒ B
+  ⊢d-app₃ :
+      Γ ⊢d ∞ ╏ e₁ ⦂ A ⇒ B
     → Γ ⊢d (c 0) ╏ e₂ ⦂ A
     → Γ ⊢d ∞ ╏ e₁ · e₂ ⦂ B
 
-  ⊢d-ann : ∀ {Γ e A n}
-    → Γ ⊢d ∞ ╏ e ⦂ A
+  ⊢d-ann :
+      Γ ⊢d ∞ ╏ e ⦂ A
     → Γ ⊢d (c n) ╏ (e ⦂ A) ⦂ A
 
-  ⊢d-sub : ∀ {Γ e A B}
-    → Γ ⊢d c 0 ╏ e ⦂ B
+  ⊢d-sub :
+      Γ ⊢d c 0 ╏ e ⦂ B
     → B ≤d A
     → Γ ⊢d ∞ ╏ e ⦂ A
 

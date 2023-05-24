@@ -1,6 +1,11 @@
-module Bot.Common where
+module Counter.Common where
 
-open import Bot.Prelude hiding (_≤?_)
+open import Counter.Prelude hiding (_≤?_)
+open import Data.Nat.Tactic.RingSolver
+
+  
+Id : Set
+Id = String
 
 infixr 5  ƛ_
 infixl 7  _·_
@@ -11,7 +16,6 @@ infixr 8 _⇒_
 data Type : Set where
   Int : Type
   Top : Type
-  Bot : Type
   _⇒_ : Type → Type → Type
 
 data Term : Set where
@@ -40,13 +44,6 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
       ------------------
     → Γ , B ∋ (suc n) ⦂ A
 
-
-variable
-  A B C D : Type
-  Γ : Context
-  m n i x : ℕ
-  e e₁ e₂ : Term
-
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                             Shift                              +--
@@ -54,7 +51,7 @@ variable
 ----------------------------------------------------------------------
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
-  _≤?_ = Bot.Prelude._≤?_
+  _≤?_ = Counter.Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x
