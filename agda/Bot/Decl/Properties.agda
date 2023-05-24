@@ -1,8 +1,8 @@
-module Bot.Dec.Properties where
+module Bot.Decl.Properties where
 
 open import Bot.Prelude
 open import Bot.Common
-open import Bot.Dec
+open import Bot.Decl
 open import Bot.Properties
 
 ----------------------------------------------------------------------

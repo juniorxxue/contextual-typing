@@ -2,7 +2,7 @@ module Counter.Completeness where
 
 open import Counter.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
 open import Counter.Common
-open import Counter.Dec
+open import Counter.Decl
 open import Counter.Algo
 open import Counter.Algo.Properties
 

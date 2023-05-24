@@ -2,8 +2,8 @@ module Bot.Soundness where
 
 open import Bot.Prelude
 open import Bot.Common
-open import Bot.Dec
-open import Bot.Dec.Properties
+open import Bot.Decl
+open import Bot.Decl.Properties
 open import Bot.Algo
 open import Bot.Algo.Properties
 

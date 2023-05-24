@@ -2,8 +2,8 @@ module Counter.Soundness where
 
 open import Counter.Prelude
 open import Counter.Common
-open import Counter.Dec
-open import Counter.Dec.Properties
+open import Counter.Decl
+open import Counter.Decl.Properties
 open import Counter.Algo
 open import Counter.Algo.Properties
 

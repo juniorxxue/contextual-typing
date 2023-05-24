@@ -1,4 +1,4 @@
-module Simple.Dec where
+module Simple.Decl where
 
 open import Data.Nat using (ℕ)
 open import Data.String using (String)

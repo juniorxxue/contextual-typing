@@ -11,7 +11,7 @@ open import Relation.Nullary using (¬_)
 open import Data.List using (List; []; _∷_; _++_; length; reverse; map; foldr; downFrom)
 
 open import Simple.Common
-open import Simple.Dec
+open import Simple.Decl
 open import Simple.Algo
 
 ----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-module Bot.Dec where
+module Bot.Decl where
 
 open import Bot.Prelude
 open import Bot.Common

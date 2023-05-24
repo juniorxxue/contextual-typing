@@ -1,4 +1,4 @@
-module Counter.Dec where
+module Counter.Decl where
 
 open import Counter.Prelude
 open import Counter.Common
