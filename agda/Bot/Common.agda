@@ -42,8 +42,8 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 
 
 variable
-  A B C D : Type
-  Γ : Context
+  A B C D E F G T : Type
+  Γ Γ₁ Γ₂ : Context
   m n i x : ℕ
   e e₁ e₂ : Term
 

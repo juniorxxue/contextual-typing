@@ -28,6 +28,16 @@ data _≤d_ : Type → Type → Set where
 ≤d-refl {Bot} = ≤d-bot
 ≤d-refl {A ⇒ B} = ≤d-arr ≤d-refl ≤d-refl
 
+≤d-trans : A ≤d B → B ≤d C → A ≤d C
+≤d-trans {.Int} {Int} {C} ≤d-int B≤C = B≤C
+≤d-trans {.Bot} {Int} {C} ≤d-bot B≤C = ≤d-bot
+≤d-trans {A} {Top} {.Top} ≤d-top ≤d-top = ≤d-top
+≤d-trans {.Bot} {Top} {.Top} ≤d-bot ≤d-top = ≤d-top
+≤d-trans {.Bot} {Bot} {C} ≤d-bot B≤C = B≤C
+≤d-trans {.Bot} {B₁ ⇒ B₂} {C} ≤d-bot B≤C = ≤d-bot
+≤d-trans {.(_ ⇒ _)} {B₁ ⇒ B₂} {.Top} (≤d-arr A≤B A≤B₁) ≤d-top = ≤d-top
+≤d-trans {.(_ ⇒ _)} {B₁ ⇒ B₂} {.(_ ⇒ _)} (≤d-arr A≤B A≤B₁) (≤d-arr B≤C B≤C₁) = ≤d-arr (≤d-trans B≤C A≤B) (≤d-trans A≤B₁ B≤C₁)
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                             Typing                             +--
@@ -41,74 +51,63 @@ data Counter : Set where
 variable
   ∞/n : Counter
 
-infix 4 _⊢d_╏_⦂_
 
-data _⊢d_╏_⦂_ : Context → Counter → Term → Type → Set where
+-- Bottom type adapt
+infix 6 _≈_
+data _≈_ : Type → Type → Set where
+  ≈bot :
+    Bot ≈ Top ⇒ Bot
+
+  ≈arr :
+    A ⇒ B ≈ A ⇒ B
+  
+infix 4 _⊢d_#_⦂_
+
+data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
   ⊢d-int :
-      Γ ⊢d (c n) ╏ (lit i) ⦂ Int
+      Γ ⊢d (c n) # (lit i) ⦂ Int
 
   ⊢d-var :
       Γ ∋ x ⦂ A
-    → Γ ⊢d (c n) ╏ ` x ⦂ A
+    → Γ ⊢d (c n) # ` x ⦂ A
 
   -- in presentation, we can merge two lam rules with a "dec" operation
 
   ⊢d-lam₁ :
-      Γ , A ⊢d ∞ ╏ e ⦂ B
-    → Γ ⊢d ∞ ╏ (ƛ e) ⦂ A ⇒ B -- full information, we are safe to use
+      Γ , A ⊢d ∞ # e ⦂ B
+    → Γ ⊢d ∞ # (ƛ e) ⦂ A ⇒ B -- full information, we are safe to use
 
   ⊢d-lam₂ :
-      Γ , A ⊢d c n ╏ e ⦂ B
-    → Γ ⊢d c (suc n) ╏ (ƛ e) ⦂ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
+      Γ , A ⊢d c n # e ⦂ B
+    → Γ ⊢d c (suc n) # (ƛ e) ⦂ A ⇒ B -- not full, only given a few arguments, we need to be careful to count arguments
 
   ⊢d-lam₃ :
-      Γ , Bot ⊢d ∞ ╏ e ⦂ Top
-    → Γ ⊢d ∞ ╏ (ƛ e) ⦂ Top
+      Γ , Bot ⊢d ∞ # e ⦂ Top
+    → Γ ⊢d ∞ # (ƛ e) ⦂ Top
 
   ⊢d-app₁ :
-      Γ ⊢d (c 0) ╏ e₁ ⦂ A ⇒ B
-    → Γ ⊢d ∞ ╏ e₂ ⦂ A
-    → Γ ⊢d (c 0) ╏ e₁ · e₂ ⦂ B -- concern about this one
+      Γ ⊢d (c 0) # e₁ ⦂ T
+    → T ≈ A ⇒ B
+    → Γ ⊢d ∞ # e₂ ⦂ A
+    → Γ ⊢d (c 0) # e₁ · e₂ ⦂ B -- concern about this one
 
   ⊢d-app₂ :
-      Γ ⊢d (c (suc n)) ╏ e₁ ⦂ A ⇒ B
-    → Γ ⊢d (c 0) ╏ e₂ ⦂ A
-    → Γ ⊢d (c n) ╏ e₁ · e₂ ⦂ B
+      Γ ⊢d (c (suc n)) # e₁ ⦂ T
+    → T ≈ A ⇒ B
+    → Γ ⊢d (c 0) # e₂ ⦂ A
+    → Γ ⊢d (c n) # e₁ · e₂ ⦂ B
 
   ⊢d-app₃ :
-      Γ ⊢d ∞ ╏ e₁ ⦂ A ⇒ B
-    → Γ ⊢d (c 0) ╏ e₂ ⦂ A
-    → Γ ⊢d ∞ ╏ e₁ · e₂ ⦂ B
+      Γ ⊢d ∞ # e₁ ⦂ T
+    → T ≈ A ⇒ B
+    → Γ ⊢d (c 0) # e₂ ⦂ A
+    → Γ ⊢d ∞ # e₁ · e₂ ⦂ B
 
   ⊢d-ann :
-      Γ ⊢d ∞ ╏ e ⦂ A
-    → Γ ⊢d (c n) ╏ (e ⦂ A) ⦂ A
+      Γ ⊢d ∞ # e ⦂ A
+    → Γ ⊢d (c n) # (e ⦂ A) ⦂ A
 
   ⊢d-sub :
-      Γ ⊢d c 0 ╏ e ⦂ B
+      Γ ⊢d c 0 # e ⦂ B
     → B ≤d A
-    → Γ ⊢d ∞ ╏ e ⦂ A
-
-
-----------------------------------------------------------------------
---+                                                                +--
---+                            Examples                            +--
---+                                                                +--
-----------------------------------------------------------------------
-
-_ : ∅ ⊢d (c 0) ╏ (ƛ (` 0)) · lit 1 ⦂ Int
-_ = ⊢d-app₂ (⊢d-lam₂ (⊢d-var Z)) ⊢d-int
-
-_ : ∅ ⊢d (c 0) ╏ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⦂ Int
-_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-app₃ (⊢d-sub (⊢d-var Z) (≤d-arr ≤d-int ≤d-int)) ⊢d-int))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int))
-
--- we want it to reject |-0 (\x . \y. y) 1
-failed : ∅ ⊢d (c 0) ╏ (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int) → ⊥
-failed (⊢d-app₂ (⊢d-lam₂ ()) ⊢d₁)
-
--- let count to be 1, the cases should be okay,
-_ : ∅ ⊢d (c 1) ╏ (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int)
-_ = ⊢d-app₂ (⊢d-lam₂ (⊢d-lam₂ (⊢d-var Z))) ⊢d-int
-
-_ : ∅ ⊢d (c 0) ╏ (ƛ ((ƛ ` 0) ⦂ (Int ⇒ Int) ⇒ Int ⇒ Int)) · (lit 2) · (ƛ ` 0) ⦂ Int ⇒ Int
-_ = ⊢d-app₁ (⊢d-app₂ (⊢d-lam₂ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl)))) ⊢d-int) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-refl))
+    → Γ ⊢d ∞ # e ⦂ A
