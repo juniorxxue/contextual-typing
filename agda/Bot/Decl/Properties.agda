@@ -20,9 +20,9 @@ open import Bot.Properties
 ⊢d-weaken (⊢d-lam₁ ⊢e) n≤l = ⊢d-lam₁ (⊢d-weaken ⊢e (s≤s n≤l))
 ⊢d-weaken (⊢d-lam₂ ⊢e) n≤l = ⊢d-lam₂ (⊢d-weaken ⊢e (s≤s n≤l))
 ⊢d-weaken (⊢d-lam₃ ⊢e) n≤l = ⊢d-lam₃ (⊢d-weaken ⊢e (s≤s n≤l))
-⊢d-weaken (⊢d-app₁ ⊢f T≈ ⊢e) n≤l = ⊢d-app₁ (⊢d-weaken ⊢f n≤l) ? (⊢d-weaken ⊢e n≤l)
-⊢d-weaken (⊢d-app₂ ⊢f T≈ ⊢e) n≤l = ⊢d-app₂ (⊢d-weaken ⊢f n≤l) ? (⊢d-weaken ⊢e n≤l)
-⊢d-weaken (⊢d-app₃ ⊢f T≈ ⊢e) n≤l = ⊢d-app₃ (⊢d-weaken ⊢f n≤l) ? (⊢d-weaken ⊢e n≤l)
+⊢d-weaken (⊢d-app₁ ⊢f T≈ ⊢e) n≤l = ⊢d-app₁ (⊢d-weaken ⊢f n≤l) T≈ (⊢d-weaken ⊢e n≤l)
+⊢d-weaken (⊢d-app₂ ⊢f T≈ ⊢e) n≤l = ⊢d-app₂ (⊢d-weaken ⊢f n≤l) T≈ (⊢d-weaken ⊢e n≤l)
+⊢d-weaken (⊢d-app₃ ⊢f T≈ ⊢e) n≤l = ⊢d-app₃ (⊢d-weaken ⊢f n≤l) T≈ (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-ann ⊢e) n≤l = ⊢d-ann (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-sub ⊢e A≤B) n≤l = ⊢d-sub (⊢d-weaken ⊢e n≤l) A≤B
 
@@ -47,9 +47,9 @@ open import Bot.Properties
 ⊢d-strengthen (⊢d-lam₁ ⊢e) (sd-lam sd) n≤l = ⊢d-lam₁ (⊢d-strengthen ⊢e sd (s≤s n≤l))
 ⊢d-strengthen (⊢d-lam₂ ⊢e) (sd-lam sd) n≤l = ⊢d-lam₂ (⊢d-strengthen ⊢e sd (s≤s n≤l))
 ⊢d-strengthen (⊢d-lam₃ ⊢e) (sd-lam sd) n≤l = ⊢d-lam₃ (⊢d-strengthen ⊢e sd (s≤s n≤l))
-⊢d-strengthen (⊢d-app₁ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₁ (⊢d-strengthen ⊢f sd n≤l) ? (⊢d-strengthen ⊢e sd₁ n≤l)
-⊢d-strengthen (⊢d-app₂ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₂ (⊢d-strengthen ⊢f sd n≤l) ? (⊢d-strengthen ⊢e sd₁ n≤l)
-⊢d-strengthen (⊢d-app₃ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₃ (⊢d-strengthen ⊢f sd n≤l) ? (⊢d-strengthen ⊢e sd₁ n≤l)
+⊢d-strengthen (⊢d-app₁ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₁ (⊢d-strengthen ⊢f sd n≤l) T≈ (⊢d-strengthen ⊢e sd₁ n≤l)
+⊢d-strengthen (⊢d-app₂ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₂ (⊢d-strengthen ⊢f sd n≤l) T≈ (⊢d-strengthen ⊢e sd₁ n≤l)
+⊢d-strengthen (⊢d-app₃ ⊢f T≈ ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₃ (⊢d-strengthen ⊢f sd n≤l) T≈ (⊢d-strengthen ⊢e sd₁ n≤l)
 ⊢d-strengthen (⊢d-ann ⊢e) (sd-ann sd) n≤l = ⊢d-ann (⊢d-strengthen ⊢e sd n≤l)
 ⊢d-strengthen (⊢d-sub ⊢e A≤B) sd n≤l = ⊢d-sub (⊢d-strengthen ⊢e sd n≤l) A≤B
 
@@ -94,7 +94,7 @@ chk-sub :
     Γ ⊢d ∞ # e ⦂ A
   → A ≤d B
   → Γ ⊢d ∞ # e ⦂ B
-  
+ 
 narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} ⊢d-int C≤A = ⟨ Int , ⟨ ⊢d-int , ≤d-int ⟩ ⟩
 narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-var x∈Γ) C≤A with narrow-var x∈Γ C≤A
 ... | ⟨ D , ⟨ x∈Γ' , D≤B ⟩ ⟩ = ⟨ D , ⟨ ⊢d-var x∈Γ' , D≤B ⟩ ⟩
@@ -104,17 +104,23 @@ narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-lam₂ {A = A} ⊢e) C≤A with nar
 ... | ⟨ D , ⟨ ⊢e , D≤B ⟩ ⟩ = ⟨ (A ⇒ D) , ⟨ (⊢d-lam₂ ⊢e) , ≤d-arr ≤d-refl D≤B ⟩ ⟩
 narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-lam₃ ⊢e) C≤A with narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂ , Bot} ⊢e C≤A
 ... | ⟨ D , ⟨ ⊢e , D≤B ⟩ ⟩ = ⟨ Bot ⇒ D , ⟨ (⊢d-lam₁ ⊢e) , ≤d-top ⟩ ⟩
-narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₁ ⊢f ⊢e) C≤A with narrow ⊢f C≤A | narrow ⊢e C≤A
-... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | ⟨ D₂ , ⟨ ⊢e' , D≤B' ⟩ ⟩ = ⟨ Bot , {!!} ⟩
-... | ⟨ A' ⇒ B' , ⟨ ⊢f' , ≤d-arr D≤B D≤B₁ ⟩ ⟩ | ⟨ D₂ , ⟨ ⊢e' , D≤B' ⟩ ⟩ = ⟨ B' , ⟨ (⊢d-app₁ ⊢f' (chk-sub ⊢e' (≤d-trans D≤B' D≤B))) , D≤B₁ ⟩ ⟩
-narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₂ ⊢f ⊢e) C≤A with narrow ⊢f C≤A | narrow ⊢e C≤A
-... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | ⟨ fst₁ , ⟨ fst₃ , snd₁ ⟩ ⟩ = {!!}
-... | ⟨ .(_ ⇒ _) , ⟨ fst₂ , ≤d-arr snd snd₂ ⟩ ⟩ | ⟨ fst₁ , ⟨ fst₃ , snd₁ ⟩ ⟩ = {!!}
-narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₃ ⊢f ⊢e) C≤A with narrow ⊢f C≤A | narrow ⊢e C≤A
-... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | res2 = {!!}
-... | ⟨ .(_ ⇒ _) , ⟨ fst₁ , ≤d-arr snd snd₁ ⟩ ⟩ | res2 = {!!}
-narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-ann ⊢e) C≤A = {!!}
-narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-sub ⊢e x) C≤A = {!!}
+
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₁ ⊢f ≈bot ⊢e) A≤B with narrow ⊢f A≤B | narrow ⊢e A≤B
+... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | ⟨ D , ⟨ ⊢e' , D≤Top ⟩ ⟩ = ⟨ Bot , ⟨ (⊢d-app₁ ⊢f' ≈bot (chk-sub ⊢e' ≤d-top)) , ≤d-bot ⟩ ⟩
+
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₁ ⊢f ≈arr ⊢e) A≤B with narrow ⊢f A≤B | narrow ⊢e A≤B
+... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | ⟨ D' , ⟨ ⊢e' , D≤B' ⟩ ⟩ = ⟨ Bot , ⟨ ⊢d-app₁ ⊢f' ≈bot (chk-sub ⊢e' ≤d-top) , ≤d-bot ⟩ ⟩
+... | ⟨ A' ⇒ B' , ⟨ ⊢f' , ≤d-arr D≤B D≤B₁ ⟩ ⟩ | ⟨ D' , ⟨ ⊢e' , D≤B' ⟩ ⟩ = ⟨ B' , ⟨ (⊢d-app₁ ⊢f' ≈arr (chk-sub ⊢e' (≤d-trans D≤B' D≤B))) , D≤B₁ ⟩ ⟩
+
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₂ ⊢f ≈bot ⊢e) A≤B with narrow ⊢f A≤B | narrow ⊢e A≤B
+... | ⟨ .Bot , ⟨ ⊢f' , ≤d-bot ⟩ ⟩ | ⟨ D , ⟨ ⊢e' , D≤Top ⟩ ⟩ = ⟨ Bot , ⟨ (⊢d-app₂ {!!} ≈bot {!!}) , {!!} ⟩ ⟩
+
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₂ ⊢f ≈arr ⊢e) A≤B = {!!}
+
+
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-app₃ ⊢f T≈ ⊢e) A≤B = {!!}
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-ann ⊢e) A≤B = {!!}
+narrow {Γ₁ = Γ₁} {Γ₂ = Γ₂} (⊢d-sub ⊢e x) A≤B = {!!}
 
 narrow-1 ⊢e C≤A = narrow {Γ₂ = ∅} ⊢e C≤A
 
@@ -123,5 +129,6 @@ chk-sub (⊢d-lam₁ ⊢e) ≤d-top with narrow-1 ⊢e ≤d-bot
 chk-sub (⊢d-lam₁ ⊢e) (≤d-arr C≤A B≤D) with narrow-1 ⊢e C≤A
 ... | ⟨ D , ⟨ ⊢e , A≤D ⟩ ⟩ = ⊢d-lam₁ (chk-sub ⊢e (≤d-trans A≤D B≤D))
 chk-sub (⊢d-lam₃ ⊢e) ≤d-top = ⊢d-lam₃ ⊢e
-chk-sub (⊢d-app₃ ⊢f ⊢e) A≤B = ⊢d-app₃ (chk-sub ⊢f (≤d-arr ≤d-refl A≤B)) ⊢e
+chk-sub (⊢d-app₃ ⊢f ≈bot ⊢e) A≤B = ⊢d-app₃ (chk-sub ⊢f ≤d-bot) ≈arr ⊢e
+chk-sub (⊢d-app₃ ⊢f ≈arr ⊢e) A≤B = ⊢d-app₃ (chk-sub ⊢f (≤d-arr ≤d-refl A≤B)) ≈arr ⊢e
 chk-sub (⊢d-sub ⊢e A≤B') A≤B = ⊢d-sub ⊢e (≤d-trans A≤B' A≤B)
