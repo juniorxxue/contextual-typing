@@ -1,18 +1,26 @@
-module Bot.Common where
+module SubGen.Common where
 
-open import Bot.Prelude hiding (_≤?_)
+open import SubGen.Prelude hiding (_≤?_)
+
+  
+Id : Set
+Id = String
 
 infixr 5  ƛ_
 infixl 7  _·_
 infix  9  `_
 infix  5  _⦂_
 infixr 8 _⇒_
+-- infixr 8 _&_
+
+infix 9 *_
 
 data Type : Set where
   Int : Type
+  *_ : ℕ → Type
   Top : Type
-  Bot : Type
   _⇒_ : Type → Type → Type
+  _&_ : Type → Type → Type
 
 data Term : Set where
   lit      : ℕ → Term
@@ -40,13 +48,6 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
       ------------------
     → Γ , B ∋ (suc n) ⦂ A
 
-
-variable
-  A A' B C D E F G T : Type
-  Γ Γ₁ Γ₂ : Context
-  m n i x : ℕ
-  e e₁ e₂ : Term
-
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                             Shift                              +--
@@ -54,7 +55,7 @@ variable
 ----------------------------------------------------------------------
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
-  _≤?_ = Bot.Prelude._≤?_
+  _≤?_ = SubGen.Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x

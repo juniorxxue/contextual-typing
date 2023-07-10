@@ -1,10 +1,10 @@
-module Counter.Completeness where
+module SubGen.Completeness where
 
-open import Counter.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
-open import Counter.Common
-open import Counter.Decl
-open import Counter.Algo
-open import Counter.Algo.Properties
+open import SubGen.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
+open import SubGen.Common
+open import SubGen.Decl
+open import SubGen.Algo
+open import SubGen.Algo.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -36,10 +36,11 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
-≤d-to-≤a : ∀ {Γ A B}
-  → B ≤d A
+≤d-to-≤a : ∀ {Γ A B ∞/n}
+  → B ≤d ∞/n # A
   → Γ ⊢a B ≤ τ A
 ≤d-to-≤a ≤d-int = ≤a-int
+≤d-to-≤a ≤d-base = ≤a-base
 ≤d-to-≤a ≤d-top = ≤a-top
 ≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
 
@@ -53,6 +54,7 @@ ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
   → Γ , A ⊢a B ≤ τ C
   → Γ ⊢a B ≤ τ C
 ≤a-strengthen-τ ≤a-int = ≤a-int
+≤a-strengthen-τ ≤a-base = ≤a-base
 ≤a-strengthen-τ ≤a-top = ≤a-top
 ≤a-strengthen-τ (≤a-arr C≤A B≤D) = ≤a-arr (≤a-strengthen-τ C≤A) (≤a-strengthen-τ B≤D)
 
@@ -73,11 +75,11 @@ subsumption : ∀ {Γ H e A H' H'' es As A'}
   → Γ ⊢a A ≤ H'
   → Γ ⊢a H' ⇛ e ⇛ A
 
-⊢a-to-≤a (⊢a-lit x) = x
-⊢a-to-≤a (⊢a-var x x₁) = x₁
+⊢a-to-≤a ⊢a-lit = ≤a-top
+⊢a-to-≤a (⊢a-var x) = ≤a-top
 ⊢a-to-≤a (⊢a-app ⊢a) with ⊢a-to-≤a ⊢a
 ... | ≤a-hint x A≤H = A≤H
-⊢a-to-≤a (⊢a-ann ⊢a x) = x
+⊢a-to-≤a (⊢a-ann ⊢e) = ≤a-top
 ⊢a-to-≤a (⊢a-lam₁ ⊢a) = ≤a-arr ≤a-refl-τ (≤a-strengthen-τ (⊢a-to-≤a ⊢a))
 ⊢a-to-≤a (⊢a-lam₂ ⊢a ⊢a₁) = ≤a-hint (rebase ⊢a ≤a-refl-τ) (≤a-strengthen-0 (⊢a-to-≤a ⊢a₁))
   where
@@ -86,14 +88,15 @@ subsumption : ∀ {Γ H e A H' H'' es As A'}
       → Γ ⊢a B ≤ τ A
       → Γ ⊢a τ A ⇛ e ⇛ B
     rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
+⊢a-to-≤a (⊢a-sub pv ⊢e A≤H) = A≤H
 
-subsumption (⊢a-lit x) spl ch sub = ⊢a-lit sub
-subsumption (⊢a-var x x₁) spl ch sub = ⊢a-var x sub
+subsumption ⊢a-lit spl ch sub = ⊢a-sub pv-i ⊢a-lit sub
+subsumption (⊢a-var x) spl ch sub = ⊢a-sub pv-var (⊢a-var x) sub
 subsumption (⊢a-app ⊢e) spl ch sub with ⊢a-to-≤a ⊢e
 ... | ≤a-hint ⊢e₂ res = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≤a-hint ⊢e₂ sub))
-
-subsumption (⊢a-ann ⊢e x) spl ch sub = ⊢a-ann ⊢e sub
+subsumption (⊢a-ann ⊢e) spl ch sub = ⊢a-sub pv-ann (⊢a-ann ⊢e) sub
 subsumption (⊢a-lam₂ ⊢e ⊢f) (have spl) (ch-cons ch) (≤a-hint x sub) = ⊢a-lam₂ ⊢e (subsumption ⊢f (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} sub))
+subsumption (⊢a-sub pv ⊢e A≤H) spl ch sub = ⊢a-sub pv ⊢e sub
 
 rebase-≤ : ∀ {Γ A A' As H H' e es T₁ T₂}
   → Γ ⊢a A ≤ H
@@ -117,18 +120,18 @@ rebase-gen : ∀ {Γ e₁ e₂ H A es T₁ T₂ As A' H'}
   → Γ ⊢a τ Top ⇛ e₂ ⇛ T₁
   → chain es (⟦ e₂ ⟧⇒ (τ T₂)) H'
   → Γ ⊢a H' ⇛ e₁ ⇛ A
-rebase-gen (⊢a-lit ()) none ⊢e ch-none
-rebase-gen (⊢a-var x∈Γ A≤H) spl ⊢e ch = ⊢a-var x∈Γ (rebase-≤ A≤H spl ch ⊢e)
+
 rebase-gen (⊢a-app ⊢f) spl ⊢e ch = ⊢a-app (rebase-gen ⊢f (have spl) ⊢e (ch-cons ch))
-rebase-gen (⊢a-ann ⊢f A≤H) spl ⊢e ch = ⊢a-ann ⊢f (rebase-≤ A≤H spl ch ⊢e)
 rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e ⊢f
 rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f (rebase-gen ⊢a (spl-weaken spl) (⊢a-weaken {n≤l = z≤n} ⊢e) (ch-weaken ch))
+rebase-gen (⊢a-sub pv ⊢f A≤H) spl ⊢e ch = ⊢a-sub pv ⊢f (rebase-≤ A≤H spl ch ⊢e)
 
 rebase-gen-1 : ∀ {Γ e₁ e₂ A B C D}
   → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
   → Γ ⊢a τ Top ⇛ e₂ ⇛ A
   → Γ ⊢a ⟦ e₂ ⟧⇒ τ B ⇛ e₁ ⇛ C ⇒ D
 rebase-gen-1 ⊢f ⊢e = rebase-gen ⊢f none ⊢e ch-none
+
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -159,6 +162,7 @@ complete-inf : ∀ {Γ e A n As T J}
   → As ⇴ Top ≗ J
   → Γ ⊢a τ J ⇛ e ⇛ A
 
+
 complete-chk (⊢d-lam₁ {A = A} ⊢d) with complete-chk ⊢d
 ... | ⟨ C , ⊢e ⟩ = ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
 
@@ -167,6 +171,13 @@ complete-chk (⊢d-app₃ ⊢f ⊢e) with complete-chk ⊢f
   where
     inv-absurd : ∀ {Γ e A B}
       → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ Int → ⊥
+    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
+    ... | ()
+
+... | ⟨ * n , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
+  where
+    inv-absurd : ∀ {Γ e A B}
+      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ * n → ⊥
     inv-absurd ⊢e with ⊢a-to-≤a ⊢e
     ... | ()
 
@@ -195,13 +206,44 @@ complete-chk (⊢d-sub {B = B} ⊢e B≤A) = ⟨ B , rebase ind-e (≤d-to-≤a 
       → Γ ⊢a τ A ⇛ e ⇛ B
     rebase ⊢e B≤A = subsumption ⊢e none ch-none B≤A
 
+complete-inf ⊢d-int n-none cht-none = ⊢a-lit
+complete-inf (⊢d-var x∈Γ) n-none cht-none = ⊢a-var x∈Γ
+complete-inf (⊢d-lam₂ ⊢e) (n-cons spl) (cht-cons AJ) = ⊢a-lam₁ (complete-inf ⊢e spl AJ)
+complete-inf (⊢d-app₁ ⊢f ⊢e) n-none cht-none = ⊢a-app (rebase ind-f (proj₂ (complete-chk ⊢e)))
+  where
+    ind-f = complete-inf ⊢f n-none cht-none
+    rebase : ∀ {Γ e₁ e₂ A B C}
+      → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
+      → Γ ⊢a τ A ⇛ e₂ ⇛ C
+      → Γ ⊢a ⟦ e₂ ⟧⇒ τ Top ⇛ e₁ ⇛ A ⇒ B
+    rebase ⊢f ⊢e = subsumption ⊢f none ch-none (≤a-hint ⊢e ≤a-top)
+
+complete-inf (⊢d-app₂ ⊢f ⊢e) spl JA = ⊢a-app (rebase ind-f (complete-inf ⊢e n-none cht-none))
+  where
+    ind-f = complete-inf ⊢f (n-cons spl) (cht-cons JA)
+    rebase : ∀ {Γ e₁ e₂ A B J}
+      → Γ ⊢a τ (A ⇒ J) ⇛ e₁ ⇛ A ⇒ B
+      → Γ ⊢a τ Top ⇛ e₂ ⇛ A
+      → Γ ⊢a ⟦ e₂ ⟧⇒ τ J ⇛ e₁ ⇛ A ⇒ B
+    rebase ⊢f ⊢e = rebase-gen-1 ⊢f ⊢e
+complete-inf (⊢d-ann ⊢e) n-none cht-none = ⊢a-ann (proj₂ (complete-chk ⊢e))
+complete-inf (⊢d-sub ⊢e B≤A) spl JA = {!!} -- not directly correspond to the subsumption in algo
+  where
+    rebase : ∀ {Γ e A B}
+      → Γ ⊢a τ Top ⇛ e ⇛ B
+      → Γ ⊢a B ≤ τ A
+      → Γ ⊢a τ A ⇛ e ⇛ B
+    rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
+
+{-
+
 complete-inf ⊢d-int n-none cht-none = ⊢a-lit ≤a-top
 complete-inf (⊢d-var x∈Γ) spl JA = ⊢a-var x∈Γ (≤d-to-≤a (≤d-n-spl spl JA))
   where
-    ≤d-n-spl : ∀ {A As J T n}
+    ≤d-n-spl : ∀ {A As J T n ∞/n}
       → A ↪ n ❪ As , T ❫
       → As ⇴ Top ≗ J
-      → A ≤d J
+      → A ≤d ∞/n # J
     ≤d-n-spl n-none cht-none = ≤d-top
     ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
       
@@ -228,9 +270,10 @@ complete-inf (⊢d-app₂ ⊢f ⊢e) spl JA = ⊢a-app (rebase ind-f (complete-i
 
 complete-inf (⊢d-ann ⊢e) spl JA = ⊢a-ann (proj₂ (complete-chk ⊢e)) (≤d-to-≤a (≤d-n-spl spl JA))
   where
-    ≤d-n-spl : ∀ {A As J T n}
+    ≤d-n-spl : ∀ {A As J T n ∞/n}
       → A ↪ n ❪ As , T ❫
       → As ⇴ Top ≗ J
-      → A ≤d J
+      → A ≤d ∞/n # J
     ≤d-n-spl n-none cht-none = ≤d-top
     ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
+-}

@@ -1,11 +1,11 @@
-module Counter.Soundness where
+module SubGen.Soundness where
 
-open import Counter.Prelude
-open import Counter.Common
-open import Counter.Decl
-open import Counter.Decl.Properties
-open import Counter.Algo
-open import Counter.Algo.Properties
+open import SubGen.Prelude
+open import SubGen.Common
+open import SubGen.Decl
+open import SubGen.Decl.Properties
+open import SubGen.Algo
+open import SubGen.Algo.Properties
 
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
@@ -34,11 +34,6 @@ data _⊩_⇛_ : Context → List Term → List Type → Set where
     → Γ ⊩ es ⇛ As
     → Γ ⊢d c 0 # e ⦂ A
     → Γ ⊩ (e ∷ es) ⇛ (A ∷ As)
-
-f : Type → Term
-f Int = lit 1
-f Top = lit 1
-f (A ⇒ A₁) = ƛ (f A₁)
 
 postulate
 
@@ -90,6 +85,7 @@ subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
                      (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
                      {(⊢d-app₁ ⊢1 ⊢2) → ⊢d-app₁ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
                      ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
+                     ;(⊢d-sub ⊢1 A≤B) → {!!}
                      })) -- ind
                      es
 
@@ -110,10 +106,36 @@ subst-chk es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁}
                          es
 
 
-sound-≤ : ∀ {Γ H A es T As A'}
+subst-base : ∀ {Γ A B e₁ e₂ ∞/n}
+  → Γ , A ⊢d ∞/n # e₁ ⦂ B
+  → Γ ⊢d c 0 # e₂ ⦂ A
+  → Γ ⊢d ∞/n # (ƛ e₁) · e₂ ⦂ B
+subst-base {∞/n = ∞} ⊢e₁ ⊢e₂ = ⊢d-app₃ (⊢d-lam₁ ⊢e₁) ⊢e₂
+subst-base {∞/n = c n} ⊢e₁ ⊢e₂ = ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂
+                         
+subst-gen : ∀ {Γ A B e e₁ ∞/n} (es : List Term)
+  → Γ , A ⊢d ∞/n # e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d c 0 # e₁ ⦂ A
+  → Γ ⊢d ∞/n # ((ƛ e) · e₁) ▻ es ⦂ B
+subst-gen es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {∞/n}
+                         → Γ , A ⊢d ∞/n # e ▻ map (_↑ 0) es ⦂ B
+                         → Γ ⊢d c 0 # e₁ ⦂ A
+                         → Γ ⊢d ∞/n # ((ƛ e) · e₁) ▻ es ⦂ B)
+                   (λ ⊢e₁ ⊢e₂ → subst-base ⊢e₁ ⊢e₂)
+                   (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
+                   { (⊢d-app₁ ⊢1 ⊢2) → {!!}
+                   ; (⊢d-app₂ ⊢1 ⊢2) → {!!}
+                   ; (⊢d-app₃ ⊢1 ⊢2) → {!!}
+                   ; (⊢d-sub ⊢1 A≤B) → ⊢d-sub {!!} A≤B
+                   }
+                   ))
+                   es
+
+
+sound-≤ : ∀ {Γ H A es T As A' ∞/n}
   → Γ ⊢a A ≤ H
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → (A' ≤d T) × (Γ ⊩ es ⇚ As)
+  → (A' ≤d ∞/n # T) × (Γ ⊩ es ⇚ As)
 
 sound-inf : ∀ {Γ e H A es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -126,12 +148,29 @@ sound-chk : ∀ {Γ e H A es T As A'}
   → Γ ⊢d ∞ # e ▻ es ⦂ T
 
 sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩none⇚ ⟩
+sound-≤ ≤a-base none = ⟨ ≤d-base , ⊩none⇚ ⟩
 sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩none⇚ ⟩
 sound-≤ (≤a-arr C≤A B≤D) none = ⟨ (≤d-arr ΓC≤A ΓB≤D) , ⊩none⇚ ⟩
   where ΓB≤D = proj₁ (sound-≤ B≤D none)
         ΓC≤A = proj₁ (sound-≤ C≤A none)
-sound-≤ (≤a-hint ⊢e A≤H) (have spl) = ⟨ (proj₁ (sound-≤ A≤H spl)) , ⊩cons⇚ (proj₂ (sound-≤ A≤H spl)) (sound-chk ⊢e none) ⟩
+sound-≤ (≤a-hint ⊢e A≤H) (have spl) = ⟨ (proj₁ (sound-≤ A≤H spl)) , ⊩cons⇚ (proj₂ (sound-≤ {∞/n = ∞} A≤H spl)) (sound-chk ⊢e none) ⟩
 
+sound-inf ⊢a-lit none = ⊢d-int
+sound-inf (⊢a-var x∈Γ) none = ⊢d-var x∈Γ
+sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
+sound-inf (⊢a-ann ⊢e) none = ⊢d-ann (sound-chk ⊢e none)
+sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-gen es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
+sound-inf (⊢a-sub pv ⊢e A≤H) spl = ⊩-elim (sound-inf ⊢e none) (proj₂ (sound-≤ {∞/n = ∞} A≤H spl)) spl
+
+sound-chk ⊢a-lit spl = {!!}
+sound-chk (⊢a-var x) spl = {!!}
+sound-chk (⊢a-app ⊢e) spl = {!!}
+sound-chk (⊢a-ann ⊢e) spl = {!!}
+sound-chk (⊢a-lam₁ ⊢e) spl = {!!}
+sound-chk (⊢a-lam₂ ⊢e ⊢e₁) spl = {!!}
+sound-chk (⊢a-sub pv ⊢e A≤H) spl = {!!}
+
+{-
 sound-inf (⊢a-lit _) none = ⊢d-int
 sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
   where arg-chks = proj₂ (sound-≤ A≤H spl)
@@ -153,3 +192,4 @@ sound-chk (⊢a-ann ⊢e A≤H) spl = ⊢d-sub elims A'≤T
         A'≤T = proj₁ (sound-≤ A≤H spl)        
 sound-chk (⊢a-lam₁ ⊢e) none = ⊢d-lam₁ (sound-chk ⊢e none)
 sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-chk es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
+-}

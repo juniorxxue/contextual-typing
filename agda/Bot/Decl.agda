@@ -86,20 +86,27 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ∞ # (ƛ e) ⦂ Top
 
   ⊢d-app₁ :
-      Γ ⊢d (c 0) # e₁ ⦂ T
-    → T ≈ A ⇒ B
+      Γ ⊢d (c 0) # e₁ ⦂ A ⇒ B
     → Γ ⊢d ∞ # e₂ ⦂ A
-    → Γ ⊢d (c 0) # e₁ · e₂ ⦂ B -- concern about this one
+    → Γ ⊢d (c 0) # e₁ · e₂ ⦂ B
+
+  ⊢d-app₁-bot :
+      Γ ⊢d (c 0) # e₁ ⦂ Bot
+    → Γ ⊢d ∞ # e₂ ⦂ A
+    → Γ ⊢d (c 0) # e₁ · e₂ ⦂ Bot
 
   ⊢d-app₂ :
-      Γ ⊢d (c (suc n)) # e₁ ⦂ T
-    → T ≈ A ⇒ B
+      Γ ⊢d (c (suc n)) # e₁ ⦂ A ⇒ B
     → Γ ⊢d (c 0) # e₂ ⦂ A
     → Γ ⊢d (c n) # e₁ · e₂ ⦂ B
 
+  ⊢d-app₂-bot :
+      Γ ⊢d (c (suc n)) # e₁ ⦂ Bot
+    → Γ ⊢d (c 0) # e₂ ⦂ A
+    → Γ ⊢d (c n) # e₁ · e₂ ⦂ Bot
+
   ⊢d-app₃ :
-      Γ ⊢d ∞ # e₁ ⦂ T
-    → T ≈ A ⇒ B
+      Γ ⊢d ∞ # e₁ ⦂ A ⇒ B
     → Γ ⊢d (c 0) # e₂ ⦂ A
     → Γ ⊢d ∞ # e₁ · e₂ ⦂ B
 

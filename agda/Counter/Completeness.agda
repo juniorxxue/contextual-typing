@@ -150,11 +150,11 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
 
   
 complete-chk : ∀ {Γ e A}
-  → Γ ⊢d ∞ ╏ e ⦂ A
+  → Γ ⊢d ∞ # e ⦂ A
   → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)
 
 complete-inf : ∀ {Γ e A n As T J}
-  → Γ ⊢d c n ╏ e ⦂ A
+  → Γ ⊢d c n # e ⦂ A
   → A ↪ n ❪ As , T ❫
   → As ⇴ Top ≗ J
   → Γ ⊢a τ J ⇛ e ⇛ A

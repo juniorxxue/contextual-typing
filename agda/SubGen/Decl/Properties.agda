@@ -1,9 +1,9 @@
-module Counter.Decl.Properties where
+module SubGen.Decl.Properties where
 
-open import Counter.Prelude
-open import Counter.Common
-open import Counter.Decl
-open import Counter.Properties
+open import SubGen.Prelude
+open import SubGen.Common
+open import SubGen.Decl
+open import SubGen.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--

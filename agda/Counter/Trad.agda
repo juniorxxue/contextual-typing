@@ -52,7 +52,7 @@ data _⊢d_∙_∙_ : Context → Term → Mode → Type → Set where
 --   since counter will exclude some cases
 
 sound : ∀ {Γ cc e ⇔ A}
-  → Γ ⊢d cc ╏ e ∙ ⇔ ∙ A
+  → Γ ⊢d cc # e ∙ ⇔ ∙ A
   → Γ ⊢d e ∙ ⇔ ∙ A
 sound ⊢d-int = ⊢dd-int
 sound (⊢d-var x) = ⊢dd-var x
@@ -75,7 +75,7 @@ feel like this statement is not meaningful
 
 complete : ∀ {Γ e ⇔ A}
   → Γ ⊢d e ∙ ⇔ ∙ A
-  → ∃[ cc ] Γ ⊢d cc ╏ e ∙ ⇔ ∙ A
+  → ∃[ cc ] Γ ⊢d cc # e ∙ ⇔ ∙ A
 complete ⊢dd-int = ⟨ c 0 , ⊢d-int ⟩
 complete (⊢dd-var x) = ⟨ c 0 , ⊢d-var x ⟩
 complete (⊢dd-lam ⊢d) with complete ⊢d
