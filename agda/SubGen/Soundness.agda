@@ -132,8 +132,8 @@ subst-gen es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {∞/n}
                    es
 
 
-sound-≤ : ∀ {Γ H A es T As A' ∞/n}
-  → Γ ⊢a A ≤ H
+sound-≤ : ∀ {Γ H A B es T As A' ∞/n}
+  → Γ ⊢a A ≤ H ⇝ B
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → (A' ≤d ∞/n # T) × (Γ ⊩ es ⇚ As)
 
@@ -147,49 +147,13 @@ sound-chk : ∀ {Γ e H A es T As A'}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → Γ ⊢d ∞ # e ▻ es ⦂ T
 
-sound-≤ ≤a-int none = ⟨ ≤d-int , ⊩none⇚ ⟩
-sound-≤ ≤a-base none = ⟨ ≤d-base , ⊩none⇚ ⟩
-sound-≤ ≤a-top none = ⟨ ≤d-top , ⊩none⇚ ⟩
-sound-≤ (≤a-arr C≤A B≤D) none = ⟨ (≤d-arr ΓC≤A ΓB≤D) , ⊩none⇚ ⟩
-  where ΓB≤D = proj₁ (sound-≤ B≤D none)
-        ΓC≤A = proj₁ (sound-≤ C≤A none)
-sound-≤ (≤a-hint ⊢e A≤H) (have spl) = ⟨ (proj₁ (sound-≤ A≤H spl)) , ⊩cons⇚ (proj₂ (sound-≤ {∞/n = ∞} A≤H spl)) (sound-chk ⊢e none) ⟩
+sound-≤ A≤H spl = {!!}
 
 sound-inf ⊢a-lit none = ⊢d-int
 sound-inf (⊢a-var x∈Γ) none = ⊢d-var x∈Γ
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-ann ⊢e) none = ⊢d-ann (sound-chk ⊢e none)
 sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-gen es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
-sound-inf (⊢a-sub pv ⊢e A≤H) spl = ⊩-elim (sound-inf ⊢e none) (proj₂ (sound-≤ {∞/n = ∞} A≤H spl)) spl
+sound-inf (⊢a-sub pv ⊢e A≤H) spl = {!!}
 
-sound-chk ⊢a-lit spl = {!!}
-sound-chk (⊢a-var x) spl = {!!}
-sound-chk (⊢a-app ⊢e) spl = {!!}
-sound-chk (⊢a-ann ⊢e) spl = {!!}
-sound-chk (⊢a-lam₁ ⊢e) spl = {!!}
-sound-chk (⊢a-lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-chk (⊢a-sub pv ⊢e A≤H) spl = {!!}
-
-{-
-sound-inf (⊢a-lit _) none = ⊢d-int
-sound-inf (⊢a-var ∋ A≤H) spl = ⊩-elim (⊢d-var ∋) arg-chks spl
-  where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
-sound-inf (⊢a-ann ⊢e A≤H) spl = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
-  where arg-chks = proj₂ (sound-≤ A≤H spl)
-sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
-
-sound-chk (⊢a-lit ≤a-int) none = ⊢d-sub ⊢d-int ≤d-refl
-sound-chk (⊢a-lit ≤a-top) none = ⊢d-sub ⊢d-int ≤d-top
-sound-chk (⊢a-var ∋ A≤H) spl = ⊢d-sub elims A'≤T
-  where arg-chks = proj₂ (sound-≤ A≤H spl)
-        elims = ⊩-elim (⊢d-var ∋) arg-chks spl
-        A'≤T = proj₁ (sound-≤ A≤H spl)
-sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
-sound-chk (⊢a-ann ⊢e A≤H) spl = ⊢d-sub elims A'≤T
-  where arg-chks = proj₂ (sound-≤ A≤H spl)
-        elims = ⊩-elim (⊢d-ann (sound-chk ⊢e none)) arg-chks spl
-        A'≤T = proj₁ (sound-≤ A≤H spl)        
-sound-chk (⊢a-lam₁ ⊢e) none = ⊢d-lam₁ (sound-chk ⊢e none)
-sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-chk es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
--}
+sound-chk ⊢e spl = {!!}

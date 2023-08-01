@@ -11,7 +11,7 @@
 \usepackage{amsthm}
 \newtheorem{lemma}{Lemma}
 
-\title{Contextual Type Inference}
+\title{Contextual Type Inference (Intersection Types)}
 \author{Xu Xue}
 
 \begin{document}
@@ -39,7 +39,7 @@
     {\Gamma \vdash_0 i : Int}
 
     \inferrule*[lab=Var]
-    {\Gamma \vdash x : A \in \Gamma}
+    {x : A \in \Gamma}
     {\Gamma \vdash_0 x : A}
 
     \inferrule*[lab=Lam]
@@ -66,9 +66,9 @@
     {\Gamma \vdash_j e : A}
 
     \inferrule*[lab=And]
-    {\Gamma \vdash_j e : A \\
-     \Gamma \vdash_j e : B}
-    {\Gamma \vdash_j e : A ~\&~ B}
+    {\Gamma \vdash_{\infty} e : A \\
+     \Gamma \vdash_{\infty} e : B}
+    {\Gamma \vdash_{\infty} e : A ~\&~ B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -76,11 +76,15 @@
 \begin{mathpar}
     \inferrule*[lab=S-Refl]
     { }
-    {A <:_{0/\infty} A}
+    {A <:_{0} A}
+
+    \inferrule*[lab=S-Int]
+    { }
+    {Int <:_{\infty} Int}
 
     \inferrule*[lab=S-Top]
     { }
-    {\Gamma \vdash A <:_j \mathtt{Top}}
+    {A <:_{\infty} \mathtt{Top}}
 
     \inferrule*[lab=S-Arr]
     {C <:_{\infty} A \\
@@ -131,7 +135,7 @@
  \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
 {\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 
-\inferrule*[lab=T-Lam3]
+\inferrule*[lab=T-Lam-And]
 {\Gamma \vdash A \Rightarrow \lambda x.~e \Rightarrow C \\
  \Gamma \vdash B \Rightarrow \lambda x.~e \Rightarrow D}
 {\Gamma \vdash A ~\&~ B \Rightarrow \lambda x.~e \Rightarrow C ~\&~ D}
@@ -141,10 +145,10 @@
  \Gamma \vdash A <: H \rightsquigarrow B}
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 
-\inferrule*[lab=T-And]
-{\Gamma \vdash H \Rightarrow e \Rightarrow A \\
- \Gamma \vdash H \Rightarrow e \Rightarrow B}
-{\Gamma \vdash H \Rightarrow e \Rightarrow A ~\&~ B}
+% \inferrule*[lab=T-And]
+% {\Gamma \vdash H \Rightarrow e \Rightarrow A \\
+%  \Gamma \vdash H \Rightarrow e \Rightarrow B}
+% {\Gamma \vdash H \Rightarrow e \Rightarrow A ~\&~ B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -159,9 +163,9 @@
 {\Gamma \vdash A <: Top \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \rightsquigarrow C \\
- \Gamma \vdash B <: D \rightsquigarrow B}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow C \rightarrow B}
+{\Gamma \vdash C <: A \rightsquigarrow A \\
+ \Gamma \vdash B <: D \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow C \rightarrow D}
 
 \inferrule*[lab=S-Hole]
 {\Gamma \vdash A \Rightarrow e \Rightarrow C \\
@@ -177,8 +181,8 @@
 {\Gamma \vdash A ~\&~ B <: H \rightsquigarrow C}
 
 \inferrule*[lab=S-And]
-{\Gamma \vdash A <: B \rightsquigarrow A \\
- \Gamma \vdash A <: C \rightsquigarrow A}
-{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow A}
+{\Gamma \vdash A <: B \rightsquigarrow B \\
+ \Gamma \vdash A <: C \rightsquigarrow C}
+{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow B ~\&~ C}
 \end{mathpar}
 \end{document}

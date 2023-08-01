@@ -37,7 +37,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-base∞ : ∀ {n}
     → * n ≤d ∞ # * n
   ≤d-top : ∀ {A}
-    → A ≤d ∞/n # Top
+    → A ≤d ∞ # Top
   -- this can be merged to one single rule in presentation
   -- but not for formalisation in pred counter is partial
   ≤d-arr∞ : ∀ {A B C D}
@@ -122,9 +122,9 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ∞/n # e ⦂ A
 
   ⊢d-and-i : ∀ {Γ e A B}
-    → Γ ⊢d ∞/n # e ⦂ A
-    → Γ ⊢d ∞/n # e ⦂ B
-    → Γ ⊢d ∞/n # e ⦂ A & B
+    → Γ ⊢d ∞ # e ⦂ A
+    → Γ ⊢d ∞ # e ⦂ B
+    → Γ ⊢d ∞ # e ⦂ A & B
 
 {- recovered by subsumption
 
@@ -147,8 +147,13 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 _ : ∅ ⊢d (c 0) # (ƛ (` 0)) · lit 1 ⦂ Int
 _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-var Z)) ⊢d-int
 
+{-
+
 _ : ∅ ⊢d (c 0) # ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⦂ Int
-_ = {!!}
+_ = ⊢d-app₁ (⊢d-ann (⊢d-lam₁ (⊢d-app₃ (⊢d-sub (⊢d-var Z) (≤d-arr∞ ≤d-int∞ ≤d-int∞))
+                                ⊢d-int))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int∞))
+
+-}
 
 -- we want it to reject |-0 (\x . \y. y) 1
 -- failed : ∅ ⊢d (c 0) # (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int) → ⊥
@@ -157,9 +162,10 @@ _ = {!!}
 _ : ∅ ⊢d (c 1) # (ƛ (ƛ ` 0)) · (lit 1) ⦂ (Int ⇒ Int)
 _ = ⊢d-app₂ (⊢d-lam₂ (⊢d-lam₂ (⊢d-var Z))) ⊢d-int
 
+{-
 _ : ∅ ⊢d (c 0) # (ƛ ((ƛ ` 0) ⦂ (Int ⇒ Int) ⇒ Int ⇒ Int)) · (lit 2) · (ƛ ` 0) ⦂ Int ⇒ Int
-_ = {!!}
-
+_ = ⊢d-app₁ (⊢d-app₂ (⊢d-lam₂ (⊢d-ann (⊢d-lam₁ (⊢d-sub (⊢d-var Z) (≤d-arr∞ ≤d-int∞ ≤d-int∞))))) ⊢d-int) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int∞))
+-}
 {-
 -- |-0 (\x . x : (Int -> Int) & (Bool -> Bool)) 1 : Int
 _ : ∅ ⊢d (c 0) # ((ƛ ` 0) ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)) · (lit 1) ⦂ Int
@@ -167,14 +173,9 @@ _ = ⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-and-i (⊢d-lam₁ (⊢d-sub (⊢d-var
 -}
 
 {-
--- we do not use counter in the subtyping (especially intersection types), which may cause our system too expressive
-
-_ : ∅ , * 1 & * 3 ⊢d c 0 # ((ƛ ` 0) ⦂ (* 1 ⇒ * 1) & (* 2 ⇒ * 2)) · ` 0 ⦂ * 1
-_ = ⊢d-app₂ {!!} (⊢d-sub (⊢d-var Z) ≤d-and₁)
+_ : ∅ , * 1 ⊢d c 0 # ((ƛ ` 0) ⦂ (* 1 ⇒ * 1) & (* 2 ⇒ * 2)) · ` 0 ⦂ * 1
+_ = ⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-and-i (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-base∞))
+                                      (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-base∞))))
+                    (≤d-and₁ (≤d-arrn ≤d-base∞ ≤d-0)))
+            (⊢d-var Z)
 -}
-
-
-_ : ∅ ⊢d c 0 # ((ƛ ` 0) ⦂ Int ⇒ Int) · (lit 1) ⦂ Top
-_ = {!!}
-
--- ((ƛ ` 0) ⦂ Int ⇒ Int) : Int -> Top

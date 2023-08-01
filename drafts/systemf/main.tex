@@ -1,0 +1,181 @@
+\documentclass{article}
+\usepackage{fullwidth}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xfrac,unicode-math}
+% \usepackage{amsthm}
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
+
+\title{Contextual Type Inference (System F)}
+\author{Xu Xue}
+
+\begin{document}
+
+\maketitle
+
+\section{Syntax}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B, C, D, T ::=&~ a \mid \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid \forall a.~A\\
+&\text{Hints} \quad\quad &H ::=&~ A \mid \boxed{e} \rightarrow H\\
+&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A \mid \Lambda X.~e \mid e[A]\\
+&\text{Partial Values} \quad \quad &p::=&~ i \mid x \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A \mid \Gamma, a\\
+&\text{Counters} \quad\quad &j ::=&~ n \mid \infty\\
+\end{align*}
+
+\subsection{Operations on Counters}
+
+\begin{align*}
+    (S~n)- &= n \\
+    \infty - &= \infty \\
+    n+ &= S~n \\
+    \infty + &= \infty
+\end{align*}
+
+\section{Decl.}
+
+\subsection{Typing}
+
+\begin{mathpar}
+    \inferrule*[lab=Int]
+    { }
+    {\Gamma \vdash_0 i : \mathtt{Int}}
+
+    \inferrule*[lab=Var]
+    {x : A \in \Gamma}
+    {\Gamma \vdash_0 x : A}
+
+    \inferrule*[lab=Lam]
+    {\Gamma, x : A \vdash_{j-} e : B}
+    {\Gamma \vdash_{j} \lambda x.~ e : A \rightarrow B}
+
+    \inferrule*[lab=App1]
+    {\Gamma \vdash_0 e_1 : A \rightarrow B \\
+    \Gamma \vdash_{\infty} e_2 : A}
+    {\Gamma \vdash_n e_1~e_2 : B}
+
+    \inferrule*[lab=App2]
+    {\Gamma \vdash_{j+} e_1 : A \rightarrow B \\
+    \Gamma \vdash_0 e_2 : A}
+    {\Gamma \vdash_j e_1~e_2 : B}
+
+    \inferrule*[lab=Ann]
+    {\Gamma \vdash_{\infty} e : A}
+    {\Gamma \vdash_0 (e : A) : A}
+
+    \inferrule*[lab=Sub]
+    {\Gamma \vdash_0 e : B \\
+    \Gamma \vdash B <:_j A}
+    {\Gamma \vdash_j e : A}
+
+    \inferrule*[lab=TAbs]
+    {\Gamma, X \vdash_j e : A}
+    {\Gamma \vdash_j \Lambda X.~e : \forall X.~A}
+
+    \inferrule*[lab=TApp]
+    {\Gamma \vdash_j e : \forall X.~B}
+    {\Gamma \vdash_j e[A] : [A/X]B}
+\end{mathpar}
+
+\subsection{Subtyping}
+
+\begin{mathpar}
+    \inferrule*[lab=S-Refl]
+    { }
+    {\Gamma \vdash_0 A <: A}
+
+    \inferrule*[lab=S-Int]
+    { }
+    {\Gamma \vdash_{\infty} \mathtt{Int} <: \mathtt{Int}}
+
+    \inferrule*[lab=S-Top]
+    { }
+    {\Gamma \vdash_{\infty} A <: \mathtt{Top}}
+
+    \inferrule*[lab=S-Arr]
+    {\Gamma \vdash_{\infty} C <: A \\
+     \Gamma \vdash_{j-} B <: D}
+    {\Gamma \vdash_j A \rightarrow B <:C \rightarrow D}
+
+    \inferrule*[lab=S-$\forall$]
+    {\Gamma , a \vdash_{\infty} A <: B}
+    {\Gamma \vdash_{\infty} \forall a.~A <: \forall a.~B}
+
+    \inferrule*[lab=S-$\forall$L]
+    {\Gamma \vdash B \\
+     \Gamma \vdash_{S~n} [B/a] A <: C}
+    {\Gamma \vdash_{S~ n} \forall a. ~A <: C}
+\end{mathpar}
+
+\section{Algo.}
+
+\subsection{Typing}
+
+\begin{mathpar}
+\inferrule*[lab=T-Lit]
+{ }
+{\Gamma \vdash \mathtt{Top} \Rightarrow i \Rightarrow \mathsf{Int}}
+
+\inferrule*[lab=T-Var]
+{x : A \in \Gamma}
+{\Gamma \vdash \mathtt{Top} \Rightarrow x \Rightarrow A}
+
+\inferrule*[lab=T-App]
+{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow e_1 \Rightarrow A \rightarrow B}
+{\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
+
+\inferrule*[lab=T-Ann]
+{\Gamma \vdash A \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \mathtt{Top} \Rightarrow e : A \Rightarrow A}
+
+\inferrule*[lab=T-Lam1]
+{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
+{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
+
+\inferrule*[lab=T-Lam2]
+{\Gamma \vdash \mathtt{Top} \Rightarrow e_2 \Rightarrow A \\
+ \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
+
+\inferrule*[lab=T-Sub]
+{\Gamma \vdash \mathtt{Top} \Rightarrow p \Rightarrow A \\
+ \Gamma \vdash A <: H \rightsquigarrow B}
+{\Gamma \vdash H \Rightarrow p \Rightarrow B}
+
+\inferrule*[lab=T-TAbs]
+{\Gamma, a \vdash A \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \forall a.~A \Rightarrow \Lambda a.~e \Rightarrow \forall a.~B}
+
+\inferrule*[lab=T-TApp]
+{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
+{\Gamma \vdash H \Rightarrow e[A] \Rightarrow [A/X]B]}
+\end{mathpar}
+
+\subsection{Subtyping(Undrafted)}
+
+\begin{mathpar}
+\inferrule*[lab=S-Int]
+{ }
+{\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \rightsquigarrow \mathtt{Int}}
+
+\inferrule*[lab=S-Top]
+{ }
+{\Gamma \vdash A <: \mathtt{Top} \rightsquigarrow A}
+
+\inferrule*[lab=S-Arr]
+{\Gamma \vdash C <: A \rightsquigarrow A' \\
+ \Gamma \vdash B <: D \rightsquigarrow D'}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow A' \rightarrow D'}
+
+\inferrule*[lab=S-Hole]
+{\Gamma \vdash A \Rightarrow e \Rightarrow C \\
+ \Gamma \vdash B <: H \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \rightsquigarrow A \rightarrow D}
+\end{mathpar}
+\end{document}

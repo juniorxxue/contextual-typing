@@ -57,11 +57,11 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a * n ≤ τ (* n) ⇝ (* n)
   ≤a-top : ∀ {Γ A}
     → Γ ⊢a A ≤ τ Top ⇝ A
-  ≤a-arr : ∀ {Γ A B C D}
-    → Γ ⊢a C ≤ τ A ⇝ A
-    → Γ ⊢a B ≤ τ D ⇝ D
+  ≤a-arr : ∀ {Γ A A' B C D D'}
+    → Γ ⊢a C ≤ τ A ⇝ A'
+    → Γ ⊢a B ≤ τ D ⇝ D'
     ---------------------------
-    → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (C ⇒ D)
+    → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (A' ⇒ D')
   ≤a-hint : ∀ {Γ A B C H e D}
     → Γ ⊢a τ A ⇛ e ⇛ C
     → Γ ⊢a B ≤ H ⇝ D
@@ -73,10 +73,10 @@ data _⊢a_≤_⇝_ where
   ≤a-and-r : ∀ {Γ A B H C}
     → Γ ⊢a B ≤ H ⇝ C
     → Γ ⊢a A & B ≤ H ⇝ C
-  ≤a-and : ∀ {Γ A B C}
-    → Γ ⊢a A ≤ τ B ⇝ B
-    → Γ ⊢a A ≤ τ C ⇝ C
-    → Γ ⊢a A ≤ τ (B & C) ⇝ (B & C)
+  ≤a-and : ∀ {Γ A B B' C C'}
+    → Γ ⊢a A ≤ τ B ⇝ B'
+    → Γ ⊢a A ≤ τ C ⇝ C'
+    → Γ ⊢a A ≤ τ (B & C) ⇝ (B' & C')
 
 data _⊢a_⇛_⇛_ where
 
@@ -110,10 +110,16 @@ data _⊢a_⇛_⇛_ where
       -------------------------------------
     → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ e ⇛ A ⇒ B
 
+  ⊢a-lam₃ : ∀ {Γ e A B C D}
+    → Γ ⊢a τ A ⇛ ƛ e ⇛ C
+    → Γ ⊢a τ B ⇛ ƛ e ⇛ D
+    → Γ ⊢a τ (A & B) ⇛ ƛ e ⇛ C & D
+
   ⊢a-sub : ∀ {Γ H p A B}
     → pv p
     → Γ ⊢a τ Top ⇛ p ⇛ A
     → Γ ⊢a A ≤ H ⇝ B
+    → H ≢ τ Top
     → Γ ⊢a H ⇛ p ⇛ B
 
 ----------------------------------------------------------------------
@@ -129,10 +135,6 @@ data _⊢a_⇛_⇛_ where
 ≤a-refl {A = Top} = ≤a-top
 ≤a-refl {A = A ⇒ A₁} = ≤a-arr ≤a-refl ≤a-refl
 ≤a-refl {A = A & B} = ≤a-and (≤a-and-l ≤a-refl) (≤a-and-r ≤a-refl)
-
-_ : ∅ ⊢a τ Top ⇛ ((ƛ ` 0 · (lit 1)) ⦂ (Int ⇒ Int) ⇒ Int) · (ƛ ` 0) ⇛ Int
-_ = ⊢a-app (⊢a-sub pv-ann (⊢a-ann (⊢a-lam₁ (⊢a-app (⊢a-sub pv-var (⊢a-var Z) (≤a-hint (⊢a-sub pv-i ⊢a-lit ≤a-int) ≤a-int)))))
-           (≤a-hint (⊢a-lam₁ (⊢a-sub pv-var (⊢a-var Z) ≤a-int)) ≤a-top))
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -153,3 +155,41 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
   have : ∀ {e H A B es A' B' Bs}
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
+
+≤a-determinism : ∀ {Γ H A B C}
+  → H ≢ τ Top
+  → Γ ⊢a A ≤ H ⇝ B
+  → Γ ⊢a A ≤ H ⇝ C
+  → B ≡ C
+≤a-determinism neq ≤a-int ≤a-int = refl
+≤a-determinism neq ≤a-base ≤a-base = refl
+≤a-determinism neq ≤a-top ≤C = ⊥-elim (neq refl)
+≤a-determinism neq (≤a-arr ≤B ≤B₁) (≤a-arr ≤C ≤C₁) = {!≤a-determinism ? ≤B ≤C!} -- easy
+≤a-determinism neq (≤a-hint ⊢1 ≤B) (≤a-hint ⊢2 ≤C) = {!!} -- easy
+≤a-determinism neq (≤a-and-l ≤B) ≤C = {!!}
+≤a-determinism neq (≤a-and-r ≤B) ≤C = {!!}
+≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and-l ≤C) = {!!}
+≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and-r ≤C) = {!!}
+≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and ≤C ≤C₁) = {!!}
+
+
+⊢a-determinism : ∀ {Γ H e A B}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a H ⇛ e ⇛ B
+  → A ≡ B
+⊢a-determinism ⊢a-lit ⊢a-lit = refl
+⊢a-determinism ⊢a-lit (⊢a-sub x ⊢2 x₁ x₂) = {!!} -- easy
+⊢a-determinism (⊢a-var x) ⊢2 = {!!} -- easy
+
+⊢a-determinism (⊢a-app ⊢1) (⊢a-app ⊢2) = {!⊢a-determinism ⊢1 ⊢2!} -- easy
+
+⊢a-determinism (⊢a-ann ⊢1) (⊢a-ann ⊢2) = refl
+⊢a-determinism (⊢a-ann ⊢1) (⊢a-sub x ⊢2 x₁ x₂) = {!!} -- easy
+
+⊢a-determinism (⊢a-lam₁ ⊢1) (⊢a-lam₁ ⊢2) = {!⊢a-determinism ⊢1 ⊢2 !}  -- easy
+⊢a-determinism (⊢a-lam₂ ⊢1 ⊢3) (⊢a-lam₂ ⊢2 ⊢4) rewrite ⊢a-determinism ⊢1 ⊢2 = {!⊢a-determinism ⊢3 ⊢4!} -- easy
+⊢a-determinism (⊢a-lam₃ ⊢1 ⊢3) (⊢a-lam₃ ⊢2 ⊢4) rewrite ⊢a-determinism ⊢1 ⊢2 | ⊢a-determinism ⊢3 ⊢4 = refl
+⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) ⊢a-lit = {!!}
+⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-var x₃) = {!!}
+⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-ann ⊢2) = {!!} -- all absurds
+⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-sub x₃ ⊢2 x₄ x₅) rewrite ⊢a-determinism ⊢1 ⊢2 = {!!}
