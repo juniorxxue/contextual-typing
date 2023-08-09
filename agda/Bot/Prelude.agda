@@ -41,10 +41,3 @@ n<m⇒m≰n : ∀ {m n}
 n<m⇒m≰n {suc m} {zero} n<m = λ ()
 n<m⇒m≰n {suc m} {suc n} (s≤s n<m) (s≤s m≤n) = n<m⇒m≰n {m} {n} n<m m≤n
 
-
-n<m⇒m≰n' : ∀ {m n}
-  → n < m
-  → m ≰ n
-n<m⇒m≰n' {suc m} {zero} (s≤s n<m) = λ ()
-n<m⇒m≰n' {suc m} {suc n} (s≤s n<m) = {!!}
-

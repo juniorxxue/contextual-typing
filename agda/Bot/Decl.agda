@@ -50,16 +50,6 @@ data Counter : Set where
 
 variable
   ∞/n : Counter
-
-
--- Bottom type adapt
-infix 6 _≈_
-data _≈_ : Type → Type → Set where
-  ≈bot :
-    Bot ≈ Top ⇒ Bot
-
-  ≈arr :
-    A ⇒ B ≈ A ⇒ B
   
 infix 4 _⊢d_#_⦂_
 
@@ -109,6 +99,11 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
       Γ ⊢d ∞ # e₁ ⦂ A ⇒ B
     → Γ ⊢d (c 0) # e₂ ⦂ A
     → Γ ⊢d ∞ # e₁ · e₂ ⦂ B
+
+  ⊢d-app₃-bot :
+      Γ ⊢d ∞ # e₁ ⦂ Bot
+    → Γ ⊢d (c 0) # e₂ ⦂ A
+    → Γ ⊢d ∞ # e₁ · e₂ ⦂ Bot
 
   ⊢d-ann :
       Γ ⊢d ∞ # e ⦂ A
