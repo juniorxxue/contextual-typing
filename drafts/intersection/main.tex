@@ -163,9 +163,9 @@
 {\Gamma \vdash A <: Top \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \rightsquigarrow A \\
- \Gamma \vdash B <: D \rightsquigarrow D}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow C \rightarrow D}
+{\Gamma \vdash C <: A \rightsquigarrow A' \\
+ \Gamma \vdash B <: D \rightsquigarrow D'}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow A' \rightarrow D'}
 
 \inferrule*[lab=S-Hole]
 {\Gamma \vdash A \Rightarrow e \Rightarrow C \\
@@ -181,8 +181,8 @@
 {\Gamma \vdash A ~\&~ B <: H \rightsquigarrow C}
 
 \inferrule*[lab=S-And]
-{\Gamma \vdash A <: B \rightsquigarrow B \\
- \Gamma \vdash A <: C \rightsquigarrow C}
-{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow B ~\&~ C}
-\end{mathpar}
+{\Gamma \vdash A <: B \rightsquigarrow B' \\
+ \Gamma \vdash A <: C \rightsquigarrow C'}
+{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow B' ~\&~ C'}
+\end{mathpar}   
 \end{document}

@@ -85,6 +85,10 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
     → B ↪ n ❪ Bs , T ❫
     → (A ⇒ B) ↪ (suc n) ❪ A ∷ Bs , T ❫
 
+{-
+
+determinism is not intended
+
 ⊢d-determinism : ∀ {Γ e A B n As Bs T₁ T₂}
   → Γ ⊢d c n # e ⦂ A
   → A ↪ n ❪ As , T₁ ❫
@@ -106,6 +110,8 @@ data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
 ⊢d-determinism (⊢d-app₂ ⊢1 ⊢3) ↪1 ⊢2 ↪2 eq = {!!}
 ⊢d-determinism (⊢d-ann ⊢1) ↪1 ⊢2 ↪2 eq = {!!}
 ⊢d-determinism (⊢d-sub ⊢1 x x₁) ↪1 ⊢2 ↪2 eq = {!!}
+
+-}
 
 data wf-j : Type → Counter → Set where
 
@@ -134,7 +140,10 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = Int} ≤d-int∞ ≤2 = ≤2
 ≤d-trans {B = Int} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
 ≤d-trans {B = Int} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
-≤d-trans {B = * x} ≤1 ≤2 = {!!}
+≤d-trans {B = * x} ≤d-0 ≤2 = ≤2
+≤d-trans {B = * x} ≤d-base∞ ≤2 = ≤2
+≤d-trans {B = * x} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
+≤d-trans {B = * x} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
 ≤d-trans {B = Top} ≤d-0 ≤2 = ≤2
 ≤d-trans {B = Top} ≤d-top ≤d-top = ≤d-top
 ≤d-trans {B = Top} ≤d-top (≤d-and ≤2 ≤3) = ≤d-and (≤d-trans ≤d-top ≤2) (≤d-trans ≤d-top ≤3)

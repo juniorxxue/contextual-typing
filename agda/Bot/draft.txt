@@ -1,0 +1,15 @@
+Check subsumption and narrowing lemma are mutually dependent.
+
+(check subsumption)
+if Γ ⊢∞ e : A and A <: B
+then Γ ⊢∞ e : B
+
+(narrowing)
+if Γ, A ⊢j e : B and A' <: A
+then ∃B', Γ, A' ⊢j e : B' and B' <: B
+
+I found check subsumption seems weak in App2 case
+
+Γ ⊢j+1 e : A → B        Γ ⊢0 e : A
+-------------------------------------- App2
+Γ ⊢j e : B

@@ -13,7 +13,7 @@ infix  5  _⦂_
 infixr 8 _⇒_
 -- infixr 8 _&_
 
-infix 9 *_
+infix 9 *_ 
 
 data Type : Set where
   Int : Type

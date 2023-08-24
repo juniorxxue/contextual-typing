@@ -7,6 +7,30 @@ open import SubGen.Decl.Properties
 open import SubGen.Algo
 open import SubGen.Algo.Properties
 
+
+-- j represents the length of H
+len : Hint → Counter
+len (τ Int) = ∞
+len (τ (* n)) = ∞
+len (τ Top) = c 0
+len (τ (x ⇒ x₁)) = ∞
+len (τ (x & x₁)) = ∞
+len (⟦ x ⟧⇒ H) = succ (len H)
+
+sound-≤ : ∀ {Γ A H A'}
+  → Γ ⊢a A ≤ H ⇝ A'
+  → A ≤d (len H) # A'
+sound-≤ ≤a-int = ≤d-int∞
+sound-≤ ≤a-base = ≤d-base∞
+sound-≤ ≤a-top = ≤d-refl wf-0
+sound-≤ (≤a-arr {A = A} {D = D} C≤A B≤D) with A | D
+... | Top | Top = ≤d-arr∞ ≤d-top {!!}
+
+sound-≤ (≤a-hint ⊢e A≤H) = {!!}
+sound-≤ (≤a-and-l A≤H) = ≤d-and₁ (sound-≤ A≤H)
+sound-≤ (≤a-and-r A≤H) = ≤d-and₂ (sound-≤ A≤H)
+sound-≤ (≤a-and A≤C A≤B) = ≤d-and {!!} {!!}
+
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
   ⊩none⇚ : ∀ {Γ}
@@ -70,7 +94,9 @@ rewrite-snoc₂ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc
 rewrite-snoc₃ : ∀ {Γ e e₁ es' e' cc B}
   → Γ ⊢d cc # ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
   → Γ ⊢d cc # (((ƛ e) · e₁) ▻ es') · e' ⦂ B
-rewrite-snoc₃ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e  
+rewrite-snoc₃ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e
+
+{-
 
 subst :  ∀ {Γ A B e e₁ n} (es : List Term)
   → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
@@ -157,3 +183,5 @@ sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-gen es (sou
 sound-inf (⊢a-sub pv ⊢e A≤H) spl = {!!}
 
 sound-chk ⊢e spl = {!!}
+
+-}

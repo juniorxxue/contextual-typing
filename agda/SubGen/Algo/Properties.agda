@@ -25,6 +25,9 @@ open import SubGen.Algo
 ≤a-hint-inv₂ (≤a-hint x ≤) = ≤
 -}
 
+{-
+-- this lemma is obviously wrong
+
 ≤a-refl-τ : ∀ {Γ A B C}
   → Γ ⊢a B ≤ τ A ⇝ C
   → A ≢ Top
@@ -32,10 +35,10 @@ open import SubGen.Algo
 ≤a-refl-τ ≤a-int neq = refl
 ≤a-refl-τ ≤a-base neq = refl
 ≤a-refl-τ ≤a-top neq = ⊥-elim (neq refl)
-≤a-refl-τ (≤a-arr B≤A B≤A₁) neq = refl
+≤a-refl-τ (≤a-arr B≤A B≤A₁) neq = {!!}
 ≤a-refl-τ (≤a-and-l B≤A) neq = ≤a-refl-τ B≤A neq
 ≤a-refl-τ (≤a-and-r B≤A) neq = ≤a-refl-τ B≤A neq
-≤a-refl-τ (≤a-and B≤A B≤A₁) neq = refl
+≤a-refl-τ (≤a-and B≤A B≤A₁) neq = {!!}
 
 ⊢a-refl : ∀ {Γ A B e}
   → Γ ⊢a τ A ⇛ e ⇛ B
@@ -48,6 +51,8 @@ open import SubGen.Algo
 ⊢a-refl (⊢a-lam₁ ⊢e) neq = {!⊢a-refl ⊢e!} -- A -> Top
 ⊢a-refl (⊢a-lam₃ ⊢e ⊢e₁) neq = {!⊢a-refl ⊢e₁!} -- Top & Top
 ⊢a-refl (⊢a-sub x ⊢e x₁) neq = ≤a-refl-τ x₁ neq
+
+-}
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -190,3 +195,78 @@ spl-weaken (have spl) = have (spl-weaken spl)
   → Γ ⊢a H ⇛ e ⇛ B
 ⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
+
+-- meta judgment
+
+data _⊢m_≤_ : Context → Type → Hint → Set where
+  ≤a-int : ∀ {Γ}
+    → Γ ⊢m Int ≤ τ Int
+  ≤a-base : ∀ {Γ n}
+    → Γ ⊢m * n ≤ τ (* n)
+  ≤a-top : ∀ {Γ A}
+    → Γ ⊢m A ≤ τ Top
+  ≤a-arr : ∀ {Γ A B C D}
+    → Γ ⊢m C ≤ τ A
+    → Γ ⊢m B ≤ τ D
+    ---------------------------
+    → Γ ⊢m (A ⇒ B) ≤ τ (C ⇒ D)
+  ≤a-hint : ∀ {Γ A B C H e}
+    → Γ ⊢a τ A ⇛ e ⇛ C
+    → Γ ⊢m B ≤ H
+    ------------------------
+    → Γ ⊢m A ⇒ B ≤ (⟦ e ⟧⇒ H)
+  ≤a-and-l : ∀ {Γ A B H}
+    → Γ ⊢m A ≤ H
+    → Γ ⊢m A & B ≤ H
+  ≤a-and-r : ∀ {Γ A B H}
+    → Γ ⊢m B ≤ H
+    → Γ ⊢m A & B ≤ H
+  ≤a-and : ∀ {Γ A B C}
+    → Γ ⊢m A ≤ τ B
+    → Γ ⊢m A ≤ τ C
+    → Γ ⊢m A ≤ τ (B & C)
+
+≤m-refl : ∀ {Γ A} → Γ ⊢m A ≤ τ A
+≤m-refl {A = Int} = ≤a-int
+≤m-refl {A = * x} = ≤a-base
+≤m-refl {A = Top} = ≤a-top
+≤m-refl {A = A ⇒ A₁} = ≤a-arr ≤m-refl ≤m-refl
+≤m-refl {A = A & A₁} = ≤a-and (≤a-and-l ≤m-refl) (≤a-and-r ≤m-refl)
+
+≤a-to-≤m : ∀ {Γ A H A'}
+  → Γ ⊢a A ≤ H ⇝ A'
+  → Γ ⊢m A ≤ H
+≤a-to-≤m ≤a-int = ≤a-int
+≤a-to-≤m ≤a-base = ≤a-base
+≤a-to-≤m ≤a-top = ≤a-top
+≤a-to-≤m (≤a-arr A≤H A≤H₁) = ≤a-arr (≤a-to-≤m A≤H) (≤a-to-≤m A≤H₁)
+≤a-to-≤m (≤a-hint x A≤H) = ≤a-hint x (≤a-to-≤m A≤H)
+≤a-to-≤m (≤a-and-l A≤H) = ≤a-and-l (≤a-to-≤m A≤H)
+≤a-to-≤m (≤a-and-r A≤H) = ≤a-and-r (≤a-to-≤m A≤H)
+≤a-to-≤m (≤a-and A≤H A≤H₁) = ≤a-and (≤a-to-≤m A≤H) (≤a-to-≤m A≤H₁)
+
+≤a-refine-prv₁ : ∀ {Γ A A' H}
+  → Γ ⊢a A ≤ H ⇝ A'
+  → Γ ⊢m A ≤ τ A'
+
+≤a-refine-prv₂ : ∀ {Γ A A' H}
+  → Γ ⊢a A ≤ H ⇝ A'
+  → Γ ⊢m A' ≤ H
+ 
+≤a-refine-prv₁ ≤a-int = ≤a-int
+≤a-refine-prv₁ ≤a-base = ≤a-base
+≤a-refine-prv₁ ≤a-top = ≤m-refl
+≤a-refine-prv₁ (≤a-arr C≤A B≤D) = ≤a-arr (≤a-refine-prv₂ C≤A) (≤a-refine-prv₁ B≤D)
+≤a-refine-prv₁ (≤a-hint ⊢e B≤H) = ≤a-arr ≤m-refl (≤a-refine-prv₁ B≤H)
+≤a-refine-prv₁ (≤a-and-l A≤H) = ≤a-and-l (≤a-refine-prv₁ A≤H)
+≤a-refine-prv₁ (≤a-and-r A≤H) = ≤a-and-r (≤a-refine-prv₁ A≤H)
+≤a-refine-prv₁ (≤a-and A≤B A≤C) = ≤a-and (≤a-refine-prv₁ A≤B) (≤a-refine-prv₁ A≤C)
+
+≤a-refine-prv₂ ≤a-int = ≤a-int
+≤a-refine-prv₂ ≤a-base = ≤a-base
+≤a-refine-prv₂ ≤a-top = ≤a-top
+≤a-refine-prv₂ (≤a-arr C≤A B≤D) = ≤a-arr (≤a-refine-prv₁ C≤A) (≤a-refine-prv₂ B≤D)
+≤a-refine-prv₂ (≤a-hint ⊢e B≤H) = ≤a-hint ⊢e (≤a-refine-prv₂ B≤H)
+≤a-refine-prv₂ (≤a-and-l A≤H) = ≤a-refine-prv₂ A≤H
+≤a-refine-prv₂ (≤a-and-r A≤H) = ≤a-refine-prv₂ A≤H
+≤a-refine-prv₂ (≤a-and A≤B A≤C) = ≤a-and (≤a-and-l (≤a-refine-prv₂ A≤B)) (≤a-and-r (≤a-refine-prv₂ A≤C))

@@ -144,7 +144,6 @@ chk-sub (⊢d-app₃ ⊢f ⊢e) A≤B = ⊢d-app₃ (chk-sub ⊢f (≤d-arr ≤d
 chk-sub (⊢d-app₃-bot ⊢f ⊢e) A≤B = ⊢d-app₃ (chk-sub ⊢f ≤d-bot) ⊢e
 chk-sub (⊢d-sub ⊢e A≤B') A≤B = ⊢d-sub ⊢e (≤d-trans A≤B' A≤B)
 
-
 -- check subsumption /  may take a different view
 -- Γ ⊢d ∞/n # e ⦂ A where ∞/n parts of the A comes from other
 

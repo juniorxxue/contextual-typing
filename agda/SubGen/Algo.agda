@@ -119,7 +119,7 @@ data _⊢a_⇛_⇛_ where
     → pv p
     → Γ ⊢a τ Top ⇛ p ⇛ A
     → Γ ⊢a A ≤ H ⇝ B
-    → H ≢ τ Top
+--    → H ≢ τ Top
     → Γ ⊢a H ⇛ p ⇛ B
 
 ----------------------------------------------------------------------
@@ -155,6 +155,8 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
   have : ∀ {e H A B es A' B' Bs}
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
+
+{-
 
 ≤a-determinism : ∀ {Γ H A B C}
   → H ≢ τ Top
@@ -193,3 +195,4 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
 ⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-var x₃) = {!!}
 ⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-ann ⊢2) = {!!} -- all absurds
 ⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-sub x₃ ⊢2 x₄ x₅) rewrite ⊢a-determinism ⊢1 ⊢2 = {!!}
+-}
