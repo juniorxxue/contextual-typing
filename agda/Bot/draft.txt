@@ -10,6 +10,15 @@ then ∃B', Γ, A' ⊢j e : B' and B' <: B
 
 I found check subsumption seems weak in App2 case
 
-Γ ⊢j+1 e : A → B        Γ ⊢0 e : A
+Γ ⊢n+1 e₁ : A → B        Γ ⊢0 e₂ : A
 -------------------------------------- App2
-Γ ⊢j e : B
+Γ ⊢n e₁ e₂ : B
+
+
+we have
+Γ , A' ⊢n+1 e₁ : A' → B'      A' → B' <: A → B
+Γ , A' ⊢0   e₂ : A''          A'' <: A
+
+
+How to construct
+Γ , A' ⊢n e₁ e₂

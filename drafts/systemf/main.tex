@@ -126,54 +126,47 @@
 
 \section{Algo.}
 
-\subsection{Typing: $\boxed{\Gamma \vdash H \Rightarrow e \Rightarrow A \mid \phi}$}
+\subsection{Typing: $\boxed{\Gamma \vdash H \Rightarrow e \Rightarrow A}$}
 
 \begin{mathpar}
 \inferrule*[lab=T-Lit]
 { }
-{\Gamma \vdash \mathtt{Top} \Rightarrow i \Rightarrow \mathsf{Int} \mid .}
+{\Gamma \vdash \mathtt{Top} \Rightarrow i \Rightarrow \mathsf{Int}}
 
 \inferrule*[lab=T-Var]
 {x : A \in \Gamma}
-{\Gamma \vdash \mathtt{Top} \Rightarrow x \Rightarrow A \mid .}
+{\Gamma \vdash \mathtt{Top} \Rightarrow x \Rightarrow A}
 
 \inferrule*[lab=T-Ann]
-{\Gamma \vdash A \Rightarrow e \Rightarrow B \mid .}
-{\Gamma \vdash \mathtt{Top} \Rightarrow e : A \Rightarrow A \mid .}
+{\Gamma \vdash A \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \mathtt{Top} \Rightarrow e : A \Rightarrow A}
 
 \inferrule*[lab=T-TAbs]
-{\Gamma, a \vdash \mathtt{Top} \Rightarrow e \Rightarrow A \mid \phi \\
- \forall \hat{a} := C \in \phi, a \notin FV(C)}
-{\Gamma \vdash \mathtt{Top} \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A \mid \phi}
+{\Gamma, a \vdash \mathtt{Top} \Rightarrow e \Rightarrow A}
+{\Gamma \vdash \mathtt{Top} \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A}
 
 \inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow e_1 \Rightarrow A \rightarrow B \mid \phi}
-{\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B \mid \phi}
+{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow e_1 \Rightarrow A \rightarrow B}
+{\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
 
 \inferrule*[lab=T-Lam1]
-{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C \mid . \\
- FV_{ex}(A) = \emptyset}
-{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C \mid \phi}
+{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
+{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
 
 \inferrule*[lab=T-Lam2]
-{\Gamma \vdash \mathtt{Top} \Rightarrow e_2 \Rightarrow A \mid .\\
- \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B \mid \phi}
-{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B \mid \phi}
+{\Gamma \vdash \mathtt{Top} \Rightarrow e_2 \Rightarrow A\\
+ \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 
 \inferrule*[lab=T-Sub]
 {\Gamma \vdash \mathtt{Top} \Rightarrow p \Rightarrow A \\
- Fv_{ex}(H) = \emptyset\\
  \Gamma \vdash A <: H \dashv \Gamma \rightsquigarrow B}
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 
 \inferrule*[lab=T-TApp]
-{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B \mid \phi}
-{\Gamma \vdash H \Rightarrow e[A] \Rightarrow [A/X]B] \mid \phi}
+{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
+{\Gamma \vdash H \Rightarrow e[A] \Rightarrow [A/X]B}
 
-\inferrule*[lab=T-Inst]
-{\Gamma \vdash \mathtt{Top} \Rightarrow e \Rightarrow A \mid . \\
- mono(A)}
-{\Gamma \vdash \hat{a} \Rightarrow e \Rightarrow A \mid \hat{a} := A}
 \end{mathpar}
 
 \subsection{Subtyping: $\boxed{\Gamma \vdash A <: H \dashv \Delta \rightsquigarrow A}$}
@@ -201,9 +194,14 @@
 {\Gamma \vdash A \rightarrow B <: C \rightarrow D \dashv \Delta_2 \rightsquigarrow A' \rightarrow D'}
 
 \inferrule*[lab=S-Hole]
-{\Gamma \vdash A \Rightarrow e \Rightarrow C \mid \phi \\
- \phi(\Gamma) \vdash B <: H \dashv \Delta \rightsquigarrow D}
+{\Gamma \vdash A \Rightarrow e \Rightarrow C\\
+ FV_{ex}(A) = \emptyset \\
+ \Gamma \vdash B <: H \dashv \Delta \rightsquigarrow D}
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow A \rightarrow D}
+
+\inferrule*[lab=S-Inst]
+{\Gamma \vdash Top \Rightarrow p \Rightarrow A}
+{\Gamma \vdash \hat{a} \rightarrow B <: \boxed{p} \rightarrow H \dashv \Gamma, \hat{a}:=A \rightsquigarrow A \rightarrow B}
 
 \inferrule*[lab=S-AllL]
 {\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Gamma, \hat{a} \rightsquigarrow B}
