@@ -104,7 +104,3 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List T
   have : ∀ {e H A B es A' B' Bs}
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
-
-▻-fold : ∀ {e₁ e₂ : Term} {es : List Term}
-  → (e₁ · e₂) ▻ es ≡ e₁ ▻ (e₂ ∷ es)
-▻-fold = refl
