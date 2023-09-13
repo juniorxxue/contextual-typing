@@ -58,7 +58,7 @@ data Hint where
 instance Show Hint where
     show :: Hint -> String
     show (T ty) = show ty
-    show (Hole e h) = show e ++ " → " ++ show h
+    show (Hole e h) = "[" ++ show e ++ "]" ++ " → " ++ show h
 
 data Context where
     Empty :: Context
@@ -140,28 +140,45 @@ substEx a newTy (ChVar b tyA ctx) | a == b = if newTy == tyA then ChVar b tyA ct
 notNull :: [a] -> Bool
 notNull = not . null
 
+notTop :: Type -> Bool
+notTop TTop = False
+notTop _ = True
+
 refine :: Context -> Type -> Hint -> Maybe (Context, Type)
-refine ctx TInt (T TInt) = Just (ctx, TInt)
-refine ctx (TExt a) (T tyA) | null (freeExVars tyA) = Just (substEx a tyA ctx, tyA)
-refine ctx tyA (T (TExt a)) | null (freeExVars tyA) = Just (substEx a tyA ctx, tyA)
-refine ctx tyA (T TTop) = Just (ctx, tyA)
+refine ctx TInt (T TInt) = do
+    trace ("[S-Int]: " ++ show ctx ++ " ⊢ " ++ show TInt ++ " <: " ++ show TInt) $ return ()
+    return (ctx, TInt)
+refine ctx (TExt a) (T tyA) | null (freeExVars tyA) = do
+    trace ("[S-Ext-L]: " ++ show ctx ++ " ⊢ " ++ show (TExt a) ++ " <: " ++ show (T tyA)) $ return ()
+    return (substEx a tyA ctx, tyA)
+refine ctx tyA (T (TExt a)) | null (freeExVars tyA) = do
+    trace ("[S-Ext-R]: " ++ show ctx ++ " ⊢ " ++ show (T tyA) ++ " <: " ++ show (TExt a)) $ return ()
+    return (substEx a tyA ctx, tyA)
+refine ctx tyA (T TTop) = do
+    trace ("[S-Top]: " ++ show ctx ++ " ⊢ " ++ show (T tyA) ++ " <: " ++ show TTop) $ return ()
+    return (ctx, tyA)
 refine ctx1 (TArr tyA tyB) (T (TArr tyC tyD)) = do
+    trace ("[S-Arr]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (TArr tyC tyD)) $ return ()
     (ctx2, tyA') <- refine ctx1 tyC (T tyA)
     (ctx3, tyB') <- refine ctx2 tyB (T tyD)
     return (ctx3, TArr tyA' tyB')
 refine ctx1 (TArr tyA tyB) (Hole e h) | null (freeExVars tyA) = do
+    trace ("[S-Hole-NoEx]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (Hole e h)) $ return ()
     tyC <- typeof ctx1 (T tyA) e
     (ctx2, tyB') <- refine ctx1 tyB h
     return (ctx2, TArr tyA tyB')
 refine ctx1 (TArr tyA tyB) (Hole e h) | notNull (freeExVars tyA) = do
-    tyC <- typeof ctx1 (T tyA) e
+    trace ("[S-Hole-Ex]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (Hole e h)) $ return ()
+    tyC <- typeof ctx1 (T TTop) e
     (ctx2, tyA') <- refine ctx1 tyC (T tyA)
     (ctx3, tyB') <- refine ctx2 tyB h
     return (ctx3, TArr tyA' tyB')
 refine ctx1 (TAll a tyA) (T (TAll b tyB)) | a == b = do
+    trace ("[S-All]: " ++ show ctx1 ++ " ⊢ " ++ show (TAll a tyA) ++ " <: " ++ show (TAll b tyB)) $ return ()
     (ctx2, tyA') <- refine (TyVar a ctx1) tyA (T tyB)
     return (cleanTyCtx a ctx2, TAll a tyA')
 refine ctx1 (TAll a tyA) (Hole e h) = do
+    trace ("[S-Hole-All]: " ++ show ctx1 ++ " ⊢ " ++ show (TAll a tyA) ++ " <: " ++ show (Hole e h)) $ return ()
     (ctx2, tyA') <- refine (ExVar a ctx1) (subst a tyA (TExt a)) (Hole e h)
     return (cleanExCtx a ctx2, tyA')
 
