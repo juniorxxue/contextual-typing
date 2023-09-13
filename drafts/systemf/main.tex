@@ -176,13 +176,13 @@
 { }
 {\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Gamma \rightsquigarrow \mathtt{Int}}
 
-\inferrule*[lab=S-Ex]
-{mono(A)}
-{\Gamma \vdash A <: \hat{a} \dashv \Gamma, \hat{a} := A \rightsquigarrow A}
+\inferrule*[lab=S-Ex-L]
+{FV_{ex}(A) = . \\ \Gamma_1 \vdash A}
+{\Gamma_1, \hat{a}, \Gamma_2 \vdash \hat{a} <: A \dashv \Gamma_1, \hat{a} := A, \Gamma_2 \rightsquigarrow A}
 
-\inferrule*[lab=S-All]
-{\Gamma, a \vdash A <: B \dashv \Gamma \rightsquigarrow C}
-{\Gamma \vdash \forall a. A <: \forall a. B \dashv \Gamma \rightsquigarrow \forall a. C}
+\inferrule*[lab=S-Ex-R]
+{FV_{ex}(A) = . \\ \Gamma_1 \vdash A}
+{\Gamma_1, \hat{a}, \Gamma_2 \vdash A <: \hat{a} \dashv \Gamma_1, \hat{a} := A, \Gamma_2 \rightsquigarrow A}
 
 \inferrule*[lab=S-Top]
 { }
@@ -200,12 +200,19 @@
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow A \rightarrow D}
 
 \inferrule*[lab=S-Inst]
-{\Gamma \vdash Top \Rightarrow p \Rightarrow A}
-{\Gamma \vdash \hat{a} \rightarrow B <: \boxed{p} \rightarrow H \dashv \Gamma, \hat{a}:=A \rightsquigarrow A \rightarrow B}
+{FV_{ex}(A) = s \\ s != . \\
+    \Gamma \vdash Top \Rightarrow e \Rightarrow C \\
+    \Gamma \vdash C <: A \dashv \Delta \rightsquigarrow A' \\
+    \Delta/s \vdash B/s <: H \dashv \Delta/s \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta/s \rightsquigarrow A' \rightarrow D}
 
-\inferrule*[lab=S-AllL]
-{\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Gamma, \hat{a} \rightsquigarrow B}
-{\Gamma \vdash \forall a. A <: \boxed{e} \rightarrow H \dashv \Gamma \rightsquigarrow B}
+\inferrule*[lab=S-All]
+{\Gamma, a \vdash A <: B \dashv \Delta_1, a, \Delta_2 \rightsquigarrow C}
+{\Gamma \vdash \forall a. A <: \forall a. B \dashv \Delta_1 \rightsquigarrow \forall a. C}
+
+\inferrule*[lab=S-All-L]
+{\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow B}
+{\Gamma \vdash \forall a. A <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow B}
 
 \end{mathpar}
 \end{document}

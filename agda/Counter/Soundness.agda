@@ -58,7 +58,7 @@ rewrite-snoc₁ : ∀ {Γ e e' es' A cc}
 rewrite-snoc₁ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
 
 rewrite-snoc₄ : ∀ {Γ e e' es' A cc}
-  → Γ ⊢d cc # (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
+              → Γ ⊢d cc # (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
   → Γ ⊢d cc # e ▻ map (_↑ 0) (es' ++ e' ∷ []) ⦂ A
 rewrite-snoc₄ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
 
@@ -92,6 +92,20 @@ subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
                      ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
                      })) -- ind
                      es
+
+module _ {Γ : Context} {A B : Type} {e e₁ : Term} {n : ℕ} where
+
+  subst' : ∀ (es : List Term)
+    → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
+    → Γ ⊢d c 0 # e₁ ⦂ A
+    → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B
+  subst' = rev (λ es → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
+                     → Γ ⊢d c 0 # e₁ ⦂ A
+                     → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B)
+               (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂)
+               {!!}
+
+
 
 subst-chk :  ∀ {Γ A B e e₁} (es : List Term)
   → Γ , A ⊢d ∞ # e ▻ map (_↑ 0) es ⦂ B

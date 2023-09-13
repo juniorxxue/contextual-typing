@@ -108,7 +108,8 @@ data _~⇧~_ : Hint → ℕ → Set where
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
   → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
-spl-weaken {T = T} none = none
+spl-weaken {T = .□} none-□ = none-□
+spl-weaken {T = .(τ _)} none-τ = none-τ
 spl-weaken (have spl) = have (spl-weaken spl)
 
 

@@ -97,9 +97,13 @@ e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
 infix 4 ❪_,_❫↣❪_,_,_,_❫
 
-data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List Type → Type → Set where
-  none : ∀ {A B}
-    → ❪ τ A , B ❫↣❪ [] , A , [] , B ❫
+data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List Type → Type → Set where
+
+  none-□ : ∀ {A}
+    → ❪ □ , A ❫↣❪ [] , □ , [] , A ❫
+
+  none-τ : ∀ {A B}
+    → ❪ τ A , B ❫↣❪ [] , τ A , [] , B ❫
 
   have : ∀ {e H A B es A' B' Bs}
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
