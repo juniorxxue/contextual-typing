@@ -213,4 +213,5 @@ main = do
     -- print $ freeExVars (TArr (TVar "a") (TExt "a"))
     -- print $ freeExVars (TArr (TExt "a") (TExt "b"))
     -- print $ typeof Empty (T TTop) (App (Lam "x" (Var "x")) (Lit 1))
+    print $ typeof (TmVar "id" (TAll "a" (TArr (TVar "a") (TVar "a"))) Empty) (T TTop) (App (Var "id") (Lit 1))
     print $ refine Empty (TAll "a" (TArr (TVar "a") (TVar "a"))) (Hole (Lit 1) (T TTop))

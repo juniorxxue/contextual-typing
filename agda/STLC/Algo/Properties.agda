@@ -156,3 +156,60 @@ spl-weaken (have spl) = have (spl-weaken spl)
   → Γ ⊢a H ⇛ e ⇛ B
 ⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                      General Subsumption                       +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+
+data chain : List Term → Hint → Hint → Set where
+  ch-none : ∀ {H}
+    → chain [] H H
+
+  ch-cons : ∀ {H e es H'}
+    → chain es H H'
+    → chain (e ∷ es) H (⟦ e ⟧⇒ H')
+
+ch-weaken : ∀ {es H' H n}
+  → chain es H' H
+  → chain (map (_↑ n) es) (H' ⇧ n) (H ⇧ n)
+ch-weaken ch-none = ch-none
+ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
+
+⊢a-to-≈a : ∀ {Γ e H A}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢a A ≈ H
+
+subsumption : ∀ {Γ H e A H' H'' es As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , □ , As , A' ❫
+  → chain es H'' H'
+  → Γ ⊢a A ≈ H'
+  → Γ ⊢a H' ⇛ e ⇛ A
+  
+⊢a-to-≈a ⊢a-lit = ≈□
+⊢a-to-≈a (⊢a-var x) = ≈□
+⊢a-to-≈a (⊢a-ann ⊢e) = ≈□
+⊢a-to-≈a (⊢a-app ⊢e) with ⊢a-to-≈a ⊢e
+... | ≈hole ⊢e A≈H = A≈H
+⊢a-to-≈a (⊢a-lam₁ ⊢e) with ⊢a-to-≈a ⊢e
+... | ≈τ = ≈τ
+⊢a-to-≈a (⊢a-lam₂ ⊢e ⊢f) = ≈hole (rebase ⊢e ≈τ) (≈a-strengthen-0 (⊢a-to-≈a ⊢f))
+  where
+    rebase : ∀ {Γ e A B}
+      → Γ ⊢a □  ⇛ e ⇛ B
+      → Γ ⊢a B ≈ τ A
+      → Γ ⊢a τ A ⇛ e ⇛ B
+    rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
+⊢a-to-≈a (⊢a-sub ⊢e x x₁) = x
+
+subsumption ⊢a-lit spl ch A≈H' = ⊢a-sub ⊢a-lit A≈H' pv-lit
+subsumption (⊢a-var x) spl ch A≈H' = ⊢a-sub (⊢a-var x) A≈H' pv-var
+subsumption (⊢a-ann ⊢e) spl ch A≈H' = ⊢a-sub (⊢a-ann ⊢e) A≈H' pv-ann
+subsumption (⊢a-app ⊢e) spl ch A≈H with ⊢a-to-≈a ⊢e
+... | ≈hole ⊢e' A≈H' = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≈hole ⊢e' A≈H))
+subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H') =
+  ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈a-weaken {n≤l = z≤n} A≈H'))
+subsumption (⊢a-sub ⊢e x x₁) spl ch A≈H' = ⊢a-sub ⊢e A≈H' x₁
