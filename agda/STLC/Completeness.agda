@@ -35,19 +35,19 @@ data _⇴_≗_ : List Type → Type → Type → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
-infix 4 _↪_❪_,_❫
+infix 4 _↪_❪_,_,_❫
 
-data _↪_❪_,_❫ : Type → Counter → List Type → Type → Set where
+data _↪_❪_,_,_❫ : Type → Counter → Counter → List Type → Type → Set where
 
   j-none : ∀ {A}
-    → A ↪ Z ❪ [] , A ❫
+    → A ↪ Z ❪ Z , [] , A ❫
 
   j-infi : ∀ {A}
-    → A ↪ ∞ ❪ [] , A ❫
+    → A ↪ ∞ ❪ ∞ , [] , A ❫
 
-  j-cons : ∀ {A B T j Bs}
-    → B ↪ j ❪ Bs , T ❫
-    → (A ⇒ B) ↪ S j ❪ A ∷ Bs , T ❫
+  j-cons : ∀ {A B T j j' Bs}
+    → B ↪ j ❪ j' , Bs , T ❫
+    → (A ⇒ B) ↪ S j ❪ j' ,  A ∷ Bs , T ❫
   
 complete-chk : ∀ {Γ e A}
   → Γ ⊢d ∞ # e ⦂ A
@@ -55,6 +55,6 @@ complete-chk : ∀ {Γ e A}
 
 complete-inf : ∀ {Γ e A j As T J}
   → Γ ⊢d j # e ⦂ A
-  → A ↪ j ❪ As , T ❫
-  → As ⇴ T ≗ J
-  → Γ ⊢a τ J ⇛ e ⇛ A
+  → A ↪ j ❪ Z , As , T ❫
+  → As ⇴ J ≗ J
+  → Γ ⊢a τ J ⇛ e ⇛ T
