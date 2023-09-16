@@ -213,3 +213,16 @@ subsumption (⊢a-app ⊢e) spl ch A≈H with ⊢a-to-≈a ⊢e
 subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H') =
   ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈a-weaken {n≤l = z≤n} A≈H'))
 subsumption (⊢a-sub ⊢e x x₁) spl ch A≈H' = ⊢a-sub ⊢e A≈H' x₁
+
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                             Check                              +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+⊢a-hint-self : ∀ {Γ e A B}
+  → Γ ⊢a τ A ⇛ e ⇛ B
+  → A ≡ B
+⊢a-hint-self ⊢e with ⊢a-to-≈a ⊢e
+... | ≈τ = refl
