@@ -1,22 +1,23 @@
 Require Import List.
 Import ListNotations.
+Require Import Coq.Program.Equality.
 
-Inductive type : Set :=
+Inductive type : Prop :=
 | Int : type
 | Arr : type -> type -> type.
 
-Inductive term : Set :=
+Inductive term : Prop :=
 | Lit : nat -> term
 | Var : nat -> term
 | Lam : term -> term
 | App : term -> term -> term
 | Ann : term -> type -> term.
 
-Inductive context : Set :=
+Inductive context : Prop :=
 | Empty : context
 | Cons  : context -> type -> context.
 
-Inductive inCon : context -> nat -> type -> Set :=
+Inductive inCon : context -> nat -> type -> Prop :=
 | Zin : forall {Gamma A},
       inCon (Cons Gamma A) 0 A
 | Sin : forall {Gamma A B n},
@@ -25,12 +26,12 @@ Inductive inCon : context -> nat -> type -> Set :=
 
 (* Decl. *)
 
-Inductive counter : Set :=
+Inductive counter : Prop :=
 | Inf : counter
 | ZCo : counter
 | SCo : counter -> counter.
 
-Inductive dwf : type -> counter -> Set :=
+Inductive dwf : type -> counter -> Prop :=
 | dwf_Z : forall A,
     dwf A ZCo
 | dwf_Inf : forall A,
@@ -40,7 +41,7 @@ Inductive dwf : type -> counter -> Set :=
     dwf (Arr A B) (SCo j)
 .
 
-Inductive dty : context -> counter -> term -> type -> Set :=
+Inductive dty : context -> counter -> term -> type -> Prop :=
 | D_Int : forall Gamma i,
     dty Gamma ZCo (Lit i) Int
 | D_Var : forall Gamma x A,
@@ -71,13 +72,13 @@ Inductive dty : context -> counter -> term -> type -> Set :=
 
 (* Algo. *)
 
-Inductive hint : Set :=
+Inductive hint : Prop :=
 | Noth : hint
 | Tau : type -> hint
 | Ho : term -> hint -> hint.
 
 
-Inductive awf : context -> type -> hint -> Set :=
+Inductive awf : context -> type -> hint -> Prop :=
 | awf_Noth : forall Gamma A,
     awf Gamma A Noth
 | awf_Tau : forall Gamma A,
@@ -86,7 +87,7 @@ Inductive awf : context -> type -> hint -> Set :=
     aty Gamma (Tau A) e C ->
     awf Gamma B H ->
     awf Gamma (Arr A B) (Ho e H)
-with aty : context -> hint -> term -> type -> Set :=
+with aty : context -> hint -> term -> type -> Prop :=
 | A_Int : forall Gamma n,
     aty Gamma Noth (Lit n) Int
 | A_Var : forall Gamma x A,
@@ -125,19 +126,33 @@ Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
     spl (Tau A) B [] (Tau A) [] B
 | Have : forall e H A B es A' B' Bs,
     spl H B es A' Bs B' ->
-    spl (Ho e H) (Arr A B) (e :: es) A' (A :: Bs) B'        
+    spl (Ho e H) (Arr A B) (e :: es) A' (A :: Bs) B'       
 .
 
-Theorem rev_app_dist: forall {X} (l1 l2:list X), rev (l1 ++ l2) = rev l2 ++ rev l1.
+Lemma rw_apps : forall e es x,
+    apps e (es ++ [x]) = App (apps e es) x.
 Proof.
-  intros X l1 l2.
-  induction l2 using rev_ind.
-Admitted.       
+  induction es; eauto.
+  intros. simpl.
+Admitted.
+                  
+  
 
 Lemma subst_app : forall es Gamma A B e e1 j,
     dty (Cons Gamma A) j (apps e es) B ->
     dty Gamma ZCo e1 A ->
     dty Gamma j (apps (App (Lam e) e1) es) B.
 Proof.
-  intros es Gamma A B e e1 j.
   induction es using rev_ind.
+  - intros. simpl in H. simpl.
+    admit.
+  - intros. rewrite rw_apps in H.
+    dependent destruction H.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + 
