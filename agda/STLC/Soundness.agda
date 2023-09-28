@@ -7,13 +7,6 @@ open import STLC.Decl.Properties
 open import STLC.Algo
 open import STLC.Algo.Properties
 
-subsumption-0 : ∀ {Γ H e A}
-  → Γ ⊢a □ ⇛ e ⇛ A
-  → Γ ⊢a A ≈ H
-  → Γ ⊢a H ⇛ e ⇛ A
-subsumption-0 ⊢e A≈H = subsumption ⊢e none-□ ch-none A≈H
-
-
 postulate
 
   rev : ∀ {A : Set} (P : List A → Set)
@@ -96,6 +89,13 @@ subst' :  ∀ {Γ A B e e₁ j} (es : List Term)
 subst' [] ⊢1 ⊢2 = ⊢d-app₂ (⊢d-lam-n ⊢1) ⊢2
 subst' (e' ∷ es) ⊢1 ⊢2 = {!!}
 
+subst'' :  ∀ {Γ A B e e₁ j k es}
+  → len es < k
+  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d Z # e₁ ⦂ A
+  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
+subst'' {k = suc k} {es = []} (s≤s sz) ⊢1 ⊢2 = {!!}
+subst'' {k = suc k} {es = x ∷ es} sz ⊢1 ⊢2 = {!!}
 
 sound-≈ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≈ H

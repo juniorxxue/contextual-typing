@@ -215,6 +215,12 @@ subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H'
 subsumption (⊢a-sub ⊢e x x₁) spl ch A≈H' = ⊢a-sub ⊢e A≈H' x₁
 
 
+subsumption-0 : ∀ {Γ H e A}
+  → Γ ⊢a □  ⇛ e ⇛ A
+  → Γ ⊢a A ≈ H
+  → Γ ⊢a H ⇛ e ⇛ A
+subsumption-0 ⊢e A≈H = subsumption ⊢e none-□ ch-none A≈H  
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                             Check                              +--
