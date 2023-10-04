@@ -39,7 +39,7 @@ data _⊢r_#_⦂_ : Context → Counter → Term → Type → Set where
 ⊢r-lam : ∀ {Γ e A B j}
   → Γ , A ⊢r j # e ⦂ B
   → Γ ⊢r S j # ƛ e ⦂ A ⇒ B
-⊢r-lam (RZ x) = RS (λ e' x₁ → RZ {!!})
+⊢r-lam (RZ x) = RS (λ e' x₁ → RZ (⊢a-app (⊢a-lam₂ {!!} x)))
 ⊢r-lam (R∞ x) = {!!}
 ⊢r-lam (RS x) = {!!}
 

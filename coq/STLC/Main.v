@@ -1,10 +1,13 @@
 Require Import List.
 Import ListNotations.
 Require Import Coq.Program.Equality.
+Require Import Lia.
 
 Inductive type : Prop :=
 | Int : type
 | Arr : type -> type -> type.
+
+Notation "A → B" := (Arr A B) (at level 20).
 
 Inductive term : Prop :=
 | Lit : nat -> term
@@ -12,6 +15,9 @@ Inductive term : Prop :=
 | Lam : term -> term
 | App : term -> term -> term
 | Ann : term -> type -> term.
+
+Notation "e ∷ A" := (Ann e A) (at level 20).
+Notation "ƛ A . e : B" := (Lam A e B) (at level 20).
 
 Inductive context : Prop :=
 | Empty : context
@@ -26,10 +32,17 @@ Inductive inCon : context -> nat -> type -> Prop :=
 
 (* Decl. *)
 
-Inductive counter : Prop :=
+Inductive counter : Set :=
 | Inf : counter
 | ZCo : counter
 | SCo : counter -> counter.
+
+Fixpoint size_counter (j : counter) : nat :=
+  match j with
+  | Inf => 1
+  | ZCo => 0
+  | SCo j' => 1 + size_counter j'
+  end.
 
 Inductive dwf : type -> counter -> Prop :=
 | dwf_Z : forall A,
@@ -40,6 +53,8 @@ Inductive dwf : type -> counter -> Prop :=
     dwf B j ->
     dwf (Arr A B) (SCo j)
 .
+
+Notation "A ~ j" := (dwf A j) (at level 40).
 
 Inductive dty : context -> counter -> term -> type -> Prop :=
 | D_Int : forall Gamma i,
@@ -68,7 +83,9 @@ Inductive dty : context -> counter -> term -> type -> Prop :=
     dty Gamma ZCo e A ->
     dwf A j ->
     dty Gamma j e A
-.      
+.
+
+Notation "T ⊢ j e : A" := (dty T j e A) (at level 50).
 
 (* Algo. *)
 
@@ -76,7 +93,6 @@ Inductive hint : Prop :=
 | Noth : hint
 | Tau : type -> hint
 | Ho : term -> hint -> hint.
-
 
 Inductive awf : context -> type -> hint -> Prop :=
 | awf_Noth : forall Gamma A,
@@ -112,12 +128,16 @@ with aty : context -> hint -> term -> type -> Prop :=
     aty Gamma H e A
 .
 
+Notation "T |- A <: H" := (awf T A H) (at level 40).
+Notation "T |- H => e => A" := (aty T H e A) (at level 50).
 
 Fixpoint apps (e : term) (es : list term) : term :=
   match es with
   | [] => e
   | e' :: es' => apps (App e e') es'
   end.
+
+Notation "e ▷ es" := (apps e es) (at level 15).
 
 Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
 | No_Noth : forall A,
@@ -129,25 +149,30 @@ Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
     spl (Ho e H) (Arr A B) (e :: es) A' (A :: Bs) B'       
 .
 
+
+Lemma lst_destruct_rev : forall (l : list term),
+    exists xs x, l = xs ++ [x].
+Proof.
+Admitted.
+
 Lemma rw_apps : forall e es x,
     apps e (es ++ [x]) = App (apps e es) x.
 Proof.
   induction es; eauto.
   intros. simpl.
 Admitted.
-                  
-  
 
-Lemma subst_app : forall es Gamma A B e e1 j,
+Lemma subst_app : forall k es Gamma A B e e1 j,
+    length es + size_counter j < k ->
     dty (Cons Gamma A) j (apps e es) B ->
     dty Gamma ZCo e1 A ->
     dty Gamma j (apps (App (Lam e) e1) es) B.
 Proof.
-  induction es using rev_ind.
-  - intros. simpl in H. simpl.
-    admit.
-  - intros. rewrite rw_apps in H.
-    dependent destruction H.
+  induction k; intros.
+  - dependent destruction H.
+  - pose (lst_destruct_rev es) as Rev. destruct Rev. destruct H2.
+    subst. rewrite rw_apps in H0.
+    dependent destruction H0.
     + admit.
     + admit.
     + admit.
@@ -155,4 +180,35 @@ Proof.
     + admit.
     + admit.
     + admit.
-    + 
+    + destruct j.
+      * eapply D_Sub; eauto.
+        eapply IHk; eauto. simpl in *. lia.
+        rewrite rw_apps. assumption.
+      * rewrite rw_apps. admit. (* consider to forbid j to be 0 *)
+      * eapply D_Sub; eauto.
+        eapply IHk; eauto. simpl in *. lia.
+        rewrite rw_apps. assumption.
+Admitted.
+      
+(* Experiment with induction on size *)
+
+Variable A : Type.
+
+Lemma app_length_k : forall k (l1 l2 : list nat),
+  length l1 < k ->
+  length (l1 ++ l2) = (length l1) + (length l2).
+Proof.
+  induction k; intros.
+  - dependent destruction H.
+  - destruct l1.
+    + simpl. reflexivity.
+    + simpl. f_equal. apply IHk. 
+      simpl in H. lia.
+Qed.
+
+Lemma app_length : forall l1 l2 : list nat,
+    length (l1 ++ l2) = (length l1) + (length l2).
+Proof.
+  intros. eapply app_length_k.
+  auto.
+Qed.

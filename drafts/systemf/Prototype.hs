@@ -1,14 +1,13 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module Main where
+module Prototype where
 import Data.List (nub)
-import Debug.Trace
+import Debug.Trace ( trace )
 
 data Type where
     TVar :: String -> Type
     TInt :: Type
-    TTop :: Type
     TArr :: Type -> Type -> Type
     TAll :: String -> Type -> Type
     TExt :: String -> Type
@@ -17,7 +16,6 @@ instance Eq Type where
     (==) :: Type -> Type -> Bool
     (==) (TVar a) (TVar b) = a == b
     (==) TInt TInt = True
-    (==) TTop TTop = True
     (==) (TArr tyA tyB) (TArr tyC tyD) = tyA == tyC && tyB == tyD
     (==) (TAll a tyA) (TAll b tyB) = a == b && tyA == tyB
     (==) (TExt a) (TExt b) = a == b
@@ -27,7 +25,6 @@ instance Show Type where
     show :: Type -> String
     show (TVar a) = a
     show TInt = "Int"
-    show TTop = "Top"
     show (TArr tyA tyB) = "(" ++ show tyA ++ " → " ++ show tyB ++ ")"
     show (TAll a tyA) = "∀" ++ a ++ "." ++ show tyA
     show (TExt a) = "^" ++ a
@@ -52,11 +49,13 @@ instance Show Term where
     show (TApp e ty) = "(" ++ show e ++ " [" ++ show ty ++ "])"
 
 data Hint where
+    No :: Hint
     T :: Type -> Hint
     Hole :: Term -> Hint -> Hint
 
 instance Show Hint where
     show :: Hint -> String
+    show No = "[]"
     show (T ty) = show ty
     show (Hole e h) = "[" ++ show e ++ "]" ++ " → " ++ show h
 
@@ -76,12 +75,12 @@ instance Show Context where
     show (ChVar a tyA ctx) = show ctx ++ ", ^" ++ a ++ " : " ++ show tyA
 
 typeof :: Context -> Hint -> Term -> Maybe Type
-typeof ctx (T TTop) (Lit _) = Just TInt
-typeof ctx (T TTop) (Var x) = lookupTmVar ctx x
-typeof ctx (T TTop) (Ann e tyA) = case typeof ctx (T tyA) e of
+typeof ctx No (Lit _) = Just TInt
+typeof ctx No (Var x) = lookupTmVar ctx x
+typeof ctx No (Ann e tyA) = case typeof ctx (T tyA) e of
     Just tyB -> Just tyA
     Nothing -> Nothing
-typeof ctx (T TTop) (TLam a e) = case typeof (TyVar a ctx) (T TTop) e of
+typeof ctx No (TLam a e) = case typeof (TyVar a ctx) No e of
     Just tyA -> Just (TAll a tyA)
     Nothing -> Nothing
 typeof ctx h (App e1 e2) = case typeof ctx (Hole e2 h) e1 of
@@ -90,7 +89,7 @@ typeof ctx h (App e1 e2) = case typeof ctx (Hole e2 h) e1 of
 typeof ctx (T (TArr tyA tyB)) (Lam x e) = case typeof (TmVar x tyA ctx) (T tyB) e of
     Just tyC -> Just (TArr tyA tyC)
     Nothing -> Nothing
-typeof ctx (Hole e2 h) (Lam x e) = case typeof ctx (T TTop) e2 of
+typeof ctx (Hole e2 h) (Lam x e) = case typeof ctx No e2 of
     Just tyA -> case typeof (TmVar x tyA ctx) h e of
         Just tyB -> Just (TArr tyA tyB)
         Nothing -> Nothing
@@ -98,7 +97,7 @@ typeof ctx (Hole e2 h) (Lam x e) = case typeof ctx (T TTop) e2 of
 typeof ctx h (TApp e tyA) = case typeof ctx h e of
     Just (TAll a tyB) -> Just (subst a tyA tyB)
     Nothing -> Nothing
-typeof ctx h e | pv e = case typeof ctx (T TTop) e of
+typeof ctx h e | pv e = case typeof ctx No e of
     Just tyA -> case refine ctx tyA h of
         Just (ctx', tyB) -> Just tyB
         Nothing -> Nothing
@@ -124,7 +123,6 @@ freeExVars = nub . freeExVarsWithDups
         freeExVarsWithDups :: Type -> [String]
         freeExVarsWithDups (TVar a) = []
         freeExVarsWithDups TInt = []
-        freeExVarsWithDups TTop = []
         freeExVarsWithDups (TArr tyA tyB) = freeExVarsWithDups tyA ++ freeExVarsWithDups tyB
         freeExVarsWithDups (TAll a tyA) =  freeExVarsWithDups tyA
         freeExVarsWithDups (TExt a) = [a]
@@ -140,10 +138,6 @@ substEx a newTy (ChVar b tyA ctx) | a == b = if newTy == tyA then ChVar b tyA ct
 notNull :: [a] -> Bool
 notNull = not . null
 
-notTop :: Type -> Bool
-notTop TTop = False
-notTop _ = True
-
 refine :: Context -> Type -> Hint -> Maybe (Context, Type)
 refine ctx TInt (T TInt) = do
     trace ("[S-Int]: " ++ show ctx ++ " ⊢ " ++ show TInt ++ " <: " ++ show TInt) $ return ()
@@ -154,9 +148,14 @@ refine ctx (TExt a) (T tyA) | null (freeExVars tyA) = do
 refine ctx tyA (T (TExt a)) | null (freeExVars tyA) = do
     trace ("[S-Ext-R]: " ++ show ctx ++ " ⊢ " ++ show (T tyA) ++ " <: " ++ show (TExt a)) $ return ()
     return (substEx a tyA ctx, tyA)
-refine ctx tyA (T TTop) = do
-    trace ("[S-Top]: " ++ show ctx ++ " ⊢ " ++ show (T tyA) ++ " <: " ++ show TTop) $ return ()
-    return (ctx, tyA)
+
+-- refine ctx tyA No | null (freeExVars tyA) = do
+--     trace ("[S-No-T]: " ++ show ctx ++ " ⊢ " ++ show tyA ++ " <: " ++ show No) $ return ()
+--     return (ctx, tyA)
+-- refine ctx (TExt a) No = do
+--     trace ("[S-No-Ex]: " ++ show ctx ++ " ⊢ " ++ show (TExt a) ++ " <: " ++ show No) $ return ()
+--     return (substEx a tyA ctx, TExt a)
+
 refine ctx1 (TArr tyA tyB) (T (TArr tyC tyD)) = do
     trace ("[S-Arr]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (TArr tyC tyD)) $ return ()
     (ctx2, tyA') <- refine ctx1 tyC (T tyA)
@@ -169,7 +168,7 @@ refine ctx1 (TArr tyA tyB) (Hole e h) | null (freeExVars tyA) = do
     return (ctx2, TArr tyA tyB')
 refine ctx1 (TArr tyA tyB) (Hole e h) | notNull (freeExVars tyA) = do
     trace ("[S-Hole-Ex]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (Hole e h)) $ return ()
-    tyC <- typeof ctx1 (T TTop) e
+    tyC <- typeof ctx1 No e
     (ctx2, tyA') <- refine ctx1 tyC (T tyA)
     (ctx3, tyB') <- refine ctx2 tyB h
     return (ctx3, TArr tyA' tyB')
@@ -213,5 +212,5 @@ main = do
     -- print $ freeExVars (TArr (TVar "a") (TExt "a"))
     -- print $ freeExVars (TArr (TExt "a") (TExt "b"))
     -- print $ typeof Empty (T TTop) (App (Lam "x" (Var "x")) (Lit 1))
-    print $ typeof (TmVar "id" (TAll "a" (TArr (TVar "a") (TVar "a"))) Empty) (T TTop) (App (Var "id") (Lit 1))
-    print $ refine Empty (TAll "a" (TArr (TVar "a") (TVar "a"))) (Hole (Lit 1) (T TTop))
+    print $ typeof (TmVar "id" (TAll "a" (TArr (TVar "a") (TVar "a"))) Empty) No (App (Var "id") (Lit 1))
+    print $ refine Empty (TAll "a" (TArr (TVar "a") (TVar "a"))) (Hole (Lit 1) No)

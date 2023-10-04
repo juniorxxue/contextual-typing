@@ -60,3 +60,57 @@
 Γ ⊢ [λx.x] → Top ⇒ f ⇒ _
 ---------------------------------------- T-App
 Γ ⊢ Top ⇒ f (λx.x) ⇒ _
+
+
+
+
+
+-----------      -------------
+⊢ [1] <: â         ⊢ â <: □
+----------------------------------------
+â ⊢ â → â <: [1] → □ ⊣ 
+-----------------------------
+⊢ ∀ a. a → a <: [1] → □
+
+
+â ⊢ Int → Int <: â → â ⊣ â := Int     â := Int ⊢ â → â <: □ ⊣ 
+------------------------------------------------------------------
+â ⊢ (â → â) → (â → â) <: [succ] → □
+---------------------------------------
+⊢ ∀ a. (a → a) → (a → a) <: [succ] → □
+
+
+
+There'll be a case:
+
+* □ is Nothing
+* it describes a situtation we have solution in context 
+
+â := Int ⊢ â → â <: □ ⊣ â := Int ~> Int → Int
+
+there's two options to refine a type:
+
+1. introduce a "context subsitution":
+   it'll a new operation (maybe hard to reason) in our system, the concern is that
+   it finds all free variables in a type, then find solution in a context and then subsitute it.
+
+2. give serveral rules for □ (can be viewed as we're trying to split □)
+   and delegate the refining phase to base rules:
+
+  ----------------------------------------- base-□
+   Γ ⊢ â <: □ ⊣ Γ ~> (find/subst ^a in Γ)           <---- much simpler since it involves single var
+
+
+  ----------------- base-□-int
+   Γ ⊢ Int <: □ 
+
+
+   Γ ⊢ A <: □ ⊣ Δ₁ ~> A'      Δ₁ ⊢ B <: □ ⊣ Δ₂ ~> B' 
+   --------------------------------------------- arrow-□
+   Γ ⊢ A → B <: □ ⊣ Δ ~> A' → B'
+
+
+
+(f succ)
+
+

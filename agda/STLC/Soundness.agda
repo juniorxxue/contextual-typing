@@ -14,7 +14,6 @@ postulate
       → (∀ (x : A) (l : List A) → P l → P (l ++ (x ∷ [])))
       → (∀ (l : List A) → P l)
 
-
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
   ⊩none⇚ : ∀ {Γ}
@@ -127,3 +126,19 @@ sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
 sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam-∞ (sound-chk ⊢e none-τ)
 sound-chk (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
 sound-chk (⊢a-sub ⊢e x x₁) spl = {!!}
+
+++-head : ∀ {x} (l₁ l₂ : List ℕ)
+  → (x ∷ l₁ ++ l₂) ≡ x ∷ (l₁ ++ l₂)
+++-head [] l₂ = refl
+++-head (x ∷ l₁) l₂ = refl
+
+len-s : ∀ x (l : List ℕ)
+  → len (x ∷ l) ≡ suc (len l)
+len-s x [] = refl
+len-s x (x₁ ∷ l) = refl
+
+app-length : ∀ {l₁ l₂ : List ℕ} k
+  → len l₁ < k
+  → len (l₁ ++ l₂) ≡ len l₁ + len l₂
+app-length {[]} (suc k) (s≤s z≤n) = refl
+app-length {x ∷ l₁} (suc k) (s≤s sz) rewrite len-s x l₁ = cong suc (app-length {l₁ = l₁} k sz)
