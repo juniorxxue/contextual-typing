@@ -3,13 +3,13 @@ Import ListNotations.
 Require Import Coq.Program.Equality.
 Require Import Lia.
 
-Inductive type : Prop :=
+Inductive type : Set :=
 | Int : type
 | Arr : type -> type -> type.
 
 Notation "A → B" := (Arr A B) (at level 20).
 
-Inductive term : Prop :=
+Inductive term : Set :=
 | Lit : nat -> term
 | Var : nat -> term
 | Lam : term -> term
@@ -19,7 +19,7 @@ Inductive term : Prop :=
 Notation "e ∷ A" := (Ann e A) (at level 20).
 Notation "ƛ A . e : B" := (Lam A e B) (at level 20).
 
-Inductive context : Prop :=
+Inductive context : Set :=
 | Empty : context
 | Cons  : context -> type -> context.
 
@@ -149,7 +149,6 @@ Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
     spl (Ho e H) (Arr A B) (e :: es) A' (A :: Bs) B'       
 .
 
-
 Lemma lst_destruct_rev : forall (l : list term),
     exists xs x, l = xs ++ [x].
 Proof.
@@ -162,8 +161,19 @@ Proof.
   intros. simpl.
 Admitted.
 
+Lemma dty_weaken : forall Gamma A B e j,
+    dty (Cons Gamma A) j e B ->
+    dty Gamma j e B.
+Admitted.
+
+Lemma length_append : forall (l : list term) x,
+    length (l ++ [x]) = length l + 1.
+Proof.
+  intros. induction l; eauto. simpl in *. f_equal. assumption.
+Qed.
+
 Lemma subst_app : forall k es Gamma A B e e1 j,
-    length es + size_counter j < k ->
+    2 * (length es) + size_counter j < k ->
     dty (Cons Gamma A) j (apps e es) B ->
     dty Gamma ZCo e1 A ->
     dty Gamma j (apps (App (Lam e) e1) es) B.
@@ -173,13 +183,14 @@ Proof.
   - pose (lst_destruct_rev es) as Rev. destruct Rev. destruct H2.
     subst. rewrite rw_apps in H0.
     dependent destruction H0.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
+    + rewrite rw_apps. eapply D_App1.
+      * eapply IHk; eauto. simpl in *.
+        rewrite length_append in H. lia.
+      * eapply dty_weaken; eauto.
+    + rewrite rw_apps. eapply D_App2.
+      * eapply IHk; eauto. simpl in *.
+        rewrite length_append in H. lia.
+      * eapply dty_weaken; eauto.
     + destruct j.
       * eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
