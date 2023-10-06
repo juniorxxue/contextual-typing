@@ -32,9 +32,8 @@ data _⊢r_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢r ∞ # e ⦂ A
 
   RS : ∀ {Γ e j A B}
-    → (∀ e' → Γ ⊢d Z # e' ⦂ A → Γ ⊢r j # (e · e') ⦂ B)
+    → (∀ e' → Γ ⊢d Z # e' ⦂ A → Γ ⊢r j # (e · e') ⦂ B) -- the biggest trouble is the expansion of application terms
     → Γ ⊢r (S j) # e ⦂ (A ⇒ B)
-
 
 ⊢r-lam : ∀ {Γ e A B j}
   → Γ , A ⊢r j # e ⦂ B
@@ -61,7 +60,7 @@ complete (⊢d-ann ⊢e) with complete ⊢e
 complete (⊢d-lam-∞ ⊢e) with complete ⊢e
 ... | R∞ ⊢a = R∞ (⊢a-lam₁ ⊢a)
 complete (⊢d-lam-n ⊢e) with complete ⊢e
-... | ⊢r = RS (λ e' ⊢e' → ⊢r-app {!!} ⊢e')
+... | ⊢r = RS (λ e' ⊢e' → ⊢r-app (⊢r-lam ⊢r) ⊢e')
 -- RS (λ e' ⊢e' → {!!})
 -- RS λ e' ⊢e' → complete (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e')
 complete (⊢d-app₁ ⊢f ⊢e) with complete ⊢f | complete ⊢e
@@ -73,20 +72,36 @@ complete {j = ∞} (⊢d-sub ⊢e A~j) with complete ⊢e
 complete {j = Z} (⊢d-sub ⊢e A~j) with complete ⊢e
 ... | RZ ⊢e' = RZ ⊢e'
 complete {j = S j} (⊢d-sub ⊢e (~S A~j)) with complete ⊢e
-... | RZ ⊢e' = RS (λ e' ⊢e'' → {!!})
+... | RZ ⊢e' = RS (λ e' x → {!!})
+
+
 
 
 complete' : ∀ {Γ j e A}
   → Γ ⊢d j # e ⦂ A
   → A ~ j 
   → Γ ⊢r j # e ⦂ A
-complete' {j = ∞} ⊢e ~∞ = R∞ {!!}
 
-complete' {j = Z} ⊢d-int ~0 = RZ {!!}
-complete' {j = Z} (⊢d-var x) ~0 = RZ {!!}
-complete' {j = Z} (⊢d-ann ⊢e) ~0 = RZ {!!}
-complete' {j = Z} (⊢d-app₁ ⊢e ⊢e₁) ~0 = RZ {!!}
-complete' {j = Z} (⊢d-app₂ ⊢e ⊢e₁) ~0 = RZ {!!}
-complete' {j = Z} (⊢d-sub ⊢e x) ~0 = RZ {!!}
+complete-inf : ∀ {Γ e A}
+  → Γ ⊢d Z # e ⦂ A
+  → Γ ⊢a □ ⇛ e ⇛ A
 
-complete' {j = S j} ⊢e (~S A~j) = RS (λ e' x → complete' (⊢d-app₂ ⊢e x) A~j)
+complete-chk : ∀ {Γ e A}
+  → Γ ⊢d ∞ # e ⦂ A
+  → Γ ⊢a τ A ⇛ e ⇛ A
+
+
+complete' {j = ∞} ⊢e ~∞ = R∞ (complete-chk ⊢e)
+complete' {j = Z} ⊢e ~0 = RZ (complete-inf ⊢e)
+complete' {j = S j} ⊢e (~S A~j) = RS (λ e' x → complete' {j = j} (⊢d-app₂ ⊢e x) A~j)
+
+complete-inf ⊢d-int = ⊢a-lit
+complete-inf (⊢d-var x) = ⊢a-var x
+complete-inf (⊢d-ann ⊢e) = ⊢a-ann (complete-chk ⊢e)
+complete-inf (⊢d-app₁ ⊢e ⊢e₁) = ⊢a-app (subsumption-0 (complete-inf ⊢e) (≈hole (complete-chk ⊢e₁) ≈□))
+
+complete-inf (⊢d-app₂ ⊢e ⊢e₁) = {!complete' ⊢e ?!}
+complete-inf (⊢d-sub ⊢e x) = complete-inf ⊢e
+complete-chk (⊢d-lam-∞ ⊢e) = ⊢a-lam₁ (complete-chk ⊢e)
+complete-chk (⊢d-app₂ ⊢e ⊢e₁) = {!!}
+complete-chk (⊢d-sub ⊢e x) = {!!}

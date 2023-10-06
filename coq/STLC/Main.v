@@ -81,6 +81,7 @@ Inductive dty : context -> counter -> term -> type -> Prop :=
     dty Gamma j (App e1 e2) B
 | D_Sub: forall Gamma e A j,
     dty Gamma ZCo e A ->
+    j <> ZCo ->
     dwf A j ->
     dty Gamma j e A
 .
@@ -128,6 +129,8 @@ with aty : context -> hint -> term -> type -> Prop :=
     aty Gamma H e A
 .
 
+Hint Constructors aty : core.
+
 Notation "T |- A <: H" := (awf T A H) (at level 40).
 Notation "T |- H => e => A" := (aty T H e A) (at level 50).
 
@@ -150,7 +153,7 @@ Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
 .
 
 Lemma lst_destruct_rev : forall (l : list term),
-    exists xs x, l = xs ++ [x].
+  exists xs x, l = xs ++ [x].
 Proof.
 Admitted.
 
@@ -195,11 +198,11 @@ Proof.
       * eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
-      * rewrite rw_apps. admit. (* consider to forbid j to be 0 *)
+      * exfalso. eapply H; eauto.
       * eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
-Admitted.
+Qed.
       
 (* Experiment with induction on size *)
 
@@ -223,3 +226,87 @@ Proof.
   intros. eapply app_length_k.
   auto.
 Qed.
+
+
+(* Completeness *)
+
+
+Inductive rty : context -> counter -> term -> type -> Prop :=
+| RZ : forall Gamma A e,
+    aty Gamma Noth e A ->
+    rty Gamma ZCo e A
+| RInf : forall Gamma A e,
+    aty Gamma (Tau A) e A ->
+    rty Gamma Inf e A
+| RS : forall Gamma e j A B,
+    (forall e', dty Gamma ZCo e' A -> rty Gamma j (App e e') B) ->
+    rty Gamma (SCo j) e (Arr A B)
+.
+
+Notation "T ⊢r j e : A" := (rty T j e A) (at level 50).
+
+Lemma r_app : forall Gamma e e' A B j,
+    rty Gamma (SCo j) e (Arr A B) ->
+    dty Gamma ZCo e' A ->
+    rty Gamma j (App e e') B.
+Proof.
+  intros. dependent destruction H. eapply H; eauto.
+Qed.
+
+Lemma r_lam : forall Gamma e A B j,
+    rty (Cons Gamma A) j e B ->
+    rty Gamma (SCo j) (Lam e) (Arr A B).
+Proof.
+  intros. induction H.
+  - econstructor. intros.
+Admitted.
+
+Lemma r_sub : forall j Gamma e A,
+    rty Gamma ZCo e A ->
+    dwf A j ->
+    rty Gamma j e A.
+Proof.
+  induction j; intros.
+  - econstructor. dependent destruction H.
+    admit.
+  - assumption.
+  - dependent destruction H0.
+    econstructor. intros.
+    eapply IHj; eauto.
+    * 
+Admitted.
+
+
+Theorem complete : forall Gamma j e A,
+    dty Gamma j e A ->
+    rty Gamma j e A.
+Proof.
+  intros.
+  induction H.
+  - econstructor. eauto.
+  - econstructor; eauto.
+  - econstructor. econstructor. dependent destruction IHdty. eauto.
+  - econstructor. dependent destruction IHdty. eauto.
+  - econstructor. intros. eapply r_app; eauto. eapply r_lam; eauto.
+  - dependent destruction IHdty1. dependent destruction IHdty2.
+    econstructor; eauto. eapply A_App. admit. (* by subsumption lemma (proved) *)
+  - dependent destruction IHdty1. dependent destruction IHdty2.
+    eapply H1; eauto.
+  - eapply r_sub; eauto.
+Admitted.
+
+
+Theorem complete' : forall Gamma j e A,
+    dty Gamma j e A ->
+    dwf A j ->
+    rty Gamma j e A.
+Proof.
+  induction j; intros.
+  - econstructor. dependent destruction H0.
+    admit.
+  - econstructor. dependent destruction H0.
+    
+  - dependent destruction H0.
+    econstructor. intros.    
+    eapply IHj; eauto.
+    eapply D_App2; eauto.
