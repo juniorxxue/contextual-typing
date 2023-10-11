@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module Prototype where
+module Worklist where
 import Data.List (nub)
 import Debug.Trace ( trace )
 
@@ -101,6 +101,7 @@ typeof ctx h e | pv e = case typeof ctx No e of
     Just tyA -> case refine ctx tyA h of
         Just (ctx', tyB) -> Just tyB
         Nothing -> Nothing
+typeof _ _ _ = Nothing        
 
 pv :: Term -> Bool
 pv (Lit _) = True
@@ -134,9 +135,22 @@ substEx a newTy (TyVar x ctx) = TyVar x (substEx a newTy ctx)
 substEx a newTy (ExVar b ctx) | a == b = ChVar a newTy (substEx a newTy ctx)
 substEx a newTy (ExVar b ctx) | a /= b = ExVar b (substEx a newTy ctx)
 substEx a newTy (ChVar b tyA ctx) | a == b = if newTy == tyA then ChVar b tyA ctx else error "context subst inconsistency"
+substEx a newTy (ChVar b tyA ctx) | a /= b = ChVar b tyA (substEx a newTy ctx)
 
 notNull :: [a] -> Bool
 notNull = not . null
+
+fullSubst :: Context -> Type -> Maybe Type
+fullSubst ctx (TExt a) = lookupExVar ctx a
+fullSubst ctx TInt = Just TInt
+fullSubst ctx (TArr tyA tyB) = do
+    tyA' <- fullSubst ctx tyA
+    tyB' <- fullSubst ctx tyB
+    return (TArr tyA' tyB')
+fullSubst ctx (TAll a tyA) = do
+    tyA' <- fullSubst (TyVar a ctx) tyA
+    return (TAll a tyA')
+
 
 refine :: Context -> Type -> Hint -> Maybe (Context, Type)
 refine ctx TInt (T TInt) = do
@@ -147,15 +161,12 @@ refine ctx (TExt a) (T tyA) | null (freeExVars tyA) = do
     return (substEx a tyA ctx, tyA)
 refine ctx tyA (T (TExt a)) | null (freeExVars tyA) = do
     trace ("[S-Ext-R]: " ++ show ctx ++ " ⊢ " ++ show (T tyA) ++ " <: " ++ show (TExt a)) $ return ()
+    -- trace ("I'm substing ex-var: " ++ a ++ " by the type " ++ show tyA ++ " in the context of" ++ show ctx) $ return ()
     return (substEx a tyA ctx, tyA)
-
--- refine ctx tyA No | null (freeExVars tyA) = do
---     trace ("[S-No-T]: " ++ show ctx ++ " ⊢ " ++ show tyA ++ " <: " ++ show No) $ return ()
---     return (ctx, tyA)
--- refine ctx (TExt a) No = do
---     trace ("[S-No-Ex]: " ++ show ctx ++ " ⊢ " ++ show (TExt a) ++ " <: " ++ show No) $ return ()
---     return (substEx a tyA ctx, TExt a)
-
+refine ctx tyA No = do
+    trace ("[S-No]: " ++ show ctx ++ " ⊢ " ++ show tyA ++ " <: " ++ show No) $ return ()
+    tyA' <- fullSubst ctx tyA
+    return (ctx, tyA')
 refine ctx1 (TArr tyA tyB) (T (TArr tyC tyD)) = do
     trace ("[S-Arr]: " ++ show ctx1 ++ " ⊢ " ++ show (TArr tyA tyB) ++ " <: " ++ show (TArr tyC tyD)) $ return ()
     (ctx2, tyA') <- refine ctx1 tyC (T tyA)
@@ -205,12 +216,53 @@ lookupTmVar (TyVar _ ctx) y = lookupTmVar ctx y
 lookupTmVar (ExVar _ ctx) y = lookupTmVar ctx y
 lookupTmVar (ChVar _ _ ctx) y = lookupTmVar ctx y
 
+lookupExVar :: Context -> String -> Maybe Type
+lookupExVar Empty _ = Nothing
+lookupExVar (TmVar _ _ ctx) y = lookupExVar ctx y
+lookupExVar (TyVar _ ctx) y = lookupExVar ctx y
+lookupExVar (ExVar x ctx) y = lookupExVar ctx y
+lookupExVar (ChVar x tyA ctx) y = if x == y then Just tyA else lookupExVar ctx y
+
+-- id : forall a. a -> a
+idCtx :: Context
+idCtx = TmVar "id" (TAll "a" (TArr (TVar "a") (TVar "a"))) Empty
+
+-- id 1
+id1 :: Term
+id1 = App (Var "id") (Lit 1)
+
+-- succ : Int -> Int
+succfCtx :: Context
+succfCtx = TmVar "succ" (TArr TInt TInt) (TmVar "f" (TAll "a" (TArr (TArr (TVar "a") (TVar "a")) (TArr (TVar "a") (TVar "a")))) Empty)
+
+-- f succ
+fsucc :: Term
+fsucc = App (Var "f") (Var "succ")
+
+-- g : forall a. forall b. a -> b -> b
+gCtx :: Context
+gCtx = TmVar "g" (TAll "a" (TAll "b" (TArr (TVar "a") (TArr (TVar "b") (TVar "b"))))) Empty
+
+-- g 1
+g1 :: Term
+g1 = App (Var "g") (Lit 1)
+
+-- g 1 2
+g12 :: Term
+g12 = App (App (Var "g") (Lit 1)) (Lit 2)
+
+-- f (\x. x)
+fxx :: Term
+fxx = App (Var "f") (Lam "x" (Var "x"))
+
+checkTypeof :: Context -> Hint -> Term -> Maybe Type
+checkTypeof ctx h e = trace ("[Check]: " ++ show ctx ++ " ⊢ " ++ show h ++ " => " ++ show e ++ " => ") $ typeof ctx h e
+
 main :: IO ()
 main = do
-    -- print $ subst "a" (TArr (TVar "a") (TVar "b")) TInt
-    -- print $ subst "a" (TArr (TVar "a") (TVar "a")) (TExt "a")
-    -- print $ freeExVars (TArr (TVar "a") (TExt "a"))
-    -- print $ freeExVars (TArr (TExt "a") (TExt "b"))
-    -- print $ typeof Empty (T TTop) (App (Lam "x" (Var "x")) (Lit 1))
-    print $ typeof (TmVar "id" (TAll "a" (TArr (TVar "a") (TVar "a"))) Empty) No (App (Var "id") (Lit 1))
+    print $ checkTypeof idCtx No id1
+    print $ checkTypeof succfCtx No fsucc
+    print $ checkTypeof succfCtx No fxx
+    print $ checkTypeof gCtx No g1
+    print $ checkTypeof gCtx No g12
     print $ refine Empty (TAll "a" (TArr (TVar "a") (TVar "a"))) (Hole (Lit 1) No)
