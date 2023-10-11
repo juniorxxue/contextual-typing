@@ -74,9 +74,6 @@ complete {j = Z} (⊢d-sub ⊢e A~j) with complete ⊢e
 complete {j = S j} (⊢d-sub ⊢e (~S A~j)) with complete ⊢e
 ... | RZ ⊢e' = RS (λ e' x → {!!})
 
-
-
-
 complete' : ∀ {Γ j e A}
   → Γ ⊢d j # e ⦂ A
   → A ~ j 
@@ -90,7 +87,6 @@ complete-chk : ∀ {Γ e A}
   → Γ ⊢d ∞ # e ⦂ A
   → Γ ⊢a τ A ⇛ e ⇛ A
 
-
 complete' {j = ∞} ⊢e ~∞ = R∞ (complete-chk ⊢e)
 complete' {j = Z} ⊢e ~0 = RZ (complete-inf ⊢e)
 complete' {j = S j} ⊢e (~S A~j) = RS (λ e' x → complete' {j = j} (⊢d-app₂ ⊢e x) A~j)
@@ -103,5 +99,5 @@ complete-inf (⊢d-app₁ ⊢e ⊢e₁) = ⊢a-app (subsumption-0 (complete-inf 
 complete-inf (⊢d-app₂ ⊢e ⊢e₁) = {!complete' ⊢e ?!}
 complete-inf (⊢d-sub ⊢e x) = complete-inf ⊢e
 complete-chk (⊢d-lam-∞ ⊢e) = ⊢a-lam₁ (complete-chk ⊢e)
-complete-chk (⊢d-app₂ ⊢e ⊢e₁) = {!!}
-complete-chk (⊢d-sub ⊢e x) = {!!}
+complete-chk (⊢d-app₂ ⊢e ⊢e₁) = ⊢a-app (subsumption-0 {!!} {!!})
+complete-chk (⊢d-sub ⊢e x) = subsumption-0 (complete-inf ⊢e) ≈τ

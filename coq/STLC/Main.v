@@ -305,8 +305,9 @@ Proof.
   - econstructor. dependent destruction H0.
     admit.
   - econstructor. dependent destruction H0.
-    
+    admit.
   - dependent destruction H0.
     econstructor. intros.    
     eapply IHj; eauto.
     eapply D_App2; eauto.
+Admitted.
