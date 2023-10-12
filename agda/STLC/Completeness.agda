@@ -18,86 +18,70 @@ open import STLC.Algo.Properties
 --+                          Completeness                          +--
 --+                                                                +--
 ----------------------------------------------------------------------
+infix 4 _⊩a_⇛_
 
-infix 4 _⊢r_#_⦂_
+data _⊩a_⇛_ : Context → List Term → List Type → Set where
 
-data _⊢r_#_⦂_ : Context → Counter → Term → Type → Set where
+  ⊩a-none : ∀ {Γ}
+    → Γ ⊩a [] ⇛ []
 
-  RZ : ∀ {Γ A e}
+  ⊩a-cons : ∀ {Γ es As e A}
+    → Γ ⊩a es ⇛ As
     → Γ ⊢a □ ⇛ e ⇛ A
-    → Γ ⊢r Z # e ⦂ A
+    → Γ ⊩a (e ∷ es) ⇛ (A ∷ As)
 
-  R∞ : ∀ {Γ A e}
-    → Γ ⊢a τ A ⇛ e ⇛ A
-    → Γ ⊢r ∞ # e ⦂ A
+infix 4 _⇴_≗_
 
-  RS : ∀ {Γ e j A B}
-    → (∀ e' → Γ ⊢d Z # e' ⦂ A → Γ ⊢r j # (e · e') ⦂ B) -- the biggest trouble is the expansion of application terms
-    → Γ ⊢r (S j) # e ⦂ (A ⇒ B)
+data _⇴_≗_ : List Term → Hint → Hint → Set where
 
-⊢r-lam : ∀ {Γ e A B j}
-  → Γ , A ⊢r j # e ⦂ B
-  → Γ ⊢r S j # ƛ e ⦂ A ⇒ B
-⊢r-lam (RZ x) = RS (λ e' x₁ → RZ (⊢a-app (⊢a-lam₂ {!!} x)))
-⊢r-lam (R∞ x) = {!!}
-⊢r-lam (RS x) = {!!}
+  cht-none-□ :
+      [] ⇴ □ ≗ □
 
-⊢r-app : ∀ {Γ e e' A B j}
-  → Γ ⊢r S j # e ⦂ A ⇒ B
-  → Γ ⊢d Z # e' ⦂ A
-  → Γ ⊢r j # (e · e') ⦂ B
-⊢r-app {e' = e'} (RS x) ⊢2 = x e' ⊢2
+  cht-none-τ : ∀ {A}
+    → [] ⇴ τ A ≗ (τ A)
 
-complete : ∀ {Γ j e A}
+  cht-cons : ∀ {e es H H'}
+    → es ⇴ H ≗ H'
+    → (e ∷ es) ⇴ H ≗ ⟦ e ⟧⇒ H'
+
+
+infix 4 _↪_❪_,_,_❫
+
+data _↪_❪_,_,_❫ : Type → Counter → List Type → Type → Counter → Set where
+
+  n-z : ∀ {A}
+    → A ↪ Z ❪ [] , A , Z ❫
+
+  n-∞ : ∀ {A}
+    → A ↪ ∞ ❪ [] , A , ∞ ❫
+
+  n-s : ∀ {A B T j Bs j'}
+    → B ↪ j ❪ Bs , T , j' ❫
+    → (A ⇒ B) ↪ (S j) ❪ A ∷ Bs , T , j' ❫
+
+complete-chk : ∀ {Γ e A j es As T H}
   → Γ ⊢d j # e ⦂ A
-  → Γ ⊢r j # e ⦂ A
-  
-complete ⊢d-int = RZ ⊢a-lit
+  → A ↪ j ❪ As , T , ∞ ❫
+  → Γ ⊩a es ⇛ As
+  → es ⇴ τ T ≗ H
+  → Γ ⊢a H ⇛ e ⇛ A
 
-complete (⊢d-var x) = RZ (⊢a-var x)
-complete (⊢d-ann ⊢e) with complete ⊢e
-... | R∞ ⊢a = RZ (⊢a-ann ⊢a)
-complete (⊢d-lam-∞ ⊢e) with complete ⊢e
-... | R∞ ⊢a = R∞ (⊢a-lam₁ ⊢a)
-complete (⊢d-lam-n ⊢e) with complete ⊢e
-... | ⊢r = RS (λ e' ⊢e' → ⊢r-app (⊢r-lam ⊢r) ⊢e')
--- RS (λ e' ⊢e' → {!!})
--- RS λ e' ⊢e' → complete (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e')
-complete (⊢d-app₁ ⊢f ⊢e) with complete ⊢f | complete ⊢e
-... | RZ ⊢f' | R∞ ⊢e' = RZ (⊢a-app (subsumption-0 ⊢f' (≈hole ⊢e' ≈□)))
-complete (⊢d-app₂ {e₂ = e₂} ⊢f ⊢e) with complete ⊢f | complete ⊢e
-... | RS ⊢f' | RZ ⊢e' = ⊢f' e₂ ⊢e
-complete {j = ∞} (⊢d-sub ⊢e A~j) with complete ⊢e
-... | RZ ⊢e' = R∞ (subsumption-0 ⊢e' ≈τ)
-complete {j = Z} (⊢d-sub ⊢e A~j) with complete ⊢e
-... | RZ ⊢e' = RZ ⊢e'
-complete {j = S j} (⊢d-sub ⊢e (~S A~j)) with complete ⊢e
-... | RZ ⊢e' = RS (λ e' x → {!!})
-
-complete' : ∀ {Γ j e A}
+complete-inf : ∀ {Γ e A j es As T H}
   → Γ ⊢d j # e ⦂ A
-  → A ~ j 
-  → Γ ⊢r j # e ⦂ A
+  → A ↪ j ❪ As , T , Z ❫
+  → Γ ⊩a es ⇛ As
+  → es ⇴ □ ≗ H
+  → Γ ⊢a H ⇛ e ⇛ A
 
-complete-inf : ∀ {Γ e A}
-  → Γ ⊢d Z # e ⦂ A
-  → Γ ⊢a □ ⇛ e ⇛ A
+complete-chk (⊢d-lam-∞ ⊢e) Aj ⊩es newH = {!newH!}
+complete-chk (⊢d-lam-n ⊢e) Aj ⊩es newH = {!!}
+complete-chk (⊢d-app₂ ⊢e ⊢e₁) Aj ⊩es newH = {!!}
+complete-chk (⊢d-sub ⊢e x) Aj ⊩es newH = {!!}
 
-complete-chk : ∀ {Γ e A}
-  → Γ ⊢d ∞ # e ⦂ A
-  → Γ ⊢a τ A ⇛ e ⇛ A
-
-complete' {j = ∞} ⊢e ~∞ = R∞ (complete-chk ⊢e)
-complete' {j = Z} ⊢e ~0 = RZ (complete-inf ⊢e)
-complete' {j = S j} ⊢e (~S A~j) = RS (λ e' x → complete' {j = j} (⊢d-app₂ ⊢e x) A~j)
-
-complete-inf ⊢d-int = ⊢a-lit
-complete-inf (⊢d-var x) = ⊢a-var x
-complete-inf (⊢d-ann ⊢e) = ⊢a-ann (complete-chk ⊢e)
-complete-inf (⊢d-app₁ ⊢e ⊢e₁) = ⊢a-app (subsumption-0 (complete-inf ⊢e) (≈hole (complete-chk ⊢e₁) ≈□))
-
-complete-inf (⊢d-app₂ ⊢e ⊢e₁) = {!complete' ⊢e ?!}
-complete-inf (⊢d-sub ⊢e x) = complete-inf ⊢e
-complete-chk (⊢d-lam-∞ ⊢e) = ⊢a-lam₁ (complete-chk ⊢e)
-complete-chk (⊢d-app₂ ⊢e ⊢e₁) = ⊢a-app (subsumption-0 {!!} {!!})
-complete-chk (⊢d-sub ⊢e x) = subsumption-0 (complete-inf ⊢e) ≈τ
+complete-inf ⊢d-int n-z ⊩a-none cht-none-□ = ⊢a-lit
+complete-inf (⊢d-var x) n-z ⊩es newH = {!!}
+complete-inf (⊢d-ann ⊢e) Aj ⊩es newH = {!!}
+complete-inf (⊢d-lam-n ⊢e) Aj ⊩es newH = {!!}
+complete-inf (⊢d-app₁ ⊢e ⊢e₁) Aj ⊩es newH = {!!}
+complete-inf (⊢d-app₂ ⊢e ⊢e₁) Aj ⊩es newH = {!!}
+complete-inf (⊢d-sub ⊢e x) Aj ⊩es newH = {!!}
