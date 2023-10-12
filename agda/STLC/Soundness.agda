@@ -63,7 +63,6 @@ rewrite-snoc₃ : ∀ {Γ e e₁ es' e' cc B}
   → Γ ⊢d cc # (((ƛ e) · e₁) ▻ es') · e' ⦂ B
 rewrite-snoc₃ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e  
 
-
 subst :  ∀ {Γ A B e e₁ j} (es : List Term)
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d Z # e₁ ⦂ A
@@ -81,20 +80,12 @@ subst es =  rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {j}
                      es
 
 
-subst' :  ∀ {Γ A B e e₁ j} (es : List Term)
-  → Γ , A ⊢d j # e ▻ map (_↑ 0) (reverse es) ⦂ B
-  → Γ ⊢d Z # e₁ ⦂ A
-  → Γ ⊢d j # ((ƛ e) · e₁) ▻ (reverse es) ⦂ B
-subst' [] ⊢1 ⊢2 = ⊢d-app₂ (⊢d-lam-n ⊢1) ⊢2
-subst' (e' ∷ es) ⊢1 ⊢2 = {!!}
-
-subst'' :  ∀ {Γ A B e e₁ j k es}
-  → len es < k
-  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d Z # e₁ ⦂ A
-  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
-subst'' {k = suc k} {es = []} (s≤s sz) ⊢1 ⊢2 = {!!}
-subst'' {k = suc k} {es = x ∷ es} sz ⊢1 ⊢2 = {!!}
+⊢a-spl-eq : ∀ {Γ H A e es T As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → T ≡ A'
+⊢a-spl-eq ⊢e none-τ = ⊢a-hint-self ⊢e
+⊢a-spl-eq ⊢e (have spl) = ⊢a-spl-eq (⊢a-app ⊢e) spl
 
 sound-≈ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≈ H
@@ -119,26 +110,12 @@ sound-inf ⊢a-lit none-□ = ⊢d-int
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk ⊢e none-τ)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
-sound-inf (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
+-- sound-inf (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
+sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
 sound-inf (⊢a-sub ⊢e A≈H p) spl = ⊢d-sub (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~0
 
 sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
 sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam-∞ (sound-chk ⊢e none-τ)
-sound-chk (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
-sound-chk (⊢a-sub ⊢e x x₁) spl = {!!}
-
-++-head : ∀ {x} (l₁ l₂ : List ℕ)
-  → (x ∷ l₁ ++ l₂) ≡ x ∷ (l₁ ++ l₂)
-++-head [] l₂ = refl
-++-head (x ∷ l₁) l₂ = refl
-
-len-s : ∀ x (l : List ℕ)
-  → len (x ∷ l) ≡ suc (len l)
-len-s x [] = refl
-len-s x (x₁ ∷ l) = refl
-
-app-length : ∀ {l₁ l₂ : List ℕ} k
-  → len l₁ < k
-  → len (l₁ ++ l₂) ≡ len l₁ + len l₂
-app-length {[]} (suc k) (s≤s z≤n) = refl
-app-length {x ∷ l₁} (suc k) (s≤s sz) rewrite len-s x l₁ = cong suc (app-length {l₁ = l₁} k sz)
+-- sound-chk (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
+sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
+sound-chk ty@(⊢a-sub ⊢e A≈H p) spl rewrite ⊢a-spl-eq ty spl = ⊢d-sub (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~∞
