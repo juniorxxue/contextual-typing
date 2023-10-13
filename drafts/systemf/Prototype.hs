@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module Worklist where
+module Prototype where
 import Data.List (nub)
 import Debug.Trace ( trace )
 

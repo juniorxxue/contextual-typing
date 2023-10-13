@@ -133,3 +133,15 @@ complete-inf (⊢d-app₂ ⊢e ⊢e₁) Aj ⊩es newH =
   ⊢a-app (complete-inf ⊢e (n-s Aj) (⊩a-cons ⊩es (complete-inf ⊢e₁ n-z ⊩a-none cht-none-□)) (cht-cons newH))
   
 complete-inf (⊢d-sub ⊢e x) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e n-z ⊩a-none cht-none-□) (complete-wf-z Aj x ⊩es newH)
+
+-- corollaries
+
+complete-inf-0 : ∀ {Γ e A}
+  → Γ ⊢d Z # e ⦂ A
+  → Γ ⊢a □ ⇛ e ⇛ A
+complete-inf-0 ⊢e = {!!}
+
+complete-chk-0 : ∀ {Γ e A}
+  → Γ ⊢d ∞ # e ⦂ A
+  → Γ ⊢a τ A ⇛ e ⇛ A
+complete-chk-0 ⊢e = {!!}  

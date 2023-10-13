@@ -2,6 +2,8 @@ Require Import List.
 Import ListNotations.
 Require Import Coq.Program.Equality.
 Require Import Lia.
+Require Import Nat.
+Require Import Coq.Arith.Compare_dec.
 
 Inductive type : Set :=
 | Int : type
@@ -152,16 +154,33 @@ Inductive spl : hint -> type -> list term -> hint -> list type -> type -> Set :=
     spl (Ho e H) (Arr A B) (e :: es) A' (A :: Bs) B'       
 .
 
+Lemma len_0_imply_empty : forall (l : list term),
+    length l = 0 ->
+    l = [].
+Proof.
+  induction l; intros; eauto.
+  dependent destruction H.
+Qed.
+  
+
 Lemma lst_destruct_rev : forall (l : list term),
+    length l > 0 -> 
   exists xs x, l = xs ++ [x].
 Proof.
-Admitted.
+  intros. induction l.
+  - inversion H.
+  - dependent destruction H.
+    + eapply len_0_imply_empty in x. subst. exists []. exists a. auto.
+    + pose proof (IHl H). destruct H0. destruct H0.
+      exists (a :: x). exists x0. subst. reflexivity.
+Qed.
 
 Lemma rw_apps : forall e es x,
     apps e (es ++ [x]) = App (apps e es) x.
 Proof.
   induction es; eauto.
-  intros. simpl.
+  intros. simpl in *.
+  pose 
 Admitted.
 
 Lemma dty_weaken : forall Gamma A B e j,
@@ -175,31 +194,35 @@ Proof.
   intros. induction l; eauto. simpl in *. f_equal. assumption.
 Qed.
 
-Lemma subst_app : forall k es Gamma A B e e1 j,
+Lemma subst_app : forall k es Gamma A B e e1 j,    
     2 * (length es) + size_counter j < k ->
     dty (Cons Gamma A) j (apps e es) B ->
-    dty Gamma ZCo e1 A ->
+    dty Gamma ZCo e1 A ->    
     dty Gamma j (apps (App (Lam e) e1) es) B.
 Proof.
   induction k; intros.
-  - dependent destruction H.
-  - pose (lst_destruct_rev es) as Rev. destruct Rev. destruct H2.
-    subst. rewrite rw_apps in H0.
-    dependent destruction H0.
-    + rewrite rw_apps. eapply D_App1.
+  - dependent destruction H.    
+  - destruct (lt_eq_lt_dec (length es) 0).
+    + destruct s. inversion l. eapply len_0_imply_empty in e0. subst.
+      simpl in *. econstructor. econstructor. eapply H0. eapply H1.
+    + pose (lst_destruct_rev es l) as Rev. destruct Rev.
+      destruct H2. 
+      subst. rewrite rw_apps in H0.
+      dependent destruction H0.
+      rewrite rw_apps. eapply D_App1.
       * eapply IHk; eauto. simpl in *.
         rewrite length_append in H. lia.
       * eapply dty_weaken; eauto.
-    + rewrite rw_apps. eapply D_App2.
-      * eapply IHk; eauto. simpl in *.
+      *  rewrite rw_apps. eapply D_App2.
+         **  eapply IHk; eauto. simpl in *.
         rewrite length_append in H. lia.
-      * eapply dty_weaken; eauto.
-    + destruct j.
-      * eapply D_Sub; eauto.
+         ** eapply dty_weaken; eauto.
+      *  destruct j.
+      **  eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
-      * exfalso. eapply H; eauto.
-      * eapply D_Sub; eauto.
+      ** exfalso. eapply H; eauto.
+      ** eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
 Qed.

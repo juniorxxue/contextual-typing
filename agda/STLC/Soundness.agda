@@ -79,6 +79,32 @@ subst es =  rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {j}
                      })) -- ind
                      es
 
+size : Counter → ℕ
+size ∞ = 1
+size Z = 0
+size (S j) = 1 + size j
+
+postulate
+
+  lst-destruct-rev : ∀ (l : List Term)
+    → len l > 0
+    → ∃[ x ] (∃[ xs ] (l ≡ (xs ++ x ∷ [])))
+
+
+ees>0 : ∀ {e} {es : List Term}
+  → len (e ∷ es) > 0
+ees>0 {e} {es} = s≤s z≤n
+
+
+subst' :  ∀ (k) {Γ A B e e₁ j es}
+  → 2 * len es + size j < k
+  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d Z # e₁ ⦂ A
+  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
+subst' (suc k) {es = []} sz ⊢1 ⊢2 = ⊢d-app₂ (⊢d-lam-n ⊢1) ⊢2
+subst' (suc k) {es = e ∷ es} sz ⊢1 ⊢2 with lst-destruct-rev (e ∷ es) (ees>0 {e} {es})
+... | ⟨ x , ⟨ xs , eq ⟩ ⟩ rewrite eq = {!!}
+
 
 ⊢a-spl-eq : ∀ {Γ H A e es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
