@@ -139,9 +139,9 @@ complete-inf (⊢d-sub ⊢e x) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e 
 complete-inf-0 : ∀ {Γ e A}
   → Γ ⊢d Z # e ⦂ A
   → Γ ⊢a □ ⇛ e ⇛ A
-complete-inf-0 ⊢e = {!!}
+complete-inf-0 ⊢e = complete-inf ⊢e n-z ⊩a-none cht-none-□
 
 complete-chk-0 : ∀ {Γ e A}
   → Γ ⊢d ∞ # e ⦂ A
   → Γ ⊢a τ A ⇛ e ⇛ A
-complete-chk-0 ⊢e = {!!}  
+complete-chk-0 ⊢e = complete-chk ⊢e n-∞ ⊩a-none cht-none-τ
