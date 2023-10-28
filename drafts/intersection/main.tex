@@ -22,11 +22,11 @@
 
 \begin{align*}
 &\text{Types} \quad\quad &A, B, C, D, T ::=&~ \mathtt{Int} \mid \mathtt{Top} \mid A \rightarrow B \mid A~\&~B\\
-&\text{Hints} \quad\quad &H ::=&~ A \mid \boxed{e} \rightarrow H\\
 &\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
 &\text{Partial Values} \quad \quad &p::=&~ i \mid x \mid e : A\\
 &\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A\\
-&\text{Counters} \quad\quad &j ::=&~ n \mid \infty\\
+&\text{Counters} \quad\quad &j ::=&~ Z \mid \infty \mid S~j \\
+&\text{Hints} \quad\quad &H ::=&~ \square \mid A \mid \boxed{e} \rightarrow H\\
 \end{align*}
 
 \section{Decl.}
@@ -36,34 +36,34 @@
 \begin{mathpar}
     \inferrule*[lab=Int]
     { }
-    {\Gamma \vdash_0 i : Int}
+    {\Gamma \vdash_Z i : Int}
 
     \inferrule*[lab=Var]
     {x : A \in \Gamma}
-    {\Gamma \vdash_0 x : A}
+    {\Gamma \vdash_Z x : A}
+
+    \inferrule*[lab=Ann]
+    {\Gamma \vdash_{\infty} e : A}
+    {\Gamma \vdash_Z (e : A) : A}
 
     \inferrule*[lab=Lam]
     {\Gamma, x : A \vdash_{j-} e : B}
     {\Gamma \vdash_{j} \lambda x.~ e : A \rightarrow B}
 
     \inferrule*[lab=App1]
-    {\Gamma \vdash_0 e_1 : A \rightarrow B \\
+    {\Gamma \vdash_Z e_1 : A \rightarrow B \\
     \Gamma \vdash_{\infty} e_2 : A}
-    {\Gamma \vdash_n e_1~e_2 : B}
+    {\Gamma \vdash_Z e_1~e_2 : B}
 
     \inferrule*[lab=App2]
-    {\Gamma \vdash_{j+} e_1 : A \rightarrow B \\
-    \Gamma \vdash_0 e_2 : A}
+    {\Gamma \vdash_{S~j} e_1 : A \rightarrow B \\
+    \Gamma \vdash_Z e_2 : A}
     {\Gamma \vdash_j e_1~e_2 : B}
 
-    \inferrule*[lab=Ann]
-    {\Gamma \vdash_{\infty} e : A}
-    {\Gamma \vdash_0 (e : A) : A}
-
     \inferrule*[lab=Sub]
-    {\Gamma \vdash_0 e : B \\
-    B <:_j A}
-    {\Gamma \vdash_j e : A}
+    {\Gamma \vdash_Z e : A \\
+    A <:_{j} B}
+    {\Gamma \vdash_j e : B}
 
     \inferrule*[lab=And]
     {\Gamma \vdash_{\infty} e : A \\
@@ -110,45 +110,45 @@
 \subsection{Typing}
 
 \begin{mathpar}
-\inferrule*[lab=T-Lit]
-{ }
-{\Gamma \vdash Top \Rightarrow i \Rightarrow \mathsf{Int}}
+    \inferrule*[lab=T-Lit]
+    { }
+    {\Gamma \vdash \square \Rightarrow i \Rightarrow \mathsf{Int}}
+    
+    \inferrule*[lab=T-Var]
+    {x : A \in \Gamma}
+    {\Gamma \vdash \square \Rightarrow x \Rightarrow A}
+    
+    \inferrule*[lab=T-Ann]
+    {\Gamma \vdash A \Rightarrow e \Rightarrow B}
+    {\Gamma \vdash \square \Rightarrow e : A \Rightarrow A}
+    
+    \inferrule*[lab=T-App]
+    {\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B}
+    {\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
+    
+    \inferrule*[lab=T-Lam1]
+    {\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
+    {\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
+    
+    \inferrule*[lab=T-Lam2]
+    {\Gamma \vdash \square \Rightarrow e_2 \Rightarrow A \\
+     \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
+    {\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 
-\inferrule*[lab=T-Var]
-{x : A \in \Gamma}
-{\Gamma \vdash Top \Rightarrow x \Rightarrow A}
-
-\inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \mapsto H \Rightarrow e_1 \Rightarrow A \rightarrow B}
-{\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
-
-\inferrule*[lab=T-Ann]
-{\Gamma \vdash A \Rightarrow e \Rightarrow B}
-{\Gamma \vdash Top \Rightarrow e : A \Rightarrow A}
-
-\inferrule*[lab=T-Lam1]
-{\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
-{\Gamma \vdash A \rightarrow B \Rightarrow \lambda x.~e \Rightarrow A \rightarrow C}
-
-\inferrule*[lab=T-Lam2]
-{\Gamma \vdash Top \Rightarrow e_2 \Rightarrow A \\
- \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
-{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
-
-\inferrule*[lab=T-Lam-And]
-{\Gamma \vdash A \Rightarrow \lambda x.~e \Rightarrow C \\
- \Gamma \vdash B \Rightarrow \lambda x.~e \Rightarrow D}
-{\Gamma \vdash A ~\&~ B \Rightarrow \lambda x.~e \Rightarrow C ~\&~ D}
+% \inferrule*[lab=T-Lam-And]
+% {\Gamma \vdash A \Rightarrow \lambda x.~e \Rightarrow C \\
+%  \Gamma \vdash B \Rightarrow \lambda x.~e \Rightarrow D}
+% {\Gamma \vdash A ~\&~ B \Rightarrow \lambda x.~e \Rightarrow C ~\&~ D}
 
 \inferrule*[lab=T-Sub]
-{\Gamma \vdash Top \Rightarrow p \Rightarrow A \\
+{\Gamma \vdash \square \Rightarrow p \Rightarrow A \\
  \Gamma \vdash A <: H \rightsquigarrow B}
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 
-% \inferrule*[lab=T-And]
-% {\Gamma \vdash H \Rightarrow e \Rightarrow A \\
-%  \Gamma \vdash H \Rightarrow e \Rightarrow B}
-% {\Gamma \vdash H \Rightarrow e \Rightarrow A ~\&~ B}
+\inferrule*[lab=T-And]
+{\Gamma \vdash H \Rightarrow e \Rightarrow A \\
+ \Gamma \vdash H \Rightarrow e \Rightarrow B}
+{\Gamma \vdash H \Rightarrow e \Rightarrow A ~\&~ B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -161,6 +161,10 @@
 \inferrule*[lab=S-Top]
 { }
 {\Gamma \vdash A <: Top \rightsquigarrow A}
+
+\inferrule*[lab=S-Square]
+{ }
+{\Gamma \vdash A <: \square \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
 {\Gamma \vdash C <: A \rightsquigarrow A' \\

@@ -212,7 +212,9 @@ T1 |- A <: H | S
 T |- Int <: Int | S                           ---> T | S, Int
 T |- ^a <: A  | S                             ---> [^a = A] T | S, A        when FV_ex(A) = .
 T |- A <: ^a  | S                             ---> [^a = A] T | S, A        when FV_ex(A) = .
+
 T |- A <: Top | S                           ---> T | S, A                      when FV_ex(A) = .
+
 T |- A -> B <: C -> D | S              ---> T |> B <: D |- C <: A | S
 T |> | S, A', B'                                ---> T | S, A' -> B' 
 T |- A -> B <: [e] -> H | S             ---> T |- B <: H | S, A                  when T |- A => e => C /\ FV_ex(A) = . 
