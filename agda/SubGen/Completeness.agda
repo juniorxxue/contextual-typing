@@ -6,274 +6,89 @@ open import SubGen.Decl
 open import SubGen.Algo
 open import SubGen.Algo.Properties
 
-----------------------------------------------------------------------
---+                                                                +--
---+                            Chaining                            +--
---+                                                                +--
-----------------------------------------------------------------------
+infix 4 _⊩a_⇛_
 
-data chain : List Term → Hint → Hint → Set where
-  ch-none : ∀ {H}
-    → chain [] H H
+data _⊩a_⇛_ : Context → List Term → List Type → Set where
 
-  ch-cons : ∀ {H e es H'}
-    → chain es H H'
-    → chain (e ∷ es) H (⟦ e ⟧⇒ H')
+  ⊩a-none : ∀ {Γ}
+    → Γ ⊩a [] ⇛ []
+
+  ⊩a-cons : ∀ {Γ es As e A}
+    → Γ ⊩a es ⇛ As
+    → Γ ⊢a □ ⇛ e ⇛ A
+    → Γ ⊩a (e ∷ es) ⇛ (A ∷ As)
+
+⊩a-weaken : ∀ {Γ es As A}
+  → Γ ⊩a es ⇛ As
+  → Γ , A ⊩a (map (_↑ 0) es) ⇛ As
+⊩a-weaken ⊩a-none = ⊩a-none
+⊩a-weaken (⊩a-cons ⊩es ⊢e) = ⊩a-cons (⊩a-weaken ⊩es) (⊢a-weaken-0-0 ⊢e)
+  where
+    ⊢a-weaken-0-0 : ∀ {Γ e A B}
+      → Γ ⊢a □ ⇛ e ⇛ A
+      → Γ , B ⊢a □ ⇛ e ↑ 0 ⇛ A
+    ⊢a-weaken-0-0 ⊢e = ⊢a-weaken {n≤l = z≤n} ⊢e
 
 infix 4 _⇴_≗_
 
-data _⇴_≗_ : List Type → Type → Type → Set where
-  cht-none : ∀ {T}
-    → [] ⇴ T ≗ T
+data _⇴_≗_ : List Term → Hint → Hint → Set where
 
-  cht-cons : ∀ {A As T T'}
-    → As ⇴ T ≗ T'
-    → (A ∷ As) ⇴ T ≗ (A ⇒ T')
-    
-----------------------------------------------------------------------
---+                                                                +--
---+                           Subtyping                            +--
---+                                                                +--
-----------------------------------------------------------------------
+  cht-none-□ :
+      [] ⇴ □ ≗ □
 
-≤d-to-≤a : ∀ {Γ A B ∞/n}
-  → B ≤d ∞/n # A
-  → Γ ⊢a B ≤ τ A
-≤d-to-≤a ≤d-int = ≤a-int
-≤d-to-≤a ≤d-base = ≤a-base
-≤d-to-≤a ≤d-top = ≤a-top
-≤d-to-≤a (≤d-arr ≤d ≤d₁) = ≤a-arr (≤d-to-≤a ≤d) (≤d-to-≤a ≤d₁)
+  cht-none-τ : ∀ {A}
+    → [] ⇴ τ A ≗ (τ A)
 
-ch-weaken : ∀ {es H' H n}
-  → chain es H' H
-  → chain (map (_↑ n) es) (H' ⇧ n) (H ⇧ n)
-ch-weaken ch-none = ch-none
-ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
-    
-≤a-strengthen-τ : ∀ {Γ A B C}
-  → Γ , A ⊢a B ≤ τ C
-  → Γ ⊢a B ≤ τ C
-≤a-strengthen-τ ≤a-int = ≤a-int
-≤a-strengthen-τ ≤a-base = ≤a-base
-≤a-strengthen-τ ≤a-top = ≤a-top
-≤a-strengthen-τ (≤a-arr C≤A B≤D) = ≤a-arr (≤a-strengthen-τ C≤A) (≤a-strengthen-τ B≤D)
+  cht-cons : ∀ {e es H H'}
+    → es ⇴ H ≗ H'
+    → (e ∷ es) ⇴ H ≗ ⟦ e ⟧⇒ H'
 
-----------------------------------------------------------------------
---+                                                                +--
---+                          Subsumption                           +--
---+                                                                +--
-----------------------------------------------------------------------
 
-⊢a-to-≤a : ∀ {Γ e H A}
+≗-shift : ∀ {es H H'}
+  → es ⇴ H ≗ H'
+  → map (_↑ 0) es ⇴ H ⇧ 0 ≗ H' ⇧ 0
+≗-shift cht-none-□ = cht-none-□
+≗-shift cht-none-τ = cht-none-τ
+≗-shift (cht-cons newH) = cht-cons (≗-shift newH)
+
+infix 4 _↪_❪_,_,_❫
+
+data _↪_❪_,_,_❫ : Type → Counter → List Type → Type → Counter → Set where
+
+  n-z : ∀ {A}
+    → A ↪ Z ❪ [] , A , Z ❫
+
+  n-∞ : ∀ {A}
+    → A ↪ ∞ ❪ [] , A , ∞ ❫
+
+  n-s : ∀ {A B T j Bs j'}
+    → B ↪ j ❪ Bs , T , j' ❫
+    → (A ⇒ B) ↪ (S j) ❪ A ∷ Bs , T , j' ❫
+
+complete-chk : ∀ {Γ e A j es As T H}
+  → Γ ⊢d j # e ⦂ A
+  → A ↪ j ❪ As , T , ∞ ❫
+  → Γ ⊩a es ⇛ As
+  → es ⇴ τ T ≗ H
   → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a A ≤ H
 
-subsumption : ∀ {Γ H e A H' H'' es As A'}
+complete-inf : ∀ {Γ e A j es As T H}
+  → Γ ⊢d j # e ⦂ A
+  → A ↪ j ❪ As , T , Z ❫
+  → Γ ⊩a es ⇛ As
+  → es ⇴ □ ≗ H
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
-  → chain es H'' H'
-  → Γ ⊢a A ≤ H'
-  → Γ ⊢a H' ⇛ e ⇛ A
 
-⊢a-to-≤a ⊢a-lit = ≤a-top
-⊢a-to-≤a (⊢a-var x) = ≤a-top
-⊢a-to-≤a (⊢a-app ⊢a) with ⊢a-to-≤a ⊢a
-... | ≤a-hint x A≤H = A≤H
-⊢a-to-≤a (⊢a-ann ⊢e) = ≤a-top
-⊢a-to-≤a (⊢a-lam₁ ⊢a) = ≤a-arr ≤a-refl-τ (≤a-strengthen-τ (⊢a-to-≤a ⊢a))
-⊢a-to-≤a (⊢a-lam₂ ⊢a ⊢a₁) = ≤a-hint (rebase ⊢a ≤a-refl-τ) (≤a-strengthen-0 (⊢a-to-≤a ⊢a₁))
-  where
-    rebase : ∀ {Γ e A B}
-      → Γ ⊢a τ Top ⇛ e ⇛ B
-      → Γ ⊢a B ≤ τ A
-      → Γ ⊢a τ A ⇛ e ⇛ B
-    rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
-⊢a-to-≤a (⊢a-sub pv ⊢e A≤H) = A≤H
+complete-chk (⊢d-lam₁ ⊢e) Aj ⊢es newH = {!!}
+complete-chk (⊢d-lam₂ ⊢e) Aj ⊢es newH = {!!}
+complete-chk (⊢d-app₂ ⊢e ⊢e₁) Aj ⊢es newH = {!!}
+complete-chk (⊢d-sub ⊢e x x₁) Aj ⊢es newH = {!!}
+complete-chk (⊢d-and-& ⊢e ⊢e₁) Aj ⊢es newH = {!!}
 
-subsumption ⊢a-lit spl ch sub = ⊢a-sub pv-i ⊢a-lit sub
-subsumption (⊢a-var x) spl ch sub = ⊢a-sub pv-var (⊢a-var x) sub
-subsumption (⊢a-app ⊢e) spl ch sub with ⊢a-to-≤a ⊢e
-... | ≤a-hint ⊢e₂ res = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≤a-hint ⊢e₂ sub))
-subsumption (⊢a-ann ⊢e) spl ch sub = ⊢a-sub pv-ann (⊢a-ann ⊢e) sub
-subsumption (⊢a-lam₂ ⊢e ⊢f) (have spl) (ch-cons ch) (≤a-hint x sub) = ⊢a-lam₂ ⊢e (subsumption ⊢f (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} sub))
-subsumption (⊢a-sub pv ⊢e A≤H) spl ch sub = ⊢a-sub pv ⊢e sub
-
-rebase-≤ : ∀ {Γ A A' As H H' e es T₁ T₂}
-  → Γ ⊢a A ≤ H
-  → ❪ H , A ❫↣❪ es , T₁ ⇒ T₂ , As , A' ❫
-  → chain es (⟦ e ⟧⇒ τ T₂) H'
-  → Γ ⊢a τ Top ⇛ e ⇛ T₁
-  → Γ ⊢a A ≤ H'
-rebase-≤ (≤a-arr A≤H A≤H₁) none ch-none ⊢e = ≤a-hint (rebase ⊢e A≤H) A≤H₁
-    where
-       rebase : ∀ {Γ e A B}
-         → Γ ⊢a τ Top ⇛ e ⇛ B
-         → Γ ⊢a B ≤ τ A
-         → Γ ⊢a τ A ⇛ e ⇛ B
-       rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
-      
-rebase-≤ (≤a-hint x A≤H) (have spl) (ch-cons ch) ⊢e = ≤a-hint x (rebase-≤ A≤H spl ch ⊢e)
-
-rebase-gen : ∀ {Γ e₁ e₂ H A es T₁ T₂ As A' H'}
-  → Γ ⊢a H ⇛ e₁ ⇛ A
-  → ❪ H , A ❫↣❪ es , T₁ ⇒ T₂ , As , A' ❫
-  → Γ ⊢a τ Top ⇛ e₂ ⇛ T₁
-  → chain es (⟦ e₂ ⟧⇒ (τ T₂)) H'
-  → Γ ⊢a H' ⇛ e₁ ⇛ A
-
-rebase-gen (⊢a-app ⊢f) spl ⊢e ch = ⊢a-app (rebase-gen ⊢f (have spl) ⊢e (ch-cons ch))
-rebase-gen (⊢a-lam₁ ⊢f) none ⊢e ch-none = ⊢a-lam₂ ⊢e ⊢f
-rebase-gen (⊢a-lam₂ ⊢f ⊢a) (have spl) ⊢e (ch-cons ch) = ⊢a-lam₂ ⊢f (rebase-gen ⊢a (spl-weaken spl) (⊢a-weaken {n≤l = z≤n} ⊢e) (ch-weaken ch))
-rebase-gen (⊢a-sub pv ⊢f A≤H) spl ⊢e ch = ⊢a-sub pv ⊢f (rebase-≤ A≤H spl ch ⊢e)
-
-rebase-gen-1 : ∀ {Γ e₁ e₂ A B C D}
-  → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
-  → Γ ⊢a τ Top ⇛ e₂ ⇛ A
-  → Γ ⊢a ⟦ e₂ ⟧⇒ τ B ⇛ e₁ ⇛ C ⇒ D
-rebase-gen-1 ⊢f ⊢e = rebase-gen ⊢f none ⊢e ch-none
-
-
-----------------------------------------------------------------------
---+                                                                +--
---+                          Completeness                          +--
---+                                                                +--
-----------------------------------------------------------------------
-
-infix 4 _↪_❪_,_❫
-
-data _↪_❪_,_❫ : Type → ℕ → List Type → Type → Set where
-
-  n-none : ∀ {A}
-    → A ↪ 0 ❪ [] , A ❫
-
-  n-cons : ∀ {A B T n Bs}
-    → B ↪ n ❪ Bs , T ❫
-    → (A ⇒ B) ↪ (suc n) ❪ A ∷ Bs , T ❫
-
-
-  
-complete-chk : ∀ {Γ e A}
-  → Γ ⊢d ∞ # e ⦂ A
-  → ∃[ B ] (Γ ⊢a τ A ⇛ e ⇛ B)
-
-complete-inf : ∀ {Γ e A n As T J}
-  → Γ ⊢d c n # e ⦂ A
-  → A ↪ n ❪ As , T ❫
-  → As ⇴ Top ≗ J
-  → Γ ⊢a τ J ⇛ e ⇛ A
-
-
-complete-chk (⊢d-lam₁ {A = A} ⊢d) with complete-chk ⊢d
-... | ⟨ C , ⊢e ⟩ = ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
-
-complete-chk (⊢d-app₃ ⊢f ⊢e) with complete-chk ⊢f
-... | ⟨ Int , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
-  where
-    inv-absurd : ∀ {Γ e A B}
-      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ Int → ⊥
-    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
-    ... | ()
-
-... | ⟨ * n , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
-  where
-    inv-absurd : ∀ {Γ e A B}
-      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ * n → ⊥
-    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
-    ... | ()
-
-... | ⟨ Top , ind-f ⟩ = ⊥-elim (inv-absurd ind-f)
-  where
-    inv-absurd : ∀ {Γ e A B}
-      → Γ ⊢a τ (A ⇒ B) ⇛ e ⇛ Top → ⊥
-    inv-absurd ⊢e with ⊢a-to-≤a ⊢e
-    ... | ()
-    
-... | ⟨ C ⇒ D , ind-f ⟩ = ⟨ D , ⊢a-app (rebase ind-f ind-e) ⟩
-  where
-    ind-e = complete-inf ⊢e n-none cht-none
-    rebase : ∀ {Γ e₁ e₂ A B C D}
-      → Γ ⊢a τ (A ⇒ B) ⇛ e₁ ⇛ C ⇒ D
-      → Γ ⊢a τ Top ⇛ e₂ ⇛ A
-      → Γ ⊢a ⟦ e₂ ⟧⇒ τ B ⇛ e₁ ⇛ C ⇒ D
-    rebase ⊢f ⊢e = rebase-gen-1 ⊢f ⊢e
-
-complete-chk (⊢d-sub {B = B} ⊢e B≤A) = ⟨ B , rebase ind-e (≤d-to-≤a B≤A) ⟩
-  where
-    ind-e = complete-inf ⊢e n-none cht-none
-    rebase : ∀ {Γ e A B}
-      → Γ ⊢a τ Top ⇛ e ⇛ B
-      → Γ ⊢a B ≤ τ A
-      → Γ ⊢a τ A ⇛ e ⇛ B
-    rebase ⊢e B≤A = subsumption ⊢e none ch-none B≤A
-
-complete-inf ⊢d-int n-none cht-none = ⊢a-lit
-complete-inf (⊢d-var x∈Γ) n-none cht-none = ⊢a-var x∈Γ
-complete-inf (⊢d-lam₂ ⊢e) (n-cons spl) (cht-cons AJ) = ⊢a-lam₁ (complete-inf ⊢e spl AJ)
-complete-inf (⊢d-app₁ ⊢f ⊢e) n-none cht-none = ⊢a-app (rebase ind-f (proj₂ (complete-chk ⊢e)))
-  where
-    ind-f = complete-inf ⊢f n-none cht-none
-    rebase : ∀ {Γ e₁ e₂ A B C}
-      → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
-      → Γ ⊢a τ A ⇛ e₂ ⇛ C
-      → Γ ⊢a ⟦ e₂ ⟧⇒ τ Top ⇛ e₁ ⇛ A ⇒ B
-    rebase ⊢f ⊢e = subsumption ⊢f none ch-none (≤a-hint ⊢e ≤a-top)
-
-complete-inf (⊢d-app₂ ⊢f ⊢e) spl JA = ⊢a-app (rebase ind-f (complete-inf ⊢e n-none cht-none))
-  where
-    ind-f = complete-inf ⊢f (n-cons spl) (cht-cons JA)
-    rebase : ∀ {Γ e₁ e₂ A B J}
-      → Γ ⊢a τ (A ⇒ J) ⇛ e₁ ⇛ A ⇒ B
-      → Γ ⊢a τ Top ⇛ e₂ ⇛ A
-      → Γ ⊢a ⟦ e₂ ⟧⇒ τ J ⇛ e₁ ⇛ A ⇒ B
-    rebase ⊢f ⊢e = rebase-gen-1 ⊢f ⊢e
-complete-inf (⊢d-ann ⊢e) n-none cht-none = ⊢a-ann (proj₂ (complete-chk ⊢e))
-complete-inf (⊢d-sub ⊢e B≤A) spl JA = {!!} -- not directly correspond to the subsumption in algo
-  where
-    rebase : ∀ {Γ e A B}
-      → Γ ⊢a τ Top ⇛ e ⇛ B
-      → Γ ⊢a B ≤ τ A
-      → Γ ⊢a τ A ⇛ e ⇛ B
-    rebase ⊢f B≤A = subsumption ⊢f none ch-none B≤A
-
-{-
-
-complete-inf ⊢d-int n-none cht-none = ⊢a-lit ≤a-top
-complete-inf (⊢d-var x∈Γ) spl JA = ⊢a-var x∈Γ (≤d-to-≤a (≤d-n-spl spl JA))
-  where
-    ≤d-n-spl : ∀ {A As J T n ∞/n}
-      → A ↪ n ❪ As , T ❫
-      → As ⇴ Top ≗ J
-      → A ≤d ∞/n # J
-    ≤d-n-spl n-none cht-none = ≤d-top
-    ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
-      
- 
-complete-inf (⊢d-lam₂ ⊢e) (n-cons spl) (cht-cons AJ) = ⊢a-lam₁ (complete-inf ⊢e spl AJ)
-
-complete-inf (⊢d-app₁ ⊢f ⊢e) n-none cht-none = ⊢a-app (rebase ind-f (proj₂ (complete-chk ⊢e)))
-  where
-    ind-f = complete-inf ⊢f n-none cht-none
-    rebase : ∀ {Γ e₁ e₂ A B C}
-      → Γ ⊢a τ Top ⇛ e₁ ⇛ A ⇒ B
-      → Γ ⊢a τ A ⇛ e₂ ⇛ C
-      → Γ ⊢a ⟦ e₂ ⟧⇒ τ Top ⇛ e₁ ⇛ A ⇒ B
-    rebase ⊢f ⊢e = subsumption ⊢f none ch-none (≤a-hint ⊢e ≤a-top)
-
-complete-inf (⊢d-app₂ ⊢f ⊢e) spl JA = ⊢a-app (rebase ind-f (complete-inf ⊢e n-none cht-none))
-  where
-    ind-f = complete-inf ⊢f (n-cons spl) (cht-cons JA)
-    rebase : ∀ {Γ e₁ e₂ A B J}
-      → Γ ⊢a τ (A ⇒ J) ⇛ e₁ ⇛ A ⇒ B
-      → Γ ⊢a τ Top ⇛ e₂ ⇛ A
-      → Γ ⊢a ⟦ e₂ ⟧⇒ τ J ⇛ e₁ ⇛ A ⇒ B
-    rebase ⊢f ⊢e = rebase-gen-1 ⊢f ⊢e
-
-complete-inf (⊢d-ann ⊢e) spl JA = ⊢a-ann (proj₂ (complete-chk ⊢e)) (≤d-to-≤a (≤d-n-spl spl JA))
-  where
-    ≤d-n-spl : ∀ {A As J T n ∞/n}
-      → A ↪ n ❪ As , T ❫
-      → As ⇴ Top ≗ J
-      → A ≤d ∞/n # J
-    ≤d-n-spl n-none cht-none = ≤d-top
-    ≤d-n-spl (n-cons nspl) (cht-cons newJ) = ≤d-arr ≤d-refl (≤d-n-spl nspl newJ)
--}
+complete-inf ⊢d-int n-z ⊩a-none cht-none-□ = ⊢a-lit
+complete-inf (⊢d-var x) n-z ⊩a-none cht-none-□ = ⊢a-var x
+complete-inf (⊢d-ann ⊢e) n-z ⊩a-none cht-none-□ = ⊢a-ann (complete-chk ⊢e n-∞ ⊩a-none cht-none-τ)
+complete-inf (⊢d-lam₂ ⊢e) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ⊢a-lam₂ x (complete-inf ⊢e Aj (⊩a-weaken ⊢es) (≗-shift newH))
+complete-inf (⊢d-app₁ ⊢e ⊢e₁) Aj ⊢es newH = {!!}
+complete-inf (⊢d-app₂ ⊢e ⊢e₁) Aj ⊢es newH = {!!}
+complete-inf (⊢d-sub ⊢e x x₁) Aj ⊢es newH = {!!}

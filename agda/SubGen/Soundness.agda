@@ -10,26 +10,25 @@ open import SubGen.Algo.Properties
 
 -- j represents the length of H
 len : Hint → Counter
-len (τ Int) = ∞
-len (τ (* n)) = ∞
-len (τ Top) = c 0
-len (τ (x ⇒ x₁)) = ∞
-len (τ (x & x₁)) = ∞
-len (⟦ x ⟧⇒ H) = succ (len H)
+len □ = Z
+len (τ A) = ∞
+len (⟦ e ⟧⇒ H) = S (len H)
+
 
 sound-≤ : ∀ {Γ A H A'}
   → Γ ⊢a A ≤ H ⇝ A'
   → A ≤d (len H) # A'
+
 sound-≤ ≤a-int = ≤d-int∞
 sound-≤ ≤a-base = ≤d-base∞
-sound-≤ ≤a-top = ≤d-refl wf-0
-sound-≤ (≤a-arr {A = A} {D = D} C≤A B≤D) with A | D
-... | Top | Top = ≤d-arr∞ ≤d-top {!!}
-
-sound-≤ (≤a-hint ⊢e A≤H) = {!!}
+sound-≤ ≤a-top = ≤d-refl∞
+sound-≤ ≤a-□ = ≤d-Z
+-- think over it later
+sound-≤ (≤a-arr A≤H A≤H₁) = ≤d-arr-∞ {!(≤a-refine-prv₂ A≤H)!} (sound-≤ A≤H₁)
+sound-≤ {Γ = Γ} (≤a-hint x A≤H) = ≤d-arr-S (sound-≤ {Γ = Γ} ≤a-top) (sound-≤ A≤H)
 sound-≤ (≤a-and-l A≤H) = ≤d-and₁ (sound-≤ A≤H)
 sound-≤ (≤a-and-r A≤H) = ≤d-and₂ (sound-≤ A≤H)
-sound-≤ (≤a-and A≤C A≤B) = ≤d-and {!!} {!!}
+sound-≤ (≤a-and A≤H A≤H₁) = ≤d-and (sound-≤ A≤H) (sound-≤ A≤H₁)
 
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
@@ -42,10 +41,10 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
     → Γ ⊩ (e ∷ es) ⇚ (A ∷ As)
 
 ⊩-elim : ∀ {Γ e H A es T As A'}
-  → Γ ⊢d c 0 # e ⦂ A
+  → Γ ⊢d Z # e ⦂ A
   → Γ ⊩ es ⇚ As
   → ❪ H , A ❫↣❪ es , T , As , A' ❫ 
-  → Γ ⊢d c 0 # e ▻ es ⦂ A'
+  → Γ ⊢d Z # e ▻ es ⦂ A'
 ⊩-elim ⊢d ⊩empty⇚ none = ⊢d
 ⊩-elim ⊢d (⊩cons⇚ ⊩es ⊢e) (have spl) = ⊩-elim (⊢d-app₁ ⊢d ⊢e) ⊩es spl
 
@@ -56,7 +55,7 @@ data _⊩_⇛_ : Context → List Term → List Type → Set where
 
   ⊩cons⇛ : ∀ {Γ es As e A}
     → Γ ⊩ es ⇛ As
-    → Γ ⊢d c 0 # e ⦂ A
+    → Γ ⊢d Z # e ⦂ A
     → Γ ⊩ (e ∷ es) ⇛ (A ∷ As)
 
 postulate

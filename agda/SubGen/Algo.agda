@@ -6,16 +6,19 @@ open import SubGen.Common
 infixr 8 ⟦_⟧⇒_
 
 data Hint : Set where
+  □ : Hint
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
 
 infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
+□ ⇧ n = □
 τ A ⇧ n = τ A
 (⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)
 
 infixl 7 _⇩_
 _⇩_ : Hint → ℕ → Hint
+□ ⇩ n = □
 τ A ⇩ n = τ A
 (⟦ e ⟧⇒ H) ⇩ n = ⟦ e ↓ n ⟧⇒ (H ⇩ n)
 
@@ -56,7 +59,9 @@ data _⊢a_≤_⇝_ where
   ≤a-base : ∀ {Γ n}
     → Γ ⊢a * n ≤ τ (* n) ⇝ (* n)
   ≤a-top : ∀ {Γ A}
-    → Γ ⊢a A ≤ τ Top ⇝ A
+    → Γ ⊢a A ≤ τ Top ⇝ Top
+  ≤a-□ : ∀ {Γ A}
+    → Γ ⊢a A ≤ □ ⇝ A
   ≤a-arr : ∀ {Γ A A' B C D D'}
     → Γ ⊢a C ≤ τ A ⇝ A'
     → Γ ⊢a B ≤ τ D ⇝ D'
@@ -82,22 +87,22 @@ data _⊢a_⇛_⇛_ where
 
   ⊢a-lit : ∀ {Γ n}
     -----------------------
-    → Γ ⊢a τ Top ⇛ lit n ⇛ Int
+    → Γ ⊢a □ ⇛ lit n ⇛ Int
 
   ⊢a-var : ∀ {Γ A x}
     → Γ ∋ x ⦂ A
     -------------------
-    → Γ ⊢a τ Top ⇛ ` x ⇛ A
-
+    → Γ ⊢a □ ⇛ ` x ⇛ A
+    
+  ⊢a-ann : ∀ {Γ e A B}
+    → Γ ⊢a τ A ⇛ e ⇛ B
+    ---------------------
+    → Γ ⊢a □ ⇛ e ⦂ A ⇛ A
+    
   ⊢a-app : ∀ {Γ e₁ e₂ H A B}
     → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
     ----------------------------------
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
-
-  ⊢a-ann : ∀ {Γ e A B}
-    → Γ ⊢a τ A ⇛ e ⇛ B
-    ---------------------
-    → Γ ⊢a τ Top ⇛ e ⦂ A ⇛ A
 
   ⊢a-lam₁ : ∀ {Γ e A B C}
     → Γ , A ⊢a τ B ⇛ e ⇛ C
@@ -105,22 +110,23 @@ data _⊢a_⇛_⇛_ where
     → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ C
 
   ⊢a-lam₂ : ∀ {Γ e₁ e A B H}
-    → Γ ⊢a τ Top ⇛ e₁ ⇛ A
+    → Γ ⊢a □ ⇛ e₁ ⇛ A
     → Γ , A ⊢a (H ⇧ 0) ⇛ e ⇛ B
       -------------------------------------
     → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ e ⇛ A ⇒ B
 
-  ⊢a-lam₃ : ∀ {Γ e A B C D}
-    → Γ ⊢a τ A ⇛ ƛ e ⇛ C
-    → Γ ⊢a τ B ⇛ ƛ e ⇛ D
-    → Γ ⊢a τ (A & B) ⇛ ƛ e ⇛ C & D
-
   ⊢a-sub : ∀ {Γ H p A B}
     → pv p
-    → Γ ⊢a τ Top ⇛ p ⇛ A
-    → Γ ⊢a A ≤ H ⇝ B
---    → H ≢ τ Top
+    → Γ ⊢a □ ⇛ p ⇛ A
+    → Γ ⊢a A ≤ H ⇝ B -- to forbid H to be □, we can try to achive this via restricting subtyping behavior
     → Γ ⊢a H ⇛ p ⇛ B
+
+  ⊢a-& : ∀ {Γ A A' B B' e}
+    → Γ ⊢a τ A ⇛ e ⇛ A'
+    → Γ ⊢a τ B ⇛ e ⇛ B'
+    → Γ ⊢a τ (A & B) ⇛ e ⇛ (A' & B')
+
+
 
 ----------------------------------------------------------------------
 --                                                                  --
@@ -148,9 +154,13 @@ e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
 infix 4 ❪_,_❫↣❪_,_,_,_❫
 
-data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Type → List Type → Type → Set where
-  none : ∀ {A B}
-    → ❪ τ A , B ❫↣❪ [] , A , [] , B ❫
+data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List Type → Type → Set where
+
+  none-□ : ∀ {A}
+    → ❪ □ , A ❫↣❪ [] , □ , [] , A ❫
+
+  none-τ : ∀ {A B}
+    → ❪ τ A , B ❫↣❪ [] , τ A , [] , B ❫
 
   have : ∀ {e H A B es A' B' Bs}
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
