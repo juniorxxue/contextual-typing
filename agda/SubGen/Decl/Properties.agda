@@ -143,7 +143,7 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) ≤d-top = ≤d-top
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-arr-∞ ≤2 ≤4) = ≤d-arr-∞ (≤d-trans ≤2 ≤1) (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤2) (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤4)
-≤d-trans {B = B ⇒ B₁} (≤d-arr-S ≤1 ≤3) (≤d-arr-S ≤2 ≤4) = ≤d-arr-S (≤d-trans ≤2 ≤1) (≤d-trans ≤3 ≤4)
+≤d-trans {B = B ⇒ B₁} (≤d-arr-S ≤1 ≤3) (≤d-arr-S ≤2 ≤4) = ≤d-arr-S ≤2 (≤d-trans ≤3 ≤4)
 
 ≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
 ≤d-trans {B = B ⇒ B₁} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
