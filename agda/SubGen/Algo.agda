@@ -62,13 +62,13 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a A ≤ τ Top ⇝ Top
   ≤a-□ : ∀ {Γ A}
     → Γ ⊢a A ≤ □ ⇝ A
-  ≤a-arr : ∀ {Γ A A' B C D D'}
-    → Γ ⊢a C ≤ τ A ⇝ A'
-    → Γ ⊢a B ≤ τ D ⇝ D'
+  ≤a-arr : ∀ {Γ A B C D}
+    → Γ ⊢a C ≤ τ A ⇝ A
+    → Γ ⊢a B ≤ τ D ⇝ D
     ---------------------------
-    → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (A' ⇒ D')
-  ≤a-hint : ∀ {Γ A B C H e D}
-    → Γ ⊢a τ A ⇛ e ⇛ C
+    → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (C ⇒ D)
+  ≤a-hint : ∀ {Γ A B H e D}
+    → Γ ⊢a τ A ⇛ e ⇛ A
     → Γ ⊢a B ≤ H ⇝ D
     ------------------------
     → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H ⇝ (A ⇒ D)
@@ -78,10 +78,10 @@ data _⊢a_≤_⇝_ where
   ≤a-and-r : ∀ {Γ A B H C}
     → Γ ⊢a B ≤ H ⇝ C
     → Γ ⊢a A & B ≤ H ⇝ C
-  ≤a-and : ∀ {Γ A B B' C C'}
-    → Γ ⊢a A ≤ τ B ⇝ B'
-    → Γ ⊢a A ≤ τ C ⇝ C'
-    → Γ ⊢a A ≤ τ (B & C) ⇝ (B' & C')
+  ≤a-and : ∀ {Γ A B C}
+    → Γ ⊢a A ≤ τ B ⇝ B
+    → Γ ⊢a A ≤ τ C ⇝ C
+    → Γ ⊢a A ≤ τ (B & C) ⇝ (B & C)
 
 data _⊢a_⇛_⇛_ where
 
@@ -206,3 +206,43 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List T
 ⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-ann ⊢2) = {!!} -- all absurds
 ⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-sub x₃ ⊢2 x₄ x₅) rewrite ⊢a-determinism ⊢1 ⊢2 = {!!}
 -}
+
+⊢a-id : ∀ {Γ H e A A' T es As}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → T ≡ A'
+
+≤a-id : ∀ {Γ H A B Bs B' es T}
+  → Γ ⊢a A ≤ H ⇝ B
+  → ❪ H , B ❫↣❪ es , τ T , Bs , B' ❫
+  → T ≡ B'
+≤a-id ≤a-int none-τ = refl
+≤a-id ≤a-base none-τ = refl
+≤a-id ≤a-top none-τ = refl
+≤a-id (≤a-arr A≤H A≤H₁) none-τ = refl
+≤a-id (≤a-hint x A≤H) (have spl) = ≤a-id A≤H spl
+≤a-id (≤a-and-l A≤H) spl = ≤a-id A≤H spl
+≤a-id (≤a-and-r A≤H) spl = ≤a-id A≤H spl
+≤a-id (≤a-and A≤H A≤H₁) none-τ = refl
+
+⊢a-id (⊢a-app ⊢e) spl = ⊢a-id ⊢e (have spl)
+⊢a-id (⊢a-lam₁ ⊢e) none-τ rewrite ⊢a-id ⊢e none-τ = refl
+⊢a-id (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = ⊢a-id ⊢e₁ (spl-⇧ spl)
+  where
+    spl-⇧ : ∀ {H B es T Bs A'}
+      → ❪ H , B ❫↣❪ es , τ T , Bs , A' ❫
+      → ❪ H ⇧ 0 , B ❫↣❪ map (_↑ 0) es , τ T , Bs , A' ❫
+    spl-⇧ none-τ = none-τ
+    spl-⇧ (have spl) = have (spl-⇧ spl)
+⊢a-id (⊢a-sub x ⊢e x₁) spl = ≤a-id x₁ spl
+⊢a-id (⊢a-& ⊢e ⊢e₁) none-τ rewrite ⊢a-id ⊢e none-τ | ⊢a-id ⊢e₁ none-τ = refl
+
+⊢a-id-0 : ∀ {Γ e A B}
+  → Γ ⊢a τ B ⇛ e ⇛ A
+  → A ≡ B
+⊢a-id-0 ⊢e = sym (⊢a-id ⊢e none-τ)
+
+≤a-id-0 : ∀ {Γ A B C}
+  → Γ ⊢a A ≤ τ B ⇝ C
+  → C ≡ B
+≤a-id-0 A≤B = sym (≤a-id A≤B none-τ)

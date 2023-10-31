@@ -40,7 +40,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-arr-S : ∀ {A B C D j}
     → C ≤d ∞ # A
     → B ≤d j # D
-    → A ⇒ B ≤d S j # C ⇒ D    
+    → A ⇒ B ≤d S j # A ⇒ D    
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → A & B ≤d j # C

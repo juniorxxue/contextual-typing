@@ -151,6 +151,7 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
 ⊢a-weaken (⊢a-sub pv ⊢e B≤H) = ⊢a-sub (↑-pv-prv pv) (⊢a-weaken ⊢e) (≤a-weaken B≤H)
+⊢a-weaken (⊢a-& ⊢e₁ ⊢e₂) = ⊢a-& (⊢a-weaken ⊢e₁) (⊢a-weaken ⊢e₂)
 
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -197,6 +198,7 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
 ... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
 ⊢a-strengthen (⊢a-sub pv ⊢e A≤H) sd sdh n≤l = ⊢a-sub (↓-pv-prv pv) (⊢a-strengthen ⊢e sd sdh-□ n≤l) (≤a-strengthen A≤H sdh n≤l)
+⊢a-strengthen (⊢a-& ⊢e₁ ⊢e₂) sd sdh n≤l = ⊢a-& (⊢a-strengthen ⊢e₁ sd sdh-τ n≤l) (⊢a-strengthen ⊢e₂ sd sdh-τ n≤l)
 
 ≤a-strengthen-0 : ∀ {Γ A B C H}
   → Γ , A ⊢a B ≤ H ⇧ 0 ⇝ C
@@ -210,83 +212,6 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
 
--- meta judgment
-
-data _⊢m_≤_ : Context → Type → Hint → Set where
-  ≤m-int : ∀ {Γ}
-    → Γ ⊢m Int ≤ τ Int
-  ≤m-base : ∀ {Γ n}
-    → Γ ⊢m * n ≤ τ (* n)
-  ≤m-top : ∀ {Γ A}
-    → Γ ⊢m A ≤ τ Top
-  ≤m-□ : ∀ {Γ A}
-    → Γ ⊢m A ≤ □
-  ≤m-arr : ∀ {Γ A B C D}
-    → Γ ⊢m C ≤ τ A
-    → Γ ⊢m B ≤ τ D
-    → Γ ⊢m (A ⇒ B) ≤ τ (C ⇒ D)
-  ≤m-hint : ∀ {Γ A B C H e}
-    → Γ ⊢a τ A ⇛ e ⇛ C
-    → Γ ⊢m B ≤ H
-    ------------------------
-    → Γ ⊢m A ⇒ B ≤ (⟦ e ⟧⇒ H)
-  ≤m-and-l : ∀ {Γ A B H}
-    → Γ ⊢m A ≤ H
-    → Γ ⊢m A & B ≤ H
-  ≤m-and-r : ∀ {Γ A B H}
-    → Γ ⊢m B ≤ H
-    → Γ ⊢m A & B ≤ H
-  ≤m-and : ∀ {Γ A B C}
-    → Γ ⊢m A ≤ τ B
-    → Γ ⊢m A ≤ τ C
-    → Γ ⊢m A ≤ τ (B & C)
-
-≤m-refl : ∀ {Γ A} → Γ ⊢m A ≤ τ A
-≤m-refl {A = Int} = ≤m-int
-≤m-refl {A = * x} = ≤m-base
-≤m-refl {A = Top} = ≤m-top
-≤m-refl {A = A ⇒ A₁} = ≤m-arr ≤m-refl ≤m-refl
-≤m-refl {A = A & A₁} = ≤m-and (≤m-and-l ≤m-refl) (≤m-and-r ≤m-refl)
-
-≤a-to-≤m : ∀ {Γ A H A'}
-  → Γ ⊢a A ≤ H ⇝ A'
-  → Γ ⊢m A ≤ H
-≤a-to-≤m ≤a-int = ≤m-int
-≤a-to-≤m ≤a-base = ≤m-base
-≤a-to-≤m ≤a-top = ≤m-top
-≤a-to-≤m ≤a-□ = ≤m-□
-≤a-to-≤m (≤a-arr A≤H A≤H₁) = ≤m-arr (≤a-to-≤m A≤H) (≤a-to-≤m A≤H₁)
-≤a-to-≤m (≤a-hint x A≤H) = ≤m-hint x (≤a-to-≤m A≤H)
-≤a-to-≤m (≤a-and-l A≤H) = ≤m-and-l (≤a-to-≤m A≤H)
-≤a-to-≤m (≤a-and-r A≤H) = ≤m-and-r (≤a-to-≤m A≤H)
-≤a-to-≤m (≤a-and A≤H A≤H₁) = ≤m-and (≤a-to-≤m A≤H) (≤a-to-≤m A≤H₁)
-
-≤a-refine-prv₁ : ∀ {Γ A A' H}
-  → Γ ⊢a A ≤ H ⇝ A'
-  → Γ ⊢m A ≤ τ A'
-
-≤a-refine-prv₂ : ∀ {Γ A A' H}
-  → Γ ⊢a A ≤ H ⇝ A'
-  → Γ ⊢m A' ≤ H
-≤a-refine-prv₁ ≤a-int = ≤m-int
-≤a-refine-prv₁ ≤a-base = ≤m-base
-≤a-refine-prv₁ ≤a-top = ≤m-top
-≤a-refine-prv₁ ≤a-□ = ≤m-refl
-≤a-refine-prv₁ (≤a-arr C≤A B≤D) = ≤m-arr (≤a-refine-prv₂ C≤A) (≤a-refine-prv₁ B≤D)
-≤a-refine-prv₁ (≤a-hint ⊢e B≤H) = ≤m-arr ≤m-refl (≤a-refine-prv₁ B≤H)
-≤a-refine-prv₁ (≤a-and-l A≤H) = ≤m-and-l (≤a-refine-prv₁ A≤H)
-≤a-refine-prv₁ (≤a-and-r A≤H) = ≤m-and-r (≤a-refine-prv₁ A≤H)
-≤a-refine-prv₁ (≤a-and A≤B A≤C) = ≤m-and (≤a-refine-prv₁ A≤B) (≤a-refine-prv₁ A≤C)
-
-≤a-refine-prv₂ ≤a-int = ≤m-int
-≤a-refine-prv₂ ≤a-base = ≤m-base
-≤a-refine-prv₂ ≤a-top = ≤m-top
-≤a-refine-prv₂ ≤a-□ = ≤m-□
-≤a-refine-prv₂ (≤a-arr C≤A B≤D) = ≤m-arr (≤a-refine-prv₁ C≤A) (≤a-refine-prv₂ B≤D)
-≤a-refine-prv₂ (≤a-hint ⊢e B≤H) = ≤m-hint ⊢e (≤a-refine-prv₂ B≤H)
-≤a-refine-prv₂ (≤a-and-l A≤H) = ≤a-refine-prv₂ A≤H
-≤a-refine-prv₂ (≤a-and-r A≤H) = ≤a-refine-prv₂ A≤H
-≤a-refine-prv₂ (≤a-and A≤B A≤C) = ≤m-and (≤m-and-l (≤a-refine-prv₂ A≤B)) (≤m-and-r (≤a-refine-prv₂ A≤C))
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -340,11 +265,11 @@ subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = {!!}
 ≤a-refined ≤a-base = ≤a-base
 ≤a-refined ≤a-top = ≤a-top
 ≤a-refined ≤a-□ = ≤a-□
-≤a-refined (≤a-arr A≤H A≤H₁) = ≤a-arr {!≤a-refined A≤H!} {!!}
-≤a-refined (≤a-hint x A≤H) = {!!}
-≤a-refined (≤a-and-l A≤H) = {!!}
-≤a-refined (≤a-and-r A≤H) = {!!}
-≤a-refined (≤a-and A≤H A≤H₁) = {!!}
+≤a-refined (≤a-arr A≤H A≤H₁) = ≤a-arr ≤a-refl (≤a-refined A≤H₁)
+≤a-refined (≤a-hint x A≤H) = ≤a-hint x (≤a-refined A≤H)
+≤a-refined (≤a-and-l A≤H) = ≤a-refined A≤H
+≤a-refined (≤a-and-r A≤H) = ≤a-refined A≤H
+≤a-refined (≤a-and A≤H A≤H₁) = ≤a-and (≤a-and-l (≤a-refined A≤H)) (≤a-and-r (≤a-refined A≤H₁))
 
 ≤a-trans : ∀ {Γ A H H' H'' T es A' A'' As}
   → Γ ⊢a A ≤ H ⇝ A'
@@ -375,7 +300,7 @@ subsumption : ∀ {Γ H e A H' H'' es As T A'}
 ⊢a-to-≤a (⊢a-app ⊢e) with ⊢a-to-≤a ⊢e
 ... | ≤a-hint x r = r
 ⊢a-to-≤a (⊢a-lam₁ ⊢e) with ⊢a-to-≤a ⊢e
-... | r = ≤a-arr ≤a-refl (≤a-strengthen-0 r)
+... | r rewrite ⊢a-id-0 ⊢e = ≤a-refl
 ⊢a-to-≤a (⊢a-lam₂ ⊢e ⊢e₁) = ≤a-hint (rebase ⊢e ≤a-refl) (≤a-strengthen-0 (⊢a-to-≤a ⊢e₁))
   where
     rebase : ∀ {Γ e A B B'}
@@ -383,22 +308,17 @@ subsumption : ∀ {Γ H e A H' H'' es As T A'}
       → Γ ⊢a B ≤ τ A ⇝ B'
       → Γ ⊢a τ A ⇛ e ⇛ B'
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
-⊢a-to-≤a (⊢a-sub x ⊢e x₁) = {!!}
-⊢a-to-≤a (⊢a-& ⊢e₁ ⊢e₂) = ≤a-and (≤a-and-l (⊢a-to-≤a ⊢e₁)) (≤a-and-r (⊢a-to-≤a ⊢e₂))
+⊢a-to-≤a (⊢a-sub x ⊢e x₁) = ≤a-refined x₁
+⊢a-to-≤a (⊢a-& ⊢e₁ ⊢e₂) rewrite ⊢a-id-0 ⊢e₁ | ⊢a-id-0 ⊢e₂ = ≤a-refl
 
 subsumption ⊢a-lit none-□ ch A≤H' = ⊢a-sub pv-i ⊢a-lit A≤H'
 subsumption (⊢a-var x) spl ch A≤H' = ⊢a-sub pv-var (⊢a-var x) A≤H'
 subsumption (⊢a-ann ⊢e) spl ch A≤H' = ⊢a-sub pv-ann (⊢a-ann ⊢e) A≤H'
 subsumption (⊢a-app ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
 ... |  ≤a-hint ⊢e' A≤H = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≤a-hint ⊢e' A≤H'))
--- subsumption (⊢a-lam₂ ⊢e ⊢e₁) spl ch A≤H' = {!!}
--- subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = {!!}
 subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≤a-hint x A≈H') =
   ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} A≈H'))
 subsumption (⊢a-sub ⊢e x x₁) spl ch A≤H' = ⊢a-sub ⊢e x (≤a-trans x₁ spl ch A≤H')
-
-
-
 
 subsumption-0 : ∀ {Γ H e A A'}
   → Γ ⊢a □ ⇛ e ⇛ A
