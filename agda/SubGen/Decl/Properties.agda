@@ -22,7 +22,7 @@ open import SubGen.Properties
 ⊢d-weaken (⊢d-app₁ ⊢f ⊢e) n≤l = ⊢d-app₁ (⊢d-weaken ⊢f n≤l) (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-app₂ ⊢f ⊢e) n≤l = ⊢d-app₂ (⊢d-weaken ⊢f n≤l) (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-ann ⊢e) n≤l = ⊢d-ann (⊢d-weaken ⊢e n≤l)
-⊢d-weaken (⊢d-and-& ⊢e₁ ⊢e₂) n≤l = ⊢d-and-& (⊢d-weaken ⊢e₁ n≤l) (⊢d-weaken ⊢e₂ n≤l)
+⊢d-weaken (⊢d-& ⊢e₁ ⊢e₂) n≤l = ⊢d-& (⊢d-weaken ⊢e₁ n≤l) (⊢d-weaken ⊢e₂ n≤l)
 ⊢d-weaken (⊢d-sub ⊢e A≤B neq) n≤l = ⊢d-sub (⊢d-weaken ⊢e n≤l) A≤B neq
 
 ⊢d-weaken-0 : ∀ {Γ cc e A B}
@@ -48,7 +48,7 @@ open import SubGen.Properties
 ⊢d-strengthen (⊢d-app₁ ⊢f ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₁ (⊢d-strengthen ⊢f sd n≤l) (⊢d-strengthen ⊢e sd₁ n≤l)
 ⊢d-strengthen (⊢d-app₂ ⊢f ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app₂ (⊢d-strengthen ⊢f sd n≤l) (⊢d-strengthen ⊢e sd₁ n≤l)
 ⊢d-strengthen (⊢d-ann ⊢e) (sd-ann sd) n≤l = ⊢d-ann (⊢d-strengthen ⊢e sd n≤l)
-⊢d-strengthen (⊢d-and-& ⊢e₁ ⊢e₂) sd n≤l = ⊢d-and-& (⊢d-strengthen ⊢e₁ sd n≤l) (⊢d-strengthen ⊢e₂ sd n≤l)
+⊢d-strengthen (⊢d-& ⊢e₁ ⊢e₂) sd n≤l = ⊢d-& (⊢d-strengthen ⊢e₁ sd n≤l) (⊢d-strengthen ⊢e₂ sd n≤l)
 ⊢d-strengthen (⊢d-sub ⊢e A≤B neq) sd n≤l = ⊢d-sub (⊢d-strengthen ⊢e sd n≤l) A≤B neq
 
 ⊢d-strengthen-0 : ∀ {Γ cc e A B}
@@ -110,16 +110,21 @@ data wf-j : Type → Counter → Set where
   wf-0 : ∀ {A}
     → wf-j A Z
 
-  wf-suc : ∀ {A B j}
+  wf-S⇒ : ∀ {A B j}
     → wf-j B j
-    → wf-j (A ⇒ B) (S j)
+    → wf-j (A ⇒ B) (S⇒ j)
+
+  wf-S⇐ : ∀ {A B j}
+    → wf-j B j
+    → wf-j (A ⇒ B) (S⇐ j)
 
 ≤d-refl : ∀ {A j}
   → wf-j A j
   → A ≤d j # A
 ≤d-refl wf-∞ = ≤d-refl∞
 ≤d-refl wf-0 = ≤d-Z
-≤d-refl (wf-suc wfj) = ≤d-arr-S (≤d-refl wf-∞) (≤d-refl wfj)
+≤d-refl (wf-S⇒ wfj) = ≤d-arr-S⇒ (≤d-refl wf-∞) (≤d-refl wfj)
+≤d-refl (wf-S⇐ wfj) = ≤d-arr-S⇐ (≤d-refl wf-∞) (≤d-refl wfj)
 
 ≤d-trans : ∀ {A B C j}
   → A ≤d j # B
@@ -143,7 +148,8 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) ≤d-top = ≤d-top
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-arr-∞ ≤2 ≤4) = ≤d-arr-∞ (≤d-trans ≤2 ≤1) (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤2) (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤4)
-≤d-trans {B = B ⇒ B₁} (≤d-arr-S ≤1 ≤3) (≤d-arr-S ≤2 ≤4) = ≤d-arr-S ≤2 (≤d-trans ≤3 ≤4)
+≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇒ ≤1 ≤3) (≤d-arr-S⇒ ≤2 ≤4) = ≤d-arr-S⇒ ≤2 (≤d-trans ≤3 ≤4)
+≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇐ ≤1 ≤3) (≤d-arr-S⇐ ≤2 ≤4) = ≤d-arr-S⇐ ≤2 (≤d-trans ≤3 ≤4)
 
 ≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
 ≤d-trans {B = B ⇒ B₁} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)

@@ -62,133 +62,6 @@ data _⊩_⇛_ : Context → List Term → List Type → Set where
     → Γ ⊢d Z # e ⦂ A
     → Γ ⊩ (e ∷ es) ⇛ (A ∷ As)
 
-postulate
-
-  rev : ∀ {A : Set} (P : List A → Set)
-    → P []
-    → (∀ (x : A) (l : List A) → P l → P (l ++ (x ∷ [])))
-    → (∀ (l : List A) → P l)
-
-▻snoc₁ : ∀ e e' es
-  → e ▻ map (_↑ 0) (es ++ e' ∷ []) ≡ (e ▻ map (_↑ 0) es) · (e' ↑ 0)
-▻snoc₁ e e' [] = refl
-▻snoc₁ e e' (e₁ ∷ es) = ▻snoc₁ (e · (e₁ ↑ 0)) e' es
-
-rewrite-snoc₁ : ∀ {Γ e e' es' A cc}
-  → Γ ⊢d cc # e ▻ map (_↑ 0) (es' ++ e' ∷ []) ⦂ A
-  → Γ ⊢d cc # (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
-rewrite-snoc₁ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
-
-rewrite-snoc₄ : ∀ {Γ e e' es' A cc}
-  → Γ ⊢d cc # (e ▻ map (_↑ 0) es') · (e' ↑ 0) ⦂ A
-  → Γ ⊢d cc # e ▻ map (_↑ 0) (es' ++ e' ∷ []) ⦂ A
-rewrite-snoc₄ {e = e} {e' = e'} {es' = es'} ⊢e rewrite ▻snoc₁ e e' es' = ⊢e
-
-▻snoc₂ : ∀ e es' e'
-  → e ▻ (es' ++ e' ∷ []) ≡  (e ▻ es') · e'
-▻snoc₂ e [] e' = refl
-▻snoc₂ e (x ∷ es') e' = ▻snoc₂ (e · x) es' e'
-
-rewrite-snoc₂ : ∀ {Γ e e₁ es' e' cc B}
-  → Γ ⊢d cc # (((ƛ e) · e₁) ▻ es') · e' ⦂ B
-  → Γ ⊢d cc # ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
-rewrite-snoc₂ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e
-
-rewrite-snoc₃ : ∀ {Γ e e₁ es' e' cc B}
-  → Γ ⊢d cc # ((ƛ e) · e₁) ▻ (es' ++ e' ∷ []) ⦂ B
-  → Γ ⊢d cc # (((ƛ e) · e₁) ▻ es') · e' ⦂ B
-rewrite-snoc₃ {e = e} {e₁ = e₁} {es' = es'} {e' = e'} ⊢e rewrite ▻snoc₂ ((ƛ e) · e₁) es' e' = ⊢e
-
-{-
-
-subst :  ∀ {Γ A B e e₁ n} (es : List Term)
-  → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d c 0 # e₁ ⦂ A
-  → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B
-
-subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
-                     → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
-                     → Γ ⊢d c 0 # e₁ ⦂ A
-                     → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B)
-                     (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂)
-                     (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
-                     {(⊢d-app₁ ⊢1 ⊢2) → ⊢d-app₁ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
-                     ;(⊢d-app₂ ⊢1 ⊢2) → ⊢d-app₂ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
-                     ;(⊢d-sub ⊢1 A≤B) → {!!}
-                     })) -- ind
-                     es
-
-subst-chk :  ∀ {Γ A B e e₁} (es : List Term)
-  → Γ , A ⊢d ∞ # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d c 0 # e₁ ⦂ A
-  → Γ ⊢d ∞ # ((ƛ e) · e₁) ▻ es ⦂ B
-
-subst-chk es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁}
-                         → Γ , A ⊢d ∞ # e ▻ map (_↑ 0) es ⦂ B
-                         → Γ ⊢d c 0 # e₁ ⦂ A
-                         → Γ ⊢d ∞ # ((ƛ e) · e₁) ▻ es ⦂ B)
-                         (λ ⊢e₁ ⊢e₂ → ⊢d-app₃ (⊢d-lam₁ ⊢e₁) ⊢e₂)
-                         (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
-                         { (⊢d-app₃ ⊢1 ⊢2) → ⊢d-app₃ (IH ⊢1 ⊢e₂) (⊢d-strengthen-0 ⊢2)
-                         ; (⊢d-sub ⊢1 A≤B) → ⊢d-sub (rewrite-snoc₃ {es' = es'} (subst (es' ++ e' ∷ []) (rewrite-snoc₄ {es' = es'} ⊢1) ⊢e₂)) A≤B
-                         }))
-                         es
-
-
-subst-base : ∀ {Γ A B e₁ e₂ ∞/n}
-  → Γ , A ⊢d ∞/n # e₁ ⦂ B
-  → Γ ⊢d c 0 # e₂ ⦂ A
-  → Γ ⊢d ∞/n # (ƛ e₁) · e₂ ⦂ B
-subst-base {∞/n = ∞} ⊢e₁ ⊢e₂ = ⊢d-app₃ (⊢d-lam₁ ⊢e₁) ⊢e₂
-subst-base {∞/n = c n} ⊢e₁ ⊢e₂ = ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂
-                         
-subst-gen : ∀ {Γ A B e e₁ ∞/n} (es : List Term)
-  → Γ , A ⊢d ∞/n # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d c 0 # e₁ ⦂ A
-  → Γ ⊢d ∞/n # ((ƛ e) · e₁) ▻ es ⦂ B
-subst-gen es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {∞/n}
-                         → Γ , A ⊢d ∞/n # e ▻ map (_↑ 0) es ⦂ B
-                         → Γ ⊢d c 0 # e₁ ⦂ A
-                         → Γ ⊢d ∞/n # ((ƛ e) · e₁) ▻ es ⦂ B)
-                   (λ ⊢e₁ ⊢e₂ → subst-base ⊢e₁ ⊢e₂)
-                   (λ e' es' IH ⊢e₁ ⊢e₂ → rewrite-snoc₂ {es' = es'} (case (rewrite-snoc₁ {es' = es'} ⊢e₁) of λ
-                   { (⊢d-app₁ ⊢1 ⊢2) → {!!}
-                   ; (⊢d-app₂ ⊢1 ⊢2) → {!!}
-                   ; (⊢d-app₃ ⊢1 ⊢2) → {!!}
-                   ; (⊢d-sub ⊢1 A≤B) → ⊢d-sub {!!} A≤B
-                   }
-                   ))
-                   es
-
-
-sound-≤ : ∀ {Γ H A B es T As A' ∞/n}
-  → Γ ⊢a A ≤ H ⇝ B
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → (A' ≤d ∞/n # T) × (Γ ⊩ es ⇚ As)
-
-sound-inf : ∀ {Γ e H A es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , Top , As , A' ❫
-  → Γ ⊢d c 0 # e ▻ es ⦂ A'
-
-sound-chk : ∀ {Γ e H A es T As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → Γ ⊢d ∞ # e ▻ es ⦂ T
-
-sound-≤ A≤H spl = {!!}
-
-sound-inf ⊢a-lit none = ⊢d-int
-sound-inf (⊢a-var x∈Γ) none = ⊢d-var x∈Γ
-sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
-sound-inf (⊢a-ann ⊢e) none = ⊢d-ann (sound-chk ⊢e none)
-sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst-gen es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none)
-sound-inf (⊢a-sub pv ⊢e A≤H) spl = {!!}
-
-sound-chk ⊢e spl = {!!}
-
--}
-
 sound-inf : ∀ {Γ e H A es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , □ , As , A' ❫
@@ -212,14 +85,16 @@ sound-chk-0 ⊢e = sound-chk ⊢e none-τ
 sound-inf ⊢a-lit none-□ = ⊢d-int
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 
-sound-inf (⊢a-ann ⊢e) none-□ = {!sym (⊢a-id-0 ⊢e)!}
+sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk-0 ⊢e)
 
-sound-inf (⊢a-app ⊢e) spl = {!!}
+sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf (⊢a-lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-inf (⊢a-sub x ⊢e x₁) spl = ⊢d-sub {!!} {!spl!} {!!}
+sound-inf (⊢a-sub x ⊢e x₁) spl = {!!}
+-- ⊩-elim (⊢d-sub (sound-inf-0 ⊢e) {!!} {!!}) {!!} spl
+-- ⊩-elim (sound-inf-0 ⊢e) {!!} {!spl!}
 
 sound-chk (⊢a-app ⊢e) spl = {!!}
 sound-chk (⊢a-lam₁ ⊢e) spl = {!!}
 sound-chk (⊢a-lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-chk (⊢a-sub x ⊢e x₁) spl = {!!}
-sound-chk (⊢a-& ⊢e ⊢e₁) spl = {!!}
+sound-chk (⊢a-sub x ⊢e x₁) spl = ⊢d-sub (⊩-elim {!!} {!!} spl) {!!} (λ ())
+sound-chk (⊢a-& ⊢e ⊢e₁) none-τ = ⊢d-& (sound-chk ⊢e none-τ) (sound-chk ⊢e₁ none-τ)

@@ -74,7 +74,7 @@ data _↪_❪_,_,_❫ : Type → Counter → List Type → Type → Counter → 
 
   n-s : ∀ {A B T j Bs j'}
     → B ↪ j ❪ Bs , T , j' ❫
-    → (A ⇒ B) ↪ (S j) ❪ A ∷ Bs , T , j' ❫
+    → (A ⇒ B) ↪ (S⇒ j) ❪ A ∷ Bs , T , j' ❫
 
 complete-≤-Z : ∀ {Γ A H es As j T B}
   → B ≤d j # A
@@ -121,21 +121,21 @@ complete-inf-0 ⊢e = complete-inf ⊢e n-z ⊩a-none cht-none-□
 
 complete-chk (⊢d-lam₁ ⊢e) n-∞ ⊩a-none cht-none-τ = ⊢a-lam₁ (complete-chk-0 ⊢e)
 complete-chk (⊢d-lam₂ ⊢e) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ⊢a-lam₂ x (complete-chk ⊢e Aj (⊩a-weaken ⊢es) (≗-shift newH))
-complete-chk (⊢d-app₂ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app (complete-chk ⊢e (n-s Aj) (⊩a-cons ⊢es (complete-inf-0 ⊢e₁)) (cht-cons newH))
+complete-chk (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app (complete-chk ⊢e ? (⊩a-cons ⊢es (complete-inf-0 ?)) (cht-cons newH))
 complete-chk (⊢d-sub ⊢e x x₁) Aj ⊢es newH = subsumption-0 (complete-inf-0 ⊢e) (complete-≤-∞ x Aj ⊢es newH)
-complete-chk (⊢d-and-& ⊢e ⊢e₁) n-∞ ⊩a-none cht-none-τ = ⊢a-& (complete-chk ⊢e n-∞ ⊩a-none cht-none-τ)
+complete-chk (⊢d-& ⊢e ⊢e₁) n-∞ ⊩a-none cht-none-τ = ⊢a-& (complete-chk ⊢e n-∞ ⊩a-none cht-none-τ)
                                                              (complete-chk ⊢e₁ n-∞ ⊩a-none cht-none-τ)
 
 complete-inf ⊢d-int n-z ⊩a-none cht-none-□ = ⊢a-lit
 complete-inf (⊢d-var x) n-z ⊩a-none cht-none-□ = ⊢a-var x
 complete-inf (⊢d-ann ⊢e) n-z ⊩a-none cht-none-□ = ⊢a-ann (complete-chk ⊢e n-∞ ⊩a-none cht-none-τ)
 complete-inf (⊢d-lam₂ ⊢e) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ⊢a-lam₂ x (complete-inf ⊢e Aj (⊩a-weaken ⊢es) (≗-shift newH))
-complete-inf (⊢d-app₁ ⊢e ⊢e₁) n-z ⊩a-none cht-none-□ = ⊢a-app (subsumption-0 (complete-inf-0 ⊢e) (≤a-hint (complete-chk-0 ⊢e₁) ≤a-□))
-complete-inf (⊢d-app₂ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app (complete-inf ⊢e (n-s Aj) (⊩a-cons ⊢es (complete-inf-0 ⊢e₁)) (cht-cons newH))
+complete-inf (⊢d-app⇒ ⊢e ⊢e₁) n-z ⊩a-none cht-none-□ = ⊢a-app (subsumption-0 (complete-inf-0 ?) (≤a-hint (complete-chk-0 ?) ≤a-□))
+complete-inf (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app (complete-inf ⊢e (n-s Aj) (⊩a-cons ⊢es (complete-inf-0 ⊢e₁)) (cht-cons newH))
 complete-inf (⊢d-sub ⊢e x x₁) Aj ⊢es newH = subsumption-0 (complete-inf-0 ⊢e) (complete-≤-Z x Aj ⊢es newH)
 
 complete-≤-Z ≤d-Z n-z ⊩a-none cht-none-□ = ≤a-□
-complete-≤-Z (≤d-arr-S B≤A B≤A₁) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-Z B≤A₁ Aj ⊢es newH)
+complete-≤-Z (≤d-arr-S⇒ B≤A B≤A₁) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-Z B≤A₁ Aj ⊢es newH)
 complete-≤-Z (≤d-and₁ B≤A) Aj ⊢es newH = ≤a-and-l (complete-≤-Z B≤A Aj ⊢es newH)
 complete-≤-Z (≤d-and₂ B≤A) Aj ⊢es newH = ≤a-and-r (complete-≤-Z B≤A Aj ⊢es newH)
 
@@ -143,7 +143,7 @@ complete-≤-∞ ≤d-int∞ n-∞ ⊩a-none cht-none-τ = ≤a-int
 complete-≤-∞ ≤d-base∞ n-∞ ⊩a-none cht-none-τ = ≤a-base
 complete-≤-∞ ≤d-top n-∞ ⊩a-none cht-none-τ = ≤a-top
 complete-≤-∞ (≤d-arr-∞ B≤A B≤A₁) n-∞ ⊩a-none cht-none-τ = ≤a-arr (complete-≤-∞-0 B≤A) (complete-≤-∞-0 B≤A₁)
-complete-≤-∞ (≤d-arr-S B≤A B≤A₁) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-∞ B≤A₁ Aj ⊢es newH)
+complete-≤-∞ (≤d-arr-S⇒ B≤A B≤A₁) (n-s Aj) (⊩a-cons ⊢es x) (cht-cons newH) = ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-∞ B≤A₁ Aj ⊢es newH)
 complete-≤-∞ (≤d-and₁ B≤A) Aj ⊢es newH = ≤a-and-l (complete-≤-∞ B≤A Aj ⊢es newH)
 complete-≤-∞ (≤d-and₂ B≤A) Aj ⊢es newH = ≤a-and-r (complete-≤-∞ B≤A Aj ⊢es newH)
 complete-≤-∞ (≤d-and B≤A B≤A₁) n-∞ ⊩a-none cht-none-τ = ≤a-and (complete-≤-∞ B≤A n-∞ ⊩a-none cht-none-τ)

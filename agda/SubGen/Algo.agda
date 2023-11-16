@@ -94,8 +94,8 @@ data _⊢a_⇛_⇛_ where
     -------------------
     → Γ ⊢a □ ⇛ ` x ⇛ A
     
-  ⊢a-ann : ∀ {Γ e A B}
-    → Γ ⊢a τ A ⇛ e ⇛ B
+  ⊢a-ann : ∀ {Γ e A}
+    → Γ ⊢a τ A ⇛ e ⇛ A
     ---------------------
     → Γ ⊢a □ ⇛ e ⦂ A ⇛ A
     
@@ -104,10 +104,10 @@ data _⊢a_⇛_⇛_ where
     ----------------------------------
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
 
-  ⊢a-lam₁ : ∀ {Γ e A B C}
-    → Γ , A ⊢a τ B ⇛ e ⇛ C
+  ⊢a-lam₁ : ∀ {Γ e A B}
+    → Γ , A ⊢a τ B ⇛ e ⇛ B
     ------------------------------------
-    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ C
+    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ B
 
   ⊢a-lam₂ : ∀ {Γ e₁ e A B H}
     → Γ ⊢a □ ⇛ e₁ ⇛ A
@@ -121,10 +121,10 @@ data _⊢a_⇛_⇛_ where
     → Γ ⊢a A ≤ H ⇝ B -- to forbid H to be □, we can try to achive this via restricting subtyping behavior
     → Γ ⊢a H ⇛ p ⇛ B
 
-  ⊢a-& : ∀ {Γ A A' B B' e}
-    → Γ ⊢a τ A ⇛ e ⇛ A'
-    → Γ ⊢a τ B ⇛ e ⇛ B'
-    → Γ ⊢a τ (A & B) ⇛ e ⇛ (A' & B')
+  ⊢a-& : ∀ {Γ A B e}
+    → Γ ⊢a τ A ⇛ e ⇛ A
+    → Γ ⊢a τ B ⇛ e ⇛ B
+    → Γ ⊢a τ (A & B) ⇛ e ⇛ (A & B)
 
 
 

@@ -12,7 +12,8 @@ open import SubGen.Common
 data Counter : Set where
   ∞ : Counter
   Z : Counter
-  S : Counter → Counter
+  S⇒ : Counter → Counter
+  S⇐ : Counter → Counter
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -37,10 +38,14 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → C ≤d ∞ # A
     → B ≤d ∞ # D
     → A ⇒ B ≤d ∞ # C ⇒ D
-  ≤d-arr-S : ∀ {A B C D j}
+  ≤d-arr-S⇒ : ∀ {A B C D j}
     → C ≤d ∞ # A
     → B ≤d j # D
-    → A ⇒ B ≤d S j # A ⇒ D    
+    → A ⇒ B ≤d S⇒ j # A ⇒ D
+  ≤d-arr-S⇐ : ∀ {A B C D j}
+    → C ≤d ∞ # A
+    → B ≤d j # D
+    → A ⇒ B ≤d S⇐ j # A ⇒ D  
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → A & B ≤d j # C
@@ -89,15 +94,15 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-lam₂ : ∀ {Γ e A B j}
     → Γ , A ⊢d j # e ⦂ B
-    → Γ ⊢d S j # (ƛ e) ⦂ A ⇒ B
+    → Γ ⊢d S⇒ j # (ƛ e) ⦂ A ⇒ B
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d Z # e₁ ⦂ A ⇒ B
+  ⊢d-app⇐ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢d S⇐ j # e₁ ⦂ A ⇒ B
     → Γ ⊢d ∞ # e₂ ⦂ A
-    → Γ ⊢d Z # e₁ · e₂ ⦂ B
+    → Γ ⊢d j # e₁ · e₂ ⦂ B
 
-  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
-    → Γ ⊢d S j # e₁ ⦂ A ⇒ B
+  ⊢d-app⇒ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢d S⇒ j # e₁ ⦂ A ⇒ B
     → Γ ⊢d Z # e₂ ⦂ A
     → Γ ⊢d j # e₁ · e₂ ⦂ B
 
@@ -107,7 +112,7 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → j ≢ Z
     → Γ ⊢d j # e ⦂ A
 
-  ⊢d-and-& : ∀ {Γ e A B}
+  ⊢d-& : ∀ {Γ e A B}
     → Γ ⊢d ∞ # e ⦂ A
     → Γ ⊢d ∞ # e ⦂ B
     → Γ ⊢d ∞ # e ⦂ A & B

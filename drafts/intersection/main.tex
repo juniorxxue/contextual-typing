@@ -25,7 +25,7 @@
 &\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
 &\text{Partial Values} \quad \quad &p::=&~ i \mid x \mid e : A\\
 &\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A\\
-&\text{Counters} \quad\quad &j ::=&~ Z \mid \infty \mid S~j \\
+&\text{Counters} \quad\quad &j ::=&~ Z \mid \infty \mid S_{\Leftarrow}~j \mid S_{\Rightarrow}~j\\
 &\text{Hints} \quad\quad &H ::=&~ \square \mid A \mid \boxed{e} \rightarrow H\\
 \end{align*}
 
@@ -51,12 +51,12 @@
     {\Gamma \vdash_{j} \lambda x.~ e : A \rightarrow B}
 
     \inferrule*[lab=App1]
-    {\Gamma \vdash_Z e_1 : A \rightarrow B \\
+    {\Gamma \vdash_{S_{\Leftarrow}~j} e_1 : A \rightarrow B \\
     \Gamma \vdash_{\infty} e_2 : A}
-    {\Gamma \vdash_Z e_1~e_2 : B}
+    {\Gamma \vdash_j e_1~e_2 : B}
 
     \inferrule*[lab=App2]
-    {\Gamma \vdash_{S~j} e_1 : A \rightarrow B \\
+    {\Gamma \vdash_{S_{\Rightarrow}~j} e_1 : A \rightarrow B \\
     \Gamma \vdash_Z e_2 : A}
     {\Gamma \vdash_j e_1~e_2 : B}
 
@@ -146,9 +146,9 @@
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 
 \inferrule*[lab=T-And]
-{\Gamma \vdash H \Rightarrow e \Rightarrow A \\
- \Gamma \vdash H \Rightarrow e \Rightarrow B}
-{\Gamma \vdash H \Rightarrow e \Rightarrow A ~\&~ B}
+{\Gamma \vdash A \Rightarrow e \Rightarrow A \\
+ \Gamma \vdash B \Rightarrow e \Rightarrow B}
+{\Gamma \vdash A ~\&~ B \Rightarrow e \Rightarrow A ~\&~ B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -160,19 +160,19 @@
 
 \inferrule*[lab=S-Top]
 { }
-{\Gamma \vdash A <: Top \rightsquigarrow A}
+{\Gamma \vdash A <: Top \rightsquigarrow Top}
 
 \inferrule*[lab=S-Square]
 { }
 {\Gamma \vdash A <: \square \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \rightsquigarrow A' \\
- \Gamma \vdash B <: D \rightsquigarrow D'}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow A' \rightarrow D'}
+{\Gamma \vdash C <: A \rightsquigarrow A \\
+ \Gamma \vdash B <: D \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \rightsquigarrow C \rightarrow D}
 
 \inferrule*[lab=S-Hole]
-{\Gamma \vdash A \Rightarrow e \Rightarrow C \\
+{\Gamma \vdash A \Rightarrow e \Rightarrow A \\
  \Gamma \vdash B <: H \rightsquigarrow D}
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \rightsquigarrow A \rightarrow D}
 
@@ -185,8 +185,8 @@
 {\Gamma \vdash A ~\&~ B <: H \rightsquigarrow C}
 
 \inferrule*[lab=S-And]
-{\Gamma \vdash A <: B \rightsquigarrow B' \\
- \Gamma \vdash A <: C \rightsquigarrow C'}
-{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow B' ~\&~ C'}
+{\Gamma \vdash A <: B \rightsquigarrow B \\
+ \Gamma \vdash A <: C \rightsquigarrow C}
+{\Gamma \vdash A <: B ~\&~ C \rightsquigarrow B ~\&~ C}
 \end{mathpar}   
 \end{document}
