@@ -66,6 +66,24 @@ data _↠_↠_≗_ : List Term → List Term → Hint → Hint → Set where
     → es ↠ es' ↠ H ≗ H'
     → (e ∷ es) ↠ es' ↠ H ≗ ⟦ e ⟧⇒ H'
 
+infix 4 _⇒_≣_
+data _⇒_≣_ : List Term → Hint → Hint → Set where
+
+  ⇒≣-none : ∀ {H}
+    → [] ⇒ H ≣ H
+
+  ⇒≣-cons : ∀ {e es H H'}
+    → es ⇒ H ≣ H'
+    → (e ∷ es) ⇒ H ≣ ⟦ e ⟧⇒ H'
+
+-- es ⇒ H ≣ H'
+-- es ⇒ (⟦ e ⟧⇒ H) ≣ 
+
+≣-shift : ∀ {es H H'}
+  → es ⇒ H ≣ H'
+  → (map (_↑ 0) es ) ⇒ H ⇧ 0 ≣ H' ⇧ 0
+≣-shift ⇒≣-none = ⇒≣-none
+≣-shift (⇒≣-cons newH) = ⇒≣-cons (≣-shift newH)
 
 ≗-shift : ∀ {es⇒ es⇐ H H'}
   → es⇒ ↠ es⇐ ↠ H ≗ H'
@@ -114,47 +132,48 @@ complete-≤-∞-0 : ∀ {Γ A B}
   → Γ ⊢a B ≤ τ A ⇝ A
 complete-≤-∞-0 B≤A = complete-≤-∞ B≤A n-∞ ⊩a-none ⊩a-none cht-none
 
-complete-chk : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T H}
+complete-chk : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T H pH}
   → Γ ⊢d j # e ⦂ A
   → A ↪ j ❪ A⇒s , A⇐s , T , ∞ ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
-  → e⇒s ↠ e⇐s ↠ τ T ≗ H
+  → e⇐s ⇒ (τ T) ≣ pH
+  → e⇒s ⇒ pH ≣ H
   → Γ ⊢a H ⇛ e ⇛ A
 
-complete-inf : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T H}
+complete-inf : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T pH H}
   → Γ ⊢d j # e ⦂ A
   → A ↪ j ❪ A⇒s , A⇐s , T , Z ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
-  → e⇒s ↠ e⇐s ↠ □ ≗ H
+  → e⇐s ⇒ □ ≣ pH
+  → e⇒s ⇒ pH ≣ H
   → Γ ⊢a H ⇛ e ⇛ A
 
 complete-chk-0 : ∀ {Γ e A}
   → Γ ⊢d ∞ # e ⦂ A
   → Γ ⊢a τ A ⇛ e ⇛ A
-complete-chk-0 ⊢e = complete-chk ⊢e n-∞ ⊩a-none ⊩a-none cht-none
+complete-chk-0 ⊢e = complete-chk ⊢e n-∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none
 
 complete-inf-0 : ∀ {Γ e A}
   → Γ ⊢d Z # e ⦂ A
   → Γ ⊢a □ ⇛ e ⇛ A
-complete-inf-0 ⊢e = complete-inf ⊢e n-z ⊩a-none ⊩a-none cht-none
+complete-inf-0 ⊢e = complete-inf ⊢e n-z ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none
 
-complete-chk (⊢d-lam₁ ⊢e) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-chk (⊢d-lam₂ ⊢e) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-chk (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-chk (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-chk (⊢d-sub ⊢e x x₁) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-chk (⊢d-& ⊢e ⊢e₁) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
+complete-chk (⊢d-lam₁ ⊢e) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
+complete-chk (⊢d-lam₂ ⊢e) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
+complete-chk (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
+complete-chk (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
+complete-chk (⊢d-sub ⊢e x x₁) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
+complete-chk (⊢d-& ⊢e ⊢e₁) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
 
-complete-inf ⊢d-int n-z ⊩a-none ⊩a-none cht-none = ⊢a-lit
-complete-inf (⊢d-var x) n-z ⊩a-none ⊩a-none cht-none = ⊢a-var x
-complete-inf (⊢d-ann ⊢e) n-z ⊩a-none ⊩a-none cht-none = ⊢a-ann (complete-chk-0 ⊢e)
-complete-inf (⊢d-lam₂ ⊢e) (n-s⇒ Aj) (⊩a-cons ⊩e⇒ x) ⊩e⇐ (cht-cons newH) =
-  ⊢a-lam₂ x (complete-inf ⊢e Aj (⊩a-weaken ⊩e⇒) (⊩a-weaken⇚ ⊩e⇐) (≗-shift newH))
-complete-inf (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊩e⇒ ⊩e⇐ newH = ⊢a-app {!complete-inf ⊢e (n-s⇐ Aj) ⊩e⇒ (⊩a-cons ⊩e⇐ (complete-chk-0 ⊢e₁)) !}
-  where ind-e = complete-inf ⊢e (n-s⇐ Aj) ⊩e⇒ (⊩a-cons ⊩e⇐ (complete-chk-0 ⊢e₁)) {!!}
-complete-inf (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊩e⇒ ⊩e⇐ newH = {!!}
-complete-inf (⊢d-sub ⊢e x x₁) Aj ⊩e⇒ ⊩e⇐ newH = subsumption-0 (complete-inf-0 ⊢e) {!!}
-
--- S⇒ S⇒ S⇒ S⇐ S⇐ S⇐ Z/∞
+complete-inf ⊢d-int n-z ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ⊢a-lit
+complete-inf (⊢d-var x) n-z ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ⊢a-var x
+complete-inf (⊢d-ann ⊢e) n-z ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ⊢a-ann (complete-chk-0 ⊢e)
+complete-inf (⊢d-lam₂ ⊢e) (n-s⇒ Aj) (⊩a-cons ⊢es⇒ x) ⊢es⇐ pH (⇒≣-cons newH) =
+  ⊢a-lam₂ x (complete-inf ⊢e Aj (⊩a-weaken ⊢es⇒) (⊩a-weaken⇚ ⊢es⇐) (≣-shift pH) (≣-shift newH))
+complete-inf (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊢es⇒ ⊢es⇐ pH newH = ⊢a-app {!ind-e!}
+  where ind-e = complete-inf ⊢e (n-s⇐ Aj) ⊢es⇒ (⊩a-cons ⊢es⇐ (complete-chk-0 ⊢e₁)) (⇒≣-cons pH) {!(⇒≣-cons newH)!}
+complete-inf (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊢es⇒ ⊢es⇐ pH newH = ⊢a-app ind-e
+  where ind-e = complete-inf ⊢e (n-s⇒ Aj) (⊩a-cons ⊢es⇒ (complete-inf-0 ⊢e₁)) ⊢es⇐ pH (⇒≣-cons newH)
+complete-inf (⊢d-sub ⊢e x x₁) Aj ⊢es⇒ ⊢es⇐ pH newH = {!!}
