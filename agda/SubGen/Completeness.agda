@@ -97,23 +97,24 @@ infix 4 _↪_❪_,_,_,_❫
 data _↪_❪_,_,_,_❫ : Type → Counter → List Type → List Type → Type → Counter → Set where
 
   n-z : ∀ {A}
-    → A ↪ Z ❪ [] , [] , A , Z ❫
+    → A ↪ ♭ Z ❪ [] , [] , A , ♭ Z ❫
 
   n-∞ : ∀ {A}
-    → A ↪ ∞ ❪ [] , [] , A , ∞ ❫
+    → A ↪ ♭ ∞ ❪ [] , [] , A , ♭ ∞ ❫
 
   n-s⇒ : ∀ {A B T j B⇒s B⇐s j'}
     → B ↪ j ❪ B⇒s , B⇐s , T , j' ❫
     → (A ⇒ B) ↪ (S⇒ j) ❪ A ∷ B⇒s , B⇐s , T , j' ❫
     
   n-s⇐ : ∀ {A B T j B⇒s B⇐s j'}
-    → B ↪ j ❪ B⇒s , B⇐s , T , j' ❫
-    → (A ⇒ B) ↪ (S⇐ j) ❪ B⇒s , A ∷ B⇐s , T , j' ❫
+    → B ↪ ♭ j ❪ B⇒s , B⇐s , T , j' ❫
+    → (A ⇒ B) ↪ (♭ (S⇐ j)) ❪ B⇒s , A ∷ B⇐s , T , j' ❫
 
+-- S⇒ S⇒ S⇒ ... S⇐ S⇐ 
 
 complete-≤-Z : ∀ {Γ A H e⇒s e⇐s A⇒s A⇐s j T B}
   → B ≤d j # A
-  → A ↪ j ❪ A⇒s , A⇐s , T , Z ❫
+  → A ↪ j ❪ A⇒s , A⇐s , T , ♭ Z ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
   → e⇒s ↠ e⇐s ↠ □ ≗ H
@@ -121,29 +122,43 @@ complete-≤-Z : ∀ {Γ A H e⇒s e⇐s A⇒s A⇐s j T B}
 
 complete-≤-∞ : ∀ {Γ A H e⇒s e⇐s A⇒s A⇐s j T B}
   → B ≤d j # A
-  → A ↪ j ❪ A⇒s , A⇐s , T , ∞ ❫
+  → A ↪ j ❪ A⇒s , A⇐s , T , ♭ ∞ ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
   → e⇒s ↠ e⇐s ↠ τ T ≗ H
   → Γ ⊢a B ≤ H ⇝ A
 
 complete-≤-∞-0 : ∀ {Γ A B}
-  → B ≤d ∞ # A
+  → B ≤d ♭ ∞ # A
   → Γ ⊢a B ≤ τ A ⇝ A
 complete-≤-∞-0 B≤A = complete-≤-∞ B≤A n-∞ ⊩a-none ⊩a-none cht-none
 
+-- Γ ⊢d j # e ⦂ A
+-- 1) A ↪ j ❪ [] , A⇐s , T , ∞ ❫
+-- 2) A ↪ j ❪ A⇒s , [] , T , ∞ ❫
+
 complete-chk : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T H pH}
   → Γ ⊢d j # e ⦂ A
-  → A ↪ j ❪ A⇒s , A⇐s , T , ∞ ❫
+  -- A⇒s → A⇐s → T ≡ A
+  → A ↪ j ❪ A⇒s , A⇐s , T , ♭ ∞ ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
   → e⇐s ⇒ (τ T) ≣ pH
   → e⇒s ⇒ pH ≣ H
+  
+  -- e⇒s ⇒ es⇐s ⇒ τ T ≡ H
+  -- App1: newH ≡ e⇒s ⇒ (e' ∷ es⇐s) ⇒ τ
+  
+  -- App2: newH ≡ (e' ∷ es⇒s) ⇒ es⇐s ⇒ τ 
   → Γ ⊢a H ⇛ e ⇛ A
+
+
+
+
 
 complete-inf : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T pH H}
   → Γ ⊢d j # e ⦂ A
-  → A ↪ j ❪ A⇒s , A⇐s , T , Z ❫
+  → A ↪ j ❪ A⇒s , A⇐s , T , ♭ Z ❫
   → Γ ⊩a e⇒s ⇛ A⇒s
   → Γ ⊩a e⇐s ⇚ A⇐s
   → e⇐s ⇒ □ ≣ pH
@@ -151,12 +166,12 @@ complete-inf : ∀ {Γ e A j e⇒s e⇐s A⇒s A⇐s T pH H}
   → Γ ⊢a H ⇛ e ⇛ A
 
 complete-chk-0 : ∀ {Γ e A}
-  → Γ ⊢d ∞ # e ⦂ A
+  → Γ ⊢d ♭ ∞ # e ⦂ A
   → Γ ⊢a τ A ⇛ e ⇛ A
 complete-chk-0 ⊢e = complete-chk ⊢e n-∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none
 
 complete-inf-0 : ∀ {Γ e A}
-  → Γ ⊢d Z # e ⦂ A
+  → Γ ⊢d ♭ Z # e ⦂ A
   → Γ ⊢a □ ⇛ e ⇛ A
 complete-inf-0 ⊢e = complete-inf ⊢e n-z ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none
 

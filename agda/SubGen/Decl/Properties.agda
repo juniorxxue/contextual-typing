@@ -105,18 +105,18 @@ determinism is not intended
 data wf-j : Type → Counter → Set where
 
   wf-∞ : ∀ {A}
-    → wf-j A ∞
+    → wf-j A (♭ ∞)
 
   wf-0 : ∀ {A}
-    → wf-j A Z
+    → wf-j A (♭ Z)
 
   wf-S⇒ : ∀ {A B j}
     → wf-j B j
     → wf-j (A ⇒ B) (S⇒ j)
 
   wf-S⇐ : ∀ {A B j}
-    → wf-j B j
-    → wf-j (A ⇒ B) (S⇐ j)
+    → wf-j B (♭ j)
+    → wf-j (A ⇒ B) (♭ (S⇐ j))
 
 ≤d-refl : ∀ {A j}
   → wf-j A j
