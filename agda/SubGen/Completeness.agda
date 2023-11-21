@@ -117,6 +117,7 @@ data ❪_,_❫↪♭❪_,_,_❫ : Type → CCounter → List Type → Type → C
     → ❪ B , j ❫↪♭❪ As , T , j' ❫
     → ❪ A ⇒ B , S⇐ j ❫↪♭❪ A ∷ As , T , j' ❫
 
+
 complete-≤-i : ∀ {Γ A B j As T es H}
   → B ≤d ♭ j # A
   → ❪ A , j ❫↪♭❪ As , T , Z ❫
@@ -128,11 +129,14 @@ complete-≤-i (≤d-arr-S⇐ B≤A B≤A₁) (↪♭s Aj) (⊩a-cons ⊢es x) (
 complete-≤-i (≤d-and₁ B≤A) Aj ⊢es newH = ≤a-and-l (complete-≤-i B≤A Aj ⊢es newH)
 complete-≤-i (≤d-and₂ B≤A) Aj ⊢es newH = ≤a-and-r (complete-≤-i B≤A Aj ⊢es newH)
 
-complete-inf : ∀ {Γ e i j A As T es H}
+complete-inf : ∀ {Γ e i j A As T Ts T' es' es H H'}
   → Γ ⊢d i # e ⦂ A
   → ❪ A , i ❫↪❪ As , T , ♭ j ❫
+  → ❪ T , j ❫↪♭❪ Ts , T' , Z ❫
   → Γ ⊩a es ⇛ As
-  → es ⇒ τ T ≣ H
+  → Γ ⊩a es' ⇚ Ts
+  → es' ⇒ □ ≣ H'
+  → es ⇒ H' ≣ H
   → Γ ⊢a H ⇛ e ⇛ A
 
 complete-chk-i : ∀ {Γ e j A As T es H}
@@ -164,21 +168,13 @@ complete-chk-i (⊢d-var x) ↪♭z ⊩a-none ⇒≣-none = ⊢a-var x
 complete-chk-i (⊢d-ann ⊢e) ↪♭z ⊩a-none ⇒≣-none = ⊢a-ann (complete-chk-c-0 ⊢e)
 complete-chk-i (⊢d-app⇐ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app ind-e 
   where ind-e = complete-chk-i ⊢e (↪♭s Aj) (⊩a-cons ⊢es (complete-chk-c-0 ⊢e₁)) (⇒≣-cons newH)
-complete-chk-i (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊢es newH =
-  ⊢a-app (subsumption ind-e (have {!!}) (ch-cons ch-none)
-                            (≤a-hint (subsumption-0 (complete-chk-i-0 ⊢e₁) ≤a-refl) (es-□-A Aj ⊢es newH)))
-  where ind-e = complete-inf ⊢e (↪s ↪z) (⊩a-cons ⊩a-none (complete-chk-i-0 ⊢e₁)) (⇒≣-cons ⇒≣-none)
-        es-□-A : ∀ {Γ j A T es As H}
-          → ❪ A , j ❫↪♭❪ As , T , Z ❫
-          → Γ ⊩a es ⇚ As
-          → es ⇒ □ ≣ H
-          → Γ ⊢a A ≤ H ⇝ A
-        es-□-A Aj ⊩a-none ⇒≣-none = ≤a-□
-        es-□-A (↪♭s Aj) (⊩a-cons ⊢es x) (⇒≣-cons newH) = ≤a-hint x (es-□-A Aj ⊢es newH)
+complete-chk-i (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app ind-e
+  where ind-e = complete-inf ⊢e (↪s ↪z) Aj (⊩a-cons ⊩a-none (complete-chk-i-0 ⊢e₁)) ⊢es newH (⇒≣-cons ⇒≣-none)
 
 complete-chk-i (⊢d-sub ⊢e x x₁) Aj ⊢es newH = subsumption-0 (complete-chk-i-0 ⊢e ) (complete-≤-i x Aj ⊢es newH)
 
 complete-inf ⊢e Aj ⊢es newH = {!!}
+
 complete-chk-c ⊢e Aj ⊢es newH = {!!}
 
 
