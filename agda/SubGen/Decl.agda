@@ -92,8 +92,8 @@ data _≤d_#_ : Type → Counter → Type → Set where
 infix 4 _⊢d_#_⦂_
 
 data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
-  ⊢d-int : ∀ {Γ i}
-    → Γ ⊢d ♭ Z # (lit i) ⦂ Int
+  ⊢d-int : ∀ {Γ n}
+    → Γ ⊢d ♭ Z # (lit n) ⦂ Int
 
   ⊢d-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
@@ -107,9 +107,9 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ , A ⊢d ♭ ∞ # e ⦂ B
     → Γ ⊢d ♭ ∞ # (ƛ e) ⦂ A ⇒ B
 
-  ⊢d-lam₂ : ∀ {Γ e A B j}
-    → Γ , A ⊢d j # e ⦂ B
-    → Γ ⊢d S⇒ j # (ƛ e) ⦂ A ⇒ B
+  ⊢d-lam₂ : ∀ {Γ e A B i}
+    → Γ , A ⊢d i # e ⦂ B
+    → Γ ⊢d S⇒ i # (ƛ e) ⦂ A ⇒ B
 
   ⊢d-app⇐ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d ♭ (S⇐ j) # e₁ ⦂ A ⇒ B
@@ -121,11 +121,11 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ♭ Z # e₂ ⦂ A
     → Γ ⊢d j # e₁ · e₂ ⦂ B
 
-  ⊢d-sub : ∀ {Γ e A B j}
+  ⊢d-sub : ∀ {Γ e A B i}
     → Γ ⊢d ♭ Z # e ⦂ B
-    → B ≤d j # A
-    → j ≢ ♭ Z
-    → Γ ⊢d j # e ⦂ A
+    → B ≤d i # A
+    → i ≢ ♭ Z
+    → Γ ⊢d i # e ⦂ A
 
   ⊢d-& : ∀ {Γ e A B}
     → Γ ⊢d ♭ ∞ # e ⦂ A
