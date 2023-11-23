@@ -9,7 +9,7 @@ open import Function.Base using (case_of_; case_return_of_) public
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym; ≢-sym) public
 open import Data.Empty public
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
-open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom) public
+open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom) renaming (length to len) public
 
 m+1≤n→m≤n : ∀ {m n}
   → suc m ≤ n
