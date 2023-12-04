@@ -175,13 +175,20 @@ Proof.
       exists (a :: x). exists x0. subst. reflexivity.
 Qed.
 
-Lemma rw_apps : forall e es x,
-    apps e (es ++ [x]) = App (apps e es) x.
+Lemma rw_apps_gen : forall es e es',
+    apps e (es ++ es') = (apps (apps e es) es').
 Proof.
   induction es; eauto.
-  intros. simpl in *.
-  pose 
-Admitted.
+  intros.
+  simpl. eauto.
+Qed.
+
+Lemma rw_apps : forall es e x,
+    apps e (es ++ [x]) = App (apps e es) x.
+Proof.
+  intros.
+  eapply rw_apps_gen.
+Qed.
 
 Lemma dty_weaken : forall Gamma A B e j,
     dty (Cons Gamma A) j e B ->
@@ -199,7 +206,7 @@ Lemma subst_app : forall k es Gamma A B e e1 j,
     dty (Cons Gamma A) j (apps e es) B ->
     dty Gamma ZCo e1 A ->    
     dty Gamma j (apps (App (Lam e) e1) es) B.
-Proof.
+Proof. 
   induction k; intros.
   - dependent destruction H.    
   - destruct (lt_eq_lt_dec (length es) 0).
@@ -249,88 +256,3 @@ Proof.
   intros. eapply app_length_k.
   auto.
 Qed.
-
-
-(* Completeness *)
-
-
-Inductive rty : context -> counter -> term -> type -> Prop :=
-| RZ : forall Gamma A e,
-    aty Gamma Noth e A ->
-    rty Gamma ZCo e A
-| RInf : forall Gamma A e,
-    aty Gamma (Tau A) e A ->
-    rty Gamma Inf e A
-| RS : forall Gamma e j A B,
-    (forall e', dty Gamma ZCo e' A -> rty Gamma j (App e e') B) ->
-    rty Gamma (SCo j) e (Arr A B)
-.
-
-Notation "T ⊢r j e : A" := (rty T j e A) (at level 50).
-
-Lemma r_app : forall Gamma e e' A B j,
-    rty Gamma (SCo j) e (Arr A B) ->
-    dty Gamma ZCo e' A ->
-    rty Gamma j (App e e') B.
-Proof.
-  intros. dependent destruction H. eapply H; eauto.
-Qed.
-
-Lemma r_lam : forall Gamma e A B j,
-    rty (Cons Gamma A) j e B ->
-    rty Gamma (SCo j) (Lam e) (Arr A B).
-Proof.
-  intros. induction H.
-  - econstructor. intros.
-Admitted.
-
-Lemma r_sub : forall j Gamma e A,
-    rty Gamma ZCo e A ->
-    dwf A j ->
-    rty Gamma j e A.
-Proof.
-  induction j; intros.
-  - econstructor. dependent destruction H.
-    admit.
-  - assumption.
-  - dependent destruction H0.
-    econstructor. intros.
-    eapply IHj; eauto.
-    * 
-Admitted.
-
-
-Theorem complete : forall Gamma j e A,
-    dty Gamma j e A ->
-    rty Gamma j e A.
-Proof.
-  intros.
-  induction H.
-  - econstructor. eauto.
-  - econstructor; eauto.
-  - econstructor. econstructor. dependent destruction IHdty. eauto.
-  - econstructor. dependent destruction IHdty. eauto.
-  - econstructor. intros. eapply r_app; eauto. eapply r_lam; eauto.
-  - dependent destruction IHdty1. dependent destruction IHdty2.
-    econstructor; eauto. eapply A_App. admit. (* by subsumption lemma (proved) *)
-  - dependent destruction IHdty1. dependent destruction IHdty2.
-    eapply H1; eauto.
-  - eapply r_sub; eauto.
-Admitted.
-
-
-Theorem complete' : forall Gamma j e A,
-    dty Gamma j e A ->
-    dwf A j ->
-    rty Gamma j e A.
-Proof.
-  induction j; intros.
-  - econstructor. dependent destruction H0.
-    admit.
-  - econstructor. dependent destruction H0.
-    admit.
-  - dependent destruction H0.
-    econstructor. intros.    
-    eapply IHj; eauto.
-    eapply D_App2; eauto.
-Admitted.

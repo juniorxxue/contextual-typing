@@ -7,6 +7,7 @@ Require Import Coq.Arith.Compare_dec.
 
 Inductive type : Set :=
 | Int : type
+| Top : type
 | Arr : type -> type -> type
 | And : type -> type -> type.
 
@@ -35,29 +36,35 @@ Inductive inCon : context -> nat -> type -> Prop :=
 
 (* Decl. *)
 
-Inductive counter : Set :=
-| Inf : counter
-| ZCo : counter
-| SCo : counter -> counter.
+Inductive ccounter : Set :=
+| Inf : ccounter
+| Zc : ccounter
+| Sc : ccounter -> ccounter.
 
-Fixpoint size_counter (j : counter) : nat :=
+Inductive counter : Set :=
+| Ba : ccounter -> counter
+| Si : counter -> counter.
+
+Fixpoint size_ccounter (j : ccounter) : nat :=
   match j with
   | Inf => 1
-  | ZCo => 0
-  | SCo j' => 1 + size_counter j'
+  | Zc => 0
+  | Sc j' => 1 + size_ccounter j'
   end.
 
-Inductive dwf : type -> counter -> Prop :=
-| dwf_Z : forall A,
-    dwf A ZCo
-| dwf_Inf : forall A,
-    dwf A Inf
-| dwf_S : forall A B j,
-    dwf B j ->
-    dwf (Arr A B) (SCo j)
+Inductive dsub : type -> counter -> type -> Prop :=
+| DS_Z : forall A,
+    dsub A (Ba Zc) A
+| DS_Int :
+    dsub Int (Ba Inf) Int
+| DS_Top : forall A,
+    dsub A (Ba Inf) Top
+| DS_Arr1 : forall A B C D,
+    dsub C (Ba Inf) A ->
+    dsub B (Ba Inf) D ->
+    dsub (Arr A B) (Ba Inf) (Arr C D)
 .
 
-Notation "A ~ j" := (dwf A j) (at level 40).
 
 Inductive dty : context -> counter -> term -> type -> Prop :=
 | D_Int : forall Gamma i,

@@ -95,15 +95,34 @@ ees>0 : ∀ {e} {es : List Term}
   → len (e ∷ es) > 0
 ees>0 {e} {es} = s≤s z≤n
 
+rewrite-test : ∀ {e₁ e₂ es}
+  → (e₁ · e₂) ▻ es ≡ e₁ ▻ (e₂ ∷ es)
+rewrite-test = refl
 
-subst' :  ∀ (k) {Γ A B e e₁ j es}
+rewrite-test' : ∀ {Γ e₁ e₂ es j B xs x}
+  → Γ ⊢d j # e₁ ▻ (xs ++ x ∷ []) ⦂ B
+  → (e₂ ∷ es) ≡ (xs ++ x ∷ [])
+  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
+rewrite-test' ⊢e eq rewrite (sym eq) = ⊢e
+
+rw-try : ∀ {Γ e₁ e₂ es j B xs x}
+  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
+  → (e₂ ∷ es) ≡ (xs ++ x ∷ [])
+  → Γ ⊢d j # e₁ ▻ (xs ++ x ∷ []) ⦂ B
+rw-try ⊢e eq rewrite (sym eq) = ⊢e
+
+subst' : ∀ (k) {Γ A B e e₁ j es}
   → 2 * len es + size j < k
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d Z # e₁ ⦂ A
   → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
 subst' (suc k) {es = []} sz ⊢1 ⊢2 = ⊢d-app₂ (⊢d-lam-n ⊢1) ⊢2
 subst' (suc k) {es = e ∷ es} sz ⊢1 ⊢2 with lst-destruct-rev (e ∷ es) (ees>0 {e} {es})
-... | ⟨ x , ⟨ xs , eq ⟩ ⟩ rewrite eq = {!!}
+subst' (suc k) {e = e₁} {e₂} {j = _} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ = rewrite-test' {!rw-try ⊢1 ?!} eq
+-- rewrite-test {e₁ = (ƛ e₁) · e₂} {e₂ = e} {es = es} = {!eq!} 
+
+-- rewrite eq = {!eq!}
+
 
 
 ⊢a-spl-eq : ∀ {Γ H A e es T As A'}
