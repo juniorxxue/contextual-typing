@@ -64,4 +64,5 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
   ⊢d-sub : ∀ {Γ e A j}
     → Γ ⊢d Z # e ⦂ A
     → A ~ j
+    → j ≢ Z
     → Γ ⊢d j # e ⦂ A
