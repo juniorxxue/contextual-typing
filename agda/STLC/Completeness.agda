@@ -117,7 +117,7 @@ complete-chk (⊢d-lam-n ⊢e) (n-s Aj) (⊩a-cons ⊩es x) (cht-cons newH) = �
 complete-chk (⊢d-app₂ ⊢e ⊢e₁) Aj ⊩es newH =
   ⊢a-app (complete-chk ⊢e (n-s Aj) (⊩a-cons ⊩es (complete-inf ⊢e₁ n-z ⊩a-none cht-none-□)) (cht-cons newH))
   
-complete-chk (⊢d-sub ⊢e x) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e n-z ⊩a-none cht-none-□) (complete-wf-∞ Aj x ⊩es newH)
+complete-chk (⊢d-sub ⊢e x j≢Z) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e n-z ⊩a-none cht-none-□) (complete-wf-∞ Aj x ⊩es newH)
 
 -- trivial cases
 complete-inf ⊢d-int n-z ⊩a-none cht-none-□ = ⊢a-lit
@@ -132,7 +132,7 @@ complete-inf (⊢d-app₁ ⊢e ⊢e₁) n-z ⊩a-none cht-none-□ =
 complete-inf (⊢d-app₂ ⊢e ⊢e₁) Aj ⊩es newH =
   ⊢a-app (complete-inf ⊢e (n-s Aj) (⊩a-cons ⊩es (complete-inf ⊢e₁ n-z ⊩a-none cht-none-□)) (cht-cons newH))
   
-complete-inf (⊢d-sub ⊢e x) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e n-z ⊩a-none cht-none-□) (complete-wf-z Aj x ⊩es newH)
+complete-inf (⊢d-sub ⊢e x j≢Z) Aj ⊩es newH = subsumption-0 (complete-inf ⊢e n-z ⊩a-none cht-none-□) (complete-wf-z Aj x ⊩es newH)
 
 -- corollaries
 
