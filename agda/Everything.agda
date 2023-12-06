@@ -14,3 +14,13 @@ import Counter.Algo
 import Counter.Algo.Properties
 import Counter.Completeness
 import Counter.Soundness
+
+import STLC.Prelude
+import STLC.Common
+import STLC.Properties
+import STLC.Decl
+import STLC.Decl.Properties
+import STLC.Algo
+import STLC.Algo.Properties
+import STLC.Completeness
+import STLC.Soundness

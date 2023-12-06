@@ -93,28 +93,6 @@ subst es = rev (λ es → ∀ {Γ} {A} {B} {e} {e₁} {n}
                      })) -- ind
                      es
 
-subst'' : ∀ {Γ A B e e₁ n es k}
-  → len es < k
-  → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d c 0 # e₁ ⦂ A
-  → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B
-subst'' {es = es} {k = suc k} sz ⊢1 ⊢2 = {!!}
-
-
-module _ {Γ : Context} {A B : Type} {e e₁ : Term} {n : ℕ} where
-
-  subst' : ∀ (es : List Term)
-    → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
-    → Γ ⊢d c 0 # e₁ ⦂ A
-    → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B
-  subst' = rev (λ es → Γ , A ⊢d c n # e ▻ map (_↑ 0) es ⦂ B
-                     → Γ ⊢d c 0 # e₁ ⦂ A
-                     → Γ ⊢d c n # ((ƛ e) · e₁) ▻ es ⦂ B)
-               (λ ⊢e₁ ⊢e₂ → ⊢d-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂)
-               {!!}
-
-
-
 subst-chk :  ∀ {Γ A B e e₁} (es : List Term)
   → Γ , A ⊢d ∞ # e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d c 0 # e₁ ⦂ A
