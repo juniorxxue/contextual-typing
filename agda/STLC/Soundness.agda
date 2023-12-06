@@ -81,21 +81,6 @@ rw-try : ∀ {Γ e₁ e₂ es j B xs x}
   → Γ ⊢d j # e₁ ▻ (xs ++ ⟦ x ⟧) ⦂ B
 rw-try ⊢e eq rewrite (sym eq) = ⊢e
 
-{-
-subst' : ∀ (k) {Γ A B e e₁ j es}
-  → 2 * len es + size j < k
-  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
-  → Γ ⊢d Z # e₁ ⦂ A
-  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
-subst' (suc k) {es = []} sz ⊢1 ⊢2 = ⊢d-app₂ (⊢d-lam-n ⊢1) ⊢2
-subst' (suc k) {es = e ∷ es} sz ⊢1 ⊢2 with lst-destruct-rev ((e ↑ 0) ∷ map (_↑ 0) es) (ees>0 {e ↑ 0} {map (_↑ 0) es})
-subst' (suc k) {e = e₁} {e₂} {j = _} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ with rw-apps→ {es = xs} (rw-try ⊢1 eq)
-... | ⊢d-app₁ r r₁ = {!!}
-... | ⊢d-app₂ r r₁ = {!!}
-... | ⊢d-sub r x₁ = {!!}
--}
-
-
 eq-cons-↑ : ∀ {e es xs x}
   → e ∷ es ≡ xs ++ ⟦ x ⟧
   → (e ↑ 0) ∷ map (_↑ 0) es ≡ (map (_↑ 0) xs) ++ ⟦ x ↑ 0 ⟧
