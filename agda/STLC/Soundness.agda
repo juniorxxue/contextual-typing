@@ -145,6 +145,24 @@ sz-case₂ (s≤s (s≤s sz)) eq rewrite cons-++-len eq = s≤s (tent-lemma sz)
                                         rewrite +-suc m m
                                         rewrite +-suc (m + m) k = 2m+k+1≤n
 
+sz-case₃ : ∀ {es : List Term} {k xs e x}
+  → suc
+      (suc
+       (len es + suc (len es + 0) + 1))
+      ≤ suc k
+  → e ∷ es ≡ xs ++ ⟦ x ⟧
+  → 2 * len (xs ++ ⟦ x ⟧) + 1 < k
+sz-case₃ {xs = xs} {x = x} (s≤s (s≤s sz)) eq rewrite cons-++-len eq
+                                             rewrite len-append {xs} {x} = s≤s (tent-lemma sz)
+  where tent-lemma : ∀ {m n} → m + suc (m + 0) + 1 ≤ n
+                             → suc (m + suc (m + 0) + 1) ≤ n
+        tent-lemma {m} {n} 2m+2≤n rewrite m+0≡m m
+                                  rewrite +-suc m m = {!!}
+rw-map : ∀ {Γ e xs x A}
+  → Γ ⊢d ∞ # e ▻ (map (_↑ 0) xs ++ ⟦ x ↑ 0 ⟧) ⦂ A
+  → Γ ⊢d ∞ # e ▻ map (_↑ 0) (xs ++ ⟦ x ⟧) ⦂ A
+rw-map {xs = xs} {x = x} ⊢e rewrite sym (map-++-commute (_↑ 0) xs ⟦ x ⟧) = ⊢e
+
 subst' : ∀ (k) {Γ A B e e₁ j es}
   → (2 * len es + size j) < k
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
@@ -157,7 +175,16 @@ subst' (suc k) {e = e₁} {e₂} {j = j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ x
   where ind-e₁ = subst' k {es = xs} (sz-case₁ sz eq) ⊢e₁ ⊢2
 ... | ⊢d-app₂ ⊢e₁ ⊢e₂ = rw-try' (rw-apps← {es = xs} (⊢d-app₂ ind-e₁ (⊢d-strengthen-0 ⊢e₂))) eq
   where ind-e₁ = subst' k {es = xs} (sz-case₂ {j = j} sz eq) ⊢e₁ ⊢2
-... | ⊢d-sub ⊢e B~j j≢Z = {!!}
+subst' (suc k) {e = e₁} {e₂} {j = ∞} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z
+  with rw-apps→ {es = map (_↑ 0) xs} (rw-try ⊢1 (eq-cons-↑ eq))
+... | r = rw-try' ind-e eq
+  where
+    ind-e = subst' k {es = xs ++ ⟦ x ⟧} (sz-case₃ sz eq) (rw-map {xs = xs} (rw-apps← {es = map (_↑ 0) xs} r)) ⊢2
+-- (rw-apps← {es = xs} {!!}) eq
+-- ⊢d-sub' (subst' k {es = e ∷ es} {!!} {!r!} ⊢2 ) B~j
+subst' (suc k) {e = e₁} {e₂} {j = Z} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z = ⊥-elim (j≢Z refl)
+subst' (suc k) {e = e₁} {e₂} {j = S j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z
+  = ⊢d-sub' {!!} B~j
 
 -- rewrite in the middle of applications
 
