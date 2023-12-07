@@ -52,6 +52,12 @@ Fixpoint size_ccounter (j : ccounter) : nat :=
   | Sc j' => 1 + size_ccounter j'
   end.
 
+Fixpoint size_counter (i : counter) : nat :=
+  match i with
+  | Ba j => size_ccounter j
+  | Si i => 1 + size_counter i
+  end.
+
 Inductive dsub : type -> counter -> type -> Prop :=
 | DS_Z : forall A,
     dsub A (Ba Zc) A
@@ -59,44 +65,66 @@ Inductive dsub : type -> counter -> type -> Prop :=
     dsub Int (Ba Inf) Int
 | DS_Top : forall A,
     dsub A (Ba Inf) Top
-| DS_Arr1 : forall A B C D,
+| DS_Arr_Inf : forall A B C D,
     dsub C (Ba Inf) A ->
     dsub B (Ba Inf) D ->
     dsub (Arr A B) (Ba Inf) (Arr C D)
+| DS_Arr_Si : forall A B C D i,
+    dsub C (Ba Inf) A ->
+    dsub B i D ->
+    dsub (Arr A B) (Si i) (Arr A D)
+| DS_Arr_Sc : forall A B C D j,
+    dsub C (Ba Inf) A ->
+    dsub B (Ba j) D ->
+    dsub (Arr A B) (Ba (Sc j)) (Arr A D)
+| DS_And1 : forall A B C j,
+    dsub A j C ->
+    dsub (And A B) j C
+| DS_And2 : forall A B C j,
+    dsub B j C ->
+    dsub (And A B) j C
+| DS_And : forall A B C,
+    dsub A (Ba Inf) B ->
+    dsub A (Ba Inf) C ->
+    dsub A (Ba Inf) (And B C)
 .
-
 
 Inductive dty : context -> counter -> term -> type -> Prop :=
 | D_Int : forall Gamma i,
-    dty Gamma ZCo (Lit i) Int
+    dty Gamma (Ba Zc) (Lit i) Int
 | D_Var : forall Gamma x A,
     inCon Gamma x A ->
-    dty Gamma ZCo (Var x) A
+    dty Gamma (Ba Zc) (Var x) A
 | D_Ann : forall Gamma e A,
-    dty Gamma Inf e A ->
-    dty Gamma ZCo (Ann e A) A
-| D_Lam_Inf : forall Gamma e A B,
-    dty (Cons Gamma A) Inf e B ->
-    dty Gamma Inf (Lam e) (Arr A B)
-| D_Lam_N : forall Gamma e A B j,
-    dty (Cons Gamma A) j e B ->
-    dty Gamma (SCo j) (Lam e) (Arr A B)
-| D_App1 : forall Gamma e1 e2 A B,
-    dty Gamma ZCo e1 (Arr A B) ->
-    dty Gamma Inf e2 A ->
-    dty Gamma ZCo (App e1 e2) B
-| D_App2 : forall Gamma e1 e2 A B j,
-    dty Gamma (SCo j) e1 (Arr A B) ->
-    dty Gamma ZCo e2 A ->
-    dty Gamma j (App e1 e2) B
-| D_Sub: forall Gamma e A j,
-    dty Gamma ZCo e A ->
-    j <> ZCo ->
-    dwf A j ->
-    dty Gamma j e A
+    dty Gamma (Ba Inf) e A ->
+    dty Gamma (Ba Zc) (Ann e A) A
+| D_Lam1 : forall Gamma e A B,
+    dty (Cons Gamma A) (Ba Inf) e B ->
+    dty Gamma (Ba Inf) (Lam e) (Arr A B)
+| D_Lam2 : forall Gamma e A B i,
+    dty (Cons Gamma A) i e B ->
+    dty Gamma (Si i) (Lam e) (Arr A B)
+| D_App1 : forall Gamma e1 e2 A B j,
+    dty Gamma (Ba (Sc j)) e1 (Arr A B) ->
+    dty Gamma (Ba Inf) e2 A ->
+    dty Gamma (Ba j) (App e1 e2) B
+| D_App2 : forall Gamma e1 e2 A B i,
+    dty Gamma (Si i) e1 (Arr A B) ->
+    dty Gamma (Ba Zc) e2 A ->
+    dty Gamma i (App e1 e2) B
+| D_Sub: forall Gamma e A A' i,
+    dty Gamma (Ba Zc) e A ->
+    dsub A i A'->
+    i <> Ba Zc ->
+    dty Gamma i e A'
+| D_And : forall Gamma e A B,
+    dty Gamma (Ba Inf) e A ->
+    dty Gamma (Ba Inf) e B ->
+    dty Gamma (Ba Inf) e (And A B)
 .
 
-Notation "T ⊢ j e : A" := (dty T j e A) (at level 50).
+Notation "A <: i # B" := (dsub A i B) (at level 50).
+Notation "T ⊢ j # e : A" := (dty T j e A) (at level 50).
 
 (* Algo. *)
 
@@ -105,15 +133,31 @@ Inductive hint : Prop :=
 | Tau : type -> hint
 | Ho : term -> hint -> hint.
 
-Inductive awf : context -> type -> hint -> Prop :=
-| awf_Noth : forall Gamma A,
-    awf Gamma A Noth
-| awf_Tau : forall Gamma A,
-    awf Gamma A (Tau A)
-| awf_Hole : forall Gamma H e A B C,
-    aty Gamma (Tau A) e C ->
-    awf Gamma B H ->
-    awf Gamma (Arr A B) (Ho e H)
+Inductive asub : context -> type -> hint -> type -> Prop :=
+| As_Int : forall Gamma,
+    asub Gamma Int (Tau Int) Int
+| As_Top : forall Gamma A,
+    asub Gamma A (Tau Top) Top
+| As_Noth : forall Gamma A,
+    asub Gamma A Noth A
+| As_Arr : forall Gamma A B C D,
+    asub Gamma C (Tau A) A ->
+    asub Gamma B (Tau B) D ->
+    asub Gamma (Arr A B) (Tau (Arr C D)) (Arr C D)
+| As_Hint : forall Gamma A B H e D,
+    aty Gamma (Tau A) e A ->
+    asub Gamma B H D ->
+    asub Gamma (Arr A B) (Ho e H) (Arr A D)
+| As_And_L : forall Gamma A B H C,
+    asub Gamma A H C ->
+    asub Gamma (And A B) H C
+| As_And_R : forall Gamma A B H C,
+    asub Gamma B H C ->
+    asub Gamma (And A B) H C
+| As_And : forall Gamma A B C,
+    asub Gamma A (Tau B) B ->
+    asub Gamma A (Tau C) C ->
+    asub Gamma A (Tau (And B C)) (And B C)
 with aty : context -> hint -> term -> type -> Prop :=
 | A_Int : forall Gamma n,
     aty Gamma Noth (Lit n) Int
@@ -125,23 +169,27 @@ with aty : context -> hint -> term -> type -> Prop :=
 | A_App : forall Gamma e1 e2 H A B,
     aty Gamma (Ho e2 H) e1 (Arr A B) ->
     aty Gamma H (App e1 e2) B
-(* I omit the shift here to simplify *)
-| A_Lam1 : forall Gamma e A B C,
-    aty (Cons Gamma A) (Tau B) e C ->
-    aty Gamma (Tau (Arr A B)) (Lam e) (Arr A C)
+| A_Lam1 : forall Gamma e A B,
+    aty (Cons Gamma A) (Tau B) e B ->
+    aty Gamma (Tau (Arr A B)) (Lam e) (Arr A B)
 | A_Lam2 : forall Gamma e1 e A B H,
     aty Gamma Noth e1 A ->
     aty (Cons Gamma A) H e B ->
     aty Gamma (Ho e1 H) (Lam e) (Arr A B)
-| A_Sub : forall Gamma e A H,
+| A_Sub : forall Gamma e A B H,
     aty Gamma Noth e A ->
-    awf Gamma A H ->
-    aty Gamma H e A
+    asub Gamma A H B ->
+    H <> Noth ->
+    aty Gamma H e B
+| A_And : forall Gamma A B e,
+    aty Gamma (Tau A) e A ->
+    aty Gamma (Tau B) e B ->
+    aty Gamma (Tau (And A B)) e (And A B)          
 .
 
 Hint Constructors aty : core.
 
-Notation "T |- A <: H" := (awf T A H) (at level 40).
+Notation "T |- A <: H ⤳ B" := (asub T A H B) (at level 40).
 Notation "T |- H => e => A" := (aty T H e A) (at level 50).
 
 Fixpoint apps (e : term) (es : list term) : term :=
@@ -183,13 +231,20 @@ Proof.
       exists (a :: x). exists x0. subst. reflexivity.
 Qed.
 
-Lemma rw_apps : forall e es x,
-    apps e (es ++ [x]) = App (apps e es) x.
+Lemma rw_apps_gen : forall es e es',
+    apps e (es ++ es') = (apps (apps e es) es').
 Proof.
   induction es; eauto.
-  intros. simpl in *.
-  pose 
-Admitted.
+  intros.
+  simpl. eauto.
+Qed.
+
+Lemma rw_apps : forall es e x,
+    apps e (es ++ [x]) = App (apps e es) x.
+Proof.
+  intros.
+  eapply rw_apps_gen.
+Qed.
 
 Lemma dty_weaken : forall Gamma A B e j,
     dty (Cons Gamma A) j e B ->
@@ -205,7 +260,7 @@ Qed.
 Lemma subst_app : forall k es Gamma A B e e1 j,    
     2 * (length es) + size_counter j < k ->
     dty (Cons Gamma A) j (apps e es) B ->
-    dty Gamma ZCo e1 A ->    
+    dty Gamma (Ba Zc) e1 A ->    
     dty Gamma j (apps (App (Lam e) e1) es) B.
 Proof.
   induction k; intros.
@@ -217,15 +272,19 @@ Proof.
       destruct H2. 
       subst. rewrite rw_apps in H0.
       dependent destruction H0.
-      rewrite rw_apps. eapply D_App1.
-      * eapply IHk; eauto. simpl in *.
-        rewrite length_append in H. lia.
-      * eapply dty_weaken; eauto.
-      *  rewrite rw_apps. eapply D_App2.
-         **  eapply IHk; eauto. simpl in *.
-        rewrite length_append in H. lia.
-         ** eapply dty_weaken; eauto.
-      *  destruct j.
+      * rewrite rw_apps. eapply D_App1.
+        ++ eapply IHk; eauto. simpl in *.
+           rewrite length_append in H. lia.
+        ++ eapply dty_weaken; eauto.
+      * rewrite rw_apps. eapply D_App2.
+        ++ eapply IHk; eauto. simpl in *.
+           rewrite length_append in H. lia.
+        ++ eapply dty_weaken; eauto.
+      * 
+
+(*        
+      *  destruct i.
+         ** destruct c.
       **  eapply D_Sub; eauto.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
@@ -234,6 +293,7 @@ Proof.
         eapply IHk; eauto. simpl in *. lia.
         rewrite rw_apps. assumption.
 Qed.
+*)
       
 (* Experiment with induction on size *)
 
