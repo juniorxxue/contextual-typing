@@ -58,6 +58,12 @@ Fixpoint size_counter (i : counter) : nat :=
   | Si i => 1 + size_counter i
   end.
 
+Fixpoint size_type (t : type) : nat :=
+  match t with
+  | And A B => 1 + size_type A + size_type B
+  | _ => 0
+  end.
+
 Inductive dsub : type -> counter -> type -> Prop :=
 | DS_Z : forall A,
     dsub A (Ba Zc) A
@@ -258,7 +264,7 @@ Proof.
 Qed.
 
 Lemma subst_app : forall k es Gamma A B e e1 j,    
-    2 * (length es) + size_counter j < k ->
+    2 * (length es) + size_counter j + size_type B < k ->
     dty (Cons Gamma A) j (apps e es) B ->
     dty Gamma (Ba Zc) e1 A ->    
     dty Gamma j (apps (App (Lam e) e1) es) B.
@@ -280,8 +286,30 @@ Proof.
         ++ eapply IHk; eauto. simpl in *.
            rewrite length_append in H. lia.
         ++ eapply dty_weaken; eauto.
-      * 
-
+      * destruct i.
+        ++ destruct c.
+           ** eapply D_Sub; eauto.
+              eapply IHk; eauto. simpl in *.
+              rewrite length_append in *. admit. (* size of typ *)
+              rewrite rw_apps. assumption.
+           ** exfalso. eapply H1; eauto.
+           ** eapply D_Sub; eauto.
+              eapply IHk; eauto. simpl in *.
+              rewrite length_append in *. admit.
+              rewrite rw_apps. assumption.
+        ++ eapply D_Sub; eauto.
+           eapply IHk; eauto. simpl in *.
+           rewrite length_append in *. admit.
+           rewrite rw_apps. assumption.
+      * eapply D_And.
+        ++ eapply IHk; eauto. simpl in *.
+           rewrite length_append in *. lia.
+           rewrite rw_apps. assumption.
+        ++ eapply IHk; eauto. simpl in *.
+           rewrite length_append in *. lia.
+           rewrite rw_apps. assumption.
+Admitted.
+  
 (*        
       *  destruct i.
          ** destruct c.
