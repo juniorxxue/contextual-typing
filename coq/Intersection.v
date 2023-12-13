@@ -263,21 +263,26 @@ Proof.
   intros. induction l; eauto. simpl in *. f_equal. assumption.
 Qed.
 
-Lemma subst_app : forall k es Gamma A B e e1 j,    
-    2 * (length es) + size_counter j + size_type B < k ->
+Lemma subst_app : forall k g es Gamma A B e e1 j,    
+    2 * (length es) + size_counter j < k ->
+    size_type B < g ->
     dty (Cons Gamma A) j (apps e es) B ->
-    dty Gamma (Ba Zc) e1 A ->    
+    dty Gamma (Ba Zc) e1 A ->
     dty Gamma j (apps (App (Lam e) e1) es) B.
 Proof.
-  induction k; intros.
-  - dependent destruction H.    
+  induction k; induction g; intros.  
+  - dependent destruction H.
+  - dependent destruction H.
+  - dependent destruction H0.
   - destruct (lt_eq_lt_dec (length es) 0).
-    + destruct s. inversion l. eapply len_0_imply_empty in e0. subst.
-      simpl in *. econstructor. econstructor. eapply H0. eapply H1.
+    + destruct s.
+      * inversion l.
+      * eapply len_0_imply_empty in e0. subst.
+        simpl in *. econstructor. econstructor. eapply H1. eapply H2.
     + pose (lst_destruct_rev es l) as Rev. destruct Rev.
-      destruct H2. 
-      subst. rewrite rw_apps in H0.
-      dependent destruction H0.
+      destruct H3. 
+      subst. rewrite rw_apps in H1.
+      dependent destruction H1.
       * rewrite rw_apps. eapply D_App1.
         ++ eapply IHk; eauto. simpl in *.
            rewrite length_append in H. lia.
@@ -290,40 +295,25 @@ Proof.
         ++ destruct c.
            ** eapply D_Sub; eauto.
               eapply IHk; eauto. simpl in *.
-              rewrite length_append in *. admit. (* size of typ *)
+              rewrite length_append in *. lia. 
               rewrite rw_apps. assumption.
-           ** exfalso. eapply H1; eauto.
+           ** exfalso. eapply H3; eauto.
            ** eapply D_Sub; eauto.
               eapply IHk; eauto. simpl in *.
-              rewrite length_append in *. admit.
+              rewrite length_append in *. lia.
               rewrite rw_apps. assumption.
         ++ eapply D_Sub; eauto.
            eapply IHk; eauto. simpl in *.
-           rewrite length_append in *. admit.
+           rewrite length_append in *. lia.
            rewrite rw_apps. assumption.
       * eapply D_And.
-        ++ eapply IHk; eauto. simpl in *.
+        ++ eapply IHg; eauto. simpl in *.
            rewrite length_append in *. lia.
            rewrite rw_apps. assumption.
-        ++ eapply IHk; eauto. simpl in *.
+        ++ eapply IHg; eauto. simpl in *.
            rewrite length_append in *. lia.
            rewrite rw_apps. assumption.
-Admitted.
-  
-(*        
-      *  destruct i.
-         ** destruct c.
-      **  eapply D_Sub; eauto.
-        eapply IHk; eauto. simpl in *. lia.
-        rewrite rw_apps. assumption.
-      ** exfalso. eapply H; eauto.
-      ** eapply D_Sub; eauto.
-        eapply IHk; eauto. simpl in *. lia.
-        rewrite rw_apps. assumption.
 Qed.
-*)
-      
-(* Experiment with induction on size *)
 
 Variable A : Type.
 
