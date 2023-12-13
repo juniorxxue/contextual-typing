@@ -184,28 +184,60 @@ sz-case₄ : ∀ {j k₂}
   → j ≡ ♭ ∞
   → size j < suc k₂
   → 0 < k₂
-sz-case₄ j≡∞ j<1+k₂ rewrite j≡∞ = <-pred j<1+k₂  
+sz-case₄ j≡∞ j<1+k₂ rewrite j≡∞ = <-pred j<1+k₂
+
+subst-3m' : ∀ k₁ k₂ k₃ xs x {Γ A B e e₁ i}
+  → 1 + len xs < k₁
+  → size i < k₂
+  → size-t B < k₃
+  → Γ , A ⊢d i # (e₁ ▻ (xs ⇈)) · (x ↑ 0) ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d i #  (((ƛ e) · e₁) ▻ xs) · x ⦂ B
+
+subst-3 : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
+  → len es < k₁
+  → size j < k₂
+  → size-t B < k₃
+  → Γ , A ⊢d j # e ▻ (es ⇈) ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
+subst-3 (suc k₁) (suc k₂) (suc k₃) [] sz₁ sz₂ sz₃ ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
+subst-3 (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ ⊢1 ⊢2 =
+  case lst-destruct-rev (e ∷ es) (ees>0 {e} {es}) of λ where
+    ⟨ x , ⟨ xs , eq ⟩ ⟩ → rw-try' (rw-apps← {es = xs} (subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {!!} {!!} {!!} {!!} ⊢2)) eq
+  
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇐ ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ {!!} {!!} {!!} {!!} {!!} {!!} ⊢1 ⊢2
+                                                                           in ⊢d-app⇐ ind-e₁ (⊢d-strengthen-0 ⊢3)
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇒ ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ {!!} {!!} {!!} {!!} {!!} {!!} ⊢1 ⊢2
+                                                                           in ⊢d-app⇒ ind-e₁ (⊢d-strengthen-0 ⊢3)
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ Z} sz₁ sz₂ sz₃ (⊢d-sub ⊢1 A≤B j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ ∞} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) A≤B
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ (S⇐ j)} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ {!!} (s≤s m≤m) ⊢1 ⊢2) A≤B
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = S⇒ i} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ {!!} (s≤s m≤m) ⊢1 ⊢2) A≤B
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-& ⊢1 ⊢3) ⊢2 = ⊢d-& (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ {!!} ⊢1 ⊢2)
+                                                                             (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ {!!} ⊢3 ⊢2)
 
 subst-3m : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
   → len es < k₁
   → size j < k₂
   → size-t B < k₃
-  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
+  → Γ , A ⊢d j # e ▻ (es ⇈) ⦂ B
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
 subst-3m (suc k₁) (suc k₂) (suc k₃) [] sz₁ sz₂ sz₃ ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
 subst-3m (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ ⊢1 ⊢2 =
   case lst-destruct-rev (e ∷ es) (ees>0 {e} {es}) of λ where
     ⟨ x , ⟨ xs , eq ⟩ ⟩ → case rw-apps→ {es = xs ⇈} (rw-try ⊢1 (eq-cons-↑ eq)) of λ where
-                            (⊢d-app⇐ r r₁) → {!!}
+                            (⊢d-app⇐ r r₁) → {! !}
                             (⊢d-app⇒ r r₁) → {!!}
                             (⊢d-sub {A = A} {B = B} ⊢e A≤B j≢Z) → case inspect j of λ where
                                                     (♭ Z with≡ j≡Z) → ⊥-elim (j≢Z j≡Z)
                                                     (♭ ∞ with≡ j≡∞) →
-                                                      let ind-e = subst-3m (suc k₁) k₂ (suc (size-t B)) (xs ++ ⟦ x ⟧)
-                                                                                       (sz-case₁ sz₁ eq) (sz-case₄ j≡∞ sz₂) (s≤s m≤m)
+                                                          -- problematic function calls
+                                                      let ind-e = subst-3m (suc k₁) k₂ ((suc (size-t B))) (xs ++ ⟦ x ⟧)
+                                                                                       (sz-case₁ sz₁ eq) (sz-case₄ j≡∞ sz₂) {!!}
                                                                            ((rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e))) ⊢2
-                                                      in ⊢d-sub' (rw-try' ind-e {!!}) A≤B
+                                                      in ⊢d-sub' (rw-try' {!!} eq) A≤B
                                                     (♭ (S⇐ j') with≡ j≡Sj') → {!!}
                                                     (S⇒ i with≡ j≡Si) → {!!}
                             (⊢d-& {A = A} {B = B} ⊢e₁ ⊢e₂) →
@@ -214,6 +246,8 @@ subst-3m (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ �
                                   ind-e₂ = subst-3m (suc k₁) (suc k₂) k₃ (xs ++ ⟦ x ⟧) (sz-case₁ sz₁ eq) sz₂ (sz-case₃ {A = A} {B = B} sz₃)
                                                                    (rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e₂)) ⊢2
                               in rw-try' (⊢d-& ind-e₁ ind-e₂) eq
+
+
 
 subst' : ∀ k g {Γ A B e e₁ j es}
   → (2 * len es + size j) < k
@@ -234,6 +268,7 @@ subst' (suc k) (suc g) {j = j} {es = e ∷ es} sz-k sz-g ⊢1 ⊢2 =
                                                                            ((rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e))) ⊢2
                                                       in ⊢d-sub' (rw-try' ind-e eq) A≤B
                                                     (♭ (S⇐ j') with≡ j≡Sj') → {!!}
+                                                    (S⇒ i with≡ j≡Si) → {!!}
                             (⊢d-& ⊢e₁ ⊢e₂) → let ind-e₁ = subst' (suc k) g {es = xs ++ ⟦ x ⟧} {!sz-k!} {!!} (rw-apps← ⊢e₁) ⊢2
                                                  ind-e₂ = subst' (suc k) g sz-k {!!} ⊢e₂ ⊢2
                                              in rw-try' (rw-apps← {es = xs} (⊢d-& {!ind-e₁!}
