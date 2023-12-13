@@ -10,6 +10,7 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; con
 open import Data.Empty public
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom) renaming (length to len) public
+open import Data.List.Properties using (map-++) public
 
 m+1≤n→m≤n : ∀ {m n}
   → suc m ≤ n
@@ -51,3 +52,8 @@ m≤m {suc m} = s≤s m≤m
 
 pattern ⟦_⟧ z = z ∷ []
 
+data Singleton {a} {A : Set a} (x : A) : Set a where
+  _with≡_ : (y : A) → x ≡ y → Singleton x
+
+inspect : ∀ {a} {A : Set a} (x : A) → Singleton x
+inspect x = x with≡ refl

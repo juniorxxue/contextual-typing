@@ -87,13 +87,157 @@ size-t Top = 0
 size-t (A ⇒ B) = 1 + size-t A + size-t B
 size-t (A & B) = 1 + size-t A + size-t B
 
+lst-destruct-rev : ∀ (l : List Term)
+  → 0 < len l
+  → ∃[ x ] (∃[ xs ] (l ≡ (xs ++ x ∷ [])))
+lst-destruct-rev (x ∷ []) (s≤s z≤n) = ⟨ x , ⟨ [] , refl ⟩ ⟩
+lst-destruct-rev (x ∷ y ∷ l) (s≤s z≤n) with lst-destruct-rev (y ∷ l) (s≤s z≤n)
+... | ⟨ x' , ⟨ xs' , eq ⟩ ⟩ rewrite eq = ⟨ x' , ⟨ x ∷ xs' , refl ⟩ ⟩
+
+ees>0 : ∀ {e} {es : List Term}
+  → len (e ∷ es) > 0
+ees>0 {e} {es} = s≤s z≤n
+
+rw-try' : ∀ {Γ e₁ e₂ es j B xs x}
+  → Γ ⊢d j # e₁ ▻ (xs ++ ⟦ x ⟧) ⦂ B
+  → (e₂ ∷ es) ≡ (xs ++ ⟦ x ⟧)
+  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
+rw-try' ⊢e eq rewrite (sym eq) = ⊢e
+
+rw-try : ∀ {Γ e₁ e₂ es j B xs x}
+  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
+  → (e₂ ∷ es) ≡ (xs ++ ⟦ x ⟧)
+  → Γ ⊢d j # e₁ ▻ (xs ++ ⟦ x ⟧) ⦂ B
+rw-try ⊢e eq rewrite (sym eq) = ⊢e
+
+rw-apps-gen : ∀ (es) {e es'}
+  → e ▻ (es ++ es') ≡ (e ▻ es) ▻ es'
+rw-apps-gen [] = refl
+rw-apps-gen (x ∷ es) = rw-apps-gen es
+
+rw-apps : ∀ {es e x}
+  → e ▻ (es ++ ⟦ x ⟧) ≡ (e ▻ es) · x
+rw-apps {es} {e} {x} = rw-apps-gen es {e = e} {es' = ⟦ x ⟧}
+
+rw-apps→ : ∀ {Γ j es e x A}
+  → Γ ⊢d j # e ▻ (es ++ ⟦ x ⟧) ⦂ A
+  → Γ ⊢d j # (e ▻ es) · x ⦂ A
+rw-apps→ {es = es} {e = e} {x = x} ⊢e rewrite rw-apps {es} {e} {x} = ⊢e
+
+rw-apps← : ∀ {Γ j es e x A}
+  → Γ ⊢d j # (e ▻ es) · x ⦂ A
+  → Γ ⊢d j # e ▻ (es ++ ⟦ x ⟧) ⦂ A
+rw-apps← {es = es} {e = e} {x = x} ⊢e rewrite rw-apps {es} {e} {x} = ⊢e
+
+infix 5 _⇈
+_⇈ : List Term → List Term
+_⇈ = map (_↑ 0)
+
+eq-cons-↑ : ∀ {e es xs x}
+  → e ∷ es ≡ xs ++ ⟦ x ⟧
+  → (e ↑ 0) ∷ map (_↑ 0) es ≡ (map (_↑ 0) xs) ++ ⟦ x ↑ 0 ⟧
+eq-cons-↑ {xs = xs} {x = x} eq rewrite sym (map-++ (_↑ 0) xs ⟦ x ⟧) = cong (map (_↑ 0)) eq
+
+rw-map : ∀ {Γ e xs x A j}
+  → Γ ⊢d j # e ▻ (map (_↑ 0) xs ++ ⟦ x ↑ 0 ⟧) ⦂ A
+  → Γ ⊢d j # e ▻ map (_↑ 0) (xs ++ ⟦ x ⟧) ⦂ A
+rw-map {xs = xs} {x = x} ⊢e rewrite sym (map-++ (_↑ 0) xs ⟦ x ⟧) = ⊢e
+
+len-append : ∀ {xs} {x : Term}
+  → len (xs ++ ⟦ x ⟧) ≡ 1 + len xs
+len-append {[]} = refl
+len-append {x ∷ xs} = cong suc (len-append {xs})
+
+cons-++-len : ∀ {e : Term} {es xs x}
+  → e ∷ es ≡ xs ++ ⟦ x ⟧
+  → len es ≡ len xs
+cons-++-len {xs = xs} {x = x} eq with cong len eq
+... | r rewrite len-append {xs} {x} = suc-injective r
+
+sz-case₁ : ∀ {e : Term} {k₁ es x xs}
+  → len (e ∷ es) < suc k₁
+  → e ∷ es ≡ xs ++ ⟦ x ⟧
+  → len (xs ++ ⟦ x ⟧) < suc k₁
+sz-case₁ sz eq rewrite sym eq = sz
+
+m+n<o⇒m<o : ∀ {m n o}
+  → m + n < o
+  → m < o
+m+n<o⇒m<o {n = n} m+n<o = {!!}
+
+m+n<o⇒n<o : ∀ {m n o}
+  → m + n < o
+  → n < o
+m+n<o⇒n<o {n = n} m+n<o = {!!}
+
+sz-case₂ : ∀ {A B k₃}
+  → suc (size-t A + size-t B) < suc k₃
+  → size-t A < k₃
+sz-case₂ {A = A} (s≤s sz) = m+n≤o⇒m≤o (suc (size-t A)) sz
+
+sz-case₃ : ∀ {A B k₃}
+  → suc (size-t A + size-t B) < suc k₃
+  → size-t B < k₃
+sz-case₃ {A = A} {B = B} (s≤s sz) = m+n≤o⇒n≤o {!!} {!!}
+
+sz-case₄ : ∀ {j k₂}
+  → j ≡ ♭ ∞
+  → size j < suc k₂
+  → 0 < k₂
+sz-case₄ j≡∞ j<1+k₂ rewrite j≡∞ = <-pred j<1+k₂  
+
+subst-3m : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
+  → len es < k₁
+  → size j < k₂
+  → size-t B < k₃
+  → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
+subst-3m (suc k₁) (suc k₂) (suc k₃) [] sz₁ sz₂ sz₃ ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
+subst-3m (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ ⊢1 ⊢2 =
+  case lst-destruct-rev (e ∷ es) (ees>0 {e} {es}) of λ where
+    ⟨ x , ⟨ xs , eq ⟩ ⟩ → case rw-apps→ {es = xs ⇈} (rw-try ⊢1 (eq-cons-↑ eq)) of λ where
+                            (⊢d-app⇐ r r₁) → {!!}
+                            (⊢d-app⇒ r r₁) → {!!}
+                            (⊢d-sub {A = A} {B = B} ⊢e A≤B j≢Z) → case inspect j of λ where
+                                                    (♭ Z with≡ j≡Z) → ⊥-elim (j≢Z j≡Z)
+                                                    (♭ ∞ with≡ j≡∞) →
+                                                      let ind-e = subst-3m (suc k₁) k₂ (suc (size-t B)) (xs ++ ⟦ x ⟧)
+                                                                                       (sz-case₁ sz₁ eq) (sz-case₄ j≡∞ sz₂) (s≤s m≤m)
+                                                                           ((rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e))) ⊢2
+                                                      in ⊢d-sub' (rw-try' ind-e {!!}) A≤B
+                                                    (♭ (S⇐ j') with≡ j≡Sj') → {!!}
+                                                    (S⇒ i with≡ j≡Si) → {!!}
+                            (⊢d-& {A = A} {B = B} ⊢e₁ ⊢e₂) →
+                              let ind-e₁ = subst-3m (suc k₁) (suc k₂) k₃ (xs ++ ⟦ x ⟧) (sz-case₁ sz₁ eq) sz₂ (sz-case₂ {A = A} {B = B} sz₃)
+                                                                   (rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e₁)) ⊢2
+                                  ind-e₂ = subst-3m (suc k₁) (suc k₂) k₃ (xs ++ ⟦ x ⟧) (sz-case₁ sz₁ eq) sz₂ (sz-case₃ {A = A} {B = B} sz₃)
+                                                                   (rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e₂)) ⊢2
+                              in rw-try' (⊢d-& ind-e₁ ind-e₂) eq
+
 subst' : ∀ k g {Γ A B e e₁ j es}
   → (2 * len es + size j) < k
   → size-t B < g
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
-subst' (suc k) (suc g) {es = es} sz-k sz-g ⊢1 ⊢2 = {!!}
+subst' (suc k) (suc g) {es = []} sz-k sz-g ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
+subst' (suc k) (suc g) {j = j} {es = e ∷ es} sz-k sz-g ⊢1 ⊢2 =
+  case lst-destruct-rev (e ∷ es) (ees>0 {e} {es}) of λ where
+    ⟨ x , ⟨ xs , eq ⟩ ⟩ → case rw-apps→ {es = xs ⇈} (rw-try ⊢1 (eq-cons-↑ eq)) of λ where
+                            (⊢d-app⇐ r r₁) → {!!}
+                            (⊢d-app⇒ r r₁) → {!!}
+                            (⊢d-sub {A = A} {B = B} ⊢e A≤B j≢Z) → case inspect j of λ where
+                                                    (♭ Z with≡ j≡Z) → ⊥-elim (j≢Z j≡Z)
+                                                    (♭ ∞ with≡ j≡∞) →
+                                                      let ind-e = subst' k (suc (size-t B)) {!!} (s≤s m≤m)
+                                                                           ((rw-map {xs = xs} (rw-apps← {es = xs ⇈} ⊢e))) ⊢2
+                                                      in ⊢d-sub' (rw-try' ind-e eq) A≤B
+                                                    (♭ (S⇐ j') with≡ j≡Sj') → {!!}
+                            (⊢d-& ⊢e₁ ⊢e₂) → let ind-e₁ = subst' (suc k) g {es = xs ++ ⟦ x ⟧} {!sz-k!} {!!} (rw-apps← ⊢e₁) ⊢2
+                                                 ind-e₂ = subst' (suc k) g sz-k {!!} ⊢e₂ ⊢2
+                                             in rw-try' (rw-apps← {es = xs} (⊢d-& {!ind-e₁!}
+                                                                                  ind-e₂)) eq 
   
 subst :  ∀ {Γ A B e e₁ i} (es : List Term)
   → Γ , A ⊢d i # e ▻ map (_↑ 0) es ⦂ B
