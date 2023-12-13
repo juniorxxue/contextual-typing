@@ -61,6 +61,7 @@ Fixpoint size_counter (i : counter) : nat :=
 Fixpoint size_type (t : type) : nat :=
   match t with
   | And A B => 1 + size_type A + size_type B
+  | Arr A B => 1 + size_type A + size_type B
   | _ => 0
   end.
 

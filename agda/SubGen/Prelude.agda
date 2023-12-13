@@ -40,3 +40,14 @@ n<m⇒m≰n : ∀ {m n}
 n<m⇒m≰n {suc m} {zero} n<m = λ ()
 n<m⇒m≰n {suc m} {suc n} (s≤s n<m) (s≤s m≤n) = n<m⇒m≰n {m} {n} n<m m≤n
 
+m+0≡m : ∀ m
+  → m + 0 ≡ m
+m+0≡m m rewrite +-comm m 0 = refl
+
+m≤m : ∀ {m}
+  → m ≤ m
+m≤m {zero} = z≤n
+m≤m {suc m} = s≤s m≤m
+
+pattern ⟦_⟧ z = z ∷ []
+

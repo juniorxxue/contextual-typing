@@ -63,9 +63,11 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D  
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
+    → j ≢ ♭ Z
     → A & B ≤d j # C
   ≤d-and₂ : ∀ {A B C j}
     → B ≤d j # C
+    → j ≢ ♭ Z
     → A & B ≤d j # C
   ≤d-and : ∀ {A B C}
     → A ≤d ♭ ∞ # B
@@ -80,7 +82,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
 ≤d-refl∞ {A = * x} = ≤d-base∞
 ≤d-refl∞ {A = Top} = ≤d-top
 ≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
-≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞) (≤d-and₂ ≤d-refl∞)
+≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
 
 
 ----------------------------------------------------------------------

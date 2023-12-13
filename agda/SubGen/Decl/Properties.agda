@@ -132,17 +132,17 @@ data wf-j : Type → Counter → Set where
   → A ≤d j # C
 ≤d-trans {B = Int} ≤d-Z ≤d-Z = ≤d-Z
 ≤d-trans {B = Int} ≤d-int∞ ≤2 = ≤2
-≤d-trans {B = Int} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
-≤d-trans {B = Int} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
+≤d-trans {B = Int} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = Int} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = * x} ≤d-Z ≤d-Z = ≤d-Z
 ≤d-trans {B = * x} ≤d-base∞ ≤2 = ≤2
-≤d-trans {B = * x} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
-≤d-trans {B = * x} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
+≤d-trans {B = * x} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = * x} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = Top} ≤d-Z ≤d-Z = ≤d-Z
 ≤d-trans {B = Top} ≤d-top ≤d-top = ≤d-top
 ≤d-trans {B = Top} ≤d-top (≤d-and ≤2 ≤3) = ≤d-and (≤d-trans ≤d-top ≤2) (≤d-trans ≤d-top ≤3)
-≤d-trans {B = Top} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
-≤d-trans {B = Top} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
+≤d-trans {B = Top} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = Top} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 
 ≤d-trans {B = B ⇒ B₁} ≤d-Z ≤2 = ≤2
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) ≤d-top = ≤d-top
@@ -151,12 +151,33 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇒ ≤1 ≤3) (≤d-arr-S⇒ ≤2 ≤4) = ≤d-arr-S⇒ ≤2 (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇐ ≤1 ≤3) (≤d-arr-S⇐ ≤2 ≤4) = ≤d-arr-S⇐ ≤2 (≤d-trans ≤3 ≤4)
 
-≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
-≤d-trans {B = B ⇒ B₁} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
+≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = B ⇒ B₁} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = B & B₁} ≤d-Z ≤2 = ≤2
-≤d-trans {B = B & B₁} (≤d-and₁ ≤1) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2)
-≤d-trans {B = B & B₁} (≤d-and₂ ≤1) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2)
+≤d-trans {B = B & B₁} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = B & B₁} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) ≤d-top = ≤d-top
-≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₁ ≤2) = ≤d-trans ≤1 ≤2
-≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₂ ≤2) = ≤d-trans ≤3 ≤2
+≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₁ ≤2 neq) = ≤d-trans ≤1 ≤2
+≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₂ ≤2 neq) = ≤d-trans ≤3 ≤2
 ≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-and ≤1 ≤3) ≤2) (≤d-trans (≤d-and ≤1 ≤3) ≤4)
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Subsumption                          +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+⊢d-sub' : ∀ {Γ e A B i}
+  → Γ ⊢d ♭ Z # e ⦂ B
+  → B ≤d i # A
+  → Γ ⊢d i # e ⦂ A
+⊢d-sub' ⊢e ≤d-Z = ⊢e
+⊢d-sub' ⊢e ≤d-int∞ = ⊢d-sub ⊢e ≤d-int∞ (λ ())
+⊢d-sub' ⊢e ≤d-base∞ = ⊢d-sub ⊢e ≤d-base∞ (λ ())
+⊢d-sub' ⊢e ≤d-top = ⊢d-sub ⊢e ≤d-top (λ ())
+⊢d-sub' ⊢e (≤d-arr-∞ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-∞ B≤A B≤A₁) (λ ())
+⊢d-sub' ⊢e (≤d-arr-S⇒ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-S⇒ B≤A B≤A₁) (λ ())
+⊢d-sub' ⊢e (≤d-arr-S⇐ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-S⇐ B≤A B≤A₁) (λ ())
+⊢d-sub' ⊢e (≤d-and₁ B≤A x) = ⊢d-sub ⊢e (≤d-and₁ B≤A x) x
+⊢d-sub' ⊢e (≤d-and₂ B≤A x) = ⊢d-sub ⊢e (≤d-and₂ B≤A x) x
+⊢d-sub' ⊢e (≤d-and B≤A B≤A₁) = ⊢d-& (⊢d-sub' ⊢e B≤A) (⊢d-sub' ⊢e B≤A₁)
