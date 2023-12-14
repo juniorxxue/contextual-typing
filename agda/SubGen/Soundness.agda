@@ -170,21 +170,11 @@ m+n<o⇒n<o : ∀ {m n o}
   → n < o
 m+n<o⇒n<o {n = n} m+n<o = {!!}
 
-sz-case₂ : ∀ {A B k₃}
-  → suc (size-t A + size-t B) < suc k₃
-  → size-t A < k₃
-sz-case₂ {A = A} (s≤s sz) = m+n≤o⇒m≤o (suc (size-t A)) sz
-
-sz-case₃ : ∀ {A B k₃}
-  → suc (size-t A + size-t B) < suc k₃
-  → size-t B < k₃
-sz-case₃ {A = A} {B = B} (s≤s sz) = m+n≤o⇒n≤o {!!} {!!}
-
-sz-case₄ : ∀ {j k₂}
-  → j ≡ ♭ ∞
-  → size j < suc k₂
-  → 0 < k₂
-sz-case₄ j≡∞ j<1+k₂ rewrite j≡∞ = <-pred j<1+k₂
+sz-case' : ∀ {e : Term} {es x xs k}
+  → suc (suc (len es)) ≤ suc k
+  → e ∷ es ≡ xs ++ ⟦ x ⟧
+  → suc (len xs) < suc k
+sz-case' (s≤s sz) eq rewrite cons-++-len eq = s≤s sz
 
 subst-3m' : ∀ k₁ k₂ k₃ xs x {Γ A B e e₁ i}
   → 1 + len xs < k₁
@@ -194,6 +184,28 @@ subst-3m' : ∀ k₁ k₂ k₃ xs x {Γ A B e e₁ i}
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d i #  (((ƛ e) · e₁) ▻ xs) · x ⦂ B
 
+size-c>0 : ∀ {k j}
+  → size-c j < k
+  → 0 < k
+size-c>0 {k} {Z} sz = sz
+size-c>0 {k} {∞} sz = <-trans (s≤s z≤n) sz
+size-c>0 {.(suc _)} {S⇐ j} (s≤s sz) = s≤s z≤n
+
+size>0 : ∀ {k i}
+  → size i < k
+  → 0 < k
+size>0 {suc i} {k} sz = s≤s z≤n
+
+size-t-+-l : ∀ {A B k}
+  → size-t A + size-t B < k
+  → size-t A < k
+size-t-+-l sz = m+n<o⇒m<o sz
+
+size-t-+-r : ∀ {A B k}
+  → size-t A + size-t B < k
+  → size-t B < k
+size-t-+-r sz = m+n<o⇒n<o sz  
+
 subst-3 : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
   → len es < k₁
   → size j < k₂
@@ -202,27 +214,26 @@ subst-3 : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
 subst-3 (suc k₁) (suc k₂) (suc k₃) [] sz₁ sz₂ sz₃ ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
-subst-3 (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ ⊢1 ⊢2 =
-  case lst-destruct-rev (e ∷ es) (ees>0 {e} {es}) of λ where
-    ⟨ x , ⟨ xs , eq ⟩ ⟩ → rw-try' (rw-apps← {es = xs} (subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {!!} sz₂ sz₃ (rw-apps→ {es = xs ⇈} (rw-try ⊢1 (eq-cons-↑ eq))) ⊢2)) eq
+subst-3 (suc k₁) (suc k₂) (suc k₃) (e ∷ es) {j = j} sz₁ sz₂ sz₃ ⊢1 ⊢2 with (λ x xs eq → (rw-try' (rw-apps← {es = xs} (subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x (sz-case' sz₁ eq) sz₂ sz₃ (rw-apps→ {es = xs ⇈} (rw-try ⊢1 (eq-cons-↑ eq))) ⊢2)) eq)) | lst-destruct-rev (e ∷ es) (ees>0 {e} {es})
+... | rec | ⟨ x , ⟨ xs , eq ⟩ ⟩ = rec x xs eq
   
-subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇐ ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ (suc (suc k₂)) {!!} xs {!!} (s≤s sz₂) {!!} ⊢1 ⊢2
-                                                                           in (⊢d-app⇐ ind-e₁ (⊢d-strengthen-0 ⊢3))
-subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇒ ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ {!!} {!!} xs {!!} {!!} {!!} ⊢1 ⊢2
-                                                                           in ⊢d-app⇒ ind-e₁ (⊢d-strengthen-0 ⊢3)
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇐ {A = A} {B = B} ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-t A) + (size-t B))) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
+                                                                                           in (⊢d-app⇐ ind-e₁ (⊢d-strengthen-0 ⊢3))
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇒ {A = A} {B = B} ⊢1 ⊢3) ⊢2 = let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-t A) + (size-t B))) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
+                                                                                           in ⊢d-app⇒ ind-e₁ (⊢d-strengthen-0 ⊢3)
 subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ Z} sz₁ sz₂ sz₃ (⊢d-sub ⊢1 A≤B j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
 subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ ∞} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) A≤B
-subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ (S⇐ j)} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ {!!} (s≤s m≤m) ⊢1 ⊢2) A≤B
-subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = S⇒ i} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ {!!} (s≤s m≤m) ⊢1 ⊢2) A≤B
-subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-& ⊢1 ⊢3) ⊢2 = ⊢d-& (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ {!!} ⊢1 ⊢2)
-                                                                             (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ {!!} ⊢3 ⊢2)
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ (S⇐ j)} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ (size-c>0 (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x {i = S⇒ i} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 = ⊢d-sub' (subst-3m' (suc k₁) k₂ (suc (size-t B)) xs x sz₁ (size>0 {i = i} (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
+subst-3m' (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-& {A = A} {B = B} ⊢1 ⊢3) ⊢2 = ⊢d-& (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ (size-t-+-l {A = A} {B = B} (<-pred sz₃)) ⊢1 ⊢2)
+                                                                                             (subst-3m' (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ (size-t-+-r {A = A} {B = B} (<-pred sz₃)) ⊢3 ⊢2)
 
   
 subst :  ∀ {Γ A B e e₁ i} (es : List Term)
   → Γ , A ⊢d i # e ▻ map (_↑ 0) es ⦂ B
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d i # ((ƛ e) · e₁) ▻ es ⦂ B
-subst {B = B} {i = i} es ⊢1 ⊢2 = {!!}
+subst {B = B} {i = i} es ⊢1 ⊢2 = subst-3 (suc (len es)) (suc (size i)) (suc (size-t B)) es (s≤s m≤m) (s≤s m≤m) (s≤s m≤m) ⊢1 ⊢2
 
 sound-inf : ∀ {Γ e H A es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
