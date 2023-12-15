@@ -110,6 +110,21 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⇩-⇧-comm (τ A) m n m≤n sdh = refl
 ⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm H m n m≤n sdh = refl
 
+
+H≢□-⇩ : ∀ {H n}
+  → H ≢ □
+  → H ⇩ n ≢ □
+H≢□-⇩ {□} H≢□ = H≢□
+H≢□-⇩ {τ x} H≢□ = H≢□
+H≢□-⇩ {⟦ x ⟧⇒ H} H≢□ = λ ()
+
+H≢□-⇧ : ∀ {H n}
+  → H ≢ □
+  → H ⇧ n ≢ □
+H≢□-⇧ {□} H≢□ = H≢□
+H≢□-⇧ {τ x} H≢□ = H≢□
+H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Weakening                            +--
@@ -130,8 +145,8 @@ data _~⇧~_ : Hint → ℕ → Set where
 ≤a-weaken ≤a-□ = ≤a-□
 ≤a-weaken (≤a-arr C≤A B≤D) = ≤a-arr (≤a-weaken C≤A) (≤a-weaken B≤D)
 ≤a-weaken (≤a-hint ⊢e B≤H) = ≤a-hint (⊢a-weaken ⊢e) (≤a-weaken B≤H)
-≤a-weaken (≤a-and-l ≤) = ≤a-and-l (≤a-weaken ≤)
-≤a-weaken (≤a-and-r ≤) = ≤a-and-r (≤a-weaken ≤)
+≤a-weaken (≤a-and-l ≤ H≢□) = ≤a-and-l (≤a-weaken ≤) (H≢□-⇧ H≢□)
+≤a-weaken (≤a-and-r ≤ H≢□) = ≤a-and-r (≤a-weaken ≤) (H≢□-⇧ H≢□)
 ≤a-weaken (≤a-and ≤₁ ≤₂) = ≤a-and (≤a-weaken ≤₁) (≤a-weaken ≤₂)
 
 ≤a-weaken-0 : ∀ {Γ A B H C}
@@ -167,6 +182,7 @@ spl-weaken (have spl) = have (spl-weaken spl)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+
 ≤a-strengthen : ∀ {Γ A B H n}
   → Γ ⊢a A ≤ H ⇝ B
   → H ~⇧~ n
@@ -186,8 +202,8 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ≤a-strengthen ≤a-□ sdh n≤l = ≤a-□
 ≤a-strengthen (≤a-arr A≤H A≤H₁) sdh n≤l = ≤a-arr (≤a-strengthen A≤H sdh-τ n≤l) (≤a-strengthen A≤H₁ sdh-τ n≤l)
 ≤a-strengthen (≤a-hint ⊢e A≤H) (sdh-h sd sdh) n≤l = ≤a-hint (⊢a-strengthen ⊢e sd sdh-τ n≤l) (≤a-strengthen A≤H sdh n≤l)
-≤a-strengthen (≤a-and-l x₁) x n≤l = ≤a-and-l (≤a-strengthen x₁ x n≤l)
-≤a-strengthen (≤a-and-r x₁) x n≤l = ≤a-and-r (≤a-strengthen x₁ x n≤l)
+≤a-strengthen (≤a-and-l x₁ H≢□) x n≤l = ≤a-and-l (≤a-strengthen x₁ x n≤l) (H≢□-⇩ H≢□)
+≤a-strengthen (≤a-and-r x₁ H≢□) x n≤l = ≤a-and-r (≤a-strengthen x₁ x n≤l) (H≢□-⇩ H≢□)
 ≤a-strengthen (≤a-and x₁ x₂) x n≤l = ≤a-and (≤a-strengthen x₁ sdh-τ n≤l) (≤a-strengthen x₂ sdh-τ n≤l)
 
 ⊢a-strengthen ⊢a-lit sd sdh n≤l = ⊢a-lit
@@ -267,9 +283,17 @@ subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = {!!}
 ≤a-refined ≤a-□ = ≤a-□
 ≤a-refined (≤a-arr A≤H A≤H₁) = ≤a-arr ≤a-refl (≤a-refined A≤H₁)
 ≤a-refined (≤a-hint x A≤H) = ≤a-hint x (≤a-refined A≤H)
-≤a-refined (≤a-and-l A≤H) = ≤a-refined A≤H
-≤a-refined (≤a-and-r A≤H) = ≤a-refined A≤H
-≤a-refined (≤a-and A≤H A≤H₁) = ≤a-and (≤a-and-l (≤a-refined A≤H)) (≤a-and-r (≤a-refined A≤H₁))
+≤a-refined (≤a-and-l A≤H H≢□) = ≤a-refined A≤H
+≤a-refined (≤a-and-r A≤H H≢□) = ≤a-refined A≤H
+≤a-refined (≤a-and A≤H A≤H₁) = ≤a-and (≤a-and-l (≤a-refined A≤H) λ ()) (≤a-and-r (≤a-refined A≤H₁) λ ())
+
+chainH≢□ : ∀ {H H' H'' es As A' T}
+  → H ≢ □
+  → ❪ H , A' ❫↣❪ es , □ , As , T ❫
+  → chain es H'' H'
+  → H' ≢ □
+chainH≢□ {□} H≢□ spl newH' = ⊥-elim (H≢□ refl)
+chainH≢□ {⟦ x ⟧⇒ H} H≢□ (have spl) (ch-cons newH') = λ ()
 
 ≤a-trans : ∀ {Γ A H H' H'' T es A' A'' As}
   → Γ ⊢a A ≤ H ⇝ A'
@@ -279,8 +303,8 @@ subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = {!!}
   → Γ ⊢a A ≤ H' ⇝ A''
 ≤a-trans ≤a-□ none-□ ch-none A'≤H' = A'≤H'
 ≤a-trans (≤a-hint x A≤H) (have spl) (ch-cons ch) (≤a-hint x₁ A'≤H') = ≤a-hint x₁ (≤a-trans A≤H spl ch A'≤H')
-≤a-trans (≤a-and-l A≤H) spl ch A'≤H' = ≤a-and-l (≤a-trans A≤H spl ch A'≤H')
-≤a-trans (≤a-and-r A≤H) spl ch A'≤H' = ≤a-and-r (≤a-trans A≤H spl ch A'≤H')
+≤a-trans (≤a-and-l A≤H H≢□) spl ch A'≤H' = ≤a-and-l (≤a-trans A≤H spl ch A'≤H') (chainH≢□ H≢□ spl ch)
+≤a-trans (≤a-and-r A≤H H≢□) spl ch A'≤H' = ≤a-and-r (≤a-trans A≤H spl ch A'≤H') (chainH≢□ H≢□ spl ch)
 
 
 ⊢a-to-≤a : ∀ {Γ e H A}
@@ -324,5 +348,4 @@ subsumption-0 : ∀ {Γ H e A A'}
   → Γ ⊢a □ ⇛ e ⇛ A
   → Γ ⊢a A ≤ H ⇝ A'
   → Γ ⊢a H ⇛ e ⇛ A'
-subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H  
-
+subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H

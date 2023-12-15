@@ -74,9 +74,11 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H ⇝ (A ⇒ D)
   ≤a-and-l : ∀ {Γ A B H C}
     → Γ ⊢a A ≤ H ⇝ C
+    → H ≢ □
     → Γ ⊢a A & B ≤ H ⇝ C
   ≤a-and-r : ∀ {Γ A B H C}
     → Γ ⊢a B ≤ H ⇝ C
+    → H ≢ □
     → Γ ⊢a A & B ≤ H ⇝ C
   ≤a-and : ∀ {Γ A B C}
     → Γ ⊢a A ≤ τ B ⇝ B
@@ -140,7 +142,7 @@ data _⊢a_⇛_⇛_ where
 ≤a-refl {A = * x} = ≤a-base
 ≤a-refl {A = Top} = ≤a-top
 ≤a-refl {A = A ⇒ A₁} = ≤a-arr ≤a-refl ≤a-refl
-≤a-refl {A = A & B} = ≤a-and (≤a-and-l ≤a-refl) (≤a-and-r ≤a-refl)
+≤a-refl {A = A & B} = ≤a-and (≤a-and-l ≤a-refl λ ()) (≤a-and-r ≤a-refl λ ())
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -221,8 +223,8 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List T
 ≤a-id ≤a-top none-τ = refl
 ≤a-id (≤a-arr A≤H A≤H₁) none-τ = refl
 ≤a-id (≤a-hint x A≤H) (have spl) = ≤a-id A≤H spl
-≤a-id (≤a-and-l A≤H) spl = ≤a-id A≤H spl
-≤a-id (≤a-and-r A≤H) spl = ≤a-id A≤H spl
+≤a-id (≤a-and-l A≤H H≢□) spl = ≤a-id A≤H spl
+≤a-id (≤a-and-r A≤H H≢□) spl = ≤a-id A≤H spl
 ≤a-id (≤a-and A≤H A≤H₁) none-τ = refl
 
 ⊢a-id (⊢a-app ⊢e) spl = ⊢a-id ⊢e (have spl)

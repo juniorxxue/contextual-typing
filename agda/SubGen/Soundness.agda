@@ -7,6 +7,10 @@ open import SubGen.Decl.Properties
 open import SubGen.Algo
 open import SubGen.Algo.Properties
 
+infix 5 _⇈
+_⇈ : List Term → List Term
+_⇈ = map (_↑ 0)
+
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
   ⊩none⇚ : ∀ {Γ}
@@ -30,7 +34,35 @@ data build-iZ : List Term → Counter → Set where
   bj-cons : ∀ {e es j}
     → build-iZ es (♭ j)
     → build-iZ (e ∷ es) (♭ (S⇐ j))
-  
+
+data build-i∞ : List Term → Counter → Set where
+  bj-none∞ :
+      build-i∞ [] (♭ ∞)
+
+  bj-cons∞ : ∀ {e es j}
+    → build-i∞ es (♭ j)
+    → build-i∞ (e ∷ es) (♭ (S⇐ j))
+
+H≢□→j≢Z : ∀ {H A es As A' j}
+  → H ≢ □
+  → ❪ H , A ❫↣❪ es , □ , As , A' ❫
+  → build-iZ es (♭ j)
+  → ♭ j ≢ ♭ Z
+H≢□→j≢Z {□} H≢□ spl newj = ⊥-elim (H≢□ refl)
+H≢□→j≢Z {⟦ x ⟧⇒ H} H≢□ (have spl) (bj-cons newj) = λ ()
+
+bi-↑ : ∀ {es j}
+  → build-iZ es (♭ j)
+  → build-iZ (es ⇈) (♭ j)
+bi-↑ bj-none = bj-none
+bi-↑ (bj-cons newi) = bj-cons (bi-↑ newi)
+
+bi-↑∞ : ∀ {es j}
+  → build-i∞ es (♭ j)
+  → build-i∞ (es ⇈) (♭ j)
+bi-↑∞ bj-none∞ = bj-none∞
+bi-↑∞ (bj-cons∞ newi) = bj-cons∞ (bi-↑∞ newi)
+
 ≤d-j-z : ∀ {A B C j}
   → A ≤d ♭ (S⇐ j) # B ⇒ C
   → ∃[ C' ] (A ≤d ♭ (S⇐ Z) # B ⇒ C') × (C' ≤d (♭ j) # C)
@@ -68,6 +100,15 @@ data build-iZ : List Term → Counter → Set where
 ⊩-elim ⊢e ⊩none⇚ bj-none A≤A' none-τ rewrite ≤d-z-inv A≤A' = ⊢e
 ⊩-elim ⊢e (⊩cons⇚ ⊢es x) (bj-cons bi) A≤A' (have spl) with ≤d-j-z A≤A'
 ... | ⟨ E , ⟨ fst , snd ⟩ ⟩ = ⊩-elim ((⊢d-app⇐ (⊢d-sub ⊢e fst λ ()) x)) ⊢es bi snd spl
+
+⊩-elim∞ : ∀ {Γ e H A es As A' A'' i T}
+  → Γ ⊢d ♭ Z # e ⦂ A
+  → Γ ⊩ es ⇚ As
+  → build-i∞ es i
+  → A ≤d i # A'
+  → ❪ H , A' ❫↣❪ es , τ T , As , A'' ❫ 
+  → Γ ⊢d ♭ ∞ # e ▻ es ⦂ T
+⊩-elim∞ ⊢e ⊢es newi A≤A' spl = {!!}
 
 -- ⊩-elim ⊢e (⊩cons⇚ ⊢es x) A≤A' (have spl) = ⊩-elim (⊢d-app⇐ (⊢d-sub ⊢e {!!} λ ()) x) ⊢es {!!} spl
 
@@ -129,9 +170,6 @@ rw-apps← : ∀ {Γ j es e x A}
   → Γ ⊢d j # e ▻ (es ++ ⟦ x ⟧) ⦂ A
 rw-apps← {es = es} {e = e} {x = x} ⊢e rewrite rw-apps {es} {e} {x} = ⊢e
 
-infix 5 _⇈
-_⇈ : List Term → List Term
-_⇈ = map (_↑ 0)
 
 eq-cons-↑ : ∀ {e es xs x}
   → e ∷ es ≡ xs ++ ⟦ x ⟧
@@ -163,7 +201,7 @@ sz-case₁ sz eq rewrite sym eq = sz
 m+n<o⇒m<o : ∀ {m n o}
   → m + n < o
   → m < o
-m+n<o⇒m<o {n = n} m+n<o = {!!}
+m+n<o⇒m<o {n = n} m+n<0 = {!!}
 
 m+n<o⇒n<o : ∀ {m n o}
   → m + n < o
@@ -235,43 +273,112 @@ subst :  ∀ {Γ A B e e₁ i} (es : List Term)
   → Γ ⊢d i # ((ƛ e) · e₁) ▻ es ⦂ B
 subst {B = B} {i = i} es ⊢1 ⊢2 = subst-3 (suc (len es)) (suc (size i)) (suc (size-t B)) es (s≤s m≤m) (s≤s m≤m) (s≤s m≤m) ⊢1 ⊢2
 
-sound-inf : ∀ {Γ e H A es As A'}
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Soundness                            +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+
+sound-inf : ∀ {Γ e H A es As A' j}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , □ , As , A' ❫
+  → build-iZ es (♭ j)
   → Γ ⊢d ♭ Z # e ▻ es ⦂ A'
 
-sound-chk : ∀ {Γ e H A es T As A'}
+sound-chk : ∀ {Γ e H A es T As A' j}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → build-i∞ es (♭ j)
   → Γ ⊢d ♭ ∞ # e ▻ es ⦂ T
 
 sound-inf-0 : ∀ {Γ e A}
   → Γ ⊢a □ ⇛ e ⇛ A
   → Γ ⊢d ♭ Z # e ⦂ A
-sound-inf-0 ⊢e = sound-inf ⊢e none-□
+sound-inf-0 ⊢e = sound-inf ⊢e none-□ bj-none
 
 sound-chk-0 : ∀ {Γ e A}
   → Γ ⊢a τ A ⇛ e ⇛ A
   → Γ ⊢d ♭ ∞ # e ⦂ A
-sound-chk-0 ⊢e = sound-chk ⊢e none-τ
+sound-chk-0 ⊢e = sound-chk ⊢e none-τ bj-none∞
 
-sound-inf ⊢a-lit none-□ = ⊢d-int
-sound-inf (⊢a-var x) none-□ = ⊢d-var x
-sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk-0 ⊢e)
-sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
-sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
-sound-inf (⊢a-sub pv-e ⊢e A≤H) spl = ⊩-elim (sound-inf-0 ⊢e) {!!} {!!} {!!} spl -- correct
+sound-≤-es : ∀ {Γ A H A' A₁ As es}
+  → Γ ⊢a A ≤ H ⇝ A₁
+  → ❪ H , A₁ ❫↣❪ es , □ , As , A' ❫
+  → Γ ⊩ es ⇚ As
 
-sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
-sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam₁ (sound-chk-0 ⊢e)
-sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl)  = subst es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
-sound-chk (⊢a-sub x ⊢e x₁) spl = ⊢d-sub (⊩-elim (sound-inf-0 ⊢e) {!!} {!!} {!!} spl) {!!} λ ()
-sound-chk (⊢a-& ⊢e ⊢e₁) none-τ = ⊢d-& (sound-chk ⊢e none-τ) (sound-chk ⊢e₁ none-τ)
+sound-≤ : ∀ {Γ A H A' A₁ As es j}
+  → Γ ⊢a A ≤ H ⇝ A₁
+  → ❪ H , A₁ ❫↣❪ es , □ , As , A' ❫
+  → build-iZ es (♭ j)
+  → A ≤d ♭ j # A₁
 
-{-
+sound-≤-spl : ∀ {Γ A₁ H A es T As A'}
+  → Γ ⊢a A₁ ≤ H ⇝ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → A' ≤d ♭ ∞ # T
 
-app-elim : ∀ {Γ e A}
-  → Γ ⊢d ♭ Z # e ▻ es ⦂ A
-  → i ~ es ~ A' ~ A
-  → Γ ⊢d i # e ⦂ A'
--}
+sound-≤-spl ≤a-int none-τ = ≤d-int∞
+sound-≤-spl ≤a-base none-τ = ≤d-base∞
+sound-≤-spl ≤a-top none-τ = ≤d-top
+sound-≤-spl (≤a-arr A≤H A≤H₁) none-τ = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
+sound-≤-spl (≤a-hint x A≤H) (have spl) = sound-≤-spl A≤H spl
+sound-≤-spl (≤a-and-l A≤H x) spl = sound-≤-spl A≤H spl
+sound-≤-spl (≤a-and-r A≤H x) spl = sound-≤-spl A≤H spl
+sound-≤-spl (≤a-and A≤H A≤H₁) none-τ = ≤d-and (≤d-and₁ (sound-≤-spl A≤H none-τ) (λ ()))
+                                              (≤d-and₂ (sound-≤-spl A≤H₁ none-τ) (λ ()))
+
+sound-≤-es-chk : ∀ {Γ A H A' A₁ As es T}
+  → Γ ⊢a A ≤ H ⇝ A₁
+  → ❪ H , A₁ ❫↣❪ es , τ T , As , A' ❫
+  → Γ ⊩ es ⇚ As
+
+sound-≤-chk : ∀ {Γ A H A' A₁ As es j T}
+  → Γ ⊢a A ≤ H ⇝ A₁
+  → ❪ H , A₁ ❫↣❪ es , τ T , As , A' ❫
+  → build-i∞ es (♭ j)
+  → A ≤d ♭ j # A₁
+
+sound-≤-es-chk ≤a-int none-τ = ⊩none⇚
+sound-≤-es-chk ≤a-base none-τ = ⊩none⇚
+sound-≤-es-chk ≤a-top none-τ = ⊩none⇚
+sound-≤-es-chk (≤a-arr A≤H A≤H₁) none-τ = ⊩none⇚
+sound-≤-es-chk (≤a-hint x A≤H) (have spl) = ⊩cons⇚ (sound-≤-es-chk A≤H spl) (sound-chk-0 x)
+sound-≤-es-chk (≤a-and-l A≤H x) spl = sound-≤-es-chk A≤H spl
+sound-≤-es-chk (≤a-and-r A≤H x) spl = sound-≤-es-chk A≤H spl
+sound-≤-es-chk (≤a-and A≤H A≤H₁) none-τ = ⊩none⇚
+
+sound-≤-chk ≤a-int none-τ bj-none∞ = ≤d-int∞
+sound-≤-chk ≤a-base none-τ bj-none∞ = ≤d-base∞
+sound-≤-chk ≤a-top none-τ bj-none∞ = ≤d-top
+sound-≤-chk (≤a-arr A≤H A≤H₁) none-τ bj-none∞ = ≤d-arr-∞ (sound-≤-chk A≤H none-τ bj-none∞) (sound-≤-chk A≤H₁ none-τ bj-none∞)
+sound-≤-chk (≤a-hint x A≤H) (have spl) (bj-cons∞ bj) = ≤d-arr-S⇐ ≤d-refl∞ (sound-≤-chk A≤H spl bj)
+sound-≤-chk (≤a-and-l A≤H x) spl bj = ≤d-and₁ (sound-≤-chk A≤H spl bj) {!!} -- correct
+sound-≤-chk (≤a-and-r A≤H x) spl bj = {!!} -- correct
+sound-≤-chk (≤a-and A≤H A≤H₁) none-τ bj-none∞ = ≤d-and (sound-≤-chk A≤H none-τ bj-none∞)
+                                                       (sound-≤-chk A≤H₁ none-τ bj-none∞)
+
+sound-≤-es ≤a-□ none-□ = ⊩none⇚
+sound-≤-es (≤a-hint ⊢e A≤H) (have spl) = ⊩cons⇚ (sound-≤-es A≤H spl) (sound-chk-0 ⊢e)
+sound-≤-es (≤a-and-l A≤H H≢□) spl = sound-≤-es A≤H spl
+sound-≤-es (≤a-and-r A≤H H≢□) spl = sound-≤-es A≤H spl
+sound-≤ ≤a-□ none-□ bj-none = ≤d-refl wf-0
+sound-≤ (≤a-hint x A≤H) (have spl) (bj-cons bi) = ≤d-arr-S⇐ ≤d-refl∞ (sound-≤ A≤H spl bi)
+sound-≤ (≤a-and-l A≤H H≢□) spl bi = ≤d-and₁ (sound-≤ A≤H spl bi) (H≢□→j≢Z H≢□ spl bi)
+sound-≤ (≤a-and-r A≤H H≢□) spl bi = ≤d-and₂ (sound-≤ A≤H spl bi) (H≢□→j≢Z H≢□ spl bi)
+
+sound-inf ⊢a-lit none-□ bi = ⊢d-int
+sound-inf (⊢a-var x) none-□ bi = ⊢d-var x
+sound-inf (⊢a-ann ⊢e) none-□ bi = ⊢d-ann (sound-chk-0 ⊢e)
+sound-inf (⊢a-app ⊢e) spl bi = sound-inf ⊢e (have spl) (bj-cons bi)
+sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) (bj-cons bi) = subst es (sound-inf ⊢f (spl-weaken spl) (bi-↑ bi)) (sound-inf-0 ⊢e)
+sound-inf (⊢a-sub pv-e ⊢e A≤H) spl bi = ⊩-elim (sound-inf-0 ⊢e) (sound-≤-es A≤H spl) bi (sound-≤ A≤H spl bi) spl
+
+sound-chk (⊢a-app ⊢e) spl bi = sound-chk ⊢e (have spl) (bj-cons∞ bi)
+sound-chk (⊢a-lam₁ ⊢e) none-τ bi = ⊢d-lam₁ (sound-chk-0 ⊢e)
+sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) (bj-cons∞ bi) = subst es (sound-chk ⊢f (spl-weaken spl) (bi-↑∞ bi)) (sound-inf-0 ⊢e)
+sound-chk (⊢a-sub pv-e ⊢e A≤H) spl bi = {!!}
+-- ⊩-elim∞ (sound-inf-0 ⊢e) (sound-≤-es-chk A≤H spl) bi (sound-≤-chk A≤H spl bi) spl
+-- ⊢d-sub (⊩-elim∞ (sound-inf-0 ⊢e) (sound-≤-es-chk A≤H spl) bi (sound-≤-chk A≤H spl bi) spl) (sound-≤-spl A≤H spl) λ ()
+sound-chk (⊢a-& ⊢e ⊢e₁) none-τ bi = ⊢d-& (sound-chk-0 ⊢e) (sound-chk-0 ⊢e₁)
