@@ -1,9 +1,9 @@
-module SubGen.Algo.Properties where
+module Intersection.Algo.Properties where
 
-open import SubGen.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
-open import SubGen.Common
-open import SubGen.Properties
-open import SubGen.Algo
+open import Intersection.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
+open import Intersection.Common
+open import Intersection.Properties
+open import Intersection.Algo
 
 ----------------------------------------------------------------------
 --                                                                  --

@@ -1,10 +1,10 @@
-module SubGen.Completeness where
+module Intersection.Completeness where
 
-open import SubGen.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
-open import SubGen.Common
-open import SubGen.Decl
-open import SubGen.Algo
-open import SubGen.Algo.Properties
+open import Intersection.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
+open import Intersection.Common
+open import Intersection.Decl
+open import Intersection.Algo
+open import Intersection.Algo.Properties
 
 infix 4 _⊩a_⇛_
 infix 4 _⊩a_⇚_

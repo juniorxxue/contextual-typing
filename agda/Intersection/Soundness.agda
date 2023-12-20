@@ -1,11 +1,11 @@
-module SubGen.Soundness where
+module Intersection.Soundness where
 
-open import SubGen.Prelude
-open import SubGen.Common
-open import SubGen.Decl
-open import SubGen.Decl.Properties
-open import SubGen.Algo
-open import SubGen.Algo.Properties
+open import Intersection.Prelude
+open import Intersection.Common
+open import Intersection.Decl
+open import Intersection.Decl.Properties
+open import Intersection.Algo
+open import Intersection.Algo.Properties
 
 infix 5 _⇈
 _⇈ : List Term → List Term

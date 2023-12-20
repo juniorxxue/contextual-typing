@@ -1,9 +1,9 @@
-module SubGen.Decl.Properties where
+module Intersection.Decl.Properties where
 
-open import SubGen.Prelude
-open import SubGen.Common
-open import SubGen.Decl
-open import SubGen.Properties
+open import Intersection.Prelude
+open import Intersection.Common
+open import Intersection.Decl
+open import Intersection.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--

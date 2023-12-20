@@ -25,12 +25,12 @@ import STLC.Algo.Properties
 import STLC.Completeness
 import STLC.Soundness
 
-import SubGen.Prelude
-import SubGen.Common
-import SubGen.Properties
-import SubGen.Decl
-import SubGen.Decl.Properties
-import SubGen.Algo
-import SubGen.Algo.Properties
-import SubGen.Completeness
-import SubGen.Soundness
+import Intersection.Prelude
+import Intersection.Common
+import Intersection.Properties
+import Intersection.Decl
+import Intersection.Decl.Properties
+import Intersection.Algo
+import Intersection.Algo.Properties
+import Intersection.Completeness
+import Intersection.Soundness

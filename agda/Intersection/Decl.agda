@@ -1,7 +1,7 @@
-module SubGen.Decl where
+module Intersection.Decl where
 
-open import SubGen.Prelude
-open import SubGen.Common
+open import Intersection.Prelude
+open import Intersection.Common
 
 ----------------------------------------------------------------------
 --+                                                                +--

@@ -1,7 +1,7 @@
-module SubGen.Properties where
+module Intersection.Properties where
 
-open import SubGen.Prelude hiding (_≤?_)
-open import SubGen.Common
+open import Intersection.Prelude hiding (_≤?_)
+open import Intersection.Common
 
 length : Context → ℕ
 length ∅        =  zero

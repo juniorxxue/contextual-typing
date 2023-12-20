@@ -1,4 +1,4 @@
-module SubGen.Prelude where
+module Intersection.Prelude where
 
 open import Data.Nat public
 open import Data.Nat.Properties public

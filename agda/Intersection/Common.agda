@@ -1,6 +1,6 @@
-module SubGen.Common where
+module Intersection.Common where
 
-open import SubGen.Prelude hiding (_≤?_)
+open import Intersection.Prelude hiding (_≤?_)
 
   
 Id : Set
@@ -55,7 +55,7 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 ----------------------------------------------------------------------
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
-  _≤?_ = SubGen.Prelude._≤?_
+  _≤?_ = Intersection.Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x

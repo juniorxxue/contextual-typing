@@ -1,7 +1,7 @@
-module SubGen.Algo where
+module Intersection.Algo where
 
-open import SubGen.Prelude
-open import SubGen.Common
+open import Intersection.Prelude
+open import Intersection.Common
 
 infixr 8 ⟦_⟧⇒_
 
