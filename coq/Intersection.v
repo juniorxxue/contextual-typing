@@ -264,6 +264,64 @@ Proof.
   intros. induction l; eauto. simpl in *. f_equal. assumption.
 Qed.
 
+Lemma subst_app' : forall k1 k2 k3 es Gamma A B e e1 j,    
+    length es < k1 ->
+    size_counter j < k2 ->
+    size_type B < k3 ->
+    dty (Cons Gamma A) j (apps e es) B ->
+    dty Gamma (Ba Zc) e1 A ->
+    dty Gamma j (apps (App (Lam e) e1) es) B.
+Proof.
+  induction k1; induction k2; induction k3; intros; eauto.
+  - inversion H1.
+  - inversion H.
+  - inversion H.
+  - inversion H.
+  - inversion H0.
+  - inversion H0.
+  - inversion H1.
+  - destruct (lt_eq_lt_dec (length es) 0).
+    + destruct s.
+      * inversion l.
+      * eapply len_0_imply_empty in e0. subst.
+        simpl in *. econstructor. econstructor. eapply H2. eapply H3.
+    + pose (lst_destruct_rev es l) as Rev. destruct Rev.
+      destruct H4. 
+      subst. rewrite rw_apps in H2.
+      dependent destruction H2.
+      * rewrite rw_apps. eapply D_App1.
+        ++ eapply IHk1; eauto. simpl in *.
+           rewrite length_append in H. lia.
+        ++ eapply dty_weaken; eauto.
+      * rewrite rw_apps. eapply D_App2.
+        ++ eapply IHk1; eauto. simpl in *.
+           rewrite length_append in H. lia.
+        ++ eapply dty_weaken; eauto.
+      * destruct i.
+        ++ destruct c.
+           ** eapply D_Sub; eauto.
+              eapply IHk2. admit. admit. info_eauto.
+              eapply IHk2; eauto. simpl in *.
+              rewrite length_append in *. lia. 
+              rewrite rw_apps. assumption.
+           ** exfalso. eapply H4; eauto.
+           ** eapply D_Sub; eauto.
+              eapply IHk2; eauto. simpl in *.
+              rewrite length_append in *. lia.
+              rewrite rw_apps. assumption.
+        ++ eapply D_Sub; eauto.
+           eapply IHk2; eauto. simpl in *.
+           rewrite length_append in *. lia.
+           rewrite rw_apps. assumption.
+      * eapply D_And.
+        ++ eapply IHk3; eauto. simpl in *.
+           rewrite length_append in *. lia.
+           rewrite rw_apps. assumption.
+        ++ eapply IHk3; eauto. simpl in *.
+           rewrite length_append in *. lia.
+           rewrite rw_apps. assumption.
+Qed.
+
 Lemma subst_app : forall k g es Gamma A B e e1 j,    
     2 * (length es) + size_counter j < k ->
     size_type B < g ->
@@ -300,6 +358,7 @@ Proof.
               rewrite rw_apps. assumption.
            ** exfalso. eapply H3; eauto.
            ** eapply D_Sub; eauto.
+              eapply IHk. admit.
               eapply IHk; eauto. simpl in *.
               rewrite length_append in *. lia.
               rewrite rw_apps. assumption.
