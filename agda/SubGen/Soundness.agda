@@ -31,9 +31,13 @@ data build-iZ : List Term → Counter → Set where
   bj-none :
       build-iZ [] (♭ Z)
 
+--  bj-none-∞ :
+--    build-iZ [] (♭ ∞)
+
   bj-cons : ∀ {e es j}
     → build-iZ es (♭ j)
     → build-iZ (e ∷ es) (♭ (S⇐ j))
+
 
 data build-i∞ : List Term → Counter → Set where
   bj-none∞ :
@@ -42,6 +46,7 @@ data build-i∞ : List Term → Counter → Set where
   bj-cons∞ : ∀ {e es j}
     → build-i∞ es (♭ j)
     → build-i∞ (e ∷ es) (♭ (S⇐ j))
+
 
 H≢□→j≢Z : ∀ {H A es As A' j}
   → H ≢ □
@@ -101,14 +106,34 @@ bi-↑∞ (bj-cons∞ newi) = bj-cons∞ (bi-↑∞ newi)
 ⊩-elim ⊢e (⊩cons⇚ ⊢es x) (bj-cons bi) A≤A' (have spl) with ≤d-j-z A≤A'
 ... | ⟨ E , ⟨ fst , snd ⟩ ⟩ = ⊩-elim ((⊢d-app⇐ (⊢d-sub ⊢e fst λ ()) x)) ⊢es bi snd spl
 
+≤d-rebase : ∀ {A B C j}
+  → A ≤d ♭ (S⇐ j) # B ⇒ C
+  → A ≤d ♭ (S⇐ Z) # B ⇒ C
+≤d-rebase (≤d-arr-S⇐ A≤BC A≤BC₁) = ≤d-arr-S⇐ A≤BC {!!}
+≤d-rebase (≤d-and₁ A≤BC x) = ≤d-and₁ (≤d-rebase A≤BC) (λ ())
+≤d-rebase (≤d-and₂ A≤BC x) = ≤d-and₂ (≤d-rebase A≤BC) (λ ())
+
 ⊩-elim∞ : ∀ {Γ e H A es As A' A'' i T}
   → Γ ⊢d ♭ Z # e ⦂ A
   → Γ ⊩ es ⇚ As
   → build-i∞ es i
   → A ≤d i # A'
-  → ❪ H , A' ❫↣❪ es , τ T , As , A'' ❫ 
+  → ❪ H , A' ❫↣❪ es , τ T , As , A'' ❫
+  → A'' ≤d ♭ ∞ # T
   → Γ ⊢d ♭ ∞ # e ▻ es ⦂ T
-⊩-elim∞ ⊢e ⊢es newi A≤A' spl = {!!}
+⊩-elim∞ ⊢e ⊩none⇚ bj-none∞ A≤A' none-τ A'≤T = ⊢d-sub' ⊢e (≤d-trans A≤A' A'≤T)
+⊩-elim∞ ⊢e (⊩cons⇚ ⊢es x) (bj-cons∞ newj) (≤d-arr-S⇐ A≤A' A≤A'') (have spl) A'≤T = ⊩-elim∞ (⊢d-app⇐ (⊢d-sub' ⊢e (≤d-arr-S⇐ ≤d-refl∞ ≤d-Z)) x) ⊢es newj A≤A'' spl A'≤T
+⊩-elim∞ ⊢e (⊩cons⇚ ⊢es x) (bj-cons∞ newj) (≤d-and₁ A≤A' x₁) (have spl) A'≤T = ⊩-elim∞ (⊢d-app⇐ (⊢d-sub' ⊢e (≤d-and₁ {!!} (λ ()))) x) ⊢es newj (≤d-refl {!!}) spl A'≤T
+⊩-elim∞ ⊢e (⊩cons⇚ ⊢es x) (bj-cons∞ newj) (≤d-and₂ A≤A' x₁) (have spl) A'≤T = {!!}
+
+{-
+⊩-elim∞ ⊢d-int ⊩none⇚ bj-none∞ A≤A' none-τ A'≤T = ⊢d-sub' ⊢d-int (≤d-trans A≤A' A'≤T)
+⊩-elim∞ (⊢d-var x) ⊢es newi A≤A' spl = {!!}
+⊩-elim∞ (⊢d-ann ⊢e) ⊢es newi A≤A' spl = {!!}
+⊩-elim∞ (⊢d-app⇐ ⊢e ⊢e₁) ⊢es newi A≤A' spl = {!!}
+⊩-elim∞ (⊢d-app⇒ ⊢e ⊢e₁) ⊢es newi A≤A' spl = {!!}
+⊩-elim∞ (⊢d-sub ⊢e x x₁) ⊢es newi A≤A' spl = {!!}
+-}
 
 -- ⊩-elim ⊢e (⊩cons⇚ ⊢es x) A≤A' (have spl) = ⊩-elim (⊢d-app⇐ (⊢d-sub ⊢e {!!} λ ()) x) ⊢es {!!} spl
 
@@ -302,7 +327,6 @@ sound-chk-0 : ∀ {Γ e A}
   → Γ ⊢a τ A ⇛ e ⇛ A
   → Γ ⊢d ♭ ∞ # e ⦂ A
 sound-chk-0 ⊢e = sound-chk ⊢e none-τ bj-none∞
-
 sound-≤-es : ∀ {Γ A H A' A₁ As es}
   → Γ ⊢a A ≤ H ⇝ A₁
   → ❪ H , A₁ ❫↣❪ es , □ , As , A' ❫
