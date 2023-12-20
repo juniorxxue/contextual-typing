@@ -185,15 +185,7 @@ sz-case₁ : ∀ {e : Term} {k₁ es x xs}
   → len (xs ++ ⟦ x ⟧) < suc k₁
 sz-case₁ sz eq rewrite sym eq = sz
 
-m+n<o⇒m<o : ∀ {m n o}
-  → m + n < o
-  → m < o
-m+n<o⇒m<o {n = n} m+n<0 = {!!}
 
-m+n<o⇒n<o : ∀ {m n o}
-  → m + n < o
-  → n < o
-m+n<o⇒n<o {n = n} m+n<o = {!!}
 
 sz-case' : ∀ {e : Term} {es x xs k}
   → suc (suc (len es)) ≤ suc k

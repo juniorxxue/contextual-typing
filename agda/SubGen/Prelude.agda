@@ -57,3 +57,13 @@ data Singleton {a} {A : Set a} (x : A) : Set a where
 
 inspect : ∀ {a} {A : Set a} (x : A) → Singleton x
 inspect x = x with≡ refl
+
+m+n<o⇒m<o : ∀ {m n o}
+  → m + n < o
+  → m < o
+m+n<o⇒m<o {m} {n} {o} m+n<o = ≤-trans (s≤s (m≤m+n m n)) m+n<o
+
+m+n<o⇒n<o : ∀ {m n o}
+  → m + n < o
+  → n < o
+m+n<o⇒n<o {m} {n} {o} m+n<o = ≤-trans (s≤s (m≤n+m n m)) m+n<o

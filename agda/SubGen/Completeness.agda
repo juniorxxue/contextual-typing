@@ -117,7 +117,48 @@ data ❪_,_❫↪♭❪_,_,_❫ : Type → CCounter → List Type → Type → C
     → ❪ B , j ❫↪♭❪ As , T , j' ❫
     → ❪ A ⇒ B , S⇐ j ❫↪♭❪ A ∷ As , T , j' ❫
 
+j≢Z→H≢□ : ∀ {Γ A j As T es H}
+  → ♭ j ≢ ♭ Z
+  → ❪ A , j ❫↪♭❪ As , T , Z ❫
+  → Γ ⊩a es ⇚ As
+  → es ⇒ □ ≣ H
+  → H ≢ □
+j≢Z→H≢□ {j = Z} j≢Z ↪♭z ⊩a-none ⇒≣-none = ⊥-elim (j≢Z refl)
+j≢Z→H≢□ {j = S⇐ j} j≢Z (↪♭s spl) (⊩a-cons ⊢es x) (⇒≣-cons newH) = λ ()
 
+i≢Z→H≢□ : ∀ {Γ i A As T j Ts T' es es' H' H}
+  → i ≢ ♭ Z
+  → ❪ A , i ❫↪❪ As , T , ♭ j ❫
+  → ❪ T , j ❫↪♭❪ Ts , T' , Z ❫
+  → Γ ⊩a es ⇛ As
+  → Γ ⊩a es' ⇚ Ts
+  → es' ⇒ □ ≣ H'
+  → es ⇒ H' ≣ H
+  → H ≢ □
+i≢Z→H≢□ {i = ♭ x} {j = .x} i≢Z ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none = j≢Z→H≢□ i≢Z Tj ⊢es' newH'
+i≢Z→H≢□ {i = S⇒ i} {j = j} i≢Z (↪s Ai) Tj (⊩a-cons ⊢es x) ⊢es' newH' (⇒≣-cons newH) = λ ()
+
+j≢Z→H≢□' : ∀ {Γ A j As T es H}
+  → ♭ j ≢ ♭ Z
+  → ❪ A , j ❫↪♭❪ As , T , ∞ ❫
+  → Γ ⊩a es ⇚ As
+  → es ⇒ τ T ≣ H
+  → H ≢ □
+j≢Z→H≢□' {j = ∞} j≢Z ↪♭∞ ⊩a-none ⇒≣-none = λ ()
+j≢Z→H≢□' {j = S⇐ j} j≢Z (↪♭s spl) (⊩a-cons ⊢es x) (⇒≣-cons newH) = λ ()
+
+i≢Z→H≢□' : ∀ {Γ i A As T j Ts T' es es' H' H}
+  → i ≢ ♭ Z
+  → ❪ A , i ❫↪❪ As , T , ♭ j ❫
+  → ❪ T , j ❫↪♭❪ Ts , T' , ∞ ❫
+  → Γ ⊩a es ⇛ As
+  → Γ ⊩a es' ⇚ Ts
+  → es' ⇒ τ T' ≣ H'
+  → es ⇒ H' ≣ H
+  → H ≢ □
+i≢Z→H≢□' {i = ♭ x} {j = .x} i≢Z ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none = j≢Z→H≢□' i≢Z Tj ⊢es' newH'
+i≢Z→H≢□' {i = S⇒ i} {j = j} i≢Z (↪s Ai) Tj (⊩a-cons ⊢es x) ⊢es' ⇒≣-none (⇒≣-cons newH) = λ ()
+  
 complete-≤-i : ∀ {Γ A B j As T es H}
   → B ≤d ♭ j # A
   → ❪ A , j ❫↪♭❪ As , T , Z ❫
@@ -126,8 +167,8 @@ complete-≤-i : ∀ {Γ A B j As T es H}
   → Γ ⊢a B ≤ H ⇝ A
 complete-≤-i ≤d-Z ↪♭z ⊩a-none ⇒≣-none = ≤a-□
 complete-≤-i (≤d-arr-S⇐ B≤A B≤A₁) (↪♭s Aj) (⊩a-cons ⊢es x) (⇒≣-cons newH) = ≤a-hint x (complete-≤-i B≤A₁ Aj ⊢es newH)
-complete-≤-i (≤d-and₁ B≤A) Aj ⊢es newH = ≤a-and-l (complete-≤-i B≤A Aj ⊢es newH)
-complete-≤-i (≤d-and₂ B≤A) Aj ⊢es newH = ≤a-and-r (complete-≤-i B≤A Aj ⊢es newH)
+complete-≤-i (≤d-and₁ B≤A j≢Z) Aj ⊢es newH = ≤a-and-l (complete-≤-i B≤A Aj ⊢es newH) (j≢Z→H≢□ j≢Z Aj ⊢es newH)
+complete-≤-i (≤d-and₂ B≤A j≢Z) Aj ⊢es newH = ≤a-and-r (complete-≤-i B≤A Aj ⊢es newH) (j≢Z→H≢□ j≢Z Aj ⊢es newH)
 
 complete-≤-s : ∀ {Γ A B i j T T' es es' H H' As Ts}
   → B ≤d i # A
@@ -147,8 +188,8 @@ complete-≤-s (≤d-arr-S⇒ B≤A B≤A₁) (↪s Aj) Tj (⊩a-cons ⊢es x) �
   ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-s B≤A₁ Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s (≤d-arr-S⇐ B≤A B≤A₁) ↪z (↪♭s Tj) ⊩a-none (⊩a-cons ⊢es' x) (⇒≣-cons newH') ⇒≣-none =
   ≤a-hint x (complete-≤-s B≤A₁ ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none)
-complete-≤-s (≤d-and₁ B≤A) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s B≤A Aj Tj ⊢es ⊢es' newH' newH)
-complete-≤-s (≤d-and₂ B≤A) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-r (complete-≤-s B≤A Aj Tj ⊢es ⊢es' newH' newH)
+complete-≤-s (≤d-and₁ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□ i≢Z Aj Tj ⊢es ⊢es' newH' newH)
+complete-≤-s (≤d-and₂ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-r (complete-≤-s B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□ i≢Z Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s (≤d-and B≤A B≤A₁) ↪z () ⊢es ⊢es' newH' newH
 
 
@@ -176,8 +217,8 @@ complete-≤-s-∞ (≤d-arr-S⇒ B≤A B≤A₁) (↪s Aj) Tj (⊩a-cons ⊢es 
   ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-s-∞ B≤A₁ Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s-∞ (≤d-arr-S⇐ B≤A B≤A₁) ↪z (↪♭s Tj) ⊩a-none (⊩a-cons ⊢es' x) (⇒≣-cons newH') ⇒≣-none =
   ≤a-hint x (complete-≤-s-∞ B≤A₁ ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none)
-complete-≤-s-∞ (≤d-and₁ B≤A) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s-∞ B≤A Aj Tj ⊢es ⊢es' newH' newH)
-complete-≤-s-∞ (≤d-and₂ B≤A) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-r (complete-≤-s-∞ B≤A Aj Tj ⊢es ⊢es' newH' newH)
+complete-≤-s-∞ (≤d-and₁ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s-∞ B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□' i≢Z Aj Tj ⊢es ⊢es' newH' newH)
+complete-≤-s-∞ (≤d-and₂ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-r (complete-≤-s-∞ B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□' i≢Z Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s-∞ (≤d-and B≤A B≤A₁) ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ≤a-and (complete-≤-s-∞ B≤A ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none)
                                                                                  (complete-≤-s-∞ B≤A₁ ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none)
   
