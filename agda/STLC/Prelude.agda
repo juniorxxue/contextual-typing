@@ -15,13 +15,6 @@ open import Data.List.Properties using (map-++) public
 open import Relation.Binary.Core using (Rel)
 open import Level using (0ℓ)
 
-abstract
-  _>'_ : Rel ℕ 0ℓ
-  _>'_ = _>_
-
-  _<'_ : Rel ℕ 0ℓ
-  _<'_ = _<_
-
 m≤m : ∀ {m}
   → m ≤ m
 m≤m {zero} = z≤n

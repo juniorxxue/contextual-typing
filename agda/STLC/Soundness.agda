@@ -7,10 +7,6 @@ open import STLC.Decl.Properties
 open import STLC.Algo
 open import STLC.Algo.Properties
 
-open import Data.Nat
-open import Data.Nat.Properties
-
-
 infix 4 _⊩_⇚_
 data _⊩_⇚_ : Context → List Term → List Type → Set where
   ⊩none⇚ : ∀ {Γ}
@@ -98,7 +94,6 @@ eq-cons-↑ : ∀ {e es xs x}
   → (e ↑ 0) ∷ map (_↑ 0) es ≡ (map (_↑ 0) xs) ++ ⟦ x ↑ 0 ⟧
 eq-cons-↑ {xs = xs} {x = x} eq rewrite sym (map-++ (_↑ 0) xs ⟦ x ⟧) = cong (map (_↑ 0)) eq
 
-
 len-append : ∀ {xs} {x : Term}
   → len (xs ++ ⟦ x ⟧) ≡ 1 + len xs
 len-append {[]} = refl
@@ -182,8 +177,6 @@ rw-map : ∀ {Γ e xs x A j}
   → Γ ⊢d j # e ▻ map (_↑ 0) (xs ++ ⟦ x ⟧) ⦂ A
 rw-map {xs = xs} {x = x} ⊢e rewrite sym (map-++ (_↑ 0) xs ⟦ x ⟧) = ⊢e
 
--- pattern _⇑_ es n = map (_↑ n) es
-
 subst' : ∀ (k) {Γ A B e e₁ j es}
   → (2 * len es + size j) < k
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
@@ -204,11 +197,6 @@ subst' (suc k) {e = e₁} {e₂} {j = Z} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ x
 subst' (suc k) {e = e₁} {e₂} {j = S j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z
   = rw-try' (⊢d-sub' ind-e B~j) eq
     where ind-e = subst' k {es = xs ++ ⟦ x ⟧} (sz-case₄ {j = j} sz eq) (rw-map {xs = xs} (rw-apps← {es = map (_↑ 0) xs} {x = x ↑ 0} ⊢e)) ⊢2
-
-
-
--- (λx. λy. ((λf. f 1) : (Int → Int) → Int) 1 2 (λx. x)
-
 
 subst :  ∀ {Γ A B e e₁ j} (es : List Term)
   → Γ , A ⊢d j # e ▻ map (_↑ 0) es ⦂ B
@@ -246,12 +234,10 @@ sound-inf ⊢a-lit none-□ = ⊢d-int
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk ⊢e none-τ)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
--- sound-inf (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
 sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
 sound-inf (⊢a-sub ⊢e A≈H p) spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~0
 
 sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
 sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam-∞ (sound-chk ⊢e none-τ)
--- sound-chk (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = {!!}
 sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl)  = subst es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
 sound-chk ty@(⊢a-sub ⊢e A≈H p) spl rewrite ⊢a-spl-eq ty spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~∞

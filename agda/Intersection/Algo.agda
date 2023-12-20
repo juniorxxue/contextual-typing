@@ -168,47 +168,6 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List T
     → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
     → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
 
-{-
-
-≤a-determinism : ∀ {Γ H A B C}
-  → H ≢ τ Top
-  → Γ ⊢a A ≤ H ⇝ B
-  → Γ ⊢a A ≤ H ⇝ C
-  → B ≡ C
-≤a-determinism neq ≤a-int ≤a-int = refl
-≤a-determinism neq ≤a-base ≤a-base = refl
-≤a-determinism neq ≤a-top ≤C = ⊥-elim (neq refl)
-≤a-determinism neq (≤a-arr ≤B ≤B₁) (≤a-arr ≤C ≤C₁) = {!≤a-determinism ? ≤B ≤C!} -- easy
-≤a-determinism neq (≤a-hint ⊢1 ≤B) (≤a-hint ⊢2 ≤C) = {!!} -- easy
-≤a-determinism neq (≤a-and-l ≤B) ≤C = {!!}
-≤a-determinism neq (≤a-and-r ≤B) ≤C = {!!}
-≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and-l ≤C) = {!!}
-≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and-r ≤C) = {!!}
-≤a-determinism neq (≤a-and ≤B ≤B₁) (≤a-and ≤C ≤C₁) = {!!}
-
-
-⊢a-determinism : ∀ {Γ H e A B}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a H ⇛ e ⇛ B
-  → A ≡ B
-⊢a-determinism ⊢a-lit ⊢a-lit = refl
-⊢a-determinism ⊢a-lit (⊢a-sub x ⊢2 x₁ x₂) = {!!} -- easy
-⊢a-determinism (⊢a-var x) ⊢2 = {!!} -- easy
-
-⊢a-determinism (⊢a-app ⊢1) (⊢a-app ⊢2) = {!⊢a-determinism ⊢1 ⊢2!} -- easy
-
-⊢a-determinism (⊢a-ann ⊢1) (⊢a-ann ⊢2) = refl
-⊢a-determinism (⊢a-ann ⊢1) (⊢a-sub x ⊢2 x₁ x₂) = {!!} -- easy
-
-⊢a-determinism (⊢a-lam₁ ⊢1) (⊢a-lam₁ ⊢2) = {!⊢a-determinism ⊢1 ⊢2 !}  -- easy
-⊢a-determinism (⊢a-lam₂ ⊢1 ⊢3) (⊢a-lam₂ ⊢2 ⊢4) rewrite ⊢a-determinism ⊢1 ⊢2 = {!⊢a-determinism ⊢3 ⊢4!} -- easy
-⊢a-determinism (⊢a-lam₃ ⊢1 ⊢3) (⊢a-lam₃ ⊢2 ⊢4) rewrite ⊢a-determinism ⊢1 ⊢2 | ⊢a-determinism ⊢3 ⊢4 = refl
-⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) ⊢a-lit = {!!}
-⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-var x₃) = {!!}
-⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-ann ⊢2) = {!!} -- all absurds
-⊢a-determinism (⊢a-sub x ⊢1 x₁ x₂) (⊢a-sub x₃ ⊢2 x₄ x₅) rewrite ⊢a-determinism ⊢1 ⊢2 = {!!}
--}
-
 ⊢a-id : ∀ {Γ H e A A' T es As}
   → Γ ⊢a H ⇛ e ⇛ A
   → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
