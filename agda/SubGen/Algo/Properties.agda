@@ -349,3 +349,28 @@ subsumption-0 : ∀ {Γ H e A A'}
   → Γ ⊢a A ≤ H ⇝ A'
   → Γ ⊢a H ⇛ e ⇛ A'
 subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H
+
+⊢a-spl-τ : ∀ {Γ H e A es As A' T}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → T ≡ A'
+
+≤a-spl-τ : ∀ {Γ A₁ A A' As H T es}
+  → Γ ⊢a A₁ ≤ H ⇝ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → T ≡ A'
+
+≤a-spl-τ ≤a-int none-τ = refl
+≤a-spl-τ ≤a-base none-τ = refl
+≤a-spl-τ ≤a-top none-τ = refl
+≤a-spl-τ (≤a-arr A≤H A≤H₁) none-τ = refl
+≤a-spl-τ (≤a-hint x A≤H) (have spl) = ≤a-spl-τ A≤H spl
+≤a-spl-τ (≤a-and-l A≤H x) spl = ≤a-spl-τ A≤H spl
+≤a-spl-τ (≤a-and-r A≤H x) spl = ≤a-spl-τ A≤H spl
+≤a-spl-τ (≤a-and A≤H A≤H₁) none-τ = refl
+
+⊢a-spl-τ (⊢a-app ⊢e) spl = ⊢a-spl-τ ⊢e (have spl)
+⊢a-spl-τ (⊢a-lam₁ ⊢e) none-τ = refl
+⊢a-spl-τ (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = ⊢a-spl-τ ⊢e₁ (spl-weaken spl)
+⊢a-spl-τ (⊢a-sub x ⊢e x₁) spl = ≤a-spl-τ x₁ spl
+⊢a-spl-τ (⊢a-& ⊢e ⊢e₁) none-τ = refl
