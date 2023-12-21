@@ -9,3 +9,5 @@ we need to archive some systems we think they are out-dated, not useful for pres
 /Bot: try to add bottom type, some proof holes needs to be fixed
 
 /CheckSub: try to recover the property of check subsumption, some proof holes needs to be fixed
+
+/Nominal: try first nominal binding, but now we fully switch to De Bruijn
