@@ -1,0 +1,17 @@
+Trying to give a "direct" operational semantics to bidirectional type system is non-trivial
+
+Thus we could argue
+
+* Elaboration semantics (type erasure) to a standard type assignemnt with semantics, and the elaboration is type sound
+
+if Γ ⊢d j # e : A ↝ M, then [Γ] ⊢ M : [A]
+in STLC, [] is the identity function
+
+this argument is kind of weak,
+
+* Adopt type-directed operational semantics, which requires a partial value and value
+
+p := λx. e | n
+v := p : A
+
+In this case we need to deal with (λx. x) 1 specially, but this is our novel part, not sure.
