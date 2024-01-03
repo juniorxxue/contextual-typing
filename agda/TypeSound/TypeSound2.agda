@@ -342,14 +342,14 @@ swap {Γ} {x} {y} {M} {A} {B} {C} x≢y ⊢M = rename ρ ⊢M
   ρ (S z≢x Z)           =  Z
   ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
 
-subst : ∀ {Γ x N V A B j}
-  → ∅ ⊢d Z # V ⦂ A
+subst : ∀ {Γ x N V A B j j'}
+  → ∅ ⊢d j' # V ⦂ A
   → Γ , x ⦂ A ⊢d j # N ⦂ B
     --------------------
   → Γ ⊢d j # N [ x := V ] ⦂ B
 subst {x = y} ⊢V ⊢d-int = ⊢d-int
 subst {x = y} ⊢V (⊢d-var {x = x} Z) with x ≟ y
-... | yes _         =  weaken ⊢V
+... | yes _         =  weaken {!!}
 ... | no  x≢y       =  ⊥-elim (x≢y refl)
 subst {x = y} ⊢V (⊢d-var {x = x} (S x≢y ∋x)) with x ≟ y
 ... | yes refl      =  ⊥-elim (x≢y refl)
@@ -365,13 +365,49 @@ subst {x = y} ⊢V (⊢d-app₁ ⊢L ⊢M) = ⊢d-app₁ (subst ⊢V ⊢L) (subs
 subst {x = y} ⊢V (⊢d-app₂ ⊢L ⊢M) = ⊢d-app₂ (subst ⊢V ⊢L) (subst ⊢V ⊢M)
 subst {x = y} ⊢V (⊢d-sub ⊢N j≢Z) = ⊢d-sub (subst ⊢V ⊢N) j≢Z
 
+⊢d-sub' : ∀ {Γ e A j}
+  → Γ ⊢d Z # e ⦂ A
+  → Γ ⊢d j # e ⦂ A
+⊢d-sub' {j = ∞} ⊢e = ⊢d-sub ⊢e (λ ())
+⊢d-sub' {j = Z} ⊢e = ⊢e
+⊢d-sub' {j = S j} ⊢e = ⊢d-sub ⊢e (λ ())
+
+prv-value : ∀ {Γ j A V}
+  → Γ ⊢d j # V ⦂ A
+  → Value V
+  → (∀ {x e} → V ≢ ƛ x ⇒ e)
+  → Γ ⊢d Z # V ⦂ A
+prv-value (⊢d-ann ⊢e) (V-p x) neq = ⊢d-ann ⊢e
+prv-value (⊢d-sub ⊢e x₁) (V-p x) neq = ⊢e
+prv-value ⊢e V-ƛ neq = ⊥-elim (neq refl)
+
+
 preserve : ∀ {M N A j}
   → ∅ ⊢d j # M ⦂ A
   → M —→ N
     ----------
   → ∅ ⊢d j # N ⦂ A
-preserve ⊢d-int M—→N = {!!}
-preserve (⊢d-ann ⊢e) M—→N = {!!}
-preserve (⊢d-app₁ ⊢e ⊢e₁) M—→N = {!!}
-preserve (⊢d-app₂ ⊢e ⊢e₁) M—→N = {!!}
-preserve (⊢d-sub ⊢e x) M—→N = {!!}
+preserve ⊢d-int n-⦂ = ⊢d-ann (⊢d-sub' ⊢d-int)
+preserve (⊢d-ann ⊢e) (ξ-⦂ x M→N) = ⊢d-ann (preserve ⊢e M→N)
+preserve (⊢d-ann ⊢e) (β-⦂ VN neq) = prv-value ⊢e VN neq
+-- app1
+preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢d-app₁ (preserve ⊢e M→N) ⊢e₁
+preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢d-app₁ ⊢e (preserve ⊢e₁ M→N)
+preserve (⊢d-app₁ (⊢d-sub ⊢e Z≢Z) ⊢e₁) (β-ƛ x) = ⊥-elim (Z≢Z refl)
+preserve (⊢d-app₁ (⊢d-ann (⊢d-lam-∞ ⊢e)) ⊢e₁) (β-ƛ⦂ x) = ⊢d-ann (subst ⊢e₁ ⊢e)
+preserve (⊢d-app₁ (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₂) x₁)) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₂ refl)
+preserve (⊢d-app₁ (⊢d-sub ⊢e Z≢Z) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (Z≢Z refl)
+-- app2
+preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢d-app₂ (preserve ⊢e M→N) ⊢e₁
+preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢d-app₂ ⊢e (preserve ⊢e₁ M→N)
+-- beta
+preserve (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (β-ƛ x) = subst ⊢e₁ ⊢e
+preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₂ refl)
+-- beta ann
+preserve (⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-lam-∞ ⊢e)) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊢d-sub' (⊢d-ann (subst ⊢e₁ ⊢e))
+preserve (⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₃) x₂)) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₃ refl)
+
+preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₂ refl)
+-- sub
+preserve (⊢d-sub ⊢e x) M→N = ⊢d-sub' (preserve ⊢e M→N)
+
