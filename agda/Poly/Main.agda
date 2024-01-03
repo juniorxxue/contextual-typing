@@ -1,6 +1,6 @@
 module Poly.Main where
 
-open import Data.Nat public
+open import Data.Nat renaming (_/_ to _/d_)  public
 open import Data.Nat.Properties public
 open import Data.String using (String) public
 open import Relation.Nullary using (yes; no; Dec; ¬_) public
@@ -21,17 +21,44 @@ data Singleton {a} {A : Set a} (x : A) : Set a where
 inspect : ∀ {a} {A : Set a} (x : A) → Singleton x
 inspect x = x with≡ refl
 
-data Term : Set where
-  tvar : ℕ → Term
-  tabs : Term → Term
-  tapp : Term → Term → Term
-  ttyabs : Term → Term
-  ttyapp : Term → Term
+----------------------------------------------------------------------
+--+                                                                +--
+--+                             Syntax                             +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+infixr 5  ƛ_
+infixl 7  _·_
+infix  9  `_
+infix  5  _⦂_
+infix  5  Λ_
+infix  5  _⟦_⟧
+
+infix  9 ‶_
+infixr 8 _`→_
+infixr 8 `∀
 
 data Type : Set where
-  tyvar : ℕ → Type
-  tyarrow : Type → Type → Type
-  tyforall : Type → Type
+  Int : Type
+  ‶_ : ℕ → Type
+  _`→_ : Type → Type → Type
+  `∀ : Type → Type
+
+data Term : Set where
+  lit      : ℕ → Term
+  `_       : ℕ → Term
+  ƛ_       : Term → Term
+  _·_      : Term → Term → Term
+  _⦂_      : Term → Type → Term
+  Λ_       : Term → Term
+  _⟦_⟧ₐ     : Term → Type → Term
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                         Binding Infra                          +--
+--+                                                                +--
+----------------------------------------------------------------------
+
 
 Context : Set → Set
 Context a = List (Maybe a)
@@ -69,35 +96,100 @@ subst = {!!}
 subst-type : Type → ℕ → Type → Type
 subst-type = {!!}
 
+⟦_/_⟧_ : Type → ℕ → Type → Type
+⟦ A / n ⟧ B = subst-type A n B
+
 map : ∀ {A B} → (f : A → B) → (e : Context A) → Context B
 map f [] = []
 map f (just x ∷ e) = just (f x) ∷ map f e
 map f (nothing ∷ e) = nothing ∷ map f e
 
-infix 3 _⊢_⦂_
+----------------------------------------------------------------------
+--+                                                                +--
+--+                              Decl                              +--
+--+                                                                +--
+----------------------------------------------------------------------
 
-data _⊢_⦂_ : Context Type → Term → Type → Set where
+_,_ : Context Type → Type → Context Type
+_,_ Γ A = insert 0 A Γ
 
-  j-var : ∀ {Γ x A}
+_↑ : Context Type → Context Type
+_↑ Γ = map (shift-type 0) Γ
+
+data Counter : Set where
+  ∞ : Counter
+  Z : Counter
+  S : Counter → Counter
+
+infix 3 _⊢d_#_⦂_
+infix 3 _⊢d_#_≤_
+
+data _⊢d_#_≤_ : Context Type → Counter → Type → Type → Set where
+
+  ≤d-refl : ∀ {Γ A}
+    → Γ ⊢d Z # A ≤ A
+
+  ≤d-int : ∀ {Γ}
+    → Γ ⊢d ∞ # Int ≤ Int
+
+  ≤d-arr-∞ : ∀ {Γ A B C D}
+    → Γ ⊢d ∞ # C ≤ A
+    → Γ ⊢d ∞ # B ≤ D
+    → Γ ⊢d ∞ # A `→ B ≤ C `→ D
+
+  ≤d-∀ : ∀ {Γ A B}
+    → Γ ↑ ⊢d ∞ # A ≤ B
+    → Γ ⊢d ∞ # `∀ A ≤ `∀ B
+
+  ≤d-∀L : ∀ {Γ A B C j}
+    -- B is well formed
+    → (Γ ↑) ⊢d S j # (⟦ B / 0 ⟧ A) ≤ C
+    → Γ ⊢d S j # `∀ A ≤ C
+
+
+data _⊢d_#_⦂_ : Context Type → Counter → Term → Type → Set where
+
+  ⊢d-lit : ∀ {Γ n}
+    → Γ ⊢d Z # lit n ⦂ Int
+
+  ⊢d-var : ∀ {Γ x A}
     → lookup x Γ ≡ just A
-    → Γ ⊢ (tvar x) ⦂ A
+    → Γ ⊢d Z # ` x ⦂ A
 
-  j-abs : ∀ {Γ e A B}
-    → (insert 0 A Γ) ⊢ e ⦂ B
-    → Γ ⊢ (tabs e) ⦂ (tyarrow A B)
+  ⊢d-ann : ∀ {Γ e A}
+    → Γ ⊢d ∞ # e ⦂ A
+    → Γ ⊢d Z # (e ⦂ A) ⦂ A
 
-  j-app : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢ e₁ ⦂ (tyarrow A B)
-    → Γ ⊢ e₂ ⦂ A
-    → Γ ⊢ (tapp e₁ e₂) ⦂ B
+  ⊢d-lam-∞ : ∀ {Γ e A B}
+    → Γ , A ⊢d ∞ # e ⦂ B
+    → Γ ⊢d ∞ # (ƛ e) ⦂ A `→ B
 
-  j-ty-abs : ∀ {Γ e A}
-    → map (shift-type 0) Γ ⊢ e ⦂ A
-    → Γ ⊢ (ttyabs e) ⦂ (tyforall A)
+  ⊢d-lam-n : ∀ {Γ e A B j}
+    → Γ , A ⊢d j # e ⦂ B
+    → Γ ⊢d S j # (ƛ e) ⦂ A `→ B
 
-  j-ty-app : ∀ {Γ e A B B'}
-    → Γ ⊢ e ⦂ (tyforall A)
-    → subst-type B 0 A ≡ B'
-    → Γ ⊢ (ttyapp e) ⦂ B'
+  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
+    → Γ ⊢d Z # e₁ ⦂ A `→ B
+    → Γ ⊢d ∞ # e₂ ⦂ A
+    → Γ ⊢d Z # e₁ · e₂ ⦂ B
 
+  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢d (S j) # e₁ ⦂ A `→ B
+    → Γ ⊢d Z # e₂ ⦂ A
+    → Γ ⊢d j # e₁ · e₂ ⦂ B
+
+  ⊢d-sub : ∀ {Γ e A A' j}
+    → Γ ⊢d Z # e ⦂ A
+    → Γ ⊢d j # A ≤ A'
+    → j ≢ Z
+    → Γ ⊢d j # e ⦂ A'
+
+  ⊢d-ty-abs : ∀ {Γ j e A}
+    → Γ ↑ ⊢d j # e ⦂ A
+    → Γ ⊢d j # Λ e ⦂ `∀ A
+
+  ⊢d-ty-app : ∀ {Γ j e A B B'}
+    → Γ ⊢d j # e ⦂ `∀ B
+    → ⟦ A / 0 ⟧ B ≡ B'
+    → Γ ⊢d j # e ⟦ A ⟧ₐ ⦂ B'
 

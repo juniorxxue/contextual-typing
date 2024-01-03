@@ -1,4 +1,4 @@
-module TypeSound where
+module TypeSound2 where
 
 open import Data.Bool using (Bool; true; false; T; not)
 open import Data.Empty using (⊥; ⊥-elim)
@@ -11,6 +11,7 @@ open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
+open import Function.Base using (case_of_; case_return_of_) public
 
 Id : Set
 Id = String
@@ -96,14 +97,26 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → j ≢ Z
     → Γ ⊢d j # e ⦂ A
 
+data PValue : Term → Set where
+
+  P-ƛ : ∀ {x e}
+      ---------------
+    → PValue (ƛ x ⇒ e)
+
+  P-n : ∀ {n}
+    → PValue (lit n)
+
+
 data Value : Term → Set where
+
+  V-p : ∀ {p A}
+    → PValue p
+      ---------------
+    → Value (p ⦂ A)
 
   V-ƛ : ∀ {x e}
       ---------------
     → Value (ƛ x ⇒ e)
-
-  V-n : ∀ {n}
-    → Value (lit n)
 
 infix 9 _[_:=_]
 
@@ -120,8 +133,6 @@ _[_:=_] : Term → Id → Term → Term
 
 infix 4 _—→_
 
-infix 4 _-→j_
-
 data _—→_ : Term → Term → Set where
 
   ξ-·₁ : ∀ {L L′ M}
@@ -132,24 +143,53 @@ data _—→_ : Term → Term → Set where
     → Value V
     → M —→ M′
     → V · M —→ V · M′
+
+  ξ-⦂ : ∀ {e e' A}
+    → ¬ (PValue e)
+    → e —→ e'
+    → (e ⦂ A) —→ (e' ⦂ A)
   
-  ξ-⦂ : ∀ {M M' A}
-    → M —→ M'
-    → (M ⦂ A) —→ (M' ⦂ A)
+  β-⦂ : ∀ {V A}
+    → Value V
+    → (∀ {x e} → V ≢ (ƛ x ⇒ e))
+    → (V ⦂ A) —→ V
 
   β-ƛ : ∀ {x N V}
     → Value V
     → (ƛ x ⇒ N) · V —→ N [ x := V ]
 
-  β-⦂ : ∀ {A V}
+  β-ƛ⦂ : ∀ {x N V A B}
     → Value V
-    → (V ⦂ A) —→ V 
+    → ((ƛ x ⇒ N) ⦂ A ⇒ B) · V —→ (N [ x := V ] ⦂ B)
+
+  n-⦂ : ∀ {n}
+    → (lit n) —→ ((lit n) ⦂ Int)
+
+¬pvalue→¬ƛ : ∀ {e}
+  → ¬ PValue e
+  → (∀ {x e'} → e ≢ ƛ x ⇒ e')
+¬pvalue→¬ƛ noP x₁ rewrite x₁ = noP P-ƛ
+
+
+V¬—→ƛ : ∀ {x e N}
+  → ƛ x ⇒ e —→ N
+  → ⊥
+V¬—→ƛ ()
+
+V¬—→p : ∀ {p A N}
+  → PValue p
+  → (p ⦂ A) —→ N
+  → ⊥
+V¬—→p P-ƛ (β-⦂ x x₁) = ⊥-elim (x₁ refl)
+V¬—→p P-n (ξ-⦂ x n-⦂) = ⊥-elim (x P-n)
+
 
 V¬—→ : ∀ {M N}
   → Value M
     ----------
   → ¬ (M —→ N)
-V¬—→ V-ƛ        ()
+V¬—→ (V-p p) = V¬—→p p
+V¬—→ V-ƛ = V¬—→ƛ
 
 —→¬V : ∀ {M N}
   → M —→ N
@@ -186,28 +226,58 @@ data Progress (M : Term) : Set where
   → ⊥
 ⊢int-arr-inv (⊢d-sub ⊢e x) = ⊢int-arr-inv ⊢e
 
+p-dec : ∀ e
+  → Dec (PValue e)
+p-dec (lit x) = yes P-n
+p-dec (` x) = no λ ()
+p-dec (ƛ x ⇒ e) = yes P-ƛ
+p-dec (e · e₁) = no (λ ())
+p-dec (e ⦂ x) = no (λ ())
+
+inv-absurd-n-fun : ∀ {Γ j n A B}
+  → Γ ⊢d j # lit n ⦂ A ⇒ B
+  → ⊥
+inv-absurd-n-fun (⊢d-sub ⊢e x) = inv-absurd-n-fun ⊢e
+
+progress-lam : ∀ {p₁ e₂ A A₁ A₂ j}
+  → PValue p₁
+  → ∅ ⊢d j # (p₁ ⦂ A) ⦂ A₁ ⇒ A₂
+  → Value e₂
+  → Progress ((p₁ ⦂ A) · e₂)
+progress-lam P-ƛ (⊢d-ann ⊢p) ve = step (β-ƛ⦂ ve)
+progress-lam P-ƛ (⊢d-sub ⊢p x) ve = progress-lam P-ƛ ⊢p ve
+progress-lam P-n (⊢d-ann ⊢p) ve = ⊥-elim (inv-absurd-n-fun ⊢p)
+progress-lam P-n (⊢d-sub ⊢p x) ve = progress-lam P-n ⊢p ve
+
 progress : ∀ {M A j}
   → ∅ ⊢d j # M ⦂ A
   → Progress M
-progress ⊢d-int = done V-n
-progress (⊢d-ann ⊢e) with progress ⊢e
-... | step e—→N  = step (ξ-⦂ e—→N)
-... | done VM = step (β-⦂ VM)
+progress ⊢d-int = step n-⦂
+progress (⊢d-ann {e = e} ⊢e) with progress ⊢e | p-dec e
+... | step x | yes P-n = done (V-p P-n)
+... | step x | no ¬p = step (ξ-⦂ ¬p x)
+... | done x | yes p = done (V-p p)
+... | done x | no ¬p = step (β-⦂ x (¬pvalue→¬ƛ ¬p))
 progress (⊢d-lam-∞ ⊢e) = done V-ƛ
 progress (⊢d-lam-n ⊢e) = done V-ƛ
 progress (⊢d-app₁ ⊢L ⊢M) with progress ⊢L
-... | step L—→L′ =  step (ξ-·₁ L—→L′)
-... | done V-n = ⊥-elim (⊢int-arr-inv ⊢L)
-progress (⊢d-app₁ ⊢L ⊢M) | done V-ƛ with progress ⊢M
+... | step L—→L′                            =  step (ξ-·₁ L—→L′)
+... | done V-ƛ with progress ⊢M
 ...   | step M—→M′                          =  step (ξ-·₂ V-ƛ M—→M′)
 ...   | done VM                             =  step (β-ƛ VM)
+progress (⊢d-app₁ ⊢L ⊢M) | done (V-p p) with progress ⊢M
+...   | step M—→M′  = step (ξ-·₂ (V-p p) M—→M′)
+...   | done VM     = progress-lam p ⊢L VM
 progress (⊢d-app₂ ⊢L ⊢M) with progress ⊢L
-... | step L—→L′ =  step (ξ-·₁ L—→L′)
-... | done V-n = ⊥-elim (⊢int-arr-inv ⊢L)
-progress (⊢d-app₂ ⊢L ⊢M) | done V-ƛ with progress ⊢M
+... | step L—→L′                            =  step (ξ-·₁ L—→L′)
+... | done V-ƛ with progress ⊢M
 ...   | step M—→M′                          =  step (ξ-·₂ V-ƛ M—→M′)
 ...   | done VM                             =  step (β-ƛ VM)
+progress (⊢d-app₂ ⊢L ⊢M) | done (V-p p) with progress ⊢M
+...   | step M—→M′  = step (ξ-·₂ (V-p p) M—→M′)
+...   | done VM     = progress-lam p ⊢L VM
 progress (⊢d-sub ⊢e x) = progress ⊢e
+
 
 ext : ∀ {Γ Δ}
   → (∀ {x A}     →         Γ ∋ x ⦂ A →         Δ ∋ x ⦂ A)
@@ -300,8 +370,8 @@ preserve : ∀ {M N A j}
   → M —→ N
     ----------
   → ∅ ⊢d j # N ⦂ A
-preserve (⊢d-ann ⊢e) (ξ-⦂ M—→N) = ⊢d-ann (preserve ⊢e M—→N)
-preserve (⊢d-ann ⊢e) (β-⦂ x) = {!!}
+preserve ⊢d-int M—→N = {!!}
+preserve (⊢d-ann ⊢e) M—→N = {!!}
 preserve (⊢d-app₁ ⊢e ⊢e₁) M—→N = {!!}
 preserve (⊢d-app₂ ⊢e ⊢e₁) M—→N = {!!}
 preserve (⊢d-sub ⊢e x) M—→N = {!!}
