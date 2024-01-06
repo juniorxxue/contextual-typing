@@ -120,8 +120,6 @@ _[_:=_] : Term → Id → Term → Term
 
 infix 4 _—→_
 
-infix 4 _-→j_
-
 data _—→_ : Term → Term → Set where
 
   ξ-·₁ : ∀ {L L′ M}
@@ -302,6 +300,13 @@ preserve : ∀ {M N A j}
   → ∅ ⊢d j # N ⦂ A
 preserve (⊢d-ann ⊢e) (ξ-⦂ M—→N) = ⊢d-ann (preserve ⊢e M—→N)
 preserve (⊢d-ann ⊢e) (β-⦂ x) = {!!}
-preserve (⊢d-app₁ ⊢e ⊢e₁) M—→N = {!!}
-preserve (⊢d-app₂ ⊢e ⊢e₁) M—→N = {!!}
-preserve (⊢d-sub ⊢e x) M—→N = {!!}
+
+preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₁ M—→N) = ⊢d-app₁ (preserve ⊢e M—→N) ⊢e₁
+preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₂ x M—→N) = ⊢d-app₁ ⊢e (preserve ⊢e₁ M—→N)
+preserve (⊢d-app₁ (⊢d-sub ⊢e x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₁ refl)
+
+preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₁ M—→N) = ⊢d-app₂ (preserve ⊢e M—→N) ⊢e₁
+preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₂ x M—→N) = ⊢d-app₂ ⊢e (preserve ⊢e₁ M—→N)
+preserve (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (β-ƛ x) = subst ⊢e₁ ⊢e
+preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₂ refl)
+preserve (⊢d-sub ⊢e x) M—→N = ⊢d-sub (preserve ⊢e M—→N) x

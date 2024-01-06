@@ -1,0 +1,137 @@
+\documentclass{article}
+\usepackage{fullwidth}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage{mathpartir}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xfrac,unicode-math}
+% \usepackage{amsthm}
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
+
+\title{Contextual Type Inference (STLC Type Soundness)}
+\author{Xu Xue}
+
+\begin{document}
+
+\maketitle
+
+\section{Syntax}
+
+\begin{align*}
+&\text{Types} \quad\quad &A, B, C, D ::=&~ \mathtt{Int} \mid A \rightarrow B\\
+&\text{Expressions} \quad \quad &e::=&~ n \mid x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A\\
+&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A\\
+&\text{Counters} \quad\quad &j ::=&~ Z \mid \infty \mid S~j\\
+\end{align*}
+
+\section{Decl.}
+
+\subsection{Typing}
+
+\begin{mathpar}
+    \inferrule*[lab=Int]
+    { }
+    {\Gamma \vdash_Z i : Int}
+
+    \inferrule*[lab=Var]
+    {x : A \in \Gamma}
+    {\Gamma \vdash_Z x : A}
+
+    \inferrule*[lab=Ann]
+    {\Gamma \vdash_{\infty} e : A}
+    {\Gamma \vdash_Z (e : A) : A}
+
+    \inferrule*[lab=Lam]
+    {\Gamma, x : A \vdash_{j-} e : B}
+    {\Gamma \vdash_{j} \lambda x.~ e : A \rightarrow B}
+
+    \inferrule*[lab=App1]
+    {\Gamma \vdash_Z e_1 : A \rightarrow B \\
+    \Gamma \vdash_{\infty} e_2 : A}
+    {\Gamma \vdash_Z e_1~e_2 : B}
+
+    \inferrule*[lab=App2]
+    {\Gamma \vdash_{S~j} e_1 : A \rightarrow B \\
+    \Gamma \vdash_Z e_2 : A}
+    {\Gamma \vdash_j e_1~e_2 : B}
+
+    \inferrule*[lab=Sub]
+    {\Gamma \vdash_Z e : A \\
+    j \neq Z}
+    {\Gamma \vdash_j e : A}
+\end{mathpar}
+
+\subsection{Operational Semantics (likely to TDOS)}
+
+\begin{align*}
+  &\text{Partial Values} \quad\quad &p ::= &~n \mid \lambda x.~ e \\
+  &\text{Values} \quad\quad &v ::= &~ p : A \mid \lambda x.~ e
+\end{align*}  
+
+\begin{mathpar}
+  \inferrule*[lab=App1]
+  {e_1 \longrightarrow e_{1}^{\prime}}
+  {e_1~e_2 \longrightarrow e_{1}^{\prime} ~e_2}
+
+  \inferrule*[lab=App2]
+  {e_2 \longrightarrow e_{2}^{\prime}}
+  {v~e_2 \longrightarrow v ~e_2^{\prime}}
+
+  \inferrule*[lab=Ann]
+  {\neg ~(e \in p) \\
+   e \longrightarrow e^{\prime}}
+  {e : A \longrightarrow e^{\prime} : A}
+
+  \inferrule*[lab=Beta-Ann]
+  {v \neq \lambda x.~e}
+  {v : A \longrightarrow v}
+
+  \inferrule*[lab=Beta-Lam]
+  { }
+  {(\lambda x. ~e) ~ v \longrightarrow e ~[x := v]}
+
+  \inferrule*[lab=Beta-LamAnn]
+  { }
+  {(\lambda x. ~e : A \rightarrow B) ~ v \longrightarrow e ~[x := v] : B}
+
+  \inferrule*[lab=Int]
+  { }
+  {n \longrightarrow n : Int}
+
+\end{mathpar}
+
+\subsection{Operational Semantics (mimic Type Erasure)}
+
+\begin{align*}
+  &\text{Values} \quad\quad &v ::= &~n \mid \lambda x.~ e
+\end{align*}  
+
+
+\begin{mathpar}
+  \inferrule*[lab=App1]
+  {e_1 \longrightarrow e_{1}^{\prime}}
+  {e_1~e_2 \longrightarrow e_{1}^{\prime} ~e_2}
+
+  \inferrule*[lab=App2]
+  {e_2 \longrightarrow e_{2}^{\prime}}
+  {v~e_2 \longrightarrow v ~e_2^{\prime}}
+
+  \inferrule*[lab=Ann]
+  {e \longrightarrow e^{\prime}}
+  {e : A \longrightarrow e^{\prime} : A}
+
+  \inferrule*[lab=Beta-Ann]
+  { }
+  {v : A \longrightarrow v}
+
+  \inferrule*[lab=Beta-Lam]
+  { }
+  {(\lambda x. ~e) ~ v \longrightarrow e ~[x := v]}
+
+
+\end{mathpar}
+ 
+\end{document}
