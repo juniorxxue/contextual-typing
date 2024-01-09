@@ -1,10 +1,10 @@
-module Elaboration.Main where
+module TypeSound.Elaboration.Main where
 
-open import Elaboration.Common
-import Elaboration.Target as T
-import Elaboration.Source as S
-open import Elaboration.Target using (_⊢_⦂_)
-open import Elaboration.Source using (_⊢d_#_⦂_)
+open import TypeSound.Elaboration.Common
+import TypeSound.Elaboration.Target as T
+import TypeSound.Elaboration.Source as S
+open import TypeSound.Elaboration.Target using (_⊢_⦂_)
+open import TypeSound.Elaboration.Source using (_⊢d_#_⦂_)
 
 ∥_∥ : S.Term → T.Term
 ∥ S.lit x ∥ = T.lit x

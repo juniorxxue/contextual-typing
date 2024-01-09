@@ -1,18 +1,13 @@
-module TypeSound.Elaboration.Source where
+module Traditional.Decl where
 
-open import TypeSound.Elaboration.Common
+open import Traditional.Prelude
+open import Traditional.Common
 
-infixr 5  ƛ_⇒_
-infixl 7  _·_
-infix  9  `_
-infix  5  _⦂_
-
-data Term : Set where
-  lit      : ℕ → Term
-  `_       : Id → Term
-  ƛ_⇒_     : Id → Term → Term
-  _·_      : Term → Term → Term
-  _⦂_      : Term → Type → Term
+----------------------------------------------------------------------
+--+                                                                +--
+--+                             Typing                             +--
+--+                                                                +--
+----------------------------------------------------------------------
 
 data Counter : Set where
   ∞ : Counter
@@ -34,13 +29,9 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ∞ # e ⦂ A
     → Γ ⊢d Z # (e ⦂ A) ⦂ A
 
-  ⊢d-lam-∞ : ∀ {Γ e x A B}
-    → Γ , x ⦂ A ⊢d ∞ # e ⦂ B
-    → Γ ⊢d ∞ # (ƛ x ⇒ e) ⦂ A ⇒ B
-
-  ⊢d-lam-n : ∀ {Γ e x A B j}
-    → Γ , x ⦂ A ⊢d j # e ⦂ B
-    → Γ ⊢d S j # (ƛ x ⇒ e) ⦂ A ⇒ B
+  ⊢d-lam-∞ : ∀ {Γ e A B}
+    → Γ , A ⊢d ∞ # e ⦂ B
+    → Γ ⊢d ∞ # (ƛ e) ⦂ A ⇒ B
 
   ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
     → Γ ⊢d Z # e₁ ⦂ A ⇒ B

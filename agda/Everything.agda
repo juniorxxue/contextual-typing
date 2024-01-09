@@ -1,5 +1,15 @@
 module Everything where
 
+import Traditional.Prelude
+import Traditional.Common
+import Traditional.Properties
+import Traditional.Decl
+import Traditional.Decl.Properties
+import Traditional.Algo
+import Traditional.Algo.Properties
+import Traditional.Completeness
+import Traditional.Soundness
+
 import STLC.Prelude
 import STLC.Common
 import STLC.Properties
@@ -19,3 +29,10 @@ import Intersection.Algo
 import Intersection.Algo.Properties
 import Intersection.Completeness
 import Intersection.Soundness
+
+import TypeSound.Elaboration.Common
+import TypeSound.Elaboration.Source
+import TypeSound.Elaboration.Target
+import TypeSound.Elaboration.Main
+
+import TypeSound.TypeSound
