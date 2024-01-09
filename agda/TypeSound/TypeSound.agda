@@ -11,6 +11,7 @@ open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl)
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
+open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)
 
 Id : Set
 Id = String
@@ -141,7 +142,42 @@ data _—→_ : Term → Term → Set where
 
   β-⦂ : ∀ {A V}
     → Value V
-    → (V ⦂ A) —→ V 
+    → (V ⦂ A) —→ V
+
+
+infix 4 _—→j_
+
+data _—→j_ : Term × Counter → Term × Counter → Set where
+
+  jξ-·₁ : ∀ {L L′ M j}
+    → (∀ {j'} → ⟨ L , j' ⟩ —→j ⟨ L′ , j' ⟩)
+    → ⟨ L · M , j ⟩ —→j ⟨ L′ · M , j ⟩
+
+  jξ-·₂ : ∀ {V M M′ j}
+    → Value V
+    → (∀ {j'} → ⟨ M , j' ⟩ —→j ⟨ M′ , j' ⟩)
+    → ⟨ V · M , j ⟩ —→j ⟨ V · M′ , j ⟩
+  
+  jξ-⦂ : ∀ {M M' A j}
+    → (∀ {j'} → ⟨ M , j' ⟩ —→j ⟨ M' , j' ⟩)
+    → ⟨ (M ⦂ A) , j ⟩ —→j ⟨ (M' ⦂ A) , j ⟩
+
+  jβ-ƛ : ∀ {x N V j}
+    → Value V
+    → ⟨ (ƛ x ⇒ N) · V , j ⟩ —→j ⟨ N [ x := V ] , j ⟩
+
+  jβ-⦂ : ∀ {A V j}
+    → Value V
+    → ⟨ (V ⦂ A) , j ⟩ —→j ⟨ V , ∞ ⟩
+
+
+-- ((\f. f 1) : (Int -> Int) -> Int) (\x. x) => Int
+
+-- ==> (\f. f 1) (\x. x) <=x> Int
+
+-- we reached a expression can neither to be checked or inferred
+
+
 
 V¬—→ : ∀ {M N}
   → Value M
@@ -240,7 +276,6 @@ weaken {Γ} ⊢M = rename ρ ⊢M
     → Γ ∋ z ⦂ C
   ρ ()
 
-
 drop : ∀ {Γ x M A B C j}
   → Γ , x ⦂ A , x ⦂ B ⊢d j # M ⦂ C
     --------------------------
@@ -310,3 +345,45 @@ preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₂ x M—→N) = ⊢d-app₂ ⊢e (pr
 preserve (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (β-ƛ x) = subst ⊢e₁ ⊢e
 preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₂ refl)
 preserve (⊢d-sub ⊢e x) M—→N = ⊢d-sub (preserve ⊢e M—→N) x
+
+  
+
+j-final : ∀ {M N j j'}
+  → ⟨ M , j ⟩ —→j ⟨ N , j' ⟩
+  → (j ≡ j') ⊎ (j' ≡ ∞)
+j-final (jξ-·₁ x) = inj₁ refl
+j-final (jξ-·₂ x x₁) = inj₁ refl
+j-final (jξ-⦂ x) = inj₁ refl
+j-final (jβ-ƛ x) = inj₁ refl
+j-final (jβ-⦂ x) = inj₂ refl
+
+j-sub : ∀ {M N j j'}
+  → j ≢ Z
+  → ⟨ M , j ⟩ —→j ⟨ N , j' ⟩
+  → ⟨ M , Z ⟩ —→j ⟨ N , Z ⟩
+j-sub neq (jξ-·₁ x) = jξ-·₁ x
+j-sub neq (jξ-·₂ x x₁) = jξ-·₂ x x₁
+j-sub neq (jξ-⦂ x) = jξ-⦂ x
+j-sub neq (jβ-ƛ x) = jβ-ƛ x
+j-sub neq (jβ-⦂ x) = {!!}
+
+
+preserve' : ∀ {M N A j j'}
+  → ∅ ⊢d j # M ⦂ A
+  → ⟨ M , j ⟩ —→j ⟨ N , j' ⟩
+    ----------
+  → ∅ ⊢d j' # N ⦂ A
+preserve' (⊢d-ann ⊢e) (jξ-⦂ M→N) = ⊢d-ann (preserve' ⊢e M→N)
+preserve' (⊢d-ann ⊢e) (jβ-⦂ x) = ⊢e
+
+preserve' (⊢d-app₁ ⊢e ⊢e₁) (jξ-·₁ x) = ⊢d-app₁ (preserve' ⊢e x) ⊢e₁
+preserve' (⊢d-app₁ ⊢e ⊢e₁) (jξ-·₂ x x₁) = ⊢d-app₁ ⊢e (preserve' ⊢e₁ x₁)
+preserve' (⊢d-app₁ (⊢d-sub ⊢e x₁) ⊢e₁) (jβ-ƛ x) = ⊥-elim (x₁ refl)
+
+preserve' (⊢d-app₂ ⊢e ⊢e₁) (jξ-·₁ x) = ⊢d-app₂ (preserve' ⊢e x) ⊢e₁
+preserve' (⊢d-app₂ ⊢e ⊢e₁) (jξ-·₂ x x₁) = ⊢d-app₂ ⊢e (preserve' ⊢e₁ x₁)
+preserve' (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (jβ-ƛ x) = subst ⊢e₁ ⊢e
+preserve' (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (jβ-ƛ x) = ⊥-elim (x₂ refl)
+preserve' (⊢d-sub ⊢e x) M→N = {!!}
+-- ⊢d-sub (preserve' ⊢e {!!}) {!!}
+-- preserve' ⊢e (j-sub M→N)
