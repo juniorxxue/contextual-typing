@@ -96,26 +96,16 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → j ≢ Z
     → Γ ⊢d j # e ⦂ A
 
-data PValue : Term → Set where
-
-  P-ƛ : ∀ {x e}
-      ---------------
-    → PValue (ƛ x ⇒ e)
-
-  P-n : ∀ {n}
-    → PValue (lit n)
-
-
 data Value : Term → Set where
 
-  V-p : ∀ {p A}
-    → PValue p
-      ---------------
-    → Value (p ⦂ A)
+  V-n : ∀ {n}
+    → Value (lit n)
 
   V-ƛ : ∀ {x e}
-      ---------------
     → Value (ƛ x ⇒ e)
+
+  V-ƛ⦂ : ∀ {x e A B}
+    → Value ((ƛ x ⇒ e) ⦂ A ⇒ B)
 
 
 ----------------------------------------------------------------------
@@ -150,13 +140,12 @@ data _—→_ : Term → Term → Set where
     → V · M —→ V · M′
 
   ξ-⦂ : ∀ {e e' A}
-    → ¬ (PValue e)
     → e —→ e'
     → (e ⦂ A) —→ (e' ⦂ A)
   
   β-⦂ : ∀ {V A}
     → Value V
-    → (∀ {x e} → V ≢ (ƛ x ⇒ e))
+    → ¬ (Value (V ⦂ A))
     → (V ⦂ A) —→ V
 
   β-ƛ : ∀ {x N V}
@@ -165,42 +154,13 @@ data _—→_ : Term → Term → Set where
 
   β-ƛ⦂ : ∀ {x N V A B}
     → Value V
-    → ((ƛ x ⇒ N) ⦂ A ⇒ B) · V —→ (N [ x := V ] ⦂ B)
-
-  n-⦂ : ∀ {n}
-    → (lit n) —→ ((lit n) ⦂ Int)
-
-¬pvalue→¬ƛ : ∀ {e}
-  → ¬ PValue e
-  → (∀ {x e'} → e ≢ ƛ x ⇒ e')
-¬pvalue→¬ƛ noP x₁ rewrite x₁ = noP P-ƛ
+    → ((ƛ x ⇒ N) ⦂ A ⇒ B) · V —→ (N [ x := (V ⦂ A) ] ⦂ B)    
 
 
 V¬—→ƛ : ∀ {x e N}
   → ƛ x ⇒ e —→ N
   → ⊥
 V¬—→ƛ ()
-
-V¬—→p : ∀ {p A N}
-  → PValue p
-  → (p ⦂ A) —→ N
-  → ⊥
-V¬—→p P-ƛ (β-⦂ x x₁) = ⊥-elim (x₁ refl)
-V¬—→p P-n (ξ-⦂ x n-⦂) = ⊥-elim (x P-n)
-
-
-V¬—→ : ∀ {M N}
-  → Value M
-    ----------
-  → ¬ (M —→ N)
-V¬—→ (V-p p) = V¬—→p p
-V¬—→ V-ƛ = V¬—→ƛ
-
-—→¬V : ∀ {M N}
-  → M —→ N
-    ---------
-  → ¬ Value M
-—→¬V M—→N VM  =  V¬—→ VM M—→N
 
 infix  4 Canonical_⦂_
 
@@ -225,64 +185,55 @@ data Progress (M : Term) : Set where
       Value M
       ----------
     → Progress M
-    
+
+
 ⊢int-arr-inv : ∀ {Γ j n A B}
   → Γ ⊢d j # lit n ⦂ A ⇒ B
   → ⊥
 ⊢int-arr-inv (⊢d-sub ⊢e x) = ⊢int-arr-inv ⊢e
-
-p-dec : ∀ e
-  → Dec (PValue e)
-p-dec (lit x) = yes P-n
-p-dec (` x) = no λ ()
-p-dec (ƛ x ⇒ e) = yes P-ƛ
-p-dec (e · e₁) = no (λ ())
-p-dec (e ⦂ x) = no (λ ())
 
 inv-absurd-n-fun : ∀ {Γ j n A B}
   → Γ ⊢d j # lit n ⦂ A ⇒ B
   → ⊥
 inv-absurd-n-fun (⊢d-sub ⊢e x) = inv-absurd-n-fun ⊢e
 
-progress-lam : ∀ {p₁ e₂ A A₁ A₂ j}
-  → PValue p₁
-  → ∅ ⊢d j # (p₁ ⦂ A) ⦂ A₁ ⇒ A₂
-  → Value e₂
-  → Progress ((p₁ ⦂ A) · e₂)
-progress-lam P-ƛ (⊢d-ann ⊢p) ve = step (β-ƛ⦂ ve)
-progress-lam P-ƛ (⊢d-sub ⊢p x) ve = progress-lam P-ƛ ⊢p ve
-progress-lam P-n (⊢d-ann ⊢p) ve = ⊥-elim (inv-absurd-n-fun ⊢p)
-progress-lam P-n (⊢d-sub ⊢p x) ve = progress-lam P-n ⊢p ve
+v-dec : ∀ e
+  → Dec (Value e)
+v-dec (lit x) = yes V-n
+v-dec (` x) = no (λ ())
+v-dec (ƛ x ⇒ e) = yes V-ƛ
+v-dec (e · e₁) = no (λ ())
+v-dec (e ⦂ Int) = no (λ ())
+v-dec (lit x ⦂ A ⇒ B) = no (λ ())
+v-dec (` x ⦂ A ⇒ B) = no (λ ())
+v-dec ((ƛ x ⇒ e) ⦂ A ⇒ B) = yes V-ƛ⦂
+v-dec (e · e₁ ⦂ A ⇒ B) = no (λ ())
+v-dec ((e ⦂ x) ⦂ A ⇒ B) = no (λ ())
 
-progress : ∀ {M A j}
-  → ∅ ⊢d j # M ⦂ A
-  → Progress M
-progress ⊢d-int = step n-⦂
-progress (⊢d-ann {e = e} ⊢e) with progress ⊢e | p-dec e
-... | step x | yes P-n = done (V-p P-n)
-... | step x | no ¬p = step (ξ-⦂ ¬p x)
-... | done x | yes p = done (V-p p)
-... | done x | no ¬p = step (β-⦂ x (¬pvalue→¬ƛ ¬p))
+progress : ∀ {j e A}
+  → ∅ ⊢d j # e ⦂ A
+  → Progress e
+progress ⊢d-int = done V-n
+progress (⊢d-ann {e = e} {A = A} ⊢e) with progress ⊢e | v-dec (e ⦂ A)
+... | step m | _ = step (ξ-⦂ m)
+... | done m | yes p = done p
+... | done m | no ¬p = step (β-⦂ m ¬p)
 progress (⊢d-lam-∞ ⊢e) = done V-ƛ
 progress (⊢d-lam-n ⊢e) = done V-ƛ
-progress (⊢d-app₁ ⊢L ⊢M) with progress ⊢L
-... | step L—→L′                            =  step (ξ-·₁ L—→L′)
-... | done V-ƛ with progress ⊢M
-...   | step M—→M′                          =  step (ξ-·₂ V-ƛ M—→M′)
-...   | done VM                             =  step (β-ƛ VM)
-progress (⊢d-app₁ ⊢L ⊢M) | done (V-p p) with progress ⊢M
-...   | step M—→M′  = step (ξ-·₂ (V-p p) M—→M′)
-...   | done VM     = progress-lam p ⊢L VM
-progress (⊢d-app₂ ⊢L ⊢M) with progress ⊢L
-... | step L—→L′                            =  step (ξ-·₁ L—→L′)
-... | done V-ƛ with progress ⊢M
-...   | step M—→M′                          =  step (ξ-·₂ V-ƛ M—→M′)
-...   | done VM                             =  step (β-ƛ VM)
-progress (⊢d-app₂ ⊢L ⊢M) | done (V-p p) with progress ⊢M
-...   | step M—→M′  = step (ξ-·₂ (V-p p) M—→M′)
-...   | done VM     = progress-lam p ⊢L VM
+progress (⊢d-app₁ ⊢e ⊢e₁) with progress ⊢e
+... | step x = step (ξ-·₁ x)
+... | done x with progress ⊢e₁
+... | step x₁ = step (ξ-·₂ x x₁)
+progress (⊢d-app₁ (⊢d-ann ⊢e) ⊢e₁) | done V-ƛ⦂ | done x₁ = step (β-ƛ⦂ x₁)
+progress (⊢d-app₁ (⊢d-sub ⊢e x₂) ⊢e₁) | done x | done x₁ = ⊥-elim (x₂ refl)
+progress (⊢d-app₂ ⊢e ⊢e₁) with progress ⊢e
+... | step x = step (ξ-·₁ x)
+... | done x with progress ⊢e₁
+... | step x₁ = step (ξ-·₂ x x₁)
+progress (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) | done x | done x₁ = step (β-ƛ x₁)
+progress (⊢d-app₂ (⊢d-sub (⊢d-ann ⊢e) x₂) ⊢e₁) | done V-ƛ⦂ | done x₁ = step (β-ƛ⦂ x₁)
+progress (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₃) x₂) ⊢e₁) | done x | done x₁ = ⊥-elim (x₃ refl)
 progress (⊢d-sub ⊢e x) = progress ⊢e
-
 
 ext : ∀ {Γ Δ}
   → (∀ {x A}     →         Γ ∋ x ⦂ A →         Δ ∋ x ⦂ A)
@@ -347,28 +298,41 @@ swap {Γ} {x} {y} {M} {A} {B} {C} x≢y ⊢M = rename ρ ⊢M
   ρ (S z≢x Z)           =  Z
   ρ (S z≢x (S z≢y ∋z))  =  S z≢y (S z≢x ∋z)
 
-subst : ∀ {Γ x N V A B j j'}
-  → ∅ ⊢d j' # V ⦂ A
+subst : ∀ {Γ x N V A B}
+  → ∅ ⊢d ∞ # V ⦂ A
+  → Γ , x ⦂ A ⊢d ∞ # N ⦂ B
+    --------------------
+  → Γ ⊢d ∞ # N [ x := (V ⦂ A) ] ⦂ B
+
+subst' : ∀ {Γ x N V A B j}
+  → ∅ ⊢d Z # V ⦂ A
   → Γ , x ⦂ A ⊢d j # N ⦂ B
     --------------------
   → Γ ⊢d j # N [ x := V ] ⦂ B
-subst {x = y} ⊢V ⊢d-int = ⊢d-int
-subst {x = y} ⊢V (⊢d-var {x = x} Z) with x ≟ y
-... | yes _         =  weaken {!!}
+  
+subst {x = y} ⊢V (⊢d-lam-∞ {x = x} ⊢e) with x ≟ y
+... | yes refl = ⊢d-lam-∞ (drop ⊢e)
+... | no  x≢y  = ⊢d-lam-∞ (subst ⊢V (swap x≢y ⊢e))
+subst {x = y} ⊢V (⊢d-app₂ ⊢e ⊢e₁) = ⊢d-app₂ (subst' (⊢d-ann ⊢V) ⊢e) (subst' (⊢d-ann ⊢V) ⊢e₁)
+subst {x = y} ⊢V (⊢d-sub ⊢e x) = ⊢d-sub (subst' (⊢d-ann ⊢V) ⊢e) x
+
+subst' {x = y} ⊢V ⊢d-int = ⊢d-int
+subst' {x = y} ⊢V (⊢d-var {x = x} Z) with x ≟ y
+... | yes _         =  weaken ⊢V
 ... | no  x≢y       =  ⊥-elim (x≢y refl)
-subst {x = y} ⊢V (⊢d-var {x = x} (S x≢y ∋x)) with x ≟ y
+subst' {x = y} ⊢V (⊢d-var {x = x} (S x≢y ∋x)) with x ≟ y
 ... | yes refl      =  ⊥-elim (x≢y refl)
 ... | no  _         =  ⊢d-var ∋x
-subst {x = y} ⊢V (⊢d-ann ⊢N) = ⊢d-ann (subst ⊢V ⊢N)
-subst {x = y} ⊢V (⊢d-lam-∞ {x = x} ⊢N) with x ≟ y
+subst' {x = y} ⊢V (⊢d-ann ⊢N) = ⊢d-ann (subst' ⊢V ⊢N)
+subst' {x = y} ⊢V (⊢d-lam-∞ {x = x} ⊢N) with x ≟ y
 ... | yes refl      =  ⊢d-lam-∞ (drop ⊢N)
-... | no  x≢y       =  ⊢d-lam-∞ (subst ⊢V (swap x≢y ⊢N))
-subst {x = y} ⊢V (⊢d-lam-n {x = x} ⊢N) with x ≟ y
+... | no  x≢y       =  ⊢d-lam-∞ (subst' ⊢V (swap x≢y ⊢N))
+subst' {x = y} ⊢V (⊢d-lam-n {x = x} ⊢N) with x ≟ y
 ... | yes refl      =  ⊢d-lam-n (drop ⊢N)
-... | no  x≢y       =  ⊢d-lam-n (subst ⊢V (swap x≢y ⊢N))
-subst {x = y} ⊢V (⊢d-app₁ ⊢L ⊢M) = ⊢d-app₁ (subst ⊢V ⊢L) (subst ⊢V ⊢M)
-subst {x = y} ⊢V (⊢d-app₂ ⊢L ⊢M) = ⊢d-app₂ (subst ⊢V ⊢L) (subst ⊢V ⊢M)
-subst {x = y} ⊢V (⊢d-sub ⊢N j≢Z) = ⊢d-sub (subst ⊢V ⊢N) j≢Z
+... | no  x≢y       =  ⊢d-lam-n (subst' ⊢V (swap x≢y ⊢N))
+subst' {x = y} ⊢V (⊢d-app₁ ⊢L ⊢M) = ⊢d-app₁ (subst' ⊢V ⊢L) (subst' ⊢V ⊢M)
+subst' {x = y} ⊢V (⊢d-app₂ ⊢L ⊢M) = ⊢d-app₂ (subst' ⊢V ⊢L) (subst' ⊢V ⊢M)
+subst' {x = y} ⊢V (⊢d-sub ⊢N j≢Z) = ⊢d-sub (subst' ⊢V ⊢N) j≢Z
 
 ⊢d-sub' : ∀ {Γ e A j}
   → Γ ⊢d Z # e ⦂ A
@@ -377,41 +341,29 @@ subst {x = y} ⊢V (⊢d-sub ⊢N j≢Z) = ⊢d-sub (subst ⊢V ⊢N) j≢Z
 ⊢d-sub' {j = Z} ⊢e = ⊢e
 ⊢d-sub' {j = S j} ⊢e = ⊢d-sub ⊢e (λ ())
 
-prv-value : ∀ {Γ j A V}
-  → Γ ⊢d j # V ⦂ A
-  → Value V
-  → (∀ {x e} → V ≢ ƛ x ⇒ e)
-  → Γ ⊢d Z # V ⦂ A
-prv-value (⊢d-ann ⊢e) (V-p x) neq = ⊢d-ann ⊢e
-prv-value (⊢d-sub ⊢e x₁) (V-p x) neq = ⊢e
-prv-value ⊢e V-ƛ neq = ⊥-elim (neq refl)
-
-
 preserve : ∀ {M N A j}
   → ∅ ⊢d j # M ⦂ A
   → M —→ N
     ----------
   → ∅ ⊢d j # N ⦂ A
-preserve ⊢d-int n-⦂ = ⊢d-ann (⊢d-sub' ⊢d-int)
-preserve (⊢d-ann ⊢e) (ξ-⦂ x M→N) = ⊢d-ann (preserve ⊢e M→N)
-preserve (⊢d-ann ⊢e) (β-⦂ VN neq) = prv-value ⊢e VN neq
--- app1
+preserve (⊢d-ann ⊢e) (ξ-⦂ M→N) = ⊢d-ann (preserve ⊢e M→N)
+preserve (⊢d-ann (⊢d-sub ⊢d-int x)) (β-⦂ V-n x₁) = ⊢d-int
+preserve (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₂) x)) (β-⦂ V-n x₁) = ⊥-elim (x₂ refl)
+preserve (⊢d-ann (⊢d-lam-∞ ⊢e)) (β-⦂ V-ƛ x₁) = ⊥-elim (x₁ V-ƛ⦂)
+preserve (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₂) x)) (β-⦂ V-ƛ x₁) = ⊥-elim (x₂ refl)
+preserve (⊢d-ann (⊢d-sub (⊢d-ann ⊢e) x)) (β-⦂ V-ƛ⦂ x₁) = ⊢d-ann ⊢e
+preserve (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₂) x)) (β-⦂ V-ƛ⦂ x₁) = ⊥-elim (x₂ refl)
 preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢d-app₁ (preserve ⊢e M→N) ⊢e₁
 preserve (⊢d-app₁ ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢d-app₁ ⊢e (preserve ⊢e₁ M→N)
-preserve (⊢d-app₁ (⊢d-sub ⊢e Z≢Z) ⊢e₁) (β-ƛ x) = ⊥-elim (Z≢Z refl)
-preserve (⊢d-app₁ (⊢d-ann (⊢d-lam-∞ ⊢e)) ⊢e₁) (β-ƛ⦂ x) = ⊢d-ann ({!!})
+preserve (⊢d-app₁ (⊢d-sub ⊢e x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₁ refl)
+preserve (⊢d-app₁ (⊢d-ann (⊢d-lam-∞ ⊢e)) ⊢e₁) (β-ƛ⦂ x) = ⊢d-ann (subst ⊢e₁ ⊢e)
 preserve (⊢d-app₁ (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₂) x₁)) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₂ refl)
-preserve (⊢d-app₁ (⊢d-sub ⊢e Z≢Z) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (Z≢Z refl)
--- app2
+preserve (⊢d-app₁ (⊢d-sub ⊢e x₁) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₁ refl)
 preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢d-app₂ (preserve ⊢e M→N) ⊢e₁
 preserve (⊢d-app₂ ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢d-app₂ ⊢e (preserve ⊢e₁ M→N)
--- beta
-preserve (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (β-ƛ x) = {!!}
+preserve (⊢d-app₂ (⊢d-lam-n ⊢e) ⊢e₁) (β-ƛ x) = subst' ⊢e₁ ⊢e
 preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ x) = ⊥-elim (x₂ refl)
--- beta ann
-preserve (⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-lam-∞ ⊢e)) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊢d-sub' (⊢d-ann {!!})
+preserve (⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-lam-∞ ⊢e)) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊢d-sub' (⊢d-ann (subst' (⊢d-ann (⊢d-sub' ⊢e₁)) ⊢e))
 preserve (⊢d-app₂ (⊢d-sub (⊢d-ann (⊢d-sub (⊢d-sub ⊢e x₃) x₂)) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₃ refl)
-
 preserve (⊢d-app₂ (⊢d-sub (⊢d-sub ⊢e x₂) x₁) ⊢e₁) (β-ƛ⦂ x) = ⊥-elim (x₂ refl)
--- sub
 preserve (⊢d-sub ⊢e x) M→N = ⊢d-sub' (preserve ⊢e M→N)
