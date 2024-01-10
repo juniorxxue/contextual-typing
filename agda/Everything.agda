@@ -30,9 +30,11 @@ import Intersection.Algo.Properties
 import Intersection.Completeness
 import Intersection.Soundness
 
+-- alternative approach of STLC soundness
 import TypeSound.Elaboration.Common
 import TypeSound.Elaboration.Source
 import TypeSound.Elaboration.Target
 import TypeSound.Elaboration.Main
 
-import TypeSound.TypeSound
+import TypeSound.STLC
+import TypeSound.Intersection

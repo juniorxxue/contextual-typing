@@ -1,4 +1,4 @@
-module TypeSound.TypeSound where
+module TypeSound.STLC where
 
 open import Data.Bool using (Bool; true; false; T; not)
 open import Data.Empty using (⊥; ⊥-elim)
