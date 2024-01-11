@@ -133,8 +133,8 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-sub : ∀ {Γ e A B i}
     → Γ ⊢d ♭ Z # e ⦂ B
-    → B ≤d i # A
-    → i ≢ ♭ Z
+    → (B≤A : B ≤d i # A)
+    → (i≢Z : i ≢ ♭ Z)
     → Γ ⊢d i # e ⦂ A
 
   ⊢d-& : ∀ {Γ e A B}
