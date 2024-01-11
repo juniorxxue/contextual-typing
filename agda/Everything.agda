@@ -37,4 +37,4 @@ import TypeSound.Elaboration.Target
 import TypeSound.Elaboration.Main
 
 import TypeSound.STLC
-import TypeSound.Intersection
+-- import TypeSound.Intersection

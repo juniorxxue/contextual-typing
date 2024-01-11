@@ -224,6 +224,9 @@ infix 3 _⊢_≤_⊣_↪_
 
 data _⊢_≤_⊣_↪_ : Context → Type → Hint → Context → Type → Set where
 
+  ≤-case1 : ∀ {Γ A}
+    → Γ ⊢ A ≤ τ A ⊣ Γ ↪ A
+
 data _⊢_⇒_⇒_ : Context → Hint → Term → Type → Set where
 
   ⊢lit : ∀ {Γ n}
@@ -233,8 +236,8 @@ data _⊢_⇒_⇒_ : Context → Hint → Term → Type → Set where
     → (x∈Γ : get-var Γ x ≡ just A)
     → Γ ⊢ □ ⇒ ` x ⇒ A
 
-  ⊢ann : ∀ {Γ e A B}
-    → Γ ⊢ τ A ⇒ e ⇒ B
+  ⊢ann : ∀ {Γ e A}
+    → Γ ⊢ τ A ⇒ e ⇒ A
     → Γ ⊢ □ ⇒ e ⦂ A ⇒ A
 
   ⊢tabs : ∀ {Γ e A}
@@ -263,3 +266,63 @@ data _⊢_⇒_⇒_ : Context → Hint → Term → Type → Set where
   ⊢tapp : ∀ {Γ e A B}
     → Γ ⊢ □ ⇒ e ⇒ `∀ B
     → Γ ⊢ □ ⇒ e ⟦ A ⟧ₐ ⇒ ⟦ A ⟧s B
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                   Soundness                                    +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+_▻_ : Term → List Term → Term
+e ▻ [] = e
+e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
+
+infix 3 ⟦_,_⟧→⟦_,_,_,_⟧
+
+data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → List Term → Hint → List Type → Type → Set where
+
+  none□ : ∀ {A}
+    → ⟦ □ , A ⟧→⟦ [] , □ , [] , A ⟧
+
+  noneτ : ∀ {A B}
+    → ⟦ τ A , B ⟧→⟦ [] , τ A , [] , B ⟧
+
+  have : ∀ {e H A B es A' B' Bs}
+    → ⟦ H , B ⟧→⟦ es , A' , Bs , B' ⟧
+    → ⟦ ⟦ e ⟧⇒ H , A `→ B ⟧→⟦ (e ∷ es) , A' , (A ∷ Bs) , B' ⟧
+
+sound-inf : ∀ {Γ e H A es As A'}
+  → Γ ⊢ H ⇒ e ⇒ A
+  → ⟦ H , A ⟧→⟦ es , □ , As , A' ⟧
+  → Γ ⊢ Z # e ▻ es ⦂ A'
+
+sound-chk : ∀ {Γ e H A es T As A'}
+  → Γ ⊢ H ⇒ e ⇒ A
+  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
+  → Γ ⊢ ∞ # e ▻ es ⦂ T
+
+sound-inf-0 : ∀ {Γ e A}
+  → Γ ⊢ □ ⇒ e ⇒ A
+  → Γ ⊢ Z # e ⦂ A
+sound-inf-0 ⊢e = sound-inf ⊢e none□
+
+sound-chk-0 : ∀ {Γ e A}
+  → Γ ⊢ τ A ⇒ e ⇒ A
+  → Γ ⊢ ∞ # e ⦂ A
+sound-chk-0 ⊢e = sound-chk ⊢e noneτ
+
+sound-inf ⊢lit spl = {!!}
+sound-inf (⊢var x∈Γ) spl = {!!}
+sound-inf (⊢ann ⊢e) spl = {!!}
+sound-inf (⊢tabs ⊢e) spl = {!!}
+sound-inf (⊢app ⊢e) spl = {!!}
+sound-inf (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
+sound-inf (⊢sub ⊢e x H≢□) spl = {!!}
+sound-inf (⊢tapp ⊢e) spl = {!!}
+
+sound-chk (⊢app ⊢e) spl = sound-chk ⊢e (have spl)
+sound-chk (⊢lam₁ ⊢e) spl = {!!}
+sound-chk (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
+sound-chk (⊢sub ⊢e x x') spl = {!!}
+
+
