@@ -110,9 +110,9 @@ data wf-j : Type → Counter → Set where
   wf-0 : ∀ {A}
     → wf-j A (♭ Z)
 
-  wf-S⇒ : ∀ {A B j}
-    → wf-j B j
-    → wf-j (A ⇒ B) (S⇒ j)
+  -- wf-S⇒ : ∀ {A B j}
+  --   → wf-j B j
+  --   → wf-j (A ⇒ B) (S⇒ j)
 
   wf-S⇐ : ∀ {A B j}
     → wf-j B (♭ j)
@@ -123,7 +123,6 @@ data wf-j : Type → Counter → Set where
   → A ≤d j # A
 ≤d-refl wf-∞ = ≤d-refl∞
 ≤d-refl wf-0 = ≤d-Z
-≤d-refl (wf-S⇒ wfj) = ≤d-arr-S⇒ (≤d-refl wf-∞) (≤d-refl wfj)
 ≤d-refl (wf-S⇐ wfj) = ≤d-arr-S⇐ (≤d-refl wf-∞) (≤d-refl wfj)
 
 ≤d-trans : ∀ {A B C j}
@@ -148,7 +147,6 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) ≤d-top = ≤d-top
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-arr-∞ ≤2 ≤4) = ≤d-arr-∞ (≤d-trans ≤2 ≤1) (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤2) (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤4)
-≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇒ ≤1 ≤3) (≤d-arr-S⇒ ≤2 ≤4) = ≤d-arr-S⇒ ≤2 (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇐ ≤1 ≤3) (≤d-arr-S⇐ ≤2 ≤4) = ≤d-arr-S⇐ ≤2 (≤d-trans ≤3 ≤4)
 
 ≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
@@ -176,7 +174,6 @@ data wf-j : Type → Counter → Set where
 ⊢d-sub' ⊢e ≤d-base∞ = ⊢d-sub ⊢e ≤d-base∞ (λ ())
 ⊢d-sub' ⊢e ≤d-top = ⊢d-sub ⊢e ≤d-top (λ ())
 ⊢d-sub' ⊢e (≤d-arr-∞ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-∞ B≤A B≤A₁) (λ ())
-⊢d-sub' ⊢e (≤d-arr-S⇒ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-S⇒ B≤A B≤A₁) (λ ())
 ⊢d-sub' ⊢e (≤d-arr-S⇐ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-S⇐ B≤A B≤A₁) (λ ())
 ⊢d-sub' ⊢e (≤d-and₁ B≤A x) = ⊢d-sub ⊢e (≤d-and₁ B≤A x) x
 ⊢d-sub' ⊢e (≤d-and₂ B≤A x) = ⊢d-sub ⊢e (≤d-and₂ B≤A x) x

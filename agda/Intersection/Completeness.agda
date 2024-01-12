@@ -184,8 +184,6 @@ complete-≤-s ≤d-int∞ ↪z () ⊢es ⊢es' newH' newH
 complete-≤-s ≤d-base∞ ↪z () ⊢es ⊢es' newH' newH
 complete-≤-s ≤d-top ↪z () ⊢es ⊢es' newH' newH
 complete-≤-s (≤d-arr-∞ B≤A B≤A₁) ↪z () ⊢es ⊢es' newH' newH
-complete-≤-s (≤d-arr-S⇒ B≤A B≤A₁) (↪s Aj) Tj (⊩a-cons ⊢es x) ⊢es' newH' (⇒≣-cons newH) =
-  ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-s B≤A₁ Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s (≤d-arr-S⇐ B≤A B≤A₁) ↪z (↪♭s Tj) ⊩a-none (⊩a-cons ⊢es' x) (⇒≣-cons newH') ⇒≣-none =
   ≤a-hint x (complete-≤-s B≤A₁ ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none)
 complete-≤-s (≤d-and₁ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□ i≢Z Aj Tj ⊢es ⊢es' newH' newH)
@@ -213,8 +211,6 @@ complete-≤-s-∞ ≤d-int∞ ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none �
 complete-≤-s-∞ ≤d-base∞ ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ≤a-base
 complete-≤-s-∞ ≤d-top ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ≤a-top
 complete-≤-s-∞ (≤d-arr-∞ B≤A B≤A₁) ↪z ↪♭∞ ⊩a-none ⊩a-none ⇒≣-none ⇒≣-none = ≤a-arr (complete-≤-0 B≤A) (complete-≤-0 B≤A₁)
-complete-≤-s-∞ (≤d-arr-S⇒ B≤A B≤A₁) (↪s Aj) Tj (⊩a-cons ⊢es x) ⊢es' newH' (⇒≣-cons newH) =
-  ≤a-hint (subsumption-0 x ≤a-refl) (complete-≤-s-∞ B≤A₁ Aj Tj ⊢es ⊢es' newH' newH)
 complete-≤-s-∞ (≤d-arr-S⇐ B≤A B≤A₁) ↪z (↪♭s Tj) ⊩a-none (⊩a-cons ⊢es' x) (⇒≣-cons newH') ⇒≣-none =
   ≤a-hint x (complete-≤-s-∞ B≤A₁ ↪z Tj ⊩a-none ⊢es' newH' ⇒≣-none)
 complete-≤-s-∞ (≤d-and₁ B≤A i≢Z) Aj Tj ⊢es ⊢es' newH' newH = ≤a-and-l (complete-≤-s-∞ B≤A Aj Tj ⊢es ⊢es' newH' newH) (i≢Z→H≢□' i≢Z Aj Tj ⊢es ⊢es' newH' newH)
@@ -311,6 +307,3 @@ complete-chk-c (⊢d-app⇒ ⊢e ⊢e₁) Aj ⊢es newH = ⊢a-app ind-e
 complete-chk-c (⊢d-sub ⊢e x x₁) Aj ⊢es newH = subsumption-0 (complete-chk-i-0 ⊢e) (complete-≤-s-∞ x ↪z Aj ⊩a-none ⊢es newH ⇒≣-none)
 complete-chk-c (⊢d-& ⊢e ⊢e₁) ↪♭∞ ⊩a-none ⇒≣-none = ⊢a-& (complete-chk-c ⊢e ↪♭∞ ⊩a-none ⇒≣-none)
                                                         (complete-chk-c ⊢e₁ ↪♭∞ ⊩a-none ⇒≣-none)
-
-
-  

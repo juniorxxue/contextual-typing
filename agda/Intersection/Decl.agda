@@ -9,18 +9,6 @@ open import Intersection.Common
 --+                                                                +--
 ----------------------------------------------------------------------
 
-data Mode : Set where
-  I : Mode
-  C : Mode
-
-{-
-data Counter : Mode → Set where
-  ∞ : ∀ {m} → Counter m
-  Z : ∀ {m} → Counter m
-  S⇒ : ∀ {m} → Counter m → Counter I
-  S⇐ : Counter C → Counter C
--}
-
 data CCounter : Set where
    Z : CCounter
    ∞ : CCounter
@@ -53,10 +41,6 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ ∞ # D
     → A ⇒ B ≤d ♭ ∞ # C ⇒ D
-  ≤d-arr-S⇒ : ∀ {A B C D j}
-    → C ≤d ♭ ∞ # A
-    → B ≤d j # D
-    → A ⇒ B ≤d S⇒ j # A ⇒ D
   ≤d-arr-S⇐ : ∀ {A B C D j}
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
