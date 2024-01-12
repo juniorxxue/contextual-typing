@@ -62,24 +62,8 @@
 
     \inferrule*[lab=Sub]
     {\Gamma \vdash_Z e : A \\
-    A \sim j}
+    j \neq Z}
     {\Gamma \vdash_j e : A}
-\end{mathpar}
-
-\subsection{Well-formedness}
-
-\begin{mathpar}
-    \inferrule*[lab=S-0]
-    { }
-    {A \sim Z}
-
-    \inferrule*[lab=S-inf]
-    { }
-    {A \sim \infty}
-
-    \inferrule*[lab=S-S]
-    {B \sim j}
-    {A \rightarrow B \sim S ~j}
 \end{mathpar}
 
 \section{Algo.}
@@ -114,6 +98,7 @@
 
 \inferrule*[lab=T-Sub]
 {\Gamma \vdash \square \Rightarrow p \Rightarrow A \\
+ H \neq \square \\
   A \approx H}
 {\Gamma \vdash H \Rightarrow p \Rightarrow A}
 \end{mathpar}

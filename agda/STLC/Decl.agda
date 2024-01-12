@@ -14,20 +14,6 @@ data Counter : Set where
   Z : Counter
   S : Counter → Counter
 
-infix 4 _~_
-
-data _~_ : Type → Counter → Set where
-
-  ~0 : ∀ {A}
-    → A ~ Z
-
-  ~∞ : ∀ {A}
-    → A ~ ∞
-
-  ~S : ∀ {A B j}
-    → B ~ j
-    → A ⇒ B ~ S j
-
 infix 4 _⊢d_#_⦂_
 
 data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
@@ -63,6 +49,5 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-sub : ∀ {Γ e A j}
     → Γ ⊢d Z # e ⦂ A
-    → A ~ j
     → j ≢ Z
     → Γ ⊢d j # e ⦂ A

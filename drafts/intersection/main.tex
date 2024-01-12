@@ -26,7 +26,7 @@
 &\text{Partial Values} \quad \quad &p::=&~ i \mid x \mid e : A\\
 &\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A\\
 &\text{Check Counters} \quad\quad &j ::=&~ Z \mid \infty \mid S_{\Leftarrow}~j \\
-&\text{Counters} \quad\quad &i ::= &~ \beta ~j \mid S_{\Rightarrow}~i\\
+&\text{Counters} \quad\quad &i ::= &~ j \mid S_{\Rightarrow}~i\\
 &\text{Hints} \quad\quad &H ::=&~ \square \mid A \mid \boxed{e} \rightarrow H\\
 \end{align*}
 
@@ -37,39 +37,40 @@
 \begin{mathpar}
     \inferrule*[lab=Int]
     { }
-    {\Gamma \vdash_{\beta ~Z} i : Int}
+    {\Gamma \vdash_{Z} i : Int}
 
     \inferrule*[lab=Var]
     {x : A \in \Gamma}
-    {\Gamma \vdash_{\beta ~Z} x : A}
+    {\Gamma \vdash_{Z} x : A}
 
     \inferrule*[lab=Ann]
-    {\Gamma \vdash_{\beta ~\infty} e : A}
-    {\Gamma \vdash_{\beta ~Z} (e : A) : A}
+    {\Gamma \vdash_{\infty} e : A}
+    {\Gamma \vdash_{Z} (e : A) : A}
 
     \inferrule*[lab=Lam]
     {\Gamma, x : A \vdash_{i-} e : B}
     {\Gamma \vdash_{i} \lambda x.~ e : A \rightarrow B}
 
     \inferrule*[lab=App1]
-    {\Gamma \vdash_{\beta ~S_{\Leftarrow}~j} e_1 : A \rightarrow B \\
-    \Gamma \vdash_{\beta ~\infty} e_2 : A}
-    {\Gamma \vdash_{\beta ~j} e_1~e_2 : B}
+    {\Gamma \vdash_{S_{\Leftarrow}~j} e_1 : A \rightarrow B \\
+    \Gamma \vdash_{\infty} e_2 : A}
+    {\Gamma \vdash_{j} e_1~e_2 : B}
 
     \inferrule*[lab=App2]
     {\Gamma \vdash_{S_{\Rightarrow}~i} e_1 : A \rightarrow B \\
-    \Gamma \vdash_{\beta ~Z} e_2 : A}
+    \Gamma \vdash_{Z} e_2 : A}
     {\Gamma \vdash_i e_1~e_2 : B}
 
     \inferrule*[lab=Sub]
-    {\Gamma \vdash_{\beta ~Z} e : A \\
+    {\Gamma \vdash_{Z} e : A \\
+    i \neq Z \\
     A <:_{i} B}
     {\Gamma \vdash_i e : B}
 
     \inferrule*[lab=And]
-    {\Gamma \vdash_{\beta ~\infty} e : A \\
-     \Gamma \vdash_{\beta ~\infty} e : B}
-    {\Gamma \vdash_{\beta ~\infty} e : A ~\&~ B}
+    {\Gamma \vdash_{\infty} e : A \\
+     \Gamma \vdash_{\infty} e : B}
+    {\Gamma \vdash_{\infty} e : A ~\&~ B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -77,20 +78,20 @@
 \begin{mathpar}
     \inferrule*[lab=S-Refl]
     { }
-    {A <:_{\beta ~Z} A}
+    {A <:_{Z} A}
 
     \inferrule*[lab=S-Int]
     { }
-    {Int <:_{\beta ~\infty} Int}
+    {Int <:_{\infty} Int}
 
     \inferrule*[lab=S-Top]
     { }
-    {A <:_{\beta ~\infty} \mathtt{Top}}
+    {A <:_{\infty} \mathtt{Top}}
 
     \inferrule*[lab=S-Arr]
-    {C <:_{\beta~\infty} A \\
-     B <:_{i--} D}
-    {A \rightarrow B <:_i C \rightarrow D}
+    {C <:_{\infty} A \\
+     B <:_{j-} D}
+    {A \rightarrow B <:_j C \rightarrow D}
 
     \inferrule*[lab=S-And-L]
     {A <:_i C}
@@ -101,9 +102,9 @@
     {A ~\&~ B <:_i C}
 
     \inferrule*[lab=S-And]
-    {A <:_{\beta~\infty} B \\
-     A <:_{\beta~\infty} C}
-    {A <:_{\beta~\infty} B ~\&~ C}
+    {A <:_{\infty} B \\
+     A <:_{\infty} C}
+    {A <:_{\infty} B ~\&~ C}
 \end{mathpar}
 
 \section{Algo.}
@@ -138,6 +139,7 @@
 
 \inferrule*[lab=T-Sub]
 {\Gamma \vdash \square \Rightarrow p \Rightarrow A \\
+ H \neq \square \\
  \Gamma \vdash A <: H \rightsquigarrow B}
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 

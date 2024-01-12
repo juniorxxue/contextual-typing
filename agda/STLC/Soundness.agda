@@ -190,12 +190,12 @@ subst' (suc k) {e = e₁} {e₂} {j = j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ x
 ... | ⊢d-app₂ ⊢e₁ ⊢e₂ = rw-try' (rw-apps← {es = xs} (⊢d-app₂ ind-e₁ (⊢d-strengthen-0 ⊢e₂))) eq
   where ind-e₁ = subst' k {es = xs} (sz-case₂ {j = j} sz eq) ⊢e₁ ⊢2
 -- sub case  
-subst' (suc k) {e = e₁} {e₂} {j = ∞} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z
-  = rw-try' (⊢d-sub' ind-e B~j) eq
+subst' (suc k) {e = e₁} {e₂} {j = ∞} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e j≢Z
+  = rw-try' (⊢d-sub' ind-e) eq
     where ind-e = subst' k {es = xs ++ ⟦ x ⟧} (sz-case₃ sz eq) (rw-map {xs = xs} (rw-apps← {es = map (_↑ 0) xs} {x = x ↑ 0} ⊢e)) ⊢2
-subst' (suc k) {e = e₁} {e₂} {j = Z} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z = ⊥-elim (j≢Z refl)
-subst' (suc k) {e = e₁} {e₂} {j = S j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e B~j j≢Z
-  = rw-try' (⊢d-sub' ind-e B~j) eq
+subst' (suc k) {e = e₁} {e₂} {j = Z} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e j≢Z = ⊥-elim (j≢Z refl)
+subst' (suc k) {e = e₁} {e₂} {j = S j} {e ∷ es} sz ⊢1 ⊢2 | ⟨ x , ⟨ xs , eq ⟩ ⟩ | ⊢d-sub ⊢e j≢Z
+  = rw-try' (⊢d-sub' ind-e) eq
     where ind-e = subst' k {es = xs ++ ⟦ x ⟧} (sz-case₄ {j = j} sz eq) (rw-map {xs = xs} (rw-apps← {es = map (_↑ 0) xs} {x = x ↑ 0} ⊢e)) ⊢2
 
 subst :  ∀ {Γ A B e e₁ j} (es : List Term)
@@ -235,9 +235,9 @@ sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk ⊢e none-τ)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have spl)
 sound-inf {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl) = subst es (sound-inf ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
-sound-inf (⊢a-sub ⊢e A≈H p) spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~0
+sound-inf (⊢a-sub ⊢e A≈H p) spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl)
 
 sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have spl)
 sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam-∞ (sound-chk ⊢e none-τ)
 sound-chk {es = e ∷ es} (⊢a-lam₂ ⊢e ⊢f) (have spl)  = subst es (sound-chk ⊢f (spl-weaken spl)) (sound-inf ⊢e none-□)
-sound-chk ty@(⊢a-sub ⊢e A≈H p) spl rewrite ⊢a-spl-eq ty spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl) ~∞
+sound-chk ty@(⊢a-sub ⊢e A≈H p) spl rewrite ⊢a-spl-eq ty spl = ⊢d-sub' (⊩-elim (sound-inf ⊢e none-□) (sound-≈ A≈H spl) spl)
