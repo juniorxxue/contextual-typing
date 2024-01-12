@@ -57,42 +57,42 @@ data _⇴_≗_ : List Term → Hint → Hint → Set where
 ≗-shift cht-none-τ = cht-none-τ
 ≗-shift (cht-cons newH) = cht-cons (≗-shift newH)
 
-infix 4 _↪_❪_,_,_❫
+infix 4 _↪_⟦_,_,_⟧
 
-data _↪_❪_,_,_❫ : Type → Counter → List Type → Type → Counter → Set where
+data _↪_⟦_,_,_⟧ : Type → Counter → List Type → Type → Counter → Set where
 
   n-z : ∀ {A}
-    → A ↪ Z ❪ [] , A , Z ❫
+    → A ↪ Z ⟦ [] , A , Z ⟧
 
   n-∞ : ∀ {A}
-    → A ↪ ∞ ❪ [] , A , ∞ ❫
+    → A ↪ ∞ ⟦ [] , A , ∞ ⟧
 
   n-s : ∀ {A B T j Bs j'}
-    → B ↪ j ❪ Bs , T , j' ❫
-    → (A ⇒ B) ↪ (S j) ❪ A ∷ Bs , T , j' ❫
+    → B ↪ j ⟦ Bs , T , j' ⟧
+    → (A ⇒ B) ↪ (S j) ⟦ A ∷ Bs , T , j' ⟧
 
 complete-wf-z : ∀ {Γ A H es As j T}
-  → A ↪ j ❪ As , T , Z ❫
+  → A ↪ j ⟦ As , T , Z ⟧
   → Γ ⊩a es ⇛ As
   → es ⇴ □ ≗ H
   → Γ ⊢a A ≈ H
 
 complete-wf-∞ : ∀ {Γ A H es As j T}
-  → A ↪ j ❪ As , T , ∞ ❫
+  → A ↪ j ⟦ As , T , ∞ ⟧
   → Γ ⊩a es ⇛ As
   → es ⇴ τ T ≗ H
   → Γ ⊢a A ≈ H
 
 complete-chk : ∀ {Γ e A j es As T H}
   → Γ ⊢d j # e ⦂ A
-  → A ↪ j ❪ As , T , ∞ ❫
+  → A ↪ j ⟦ As , T , ∞ ⟧
   → Γ ⊩a es ⇛ As
   → es ⇴ τ T ≗ H
   → Γ ⊢a H ⇛ e ⇛ A
 
 complete-inf : ∀ {Γ e A j es As T H}
   → Γ ⊢d j # e ⦂ A
-  → A ↪ j ❪ As , T , Z ❫
+  → A ↪ j ⟦ As , T , Z ⟧
   → Γ ⊩a es ⇛ As
   → es ⇴ □ ≗ H
   → Γ ⊢a H ⇛ e ⇛ A

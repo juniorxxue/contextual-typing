@@ -104,8 +104,8 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⊢a-weaken (⊢a-sub ⊢e B≈H p) = ⊢a-sub (⊢a-weaken ⊢e) (≈a-weaken B≈H) (↑-pv p)
 
 spl-weaken : ∀ {H A es T As A' n}
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , T , As , A' ⟧
+  → ⟦ H ⇧ n , A ⟧→⟦ map (_↑ n) es , T , As , A' ⟧
 spl-weaken {T = .□} none-□ = none-□
 spl-weaken {T = .(τ _)} none-τ = none-τ
 spl-weaken (have spl) = have (spl-weaken spl)
@@ -180,7 +180,7 @@ ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
 
 subsumption : ∀ {Γ H e A H' H'' es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , □ , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , □ , As , A' ⟧
   → chain es H'' H'
   → Γ ⊢a A ≈ H'
   → Γ ⊢a H' ⇛ e ⇛ A

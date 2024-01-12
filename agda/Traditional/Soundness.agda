@@ -20,7 +20,7 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
 ⊩-elim : ∀ {Γ e H A es T As A'}
   → Γ ⊢d Z # e ⦂ A
   → Γ ⊩ es ⇚ As
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫ 
+  → ⟦ H , A ⟧→⟦ es , T , As , A' ⟧ 
   → Γ ⊢d Z # e ▻ es ⦂ A'
 ⊩-elim ⊢d ⊩none⇚ none-□ = ⊢d
 ⊩-elim ⊢d ⊩none⇚ none-τ = ⊢d
@@ -28,24 +28,24 @@ data _⊩_⇚_ : Context → List Term → List Type → Set where
 
 ⊢a-spl-eq : ∀ {Γ H A e es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
   → T ≡ A'
 ⊢a-spl-eq ⊢e none-τ = ⊢a-hint-self ⊢e
 ⊢a-spl-eq ⊢e (have spl) = ⊢a-spl-eq (⊢a-app ⊢e) spl
 
 sound-≈ : ∀ {Γ H A es T As A'}
   → Γ ⊢a A ≈ H
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , T , As , A' ⟧
   → Γ ⊩ es ⇚ As
 
 sound-inf : ∀ {Γ e H A es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , □ , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , □ , As , A' ⟧
   → Γ ⊢d Z # e ▻ es ⦂ A'
 
 sound-chk : ∀ {Γ e H A es T As A'}
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
   → Γ ⊢d ∞ # e ▻ es ⦂ T
 
 sound-≈ ≈□ none-□ = ⊩none⇚

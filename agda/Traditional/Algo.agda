@@ -32,11 +32,11 @@ data pv : Term → Set where
 
   pv-ann : ∀ {e A}
     → pv (e ⦂ A)
-  
-  
+
+
 infix 4 _⊢a_≈_
-infix 4 _⊢a_⇛_⇛_ 
- 
+infix 4 _⊢a_⇛_⇛_
+
 data _⊢a_≈_ : Context → Type → Hint → Set
 data _⊢a_⇛_⇛_ : Context → Hint → Term → Type → Set
 
@@ -65,7 +65,7 @@ data _⊢a_⇛_⇛_ where
   ⊢a-ann : ∀ {Γ e A B}
     → Γ ⊢a τ A ⇛ e ⇛ B
     → Γ ⊢a □ ⇛ e ⦂ A ⇛ A
-    
+
   ⊢a-app : ∀ {Γ e₁ e₂ H A B}
     → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
     → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
@@ -90,16 +90,16 @@ _▻_ : Term → List Term → Term
 e ▻ [] = e
 e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
 
-infix 4 ❪_,_❫↣❪_,_,_,_❫
+infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
 
-data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List Type → Type → Set where
+data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → List Term → Hint → List Type → Type → Set where
 
   none-□ : ∀ {A}
-    → ❪ □ , A ❫↣❪ [] , □ , [] , A ❫
+    → ⟦ □ , A ⟧→⟦ [] , □ , [] , A ⟧
 
   none-τ : ∀ {A B}
-    → ❪ τ A , B ❫↣❪ [] , τ A , [] , B ❫
+    → ⟦ τ A , B ⟧→⟦ [] , τ A , [] , B ⟧
 
   have : ∀ {e H A B es A' B' Bs}
-    → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
-    → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
+    → ⟦ H , B ⟧→⟦ es , A' , Bs , B' ⟧
+    → ⟦ ⟦ e ⟧⇒ H , A ⇒ B ⟧→⟦ e ∷ es , A' , A ∷ Bs , B' ⟧
