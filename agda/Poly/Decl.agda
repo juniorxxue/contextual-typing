@@ -259,7 +259,7 @@ data _⊢_⇒_⇒_ : Context → Hint → Term → Type → Set where
 
   ⊢sub : ∀ {Γ e A A' H}
     → Γ ⊢ □ ⇒ e ⇒ A
-    → Γ ⊢ A ≤ H ⊣ Γ ↪ A'
+    → (A≤H : Γ ⊢ A ≤ H ⊣ Γ ↪ A')
     → (H≢□ : H ≢ □)
     → Γ ⊢ H ⇒ e ⇒ A'
 
@@ -311,13 +311,13 @@ sound-chk-0 : ∀ {Γ e A}
   → Γ ⊢ ∞ # e ⦂ A
 sound-chk-0 ⊢e = sound-chk ⊢e noneτ
 
-sound-inf ⊢lit spl = {!!}
+sound-inf ⊢lit none□ = ⊢lit
 sound-inf (⊢var x∈Γ) spl = {!!}
 sound-inf (⊢ann ⊢e) spl = {!!}
 sound-inf (⊢tabs ⊢e) spl = {!!}
 sound-inf (⊢app ⊢e) spl = {!!}
 sound-inf (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-inf (⊢sub ⊢e x H≢□) spl = {!!}
+sound-inf (⊢sub ⊢e A≤H H≢□) spl = {!sound-inf-0 ⊢e!}
 sound-inf (⊢tapp ⊢e) spl = {!!}
 
 sound-chk (⊢app ⊢e) spl = sound-chk ⊢e (have spl)
