@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module TypeSound.Intersection where
 
 open import Data.Bool using (Bool; true; false; T; not)

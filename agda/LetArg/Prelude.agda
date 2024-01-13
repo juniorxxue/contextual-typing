@@ -1,4 +1,4 @@
-module Poly.Prelude where
+module LetArg.Prelude where
 
 open import Data.Nat public
 open import Data.Nat.Properties public

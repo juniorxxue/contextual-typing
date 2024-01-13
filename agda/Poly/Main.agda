@@ -1,6 +1,7 @@
-module Decl where
+{-# OPTIONS --allow-unsolved-metas #-}
+module Poly.Main where
 
-open import Prelude
+open import Poly.Prelude
 
 infixr 5  ƛ_
 infixl 7  _·_
@@ -186,6 +187,8 @@ data _⊢_#_⦂_ : Context → Counter → Term → Type → Set where
 ≤refl-∞ {A = A `→ B} = ≤arr-∞ ≤refl-∞ ≤refl-∞
 ≤refl-∞ {A = `∀ A} = ≤∀ ≤refl-∞
 
+-- trans
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                         Decl. Examples                         +--
@@ -318,7 +321,7 @@ sound-inf (⊢tabs ⊢e) spl = {!!}
 sound-inf (⊢app ⊢e) spl = {!!}
 sound-inf (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
 sound-inf (⊢sub ⊢e A≤H H≢□) spl = {!sound-inf-0 ⊢e!}
-sound-inf (⊢tapp ⊢e) spl = {!!}
+sound-inf (⊢tapp ⊢e) spl = sound-inf {!!} {!x!}
 
 sound-chk (⊢app ⊢e) spl = sound-chk ⊢e (have spl)
 sound-chk (⊢lam₁ ⊢e) spl = {!!}
