@@ -37,6 +37,15 @@ import TypeSound.Elaboration.Target
 import TypeSound.Elaboration.Main
 
 import TypeSound.STLC
+
+-- our typing is complete over Let arguments go first
+-- and traditional bidirectional typing (with two application rules)
+import Complete.Prelude
+import Complete.LetArg
+import Complete.Trad
+
+-- unfinished work
+
 import TypeSound.Intersection
 
 import Poly.Prelude

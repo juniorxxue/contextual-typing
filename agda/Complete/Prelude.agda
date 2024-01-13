@@ -1,4 +1,4 @@
-module LetArg.Prelude where
+module Complete.Prelude where
 
 open import Data.Nat public
 open import Data.Nat.Properties public
