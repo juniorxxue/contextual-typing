@@ -1,5 +1,5 @@
 {-# OPTIONS --allow-unsolved-metas #-}
-module TypeSound.Intersection where
+module TypeSound.Operation.Intersection where
 
 open import Data.Bool using (Bool; true; false; T; not)
 open import Data.Empty using (⊥; ⊥-elim)

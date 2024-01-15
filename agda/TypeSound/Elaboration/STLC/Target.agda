@@ -1,6 +1,6 @@
-module TypeSound.Elaboration.Target where
+module TypeSound.Elaboration.STLC.Target where
 
-open import TypeSound.Elaboration.Common
+open import TypeSound.Elaboration.STLC.Common
 
 infixr 5  ƛ_⇒_
 infixl 7  _·_

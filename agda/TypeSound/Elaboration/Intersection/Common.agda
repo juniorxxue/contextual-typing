@@ -1,4 +1,4 @@
-module TypeSound.ElaborationAnd.Common where
+module TypeSound.Elaboration.Intersection.Common where
 
 open import Data.Bool using (Bool; true; false; T; not) public
 open import Data.Empty using (⊥; ⊥-elim) public

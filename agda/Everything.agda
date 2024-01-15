@@ -30,13 +30,18 @@ import Intersection.Algo.Properties
 import Intersection.Completeness
 import Intersection.Soundness
 
--- alternative approach of STLC soundness
-import TypeSound.Elaboration.Common
-import TypeSound.Elaboration.Source
-import TypeSound.Elaboration.Target
-import TypeSound.Elaboration.Main
+-- elaboration semantics
+import TypeSound.Elaboration.STLC.Common
+import TypeSound.Elaboration.STLC.Source
+import TypeSound.Elaboration.STLC.Target
+import TypeSound.Elaboration.STLC.Main
+import TypeSound.Elaboration.Intersection.Common
+import TypeSound.Elaboration.Intersection.Source
+import TypeSound.Elaboration.Intersection.Target
+import TypeSound.Elaboration.Intersection.Main
 
-import TypeSound.STLC
+-- operational semantics
+import TypeSound.Operation.STLC
 
 -- our typing is complete over Let arguments go first
 -- and traditional bidirectional typing (with two application rules)
@@ -45,8 +50,6 @@ import Complete.LetArg
 import Complete.Trad
 
 -- unfinished work
-
-import TypeSound.Intersection
-
+import TypeSound.Operation.Intersection
 import Poly.Prelude
 import Poly.Main
