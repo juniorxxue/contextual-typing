@@ -107,10 +107,10 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ♭ Z # + ⦂ (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
 
   ⊢d-+i : ∀ {Γ n}
-    → Γ ⊢d ♭ Z # +i n ⦂ Int ⇒ Int
+    → Γ ⊢d ♭ Z # (+i n) ⦂ Int ⇒ Int
 
   ⊢d-+f : ∀ {Γ m}
-    → Γ ⊢d ♭ Z # +f m ⦂ Float ⇒ Float
+    → Γ ⊢d ♭ Z # (+f m) ⦂ Float ⇒ Float
 
 
 ----------------------------------------------------------------------

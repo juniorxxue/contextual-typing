@@ -1,3 +1,4 @@
+
 module TypeSound.Elaboration.Overloading.Target where
 
 open import TypeSound.Elaboration.Overloading.Common
@@ -89,6 +90,9 @@ data _⊢_⦂_ : Context → Term → Type → Set where
 
   ⊢n : ∀ {Γ n}
     → Γ ⊢ (lit n) ⦂ Int
+
+  ⊢m : ∀ {Γ m}
+    → Γ ⊢ (flt m) ⦂ Int
     
   ⊢` : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
@@ -215,10 +219,51 @@ elim-int' : ∀ {Γ n A B}
   → ⊥
 elim-int' (⊢sub ⊢e x) = elim-int ⊢e x
 
+elim-flt : ∀ {Γ n A B C}
+  → Γ ⊢ flt n ⦂ A
+  → A ≤ B ⇒ C
+  → ⊥
+elim-flt (⊢& ⊢e ⊢e₁) (s-and-l A≤B) = elim-flt ⊢e A≤B
+elim-flt (⊢& ⊢e ⊢e₁) (s-and-r A≤B) = elim-flt ⊢e₁ A≤B
+elim-flt (⊢sub ⊢e x) A≤B = elim-flt ⊢e (≤-trans x A≤B)
+
+elim-flt' : ∀ {Γ n A B}
+  → Γ ⊢ flt n ⦂ A ⇒ B
+  → ⊥
+elim-flt' (⊢sub ⊢e x) = elim-flt ⊢e x
+
+progress-+ : ∀ {M A B}
+  → ∅ ⊢ + ⦂ A ⇒ B
+  → ∅ ⊢ M ⦂ A
+  → Value M
+  → Progress (+ · M)
+progress-+ ⊢N ⊢M V-n = step β-+-i
+progress-+ ⊢N ⊢M V-m = step β-+-f
+progress-+ ⊢N ⊢M V-ƛ = {!!}
+progress-+ ⊢N ⊢M V-+ = {!!}
+progress-+ ⊢N ⊢M V-+i = {!!}
+progress-+ ⊢N ⊢M V-+f = {!!}
+
 progress : ∀ {e A}
   → ∅ ⊢ e ⦂ A
   → Progress e
-progress ⊢e = {!!}  
+progress ⊢n = done V-n
+progress ⊢m = done V-m
+progress (⊢ƛ ⊢e) = done V-ƛ
+progress (⊢· ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
+... | step s₁ | _ = step (ξ-·₁ s₁)
+... | done v₁ | step s₂ = step (ξ-·₂ v₁ s₂)
+... | done V-n | done v₂ = ⊥-elim (elim-int' ⊢e₁)
+... | done V-m | done v₂ = ⊥-elim (elim-flt' ⊢e₁)
+... | done V-ƛ | done v₂ = step (β-ƛ v₂)
+... | done V-+ | done v₂ = {!!}
+... | done V-+i | done v₂ = {!!}
+... | done V-+f | done v₂ = {!!}
+progress (⊢& ⊢e ⊢e₁) = progress ⊢e
+progress ⊢+ = done V-+
+progress ⊢+i = done V-+i
+progress ⊢+f = done V-+f
+progress (⊢sub ⊢e x) = progress ⊢e
 
 ext : ∀ {Γ Δ}
   → (∀ {x A}     →         Γ ∋ x ⦂ A →         Δ ∋ x ⦂ A)
@@ -232,11 +277,15 @@ rename : ∀ {Γ Δ}
     ----------------------------------
   → (∀ {M A} → Γ ⊢ M ⦂ A → Δ ⊢ M ⦂ A)
 rename ρ ⊢n = ⊢n
+rename ρ ⊢m = ⊢m
 rename ρ (⊢` ∋w)    =  ⊢` (ρ ∋w)
 rename ρ (⊢ƛ ⊢N)    =  ⊢ƛ (rename (ext ρ) ⊢N)
 rename ρ (⊢· ⊢L ⊢M) =  ⊢· (rename ρ ⊢L) (rename ρ ⊢M)
 rename ρ (⊢& ⊢L ⊢M) =  ⊢& (rename ρ ⊢L) (rename ρ ⊢M)
 rename ρ (⊢sub ⊢L s) = ⊢sub (rename ρ ⊢L) s
+rename ρ ⊢+ = ⊢+
+rename ρ ⊢+i = ⊢+i
+rename ρ ⊢+f = ⊢+f
 
 weaken : ∀ {Γ M A}
   → ∅ ⊢ M ⦂ A
@@ -285,6 +334,7 @@ subst : ∀ {Γ x N V A B}
     --------------------
   → Γ ⊢ N [ x := V ] ⦂ B
 subst {x = y} ⊢V ⊢n = ⊢n
+subst {x = y} ⊢V ⊢m = ⊢m
 subst {x = y} ⊢V (⊢` {x = x} Z) with x ≟ y
 ... | yes _         =  weaken ⊢V
 ... | no  x≢y       =  ⊥-elim (x≢y refl)
@@ -297,6 +347,9 @@ subst {x = y} ⊢V (⊢ƛ {x = x} ⊢N) with x ≟ y
 subst ⊢V (⊢· ⊢L ⊢M) = ⊢· (subst ⊢V ⊢L) (subst ⊢V ⊢M)
 subst ⊢V (⊢& ⊢L ⊢M) = ⊢& (subst ⊢V ⊢L) (subst ⊢V ⊢M)
 subst ⊢V (⊢sub ⊢L s) = ⊢sub (subst ⊢V ⊢L) s
+subst ⊢V ⊢+ = ⊢+
+subst ⊢V ⊢+i = ⊢+i
+subst ⊢V ⊢+f = ⊢+f
 
 inv-lam' : ∀ {Γ x e A B T}
   → Γ ⊢ ƛ x ⇒ e ⦂ T
@@ -317,9 +370,31 @@ inv-lam : ∀ {Γ x e A B}
 inv-lam {A = A} {B = B} (⊢ƛ ⊢e) = ⟨ A , ⟨ B , ⟨ ⊢e , ⟨ s-refl , s-refl ⟩ ⟩ ⟩ ⟩
 inv-lam {A = A} {B = B} (⊢sub ⊢e x) = inv-lam' ⊢e x
 
+inv-int : ∀ {Γ n A}
+  → Γ ⊢ lit n ⦂ A
+  → Int ≤ A
+inv-int ⊢n = s-refl
+inv-int (⊢& ⊢e ⊢e₁) = s-and (inv-int ⊢e) (inv-int ⊢e₁)
+inv-int (⊢sub ⊢e x) = ≤-trans (inv-int ⊢e) x
+
+inv-+ : ∀ {Γ A B}
+  → Γ ⊢ + ⦂ A ⇒ B
+  → Int ≤ A
+  → Int ⇒ Int ≤ B
+inv-+ = {!!}  
+
 preserve : ∀ {M N A}
   → ∅ ⊢ M ⦂ A
   → M —→ N
     ----------
   → ∅ ⊢ N ⦂ A
-preserve ⊢e M→N = {!!}
+preserve (⊢· ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢· (preserve ⊢e M→N) ⊢e₁
+preserve (⊢· ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢· ⊢e (preserve ⊢e₁ M→N)
+preserve (⊢· ⊢e ⊢e₁) (β-ƛ x) with inv-lam ⊢e
+... | ⟨ A' , ⟨ B' , ⟨ ⊢e' , ⟨ A≤A' , B'≤B ⟩ ⟩ ⟩ ⟩ = subst (⊢sub ⊢e₁ A≤A') (⊢sub ⊢e' B'≤B)
+preserve (⊢· ⊢e ⊢e₁) β-+-i = ⊢sub ⊢+i {!!}
+preserve (⊢· ⊢e ⊢e₁) β-+-f = ⊢sub ⊢+f {!!}
+preserve (⊢· ⊢e ⊢e₁) β-+i = ⊢sub ⊢n {!!}
+preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m {!!}
+preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
+preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x

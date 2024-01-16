@@ -1,21 +1,26 @@
-module TypeSound.Elaboration.Intersection.Main where
+module TypeSound.Elaboration.Overloading.Main where
 
-open import TypeSound.Elaboration.Intersection.Common
-import TypeSound.Elaboration.Intersection.Target as T
-import TypeSound.Elaboration.Intersection.Source as S
+open import TypeSound.Elaboration.Overloading.Common
+import TypeSound.Elaboration.Overloading.Target as T
+import TypeSound.Elaboration.Overloading.Source as S
 
 ∥_∥ : S.Term → T.Term
 ∥ S.lit x ∥ = T.lit x
+∥ S.flt x ∥ = T.flt x
 ∥ S.` x ∥ = T.` x
-∥ S.ƛ x ⇒ e ∥ = T.ƛ x ⇒ ∥ e ∥
-∥ e₁ S.· e₂ ∥ = ∥ e₁ ∥ T.· ∥ e₂ ∥
-∥ e S.⦂ A ∥ = ∥ e ∥
+∥ S.ƛ x ⇒ s ∥ = T.ƛ x ⇒ ∥ s ∥
+∥ s S.· s₁ ∥ = ∥ s ∥ T.· ∥ s₁ ∥ 
+∥ s S.⦂ x ∥ = ∥ s ∥
+∥ S.+ ∥ = T.+
+∥ S.+i x ∥ = T.+i x
+∥ S.+f x ∥ = T.+f x
 
 preserve-sub : ∀ {B j A}
   → B S.≤d j # A
   → B T.≤ A
 preserve-sub S.≤d-Z = T.s-refl
 preserve-sub S.≤d-int∞ = T.s-refl
+preserve-sub S.≤d-float∞ = T.s-refl
 preserve-sub S.≤d-top = T.s-top
 preserve-sub (S.≤d-arr-∞ B≤A B≤A₁) = T.s-arr (preserve-sub B≤A) (preserve-sub B≤A₁)
 preserve-sub (S.≤d-arr-S⇐ B≤A B≤A₁) = T.s-arr T.s-refl (preserve-sub B≤A₁)
@@ -35,3 +40,6 @@ preserve (S.⊢d-app⇐ ⊢e ⊢e₁) = T.⊢· (preserve ⊢e) (preserve ⊢e�
 preserve (S.⊢d-app⇒ ⊢e ⊢e₁) = T.⊢· (preserve ⊢e) (preserve ⊢e₁)
 preserve (S.⊢d-sub ⊢e x x₁) = T.⊢sub (preserve ⊢e) (preserve-sub x)
 preserve (S.⊢d-& ⊢e ⊢e₁) = T.⊢& (preserve ⊢e) (preserve ⊢e₁)
+preserve S.⊢d-+ = T.⊢+
+preserve S.⊢d-+i = T.⊢+i
+preserve S.⊢d-+f = T.⊢+f
