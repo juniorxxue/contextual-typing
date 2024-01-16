@@ -35,10 +35,16 @@ import TypeSound.Elaboration.STLC.Common
 import TypeSound.Elaboration.STLC.Source
 import TypeSound.Elaboration.STLC.Target
 import TypeSound.Elaboration.STLC.Main
+
 import TypeSound.Elaboration.Intersection.Common
 import TypeSound.Elaboration.Intersection.Source
 import TypeSound.Elaboration.Intersection.Target
 import TypeSound.Elaboration.Intersection.Main
+
+import TypeSound.Elaboration.Overloading.Common
+import TypeSound.Elaboration.Overloading.Source
+import TypeSound.Elaboration.Overloading.Target
+import TypeSound.Elaboration.Overloading.Main
 
 -- operational semantics
 import TypeSound.Operation.STLC
@@ -55,6 +61,6 @@ import Complete.Trad
 --+                                                                +--
 ----------------------------------------------------------------------
 
-import TypeSound.Operation.Intersection
+-- import TypeSound.Operation.Intersection
 import Poly.Prelude
 import Poly.Main
