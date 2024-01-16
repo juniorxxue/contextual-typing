@@ -49,7 +49,12 @@ import Complete.Prelude
 import Complete.LetArg
 import Complete.Trad
 
--- unfinished work
+----------------------------------------------------------------------
+--+                                                                +--
+--+                      Warning: Unfinished!                      +--
+--+                                                                +--
+----------------------------------------------------------------------
+
 import TypeSound.Operation.Intersection
 import Poly.Prelude
 import Poly.Main

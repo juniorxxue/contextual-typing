@@ -122,6 +122,9 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ , x ⦂ A ⊢d i # e ⦂ B
     → Γ ⊢d S⇒ i # (ƛ x ⇒ e) ⦂ A ⇒ B
 
+  ⊢d-lam-top : ∀ {Γ e x}
+    → Γ ⊢d ♭ ∞ # (ƛ x ⇒ e) ⦂ Top
+
   ⊢d-app⇐ : ∀ {Γ e₁ e₂ A B j}
     → Γ ⊢d ♭ (S⇐ j) # e₁ ⦂ A ⇒ B
     → Γ ⊢d ♭ ∞ # e₂ ⦂ A
@@ -143,17 +146,23 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ♭ ∞ # e ⦂ B
     → Γ ⊢d ♭ ∞ # e ⦂ A & B
 
+data UValue : Term → Set where
+
+  U-n : ∀ {n}
+    → UValue (lit n)
+    
+  U-ƛ : ∀ {x e}
+    → UValue (ƛ x ⇒ e)
+
 data Value : Term → Set where
 
-  V-n : ∀ {n}
-    → Value (lit n)
+  V-U : ∀ {u}
+    → UValue u
+    → Value u
 
-  V-ƛ : ∀ {x e}
-    → Value (ƛ x ⇒ e)
-
-  V-ƛ⦂ : ∀ {x e A B}
-    → Value ((ƛ x ⇒ e) ⦂ A ⇒ B)
-
+  V-U⦂ : ∀ {u A}
+    → UValue u
+    → Value (u ⦂ A)
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -189,11 +198,9 @@ data _—→_ : Term → Term → Set where
   ξ-⦂ : ∀ {e e' A}
     → e —→ e'
     → (e ⦂ A) —→ (e' ⦂ A)
-  
-  β-⦂ : ∀ {V A}
-    → Value V
-    → ¬ (Value (V ⦂ A))
-    → (V ⦂ A) —→ V
+
+  β-⦂ : ∀ {M A B}
+    → ((M ⦂ A) ⦂ B) —→ (M ⦂ B)
 
   β-ƛ : ∀ {x N V}
     → Value V
@@ -201,7 +208,7 @@ data _—→_ : Term → Term → Set where
 
   β-ƛ⦂ : ∀ {x N V A B}
     → Value V
-    → ((ƛ x ⇒ N) ⦂ A ⇒ B) · V —→ (N [ x := (V ⦂ A) ] ⦂ B)    
+    → ((ƛ x ⇒ N) ⦂ A ⇒ B) · V —→ (N [ x := (V ⦂ A) ] ⦂ B)
 
 
 data Progress (M : Term) : Set where
@@ -216,21 +223,8 @@ data Progress (M : Term) : Set where
       ----------
     → Progress M
 
-
 v-dec : ∀ e
   → Dec (Value e)
-v-dec (lit x) = yes V-n
-v-dec (` x) = no (λ ())
-v-dec (ƛ x ⇒ e) = yes V-ƛ
-v-dec (e · e₁) = no (λ ())
-v-dec (e ⦂ Int) = no (λ ())
-v-dec (e ⦂ Top) = no (λ ())
-v-dec (lit x ⦂ A ⇒ A₁) = no (λ ())
-v-dec (` x ⦂ A ⇒ A₁) = no (λ ())
-v-dec ((ƛ x ⇒ e) ⦂ A ⇒ A₁) = yes V-ƛ⦂
-v-dec (e · e₁ ⦂ A ⇒ A₁) = no (λ ())
-v-dec ((e ⦂ x) ⦂ A ⇒ A₁) = no (λ ())
-v-dec (e ⦂ A & A₁) = no (λ ())
 
 progress-app₁ : ∀ {e₁ e₂ j A B}
   → ∅ ⊢d ♭ (S⇐ j) # e₁ ⦂ A ⇒ B
@@ -238,9 +232,6 @@ progress-app₁ : ∀ {e₁ e₂ j A B}
   → Value e₁
   → Value e₂
   → Progress (e₁ · e₂)
-progress-app₁ (⊢d-sub (⊢d-sub ⊢e₁ x₂ x₃) x x₁) ⊢e₂ V-n V2 = ⊥-elim (x₃ refl)
-progress-app₁ (⊢d-sub (⊢d-sub ⊢e₁ x₂ x₃) x x₁) ⊢e₂ V-ƛ V2 = ⊥-elim (x₃ refl)
-progress-app₁ ⊢e₁ ⊢e₂ V-ƛ⦂ v2 = step (β-ƛ⦂ v2)
 
 progress-app₂ : ∀ {e₁ e₂ i A B}
   → ∅ ⊢d (S⇒ i) # e₁ ⦂ A ⇒ B
@@ -248,32 +239,10 @@ progress-app₂ : ∀ {e₁ e₂ i A B}
   → Value e₁
   → Value e₂
   → Progress (e₁ · e₂)
-progress-app₂ (⊢d-sub (⊢d-sub ⊢e₁ x₂ x₃) x x₁) ⊢e₂ V-n v2 = ⊥-elim (x₃ refl)
-progress-app₂ (⊢d-lam₂ ⊢e₁) ⊢e₂ V-ƛ v2 = step (β-ƛ v2)
-progress-app₂ (⊢d-sub (⊢d-sub ⊢e₁ x₂ x₃) x x₁) ⊢e₂ V-ƛ v2 = ⊥-elim (x₃ refl)
-progress-app₂ ⊢e₁ ⊢e₂ V-ƛ⦂ v2 = step (β-ƛ⦂ v2)
-
+  
 progress : ∀ {j e A}
   → ∅ ⊢d j # e ⦂ A
   → Progress e
-progress ⊢d-int = done V-n
-progress (⊢d-ann {e = e} {A = A} ⊢e) with progress ⊢e | v-dec (e ⦂ A)
-... | step x | _ = step (ξ-⦂ x)
-... | done x | yes p = done p
-... | done x | no ¬p = step (β-⦂ x ¬p)
-progress (⊢d-lam₁ ⊢e) = done V-ƛ
-progress (⊢d-lam₂ ⊢e) = done V-ƛ
-progress (⊢d-app⇐ ⊢e₁ ⊢e₂) with progress ⊢e₁
-... | step x = step (ξ-·₁ x)
-... | done x with progress ⊢e₂
-... | step x₁ = step (ξ-·₂ x x₁)
-... | done x₁ = progress-app₁ ⊢e₁ ⊢e₂ x x₁
-progress (⊢d-app⇒ ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
-... | step r1 | _ = step (ξ-·₁ r1)
-... | done v1 | step r2 = step (ξ-·₂ v1 r2)
-... | done v1 | done v2 = progress-app₂ ⊢e₁ ⊢e₂ v1 v2
-progress (⊢d-sub ⊢e x x₁) = progress ⊢e
-progress (⊢d-& ⊢e₁ ⊢e₂) = progress ⊢e₁
 
 ext : ∀ {Γ Δ}
   → (∀ {x A}     →         Γ ∋ x ⦂ A →         Δ ∋ x ⦂ A)
@@ -285,12 +254,13 @@ ext ρ (S x≢y ∋x)  =  S x≢y (ρ ∋x)
 rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
     ----------------------------------
-  → (∀ {M A j} → Γ ⊢d j # M ⦂ A → Δ ⊢d j # M ⦂ A)
+  → (∀ {M A j} → Γ ⊢d j # M ⦂ A → Δ ⊢d j # M ⦂ A)  
 rename ρ ⊢d-int = ⊢d-int
 rename ρ (⊢d-var x) = ⊢d-var (ρ x)
 rename ρ (⊢d-ann ⊢M) = ⊢d-ann (rename ρ ⊢M)
 rename ρ (⊢d-lam₁ ⊢M) = ⊢d-lam₁ (rename (ext ρ) ⊢M)
 rename ρ (⊢d-lam₂ ⊢M) = ⊢d-lam₂ (rename (ext ρ) ⊢M)
+rename ρ (⊢d-lam-top) = ⊢d-lam-top
 rename ρ (⊢d-app⇐ ⊢M ⊢M₁) = ⊢d-app⇐ (rename ρ ⊢M) (rename ρ ⊢M₁)
 rename ρ (⊢d-app⇒ ⊢M ⊢M₁) = ⊢d-app⇒ (rename ρ ⊢M) (rename ρ ⊢M₁)
 rename ρ (⊢d-sub ⊢M x x₁) = ⊢d-sub (rename ρ ⊢M) x x₁
@@ -372,6 +342,9 @@ subst' : ∀ {Γ x N V A B j}
 subst {x = y} ⊢V (⊢d-lam₁ {x = x} ⊢N) with x ≟ y
 ... | yes refl = ⊢d-lam₁ (drop ⊢N)
 ... | no  x≢y  = ⊢d-lam₁ (subst ⊢V (swap x≢y ⊢N))
+subst {x = y} ⊢V (⊢d-lam-top {x = x}) with x ≟ y
+... | yes refl = ⊢d-lam-top
+... | no  x≢y  = ⊢d-lam-top
 subst {x = y} ⊢V (⊢d-app⇐ ⊢N ⊢M) = ⊢d-app⇐ (subst' (⊢d-ann ⊢V) ⊢N) (subst' (⊢d-ann ⊢V) ⊢M)
 subst {x = y} ⊢V (⊢d-app⇒ ⊢N ⊢M) = ⊢d-app⇒ (subst' (⊢d-ann ⊢V) ⊢N) (subst' (⊢d-ann ⊢V) ⊢M)
 subst {x = y} ⊢V (⊢d-sub ⊢N x x₁) = ⊢d-sub' (subst' (⊢d-ann ⊢V) ⊢N) x
@@ -391,40 +364,36 @@ subst' {x = y} ⊢V (⊢d-lam₁ {x = x} ⊢N) with x ≟ y
 subst' {x = y} ⊢V (⊢d-lam₂ {x = x} ⊢N) with x ≟ y
 ... | yes refl      =  ⊢d-lam₂ (drop ⊢N)
 ... | no  x≢y       =  ⊢d-lam₂ (subst' ⊢V (swap x≢y ⊢N))
+subst' {x = y} ⊢V (⊢d-lam-top {x = x}) with x ≟ y
+... | yes refl = ⊢d-lam-top
+... | no x≢y = ⊢d-lam-top
 subst' {x = y} ⊢V (⊢d-app⇐ ⊢L ⊢M) = ⊢d-app⇐ (subst' ⊢V ⊢L) (subst' ⊢V ⊢M)
 subst' {x = y} ⊢V (⊢d-app⇒ ⊢L ⊢M) = ⊢d-app⇒ (subst' ⊢V ⊢L) (subst' ⊢V ⊢M)
 subst' {x = y} ⊢V (⊢d-sub ⊢N x x₁) = ⊢d-sub' (subst' ⊢V ⊢N) x
 subst' {x = y} ⊢V (⊢d-& ⊢M ⊢N) = ⊢d-& (subst' ⊢V ⊢M) (subst' ⊢V ⊢N)
 
+check-sub : ∀ {Γ e A B}
+  → Γ ⊢d ♭ ∞ # e ⦂ B
+  → B ≤d ♭ ∞ # A
+  → Γ ⊢d ♭ ∞ # e ⦂ A
+check-sub (⊢d-lam₁ ⊢e) ≤d-top = ⊢d-lam-top
+check-sub (⊢d-lam₁ ⊢e) (≤d-arr-∞ B≤A B≤A₁) = ⊢d-lam₁ {!!}
+check-sub (⊢d-lam₁ ⊢e) (≤d-and B≤A B≤A₁) = ⊢d-& (check-sub (⊢d-lam₁ ⊢e) B≤A) (check-sub (⊢d-lam₁ ⊢e) B≤A₁)
+check-sub ⊢d-lam-top ≤d-top = ⊢d-lam-top
+check-sub ⊢d-lam-top (≤d-and B≤A B≤A₁) = ⊢d-& (check-sub ⊢d-lam-top B≤A) (check-sub ⊢d-lam-top B≤A₁)
+check-sub (⊢d-app⇐ ⊢e ⊢e₁) B≤A = ⊢d-app⇐ {!check-sub!} {!!}
+check-sub (⊢d-app⇒ ⊢e ⊢e₁) B≤A = {!!}
+check-sub (⊢d-sub ⊢e B≤A₁ i≢Z) B≤A = {!!}
+check-sub (⊢d-& ⊢e ⊢e₁) B≤A = {!!}
+
 preserve : ∀ {M N A j}
   → ∅ ⊢d j # M ⦂ A
   → M —→ N
   → ∅ ⊢d j # N ⦂ A
--- ann  
-preserve (⊢d-ann ⊢M) (ξ-⦂ M→N) = ⊢d-ann (preserve ⊢M M→N)
--- ann value
-preserve (⊢d-ann ⊢M) (β-⦂ V-n ¬vnA) = {!!}
-preserve (⊢d-ann ⊢M) (β-⦂ V-ƛ ¬vnA) = {!!}
-preserve (⊢d-ann ⊢M) (β-⦂ V-ƛ⦂ ¬vnA) = {!!}
--- app check
-preserve (⊢d-app⇐ ⊢M ⊢B) (ξ-·₁ M→N) = ⊢d-app⇐ (preserve ⊢M M→N) ⊢B
-preserve (⊢d-app⇐ ⊢M ⊢B) (ξ-·₂ VM M→N) = ⊢d-app⇐ ⊢M (preserve ⊢B M→N)
-preserve (⊢d-app⇐ (⊢d-sub (⊢d-sub ⊢M x₂ x₃) x x₁) ⊢B) (β-ƛ VB) = ⊥-elim (x₃ refl)
-preserve (⊢d-app⇐ (⊢d-sub (⊢d-ann (⊢d-lam₁ ⊢M)) (≤d-arr-S⇐ x₁ x₃) x₂) ⊢B) (β-ƛ⦂ x) = ⊢d-sub' (⊢d-ann (subst ⊢B ⊢M)) x₃
-preserve (⊢d-app⇐ (⊢d-sub (⊢d-ann (⊢d-sub (⊢d-sub ⊢M x₅ x₆) x₃ x₄)) x₁ x₂) ⊢B) (β-ƛ⦂ x) = ⊥-elim (x₆ refl)
-preserve (⊢d-app⇐ (⊢d-sub (⊢d-sub ⊢M x₃ x₄) x₁ x₂) ⊢B) (β-ƛ⦂ x) = ⊥-elim (x₄ refl)
--- app infer
-preserve (⊢d-app⇒ ⊢M ⊢B) (ξ-·₁ M→N) = ⊢d-app⇒ (preserve ⊢M M→N) ⊢B
-preserve (⊢d-app⇒ ⊢M ⊢B) (ξ-·₂ x M→N) = ⊢d-app⇒ ⊢M (preserve ⊢B M→N)
-preserve (⊢d-app⇒ (⊢d-lam₂ ⊢M) ⊢B) (β-ƛ x) = subst' ⊢B ⊢M
-preserve (⊢d-app⇒ (⊢d-sub (⊢d-sub ⊢M x₃ x₄) x₁ x₂) ⊢B) (β-ƛ x) = ⊥-elim (x₄ refl)
-preserve (⊢d-app⇒ (⊢d-sub (⊢d-ann (⊢d-lam₁ ⊢M)) (≤d-arr-S⇒ x₁ x₃) x₂) ⊢B) (β-ƛ⦂ x) = ⊢d-sub' (⊢d-ann (subst (⊢d-sub' ⊢B ≤d-refl∞) ⊢M)) x₃
-preserve (⊢d-app⇒ (⊢d-sub (⊢d-ann (⊢d-sub (⊢d-sub ⊢M x₆ x₇) x₄ x₅)) (≤d-arr-S⇒ x₁ x₃) x₂) ⊢B) (β-ƛ⦂ x) = ⊥-elim (x₇ refl)
-preserve (⊢d-app⇒ (⊢d-sub (⊢d-sub ⊢M x₃ x₄) x₁ x₂) ⊢B) (β-ƛ⦂ x) = ⊥-elim (x₄ refl)
--- sub
-preserve (⊢d-sub ⊢M B≤A nz) M→N = ⊢d-sub (preserve ⊢M M→N) B≤A nz
--- and
-preserve (⊢d-& ⊢M ⊢B) M→N = ⊢d-& (preserve ⊢M M→N) (preserve ⊢B M→N)
-
--- TODO: use dependent pattern matching to eliminate ⊥-elim cases
--- Warning: must consider how subtyping affects the reasoning
+preserve (⊢d-ann ⊢M) (ξ-⦂ M→N) = {!!}
+preserve (⊢d-ann (⊢d-sub ⊢M B≤A i≢Z)) β-⦂ = {!!}
+preserve (⊢d-ann (⊢d-& ⊢M ⊢N)) β-⦂ = ⊢d-ann {!!}
+preserve (⊢d-app⇐ ⊢M ⊢M₁) M→N = {!!}
+preserve (⊢d-app⇒ ⊢M ⊢M₁) M→N = {!!}
+preserve (⊢d-sub ⊢M B≤A i≢Z) M→N = {!!}
+preserve (⊢d-& ⊢M ⊢M₁) M→N = {!!}
