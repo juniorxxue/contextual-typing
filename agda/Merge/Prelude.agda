@@ -1,4 +1,4 @@
-module Record.Prelude where
+module Merge.Prelude where
 
 open import Data.Nat public
 open import Data.Nat.Properties public

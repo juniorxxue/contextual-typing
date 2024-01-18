@@ -1,7 +1,7 @@
-module Record.Properties where
+module Merge.Properties where
 
-open import Record.Prelude hiding (_≤?_)
-open import Record.Common
+open import Merge.Prelude hiding (_≤?_)
+open import Merge.Common
 
 length : Context → ℕ
 length ∅        =  zero

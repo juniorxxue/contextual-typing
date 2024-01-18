@@ -1,34 +1,35 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-module Record.Common where
+module Merge.Common where
 
-open import Record.Prelude hiding (_≤?_)
+open import Merge.Prelude hiding (_≤?_)
 
   
 Id : Set
 Id = String
 
-infixr 5  ƛ_
-infixl 7  _·_
-infix  9  `_
-infix  5  _⦂_
+infixr 5 ƛ_
+infix  5 ⌊_⇒_⌋
+
+infixl 7 _·_
+infixl 7 _⋆_
+
+infix  9 `_
+infix  5 _⦂_
 infixr 8 _⇒_
--- infixr 8 _&_
-infix  2 𝕣_
-infixr 5 r⟦_↦_⟧_
+infixr 8 _&_
+infixr 8 _⨟_
 
 infix 9 *_ 
 Label = ℕ
 
 data Type : Set where
-  Int : Type
-  *_ : ℕ → Type
-  Top : Type
-  _⇒_ : Type → Type → Type
-  _&_ : Type → Type → Type
-  τ⟦_↦_⟧ : Label → Type → Type
+  Int   : Type
+  *_    : ℕ → Type
+  Top   : Type
+  _⇒_   : Type → Type → Type
+  _&_   : Type → Type → Type
+  ⌊_⇒_⌋ : (l : Label) → (A : Type) → Type
 
 data Term : Set
-data Record : Set
 
 data Term where
   lit      : ℕ → Term
@@ -36,12 +37,9 @@ data Term where
   ƛ_       : Term → Term
   _·_      : Term → Term → Term
   _⦂_      : Term → Type → Term
-  𝕣_       : Record → Term
-  _𝕡_      : Term → Label → Term
-
-data Record where
-  rnil : Record
-  r⟦_↦_⟧_ : Label → Term → Record → Record  
+  _⨟_      : (e₁ : Term) → (e₂ : Term) → Term
+  ⌊_⇒_⌋    :  (l : Label) → (e : Term) → Term
+  _⋆_      : (e : Term) → (l : Label) → Term
 
 infixl 5  _,_
 
@@ -69,7 +67,7 @@ data _∋_⦂_ : Context → ℕ → Type → Set where
 ----------------------------------------------------------------------
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
-  _≤?_ = Record.Prelude._≤?_
+  _≤?_ = Merge.Prelude._≤?_
 
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x
@@ -83,8 +81,9 @@ lit i ↑ n = lit i
 (ƛ e) ↑ n = ƛ (e ↑ (suc n))
 e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
 (e ⦂ A) ↑ n = (e ↑ n) ⦂ A
-(𝕣 _) ↑ n = {!!}
-(rcd 𝕡 l) ↑ n = {!!}
+e₁ ⨟ e₂ ↑ n = (e₁ ↑ n) ⨟ (e₂ ↑ n)
+⌊ l ⇒ e ⌋ ↑ n = ⌊ l ⇒ e ↑ n ⌋ 
+e ⋆ l ↑ n = (e ↑ n) ⋆ l
 
 ↓-var : ℕ → ℕ → ℕ
 ↓-var n x with n ≤? x
@@ -92,14 +91,15 @@ e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
 ... | no n>x   = x
 
 infixl 7 _↓_
-_↓_ : Term → ℕ → Term
+_↓_ : (e : Term) → (n : ℕ) → Term
 lit i ↓ n = lit i
 ` x ↓ n = ` (↓-var n x)
 (ƛ e) ↓ n = ƛ (e ↓ (suc n))
 e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 (e ⦂ A) ↓ n = (e ↓ n) ⦂ A
-(𝕣 _) ↓ n = {!!}
-(x₁ 𝕡 x₂) ↓ x = {!!}
+(e₁ ⨟ e₂) ↓ n = (e₁ ↓ n) ⨟ (e₂ ↓ n)
+⌊ l ⇒ e ⌋ ↓ n = ⌊ l ⇒ e ↓ n ⌋
+(e ⋆ l) ↓ n = (e ↓ n ⋆ l)
 
 ↑-↓-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
 ↑-↓-var x n with n ≤? x
@@ -118,8 +118,9 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ↑-↓-id (ƛ e) n rewrite ↑-↓-id e (suc n) = refl
 ↑-↓-id (e₁ · e₂) n rewrite ↑-↓-id e₁ n | ↑-↓-id e₂ n = refl
 ↑-↓-id (e ⦂ A) n rewrite ↑-↓-id e n = refl
-↑-↓-id (𝕣 _) n = {!!}
-↑-↓-id (x 𝕡 x₁) n = {!!}
+↑-↓-id (e₁ ⨟ e₂) n rewrite ↑-↓-id e₁ n | ↑-↓-id e₂ n = refl
+↑-↓-id (e ⋆ l) n rewrite ↑-↓-id e n = refl
+↑-↓-id ⌊ l ⇒ e ⌋ n rewrite ↑-↓-id e n = refl
 
 ↑-↑-comm-var : ∀ m n x
   → m ≤ n
@@ -153,8 +154,9 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
-↑-↑-comm (𝕣 _) m n m≤n = {!!}
-↑-↑-comm (x₁ 𝕡 x₂) m n x = {!!}
+↑-↑-comm (e₁ ⨟ e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
+↑-↑-comm (e ⋆ l) m n m≤n rewrite ↑-↑-comm e m n m≤n  = refl
+↑-↑-comm ⌊ l ⇒ e ⌋ m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
 
 infix 4 _~↑~_
 
@@ -180,6 +182,19 @@ data _~↑~_ : Term → ℕ → Set where
     → e ~↑~ n
     → (e ⦂ A) ~↑~ n
 
+  sd-mrg : ∀ {e₁ e₂ n}
+    → e₁ ~↑~ n
+    → e₂ ~↑~ n
+    → (e₁ ⨟ e₂) ~↑~ n
+
+  sd-prj : ∀ {e l n}
+    → e ~↑~ n
+    → (e ⋆ l) ~↑~ n
+
+  sd-rcd : ∀ {e l n}
+    → e ~↑~ n
+    → ⌊ l ⇒ e ⌋ ~↑~ n
+
 ↑-shifted : ∀ {e n}
   → (e ↑ n) ~↑~ n
 ↑-shifted {lit i} {n} = sd-lit
@@ -189,8 +204,9 @@ data _~↑~_ : Term → ℕ → Set where
 ↑-shifted {ƛ e} {n} = sd-lam (↑-shifted {e})
 ↑-shifted {e₁ · e₂} {n} = sd-app (↑-shifted {e₁}) (↑-shifted {e₂})
 ↑-shifted {e ⦂ A} {n} = sd-ann (↑-shifted {e})
-↑-shifted {𝕣 _} {n} = {!!}
-↑-shifted {x 𝕡 x₁} = {!!}
+↑-shifted {e₁ ⨟ e₂} = sd-mrg ↑-shifted ↑-shifted
+↑-shifted {e ⋆ l} = sd-prj ↑-shifted
+↑-shifted {⌊ l ⇒ e ⌋} = sd-rcd ↑-shifted
 
 ↓-↑-comm-var : ∀ m n x
   → m ≤ n
@@ -228,6 +244,9 @@ data _~↑~_ : Term → ℕ → Set where
 ↓-↑-comm (ƛ e) m n m≤n (sd-lam sd) rewrite ↓-↑-comm e (suc m) (suc n) (s≤s m≤n) sd = refl
 ↓-↑-comm (e₁ · e₂) m n m≤n (sd-app sd₁ sd₂) rewrite ↓-↑-comm e₁ m n m≤n sd₁ | ↓-↑-comm e₂ m n m≤n sd₂ = refl
 ↓-↑-comm (e ⦂ A) m n m≤n (sd-ann sd) rewrite ↓-↑-comm e m n m≤n sd = refl
+↓-↑-comm (e₁ ⨟ e₂) m n m≤n (sd-mrg sd₁ sd₂) rewrite ↓-↑-comm e₁ m n m≤n sd₁ | ↓-↑-comm e₂ m n m≤n sd₂ = refl
+↓-↑-comm ⌊ l ⇒ e ⌋ m n m≤n (sd-rcd sd) rewrite ↓-↑-comm e m n m≤n sd = refl
+↓-↑-comm (e ⋆ l) m n m≤n (sd-prj sd) rewrite ↓-↑-comm e m n m≤n sd = refl
 
 
 ↑-shifted-n : ∀ {e m n}
@@ -241,3 +260,6 @@ data _~↑~_ : Term → ℕ → Set where
 ↑-shifted-n {ƛ e} m≤n+1 (sd-lam sd) = sd-lam (↑-shifted-n (s≤s m≤n+1) sd)
 ↑-shifted-n {e · e₁} m≤n+1 (sd-app sd sd₁) = sd-app (↑-shifted-n m≤n+1 sd) (↑-shifted-n m≤n+1 sd₁)
 ↑-shifted-n {e ⦂ x} m≤n+1 (sd-ann sd) = sd-ann (↑-shifted-n m≤n+1 sd)
+↑-shifted-n {e ⨟ e₁} m≤n+1 (sd-mrg sd sd₁) = sd-mrg (↑-shifted-n m≤n+1 sd) (↑-shifted-n m≤n+1 sd₁)
+↑-shifted-n {⌊ l ⇒ e ⌋} x (sd-rcd x₁) = sd-rcd (↑-shifted-n x x₁)
+↑-shifted-n {e ⋆ l} x (sd-prj x₁) = sd-prj (↑-shifted-n x x₁)

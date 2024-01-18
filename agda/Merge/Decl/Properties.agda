@@ -1,9 +1,9 @@
-module Record.Decl.Properties where
+module Merge.Decl.Properties where
 
-open import Record.Prelude
-open import Record.Common
-open import Record.Decl
-open import Record.Properties
+open import Merge.Prelude
+open import Merge.Common
+open import Merge.Decl
+open import Merge.Properties
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -23,7 +23,10 @@ open import Record.Properties
 ⊢d-weaken (⊢d-app⇒ ⊢f ⊢e) n≤l = ⊢d-app⇒ (⊢d-weaken ⊢f n≤l) (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-ann ⊢e) n≤l = ⊢d-ann (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-& ⊢e₁ ⊢e₂) n≤l = ⊢d-& (⊢d-weaken ⊢e₁ n≤l) (⊢d-weaken ⊢e₂ n≤l)
+⊢d-weaken {e = e ⨟ e₁} {B = B & B₁} (⊢d-⨟ x x₁) n≤l = ⊢d-⨟ (⊢d-weaken x n≤l) (⊢d-weaken x₁ n≤l)
+⊢d-weaken {e = ⌊ l ⇒ e ⌋} {B = ⌊ .l ⇒ B ⌋} (⊢d-rcd x) n≤l = ⊢d-rcd (⊢d-weaken x n≤l)
 ⊢d-weaken (⊢d-sub ⊢e A≤B neq) n≤l = ⊢d-sub (⊢d-weaken ⊢e n≤l) A≤B neq
+⊢d-weaken {e = e ⋆ l} (⊢d-prj x) n≤l = ⊢d-prj (⊢d-weaken x n≤l)
 
 ⊢d-weaken-0 : ∀ {Γ cc e A B}
   → Γ ⊢d cc # e ⦂ B
@@ -50,6 +53,9 @@ open import Record.Properties
 ⊢d-strengthen (⊢d-ann ⊢e) (sd-ann sd) n≤l = ⊢d-ann (⊢d-strengthen ⊢e sd n≤l)
 ⊢d-strengthen (⊢d-& ⊢e₁ ⊢e₂) sd n≤l = ⊢d-& (⊢d-strengthen ⊢e₁ sd n≤l) (⊢d-strengthen ⊢e₂ sd n≤l)
 ⊢d-strengthen (⊢d-sub ⊢e A≤B neq) sd n≤l = ⊢d-sub (⊢d-strengthen ⊢e sd n≤l) A≤B neq
+⊢d-strengthen {e = e ⨟ e₁} {A & A₁} (⊢d-⨟ x₁ x₂) (sd-mrg x x₃) n≤l = ⊢d-⨟ (⊢d-strengthen x₁ x n≤l) (⊢d-strengthen x₂ x₃ n≤l)
+⊢d-strengthen {e = ⌊ l ⇒ e ⌋} {⌊ .l ⇒ A ⌋} (⊢d-rcd x₁) (sd-rcd x) n≤l = ⊢d-rcd (⊢d-strengthen x₁ x n≤l)
+⊢d-strengthen {e = e ⋆ l} (⊢d-prj x₁) (sd-prj x) n≤l = ⊢d-prj (⊢d-strengthen x₁ x n≤l)
 
 ⊢d-strengthen-0 : ∀ {Γ cc e A B}
   → Γ , A ⊢d cc # e ↑ 0 ⦂ B
@@ -158,6 +164,21 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₁ ≤2 neq) = ≤d-trans ≤1 ≤2
 ≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and₂ ≤2 neq) = ≤d-trans ≤3 ≤2
 ≤d-trans {B = B & B₁} (≤d-and ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-and ≤1 ≤3) ≤2) (≤d-trans (≤d-and ≤1 ≤3) ≤4)
+≤d-trans {⌊ l ⇒ A ⌋} ≤d-Z ≤d-Z = ≤d-Z
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₁ x x₁) ≤d-Z = ⊥-elim (x₁ refl)
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₂ x x₁) ≤d-Z = ⊥-elim (x₁ refl)
+≤d-trans (≤d-rcd∞ x) ≤d-top = ≤d-top
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₁ x x₁) ≤d-top = ≤d-top
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₂ x x₁) ≤d-top = ≤d-top
+≤d-trans (≤d-rcd∞ x) (≤d-rcd∞ x₁) = ≤d-rcd∞ (≤d-trans x x₁)
+≤d-trans (≤d-and₁ x x₂) (≤d-rcd∞ x₁) = ≤d-and₁ (≤d-trans x (≤d-rcd∞ x₁)) λ ()
+≤d-trans (≤d-and₂ x x₂) (≤d-rcd∞ x₁) = ≤d-and₂ (≤d-trans x (≤d-rcd∞ x₁)) (λ ())
+≤d-trans (≤d-rcd-Sl x) (≤d-rcd-Sl x₁) = ≤d-rcd-Sl (≤d-trans x x₁)
+≤d-trans (≤d-and₁ x x₂) (≤d-rcd-Sl x₁) = ≤d-and₁ (≤d-trans x (≤d-rcd-Sl x₁)) λ ()
+≤d-trans (≤d-and₂ x x₂) (≤d-rcd-Sl x₁) = ≤d-and₂ (≤d-trans x (≤d-rcd-Sl x₁)) λ ()
+≤d-trans (≤d-rcd∞ x) (≤d-and x₁ x₂) = ≤d-and (≤d-trans (≤d-rcd∞ x) x₁) (≤d-trans (≤d-rcd∞ x) x₂)
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₁ x x₁) (≤d-and x₂ x₃) = ≤d-and (≤d-and₁ (≤d-trans x x₂) λ ()) (≤d-and₁ (≤d-trans x x₃) (λ ()))
+≤d-trans {B = ⌊ l ⇒ B ⌋} (≤d-and₂ x x₁) (≤d-and x₂ x₃) = ≤d-and (≤d-and₂ (≤d-trans x x₂) λ ()) (≤d-and₂ (≤d-trans x x₃) (λ ()))
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -169,12 +190,10 @@ data wf-j : Type → Counter → Set where
   → Γ ⊢d ♭ Z # e ⦂ B
   → B ≤d i # A
   → Γ ⊢d i # e ⦂ A
-⊢d-sub' ⊢e ≤d-Z = ⊢e
-⊢d-sub' ⊢e ≤d-int∞ = ⊢d-sub ⊢e ≤d-int∞ (λ ())
-⊢d-sub' ⊢e ≤d-base∞ = ⊢d-sub ⊢e ≤d-base∞ (λ ())
-⊢d-sub' ⊢e ≤d-top = ⊢d-sub ⊢e ≤d-top (λ ())
-⊢d-sub' ⊢e (≤d-arr-∞ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-∞ B≤A B≤A₁) (λ ())
-⊢d-sub' ⊢e (≤d-arr-S⇐ B≤A B≤A₁) = ⊢d-sub ⊢e (≤d-arr-S⇐ B≤A B≤A₁) (λ ())
-⊢d-sub' ⊢e (≤d-and₁ B≤A x) = ⊢d-sub ⊢e (≤d-and₁ B≤A x) x
-⊢d-sub' ⊢e (≤d-and₂ B≤A x) = ⊢d-sub ⊢e (≤d-and₂ B≤A x) x
-⊢d-sub' ⊢e (≤d-and B≤A B≤A₁) = ⊢d-& (⊢d-sub' ⊢e B≤A) (⊢d-sub' ⊢e B≤A₁)
+⊢d-sub' {i = ♭ Z} ⊢e ≤d-Z = ⊢e
+⊢d-sub' {i = ♭ Z} ⊢e (≤d-and₁ B≤A x) = ⊥-elim (x refl)
+⊢d-sub' {i = ♭ Z} ⊢e (≤d-and₂ B≤A x) = ⊥-elim (x refl)
+⊢d-sub' {i = ♭ ∞} ⊢e B≤A = ⊢d-sub ⊢e B≤A (λ ())
+⊢d-sub' {i = ♭ (S⇐ x)} ⊢e B≤A = ⊢d-sub ⊢e B≤A (λ ())
+⊢d-sub' {i = ♭ (Sl x)} ⊢e B≤A = ⊢d-sub ⊢e B≤A (λ ())
+⊢d-sub' {i = S⇒ i} ⊢e B≤A = ⊢d-sub ⊢e B≤A (λ ())
