@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Record.Common where
 
 open import Record.Prelude hiding (_≤?_)
@@ -12,8 +13,11 @@ infix  9  `_
 infix  5  _⦂_
 infixr 8 _⇒_
 -- infixr 8 _&_
+infix  2 𝕣_
+infixr 5 r⟦_↦_⟧_
 
 infix 9 *_ 
+Label = ℕ
 
 data Type : Set where
   Int : Type
@@ -21,20 +25,24 @@ data Type : Set where
   Top : Type
   _⇒_ : Type → Type → Type
   _&_ : Type → Type → Type
+  τ⟦_↦_⟧ : Label → Type → Type
 
-Label = ℕ
+data Term : Set
+data Record : Set
 
-data Term : Set where
+data Term where
   lit      : ℕ → Term
   `_       : ℕ → Term
   ƛ_       : Term → Term
   _·_      : Term → Term → Term
   _⦂_      : Term → Type → Term
-  r⟦_⟧     : List (Label × Term) → Term
+  𝕣_       : Record → Term
+  _𝕡_      : Term → Label → Term
 
-_ : Term
-_ = r⟦ (⟨ 0 , (lit 2) ⟩ ∷ (⟨ 3 , ƛ ` 0 ⟩ ∷ [])) ⟧
-  
+data Record where
+  rnil : Record
+  r⟦_↦_⟧_ : Label → Term → Record → Record  
+
 infixl 5  _,_
 
 data Context : Set where
@@ -75,7 +83,8 @@ lit i ↑ n = lit i
 (ƛ e) ↑ n = ƛ (e ↑ (suc n))
 e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
 (e ⦂ A) ↑ n = (e ↑ n) ⦂ A
-r⟦ xs ⟧ ↑ n = {!!}
+(𝕣 _) ↑ n = {!!}
+(rcd 𝕡 l) ↑ n = {!!}
 
 ↓-var : ℕ → ℕ → ℕ
 ↓-var n x with n ≤? x
@@ -89,7 +98,8 @@ lit i ↓ n = lit i
 (ƛ e) ↓ n = ƛ (e ↓ (suc n))
 e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 (e ⦂ A) ↓ n = (e ↓ n) ⦂ A
-r⟦ xs ⟧ ↓ n = {!!}
+(𝕣 _) ↓ n = {!!}
+(x₁ 𝕡 x₂) ↓ x = {!!}
 
 ↑-↓-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
 ↑-↓-var x n with n ≤? x
@@ -108,7 +118,8 @@ r⟦ xs ⟧ ↓ n = {!!}
 ↑-↓-id (ƛ e) n rewrite ↑-↓-id e (suc n) = refl
 ↑-↓-id (e₁ · e₂) n rewrite ↑-↓-id e₁ n | ↑-↓-id e₂ n = refl
 ↑-↓-id (e ⦂ A) n rewrite ↑-↓-id e n = refl
-↑-↓-id r⟦ xs ⟧ = {!!}
+↑-↓-id (𝕣 _) n = {!!}
+↑-↓-id (x 𝕡 x₁) n = {!!}
 
 ↑-↑-comm-var : ∀ m n x
   → m ≤ n
@@ -142,6 +153,8 @@ r⟦ xs ⟧ ↓ n = {!!}
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
+↑-↑-comm (𝕣 _) m n m≤n = {!!}
+↑-↑-comm (x₁ 𝕡 x₂) m n x = {!!}
 
 infix 4 _~↑~_
 
@@ -173,10 +186,11 @@ data _~↑~_ : Term → ℕ → Set where
 ↑-shifted {` x} {n} with n ≤? x
 ... | yes p = sd-var (<⇒≢ (s≤s p))
 ... | no ¬p = sd-var (>⇒≢ (≰⇒> ¬p))
-↑-shifted {ƛ e} {n} = sd-lam ↑-shifted
-↑-shifted {e₁ · e₂} {n} = sd-app ↑-shifted ↑-shifted
-↑-shifted {e ⦂ A} {n} = sd-ann ↑-shifted
-↑-shifted {r⟦ x ⟧} {n} = {!!}
+↑-shifted {ƛ e} {n} = sd-lam (↑-shifted {e})
+↑-shifted {e₁ · e₂} {n} = sd-app (↑-shifted {e₁}) (↑-shifted {e₂})
+↑-shifted {e ⦂ A} {n} = sd-ann (↑-shifted {e})
+↑-shifted {𝕣 _} {n} = {!!}
+↑-shifted {x 𝕡 x₁} = {!!}
 
 ↓-↑-comm-var : ∀ m n x
   → m ≤ n

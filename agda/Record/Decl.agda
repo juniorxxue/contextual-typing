@@ -13,11 +13,14 @@ data CCounter : Set where
    Z : CCounter
    ∞ : CCounter
    S⇐ : CCounter → CCounter
+   Sl : CCounter → CCounter -- remember to argue that this is not interleaved with S⇒
+
    
 data Counter : Set where
    ♭ : CCounter → Counter
    S⇒ : Counter → Counter
-   
+
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Subtyping                            +--
@@ -38,10 +41,16 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ ∞ # D
     → A ⇒ B ≤d ♭ ∞ # C ⇒ D
+  ≤d-rcd∞ : ∀ {A B l}
+    → A ≤d ♭ ∞ # B
+    → τ⟦ l ↦ A ⟧ ≤d ♭ ∞ # τ⟦ l ↦ B ⟧
   ≤d-arr-S⇐ : ∀ {A B C D j}
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
-    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D  
+    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D
+  ≤d-rcd-Sl : ∀ {A B l j}
+    → A ≤d ♭ j # B
+    → τ⟦ l ↦ A ⟧ ≤d ♭ (Sl j) # (τ⟦ l ↦ B ⟧) & Top -- I'm a bit worried about this
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → j ≢ ♭ Z
@@ -64,7 +73,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
 ≤d-refl∞ {A = Top} = ≤d-top
 ≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
 ≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
-
+≤d-refl∞ {τ⟦ l ↦ A ⟧} = ≤d-rcd∞ ≤d-refl∞
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -73,8 +82,13 @@ data _≤d_#_ : Type → Counter → Type → Set where
 ----------------------------------------------------------------------
 
 infix 4 _⊢d_#_⦂_
+infix 4 _⊢r_#_⦂_
 
-data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
+data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set
+data _⊢r_#_⦂_ : Context → Counter → Record → Type → Set
+
+data _⊢d_#_⦂_ where
+
   ⊢d-int : ∀ {Γ n}
     → Γ ⊢d ♭ Z # (lit n) ⦂ Int
 
@@ -114,3 +128,41 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ♭ ∞ # e ⦂ A
     → Γ ⊢d ♭ ∞ # e ⦂ B
     → Γ ⊢d ♭ ∞ # e ⦂ A & B
+
+  ⊢d-rcd : ∀ {Γ rs As}
+    → Γ ⊢r ♭ Z # rs ⦂ As
+    → Γ ⊢d ♭ Z # (𝕣 rs) ⦂ As
+
+  ⊢d-prj : ∀ {Γ e l j A}
+    → Γ ⊢d ♭ (Sl j) # e ⦂ τ⟦ l ↦ A ⟧ & Top
+    → Γ ⊢d ♭ j # e 𝕡 l ⦂ A
+
+data _⊢r_#_⦂_ where
+
+  ⊢r-nil : ∀ {Γ}
+    → Γ ⊢r ♭ Z # rnil ⦂ Top
+
+  ⊢r-cons : ∀ {Γ l e rs A As}
+    → Γ ⊢d ♭ Z # e ⦂ A
+    → Γ ⊢r ♭ Z # rs ⦂ As
+    → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rs ⦂ (τ⟦ l ↦ A ⟧ & As)
+
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                            Examples                            +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+id-fun-& : Term
+id-fun-& = (ƛ ` 0) ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
+
+⊢id-fun-& : ∅ ⊢d ♭ Z # id-fun-& ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
+⊢id-fun-& = ⊢d-ann (⊢d-& (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int∞ (λ ()))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-base∞ (λ ()))))
+
+example-1-sub : (τ⟦ 1 ↦ (Int ⇒ Int) & (* 1 ⇒ * 1) ⟧ & (τ⟦ 2 ↦ Int ⟧ & Top))
+                    ≤d ♭ (Sl (S⇐ Z)) # (τ⟦ 1 ↦ Int ⇒ Int ⟧ & Top)
+example-1-sub = ≤d-and₁ (≤d-rcd-Sl (≤d-and₁ (≤d-arr-S⇐ ≤d-int∞ ≤d-Z) (λ ()))) (λ ())
+
+example-1 : ∅ ⊢d ♭ Z # ((𝕣 r⟦ 1 ↦ id-fun-& ⟧ r⟦ 2 ↦ (lit 2) ⟧ rnil) 𝕡 1) · (lit 1) ⦂ Int
+example-1 = ⊢d-app⇐ (⊢d-prj (⊢d-sub (⊢d-rcd (⊢r-cons ⊢id-fun-& (⊢r-cons ⊢d-int ⊢r-nil))) example-1-sub (λ ()))) (⊢d-sub ⊢d-int ≤d-int∞ (λ ()))
