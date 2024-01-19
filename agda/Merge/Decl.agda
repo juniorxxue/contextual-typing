@@ -127,14 +127,14 @@ data _⊢d_#_⦂_ where
     → Γ ⊢d ♭ ∞ # e ⦂ B
     → Γ ⊢d ♭ ∞ # e ⦂ A & B
 
-  ⊢d-⨟ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d ♭ Z # e₁ ⦂ A
-    → Γ ⊢d ♭ Z # e₂ ⦂ B
-    → Γ ⊢d ♭ Z # e₁ ⨟ e₂ ⦂ A & B
+  ⊢d-⨟ : ∀ {Γ e₁ e₂ A B i}
+    → Γ ⊢d i # e₁ ⦂ A
+    → Γ ⊢d i # e₂ ⦂ B
+    → Γ ⊢d i # e₁ ⨟ e₂ ⦂ A & B
 
-  ⊢d-rcd : ∀ {Γ e l A}
-    → Γ ⊢d ♭ Z # e ⦂ A
-    → Γ ⊢d ♭ Z # ⌊ l ⇒ e ⌋ ⦂  ⌊ l ⇒ A ⌋
+  ⊢d-rcd : ∀ {Γ e l A i}
+    → Γ ⊢d i # e ⦂ A
+    → Γ ⊢d i # ⌊ l ⇒ e ⌋ ⦂  ⌊ l ⇒ A ⌋
 
   ⊢d-prj : ∀ {Γ e l j A}
     → Γ ⊢d ♭ (Sl j) # e ⦂ ⌊ l ⇒ A ⌋

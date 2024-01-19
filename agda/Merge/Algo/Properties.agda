@@ -1,9 +1,9 @@
-module Record.Algo.Properties where
+module Merge.Algo.Properties where
 
-open import Record.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
-open import Record.Common
-open import Record.Properties
-open import Record.Algo
+open import Merge.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
+open import Merge.Common
+open import Merge.Properties
+open import Merge.Algo
 
 ----------------------------------------------------------------------
 --                                                                  --
@@ -66,13 +66,14 @@ open import Record.Algo
 ⇧-⇧-comm □ m n m≤n = refl
 ⇧-⇧-comm (τ A) m n m≤n = refl
 ⇧-⇧-comm (⟦ e ⟧⇒ H) m n m≤n rewrite ↑-↑-comm e m n m≤n | ⇧-⇧-comm H m n m≤n = refl
+⇧-⇧-comm (⌊ l ⌋⇒ H) m n m≤n rewrite ⇧-⇧-comm H m n m≤n = refl
 
 ⇧-⇩-id : ∀ H n
   → H ⇧ n ⇩ n ≡ H
 ⇧-⇩-id □ n = refl  
 ⇧-⇩-id (τ A) n = refl
 ⇧-⇩-id (⟦ e ⟧⇒ H) n rewrite ↑-↓-id e n | ⇧-⇩-id H n = refl
-
+⇧-⇩-id (⌊ l ⌋⇒ H) n rewrite ⇧-⇩-id H n = refl
 
 infix 4 _~⇧~_
 data _~⇧~_ : Hint → ℕ → Set where
@@ -88,11 +89,16 @@ data _~⇧~_ : Hint → ℕ → Set where
     → H ~⇧~ n
     → (⟦ e ⟧⇒ H) ~⇧~ n
 
+  sdh-l : ∀ {n H l}
+    → H ~⇧~ n
+    → (⌊ l ⌋⇒ H) ~⇧~ n
+
 ⇧-shiftedh : ∀ {H n}
   → (H ⇧ n) ~⇧~ n
 ⇧-shiftedh {□} = sdh-□  
 ⇧-shiftedh {τ A} = sdh-τ
-⇧-shiftedh {⟦ e ⟧⇒ H} = sdh-h ↑-shifted ⇧-shiftedh
+⇧-shiftedh {⟦ e ⟧⇒ H} = sdh-h ↑-shifted (⇧-shiftedh {H})
+⇧-shiftedh {⌊ l ⌋⇒ H} = sdh-l ⇧-shiftedh
 
 ⇧-shiftedh-n : ∀ {H m n}
   → m ≤n suc n
@@ -101,6 +107,7 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⇧-shiftedh-n {□} m≤n sdh = sdh-□
 ⇧-shiftedh-n {τ A} m≤n sdh = sdh-τ
 ⇧-shiftedh-n {⟦ e ⟧⇒ H} m≤n (sdh-h sd sdh) = sdh-h (↑-shifted-n m≤n sd) (⇧-shiftedh-n m≤n sdh)
+⇧-shiftedh-n {⌊ l ⌋⇒ H} m≤n (sdh-l sd) = sdh-l (⇧-shiftedh-n m≤n sd)
 
 ⇩-⇧-comm : ∀ H m n
   → m ≤n n
@@ -109,7 +116,7 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⇩-⇧-comm □ m n m≤n sdh = refl
 ⇩-⇧-comm (τ A) m n m≤n sdh = refl
 ⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm H m n m≤n sdh = refl
-
+⇩-⇧-comm (⌊ l ⌋⇒ H) m n m≤n (sdh-l sd) rewrite ⇩-⇧-comm H m n m≤n sd = refl
 
 H≢□-⇩ : ∀ {H n}
   → H ≢ □
@@ -148,6 +155,8 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 ≤a-weaken (≤a-and-l ≤ H≢□) = ≤a-and-l (≤a-weaken ≤) (H≢□-⇧ H≢□)
 ≤a-weaken (≤a-and-r ≤ H≢□) = ≤a-and-r (≤a-weaken ≤) (H≢□-⇧ H≢□)
 ≤a-weaken (≤a-and ≤₁ ≤₂) = ≤a-and (≤a-weaken ≤₁) (≤a-weaken ≤₂)
+≤a-weaken (≤a-rcd x) = ≤a-rcd (≤a-weaken x)
+≤a-weaken (≤a-hint-l x) = ≤a-hint-l (≤a-weaken x)
 
 ≤a-weaken-0 : ∀ {Γ A B H C}
   → Γ ⊢a B ≤ H ⇝ C
@@ -167,6 +176,8 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
 ⊢a-weaken (⊢a-sub pv ⊢e B≤H) = ⊢a-sub (↑-pv-prv pv) (⊢a-weaken ⊢e) (≤a-weaken B≤H)
 ⊢a-weaken (⊢a-& ⊢e₁ ⊢e₂) = ⊢a-& (⊢a-weaken ⊢e₁) (⊢a-weaken ⊢e₂)
+⊢a-weaken {e = e ⨟ e₁} (⊢a-⨟ x x₁) = ⊢a-⨟ (⊢a-weaken x) (⊢a-weaken x₁)
+⊢a-weaken {e = ⌊ l ⇒ e ⌋} (⊢a-rcd x) = ⊢a-rcd (⊢a-weaken x)
 
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -205,6 +216,8 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ≤a-strengthen (≤a-and-l x₁ H≢□) x n≤l = ≤a-and-l (≤a-strengthen x₁ x n≤l) (H≢□-⇩ H≢□)
 ≤a-strengthen (≤a-and-r x₁ H≢□) x n≤l = ≤a-and-r (≤a-strengthen x₁ x n≤l) (H≢□-⇩ H≢□)
 ≤a-strengthen (≤a-and x₁ x₂) x n≤l = ≤a-and (≤a-strengthen x₁ sdh-τ n≤l) (≤a-strengthen x₂ sdh-τ n≤l)
+≤a-strengthen (≤a-rcd x₁) x n≤l = ≤a-rcd (≤a-strengthen x₁ sdh-τ n≤l)
+≤a-strengthen (≤a-hint-l x₁) (sdh-l x) n≤l = ≤a-hint-l (≤a-strengthen x₁ x n≤l)
 
 ⊢a-strengthen ⊢a-lit sd sdh n≤l = ⊢a-lit
 ⊢a-strengthen (⊢a-var x∈Γ) sd sdh n≤l = ⊢a-var (∋-strenghthen x∈Γ sd n≤l)
@@ -215,17 +228,19 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
 ⊢a-strengthen (⊢a-sub pv ⊢e A≤H) sd sdh n≤l = ⊢a-sub (↓-pv-prv pv) (⊢a-strengthen ⊢e sd sdh-□ n≤l) (≤a-strengthen A≤H sdh n≤l)
 ⊢a-strengthen (⊢a-& ⊢e₁ ⊢e₂) sd sdh n≤l = ⊢a-& (⊢a-strengthen ⊢e₁ sd sdh-τ n≤l) (⊢a-strengthen ⊢e₂ sd sdh-τ n≤l)
+⊢a-strengthen {e = e ⨟ e₁} (⊢a-⨟ x₂ x₃) (sd-mrg x x₄) x₁ n≤l = ⊢a-⨟ (⊢a-strengthen x₂ x x₁ n≤l) (⊢a-strengthen x₃ x₄ x₁ n≤l)
+-- ⊢a-strengthen {e = ⌊ l ⇒ e ⌋} (⊢a-rcd x₂) (sd-rcd x) x₁ n≤l = ⊢a-rcd (⊢a-strengthen x₂ x x₁ n≤l)
 
 ≤a-strengthen-0 : ∀ {Γ A B C H}
   → Γ , A ⊢a B ≤ H ⇧ 0 ⇝ C
   → Γ ⊢a B ≤ H ⇝ C
-≤a-strengthen-0 {H = H} B≤H with ≤a-strengthen {n = 0} B≤H ⇧-shiftedh z≤n
+≤a-strengthen-0 {H = H} B≤H with ≤a-strengthen {n = 0} B≤H (⇧-shiftedh {H}) z≤n
 ... | ind-h rewrite ⇧-⇩-id H 0 = ind-h  
 
 ⊢a-strengthen-0 : ∀ {Γ H e A B}
   → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
   → Γ ⊢a H ⇛ e ⇛ B
-⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
+⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted (⇧-shiftedh {H}) z≤n
 ... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
 
 
@@ -286,6 +301,8 @@ subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = {!!}
 ≤a-refined (≤a-and-l A≤H H≢□) = ≤a-refined A≤H
 ≤a-refined (≤a-and-r A≤H H≢□) = ≤a-refined A≤H
 ≤a-refined (≤a-and A≤H A≤H₁) = ≤a-and (≤a-and-l (≤a-refined A≤H) λ ()) (≤a-and-r (≤a-refined A≤H₁) λ ())
+≤a-refined (≤a-rcd x) = ≤a-rcd (≤a-refined x)
+≤a-refined (≤a-hint-l x) = ≤a-hint-l (≤a-refined x)
 
 chainH≢□ : ∀ {H H' H'' es As A' T}
   → H ≢ □
@@ -334,6 +351,8 @@ subsumption : ∀ {Γ H e A H' H'' es As T A'}
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
 ⊢a-to-≤a (⊢a-sub x ⊢e x₁) = ≤a-refined x₁
 ⊢a-to-≤a (⊢a-& ⊢e₁ ⊢e₂) rewrite ⊢a-id-0 ⊢e₁ | ⊢a-id-0 ⊢e₂ = ≤a-refl
+⊢a-to-≤a {e = e ⨟ e₁} (⊢a-⨟ x x₁) = ≤a-□
+-- ⊢a-to-≤a {e = ⌊ l ⇒ e ⌋} (⊢a-rcd x) = ≤a-□
 
 subsumption ⊢a-lit none-□ ch A≤H' = ⊢a-sub pv-i ⊢a-lit A≤H'
 subsumption (⊢a-var x) spl ch A≤H' = ⊢a-sub pv-var (⊢a-var x) A≤H'
@@ -343,6 +362,9 @@ subsumption (⊢a-app ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
 subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≤a-hint x A≈H') =
   ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} A≈H'))
 subsumption (⊢a-sub ⊢e x x₁) spl ch A≤H' = ⊢a-sub ⊢e x (≤a-trans x₁ spl ch A≤H')
+subsumption {e = e ⨟ e₁} (⊢a-⨟ x₂ x₃) none-□ ch-none x₁ = ⊢a-sub pv-mrg (⊢a-⨟ x₂ x₃) x₁
+-- subsumption {e = ⌊ l ⇒ e ⌋} (⊢a-rcd x₂) none-□ ch-none x₁ = {!!}
+subsumption {e = e ⋆ l} (⊢a-prj ⊢e) x₁ x₂ x₃ = {!!}
 
 subsumption-0 : ∀ {Γ H e A A'}
   → Γ ⊢a □ ⇛ e ⇛ A
