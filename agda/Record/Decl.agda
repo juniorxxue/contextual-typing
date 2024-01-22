@@ -50,7 +50,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D
   ≤d-rcd-Sl : ∀ {A B l j}
     → A ≤d ♭ j # B
-    → τ⟦ l ↦ A ⟧ ≤d ♭ (Sl j) # (τ⟦ l ↦ B ⟧) & Top -- I'm a bit worried about this
+    → τ⟦ l ↦ A ⟧ ≤d ♭ (Sl j) # (τ⟦ l ↦ B ⟧)
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → j ≢ ♭ Z
@@ -134,13 +134,17 @@ data _⊢d_#_⦂_ where
     → Γ ⊢d ♭ Z # (𝕣 rs) ⦂ As
 
   ⊢d-prj : ∀ {Γ e l j A}
-    → Γ ⊢d ♭ (Sl j) # e ⦂ τ⟦ l ↦ A ⟧ & Top
+    → Γ ⊢d ♭ (Sl j) # e ⦂ τ⟦ l ↦ A ⟧
     → Γ ⊢d ♭ j # e 𝕡 l ⦂ A
 
 data _⊢r_#_⦂_ where
 
   ⊢r-nil : ∀ {Γ}
     → Γ ⊢r ♭ Z # rnil ⦂ Top
+
+  ⊢r-one : ∀ {Γ e A l}
+    → Γ ⊢d ♭ Z # e ⦂ A
+    → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rnil ⦂ τ⟦ l ↦ A ⟧
 
   ⊢r-cons : ∀ {Γ l e rs A As}
     → Γ ⊢d ♭ Z # e ⦂ A
@@ -160,9 +164,9 @@ id-fun-& = (ƛ ` 0) ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
 ⊢id-fun-& : ∅ ⊢d ♭ Z # id-fun-& ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
 ⊢id-fun-& = ⊢d-ann (⊢d-& (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int∞ (λ ()))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-base∞ (λ ()))))
 
-example-1-sub : (τ⟦ 1 ↦ (Int ⇒ Int) & (* 1 ⇒ * 1) ⟧ & (τ⟦ 2 ↦ Int ⟧ & Top))
-                    ≤d ♭ (Sl (S⇐ Z)) # (τ⟦ 1 ↦ Int ⇒ Int ⟧ & Top)
+example-1-sub : (τ⟦ 1 ↦ (Int ⇒ Int) & (* 1 ⇒ * 1) ⟧ & (τ⟦ 2 ↦ Int ⟧))
+                    ≤d ♭ (Sl (S⇐ Z)) # (τ⟦ 1 ↦ Int ⇒ Int ⟧)
 example-1-sub = ≤d-and₁ (≤d-rcd-Sl (≤d-and₁ (≤d-arr-S⇐ ≤d-int∞ ≤d-Z) (λ ()))) (λ ())
 
 example-1 : ∅ ⊢d ♭ Z # ((𝕣 r⟦ 1 ↦ id-fun-& ⟧ r⟦ 2 ↦ (lit 2) ⟧ rnil) 𝕡 1) · (lit 1) ⦂ Int
-example-1 = ⊢d-app⇐ (⊢d-prj (⊢d-sub (⊢d-rcd (⊢r-cons ⊢id-fun-& (⊢r-cons ⊢d-int ⊢r-nil))) example-1-sub (λ ()))) (⊢d-sub ⊢d-int ≤d-int∞ (λ ()))
+example-1 = ⊢d-app⇐ (⊢d-prj (⊢d-sub (⊢d-rcd (⊢r-cons ⊢id-fun-& (⊢r-one ⊢d-int))) example-1-sub λ ())) (⊢d-sub ⊢d-int ≤d-int∞ (λ ()))
