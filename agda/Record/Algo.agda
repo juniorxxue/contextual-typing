@@ -1,26 +1,32 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Record.Algo where
 
 open import Record.Prelude
 open import Record.Common
 
 infixr 8 ⟦_⟧⇒_
+infixr 8 ⌊_⌋⇒_
+
 
 data Hint : Set where
   □ : Hint
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
+  ⌊_⌋⇒_ : Label → Hint → Hint
 
 infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
 □ ⇧ n = □
 τ A ⇧ n = τ A
 (⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)
+⌊ l ⌋⇒ H ⇧ n = ⌊ l ⌋⇒ (H ⇧ n)
 
 infixl 7 _⇩_
 _⇩_ : Hint → ℕ → Hint
 □ ⇩ n = □
 τ A ⇩ n = τ A
 (⟦ e ⟧⇒ H) ⇩ n = ⟦ e ↓ n ⟧⇒ (H ⇩ n)
+⌊ l ⌋⇒ H ⇩ n = ⌊ l ⌋⇒ (H ⇩ n)
 
 data pv : Term → Set where
 
@@ -33,12 +39,16 @@ data pv : Term → Set where
   pv-ann : ∀ {e A}
     → pv (e ⦂ A)
 
+  pv-rcd : ∀ {rs}
+    → pv (𝕣 rs)
+
 ↑-pv-prv : ∀ {p n}
   → pv p
   → pv (p ↑ n)
 ↑-pv-prv pv-i = pv-i
 ↑-pv-prv pv-var = pv-var
 ↑-pv-prv pv-ann = pv-ann
+↑-pv-prv pv-rcd = pv-rcd
 
 ↓-pv-prv : ∀ {p n}
   → pv p
@@ -46,12 +56,15 @@ data pv : Term → Set where
 ↓-pv-prv pv-i = pv-i
 ↓-pv-prv pv-var = pv-var
 ↓-pv-prv pv-ann = pv-ann
+↓-pv-prv pv-rcd = pv-rcd
   
 infix 4 _⊢a_≤_⇝_
-infix 4 _⊢a_⇛_⇛_ 
+infix 4 _⊢a_⇛_⇛_
+infix 4 _⊢r_⇛_⇛_
 
 data _⊢a_≤_⇝_ : Context → Type → Hint → Type → Set
 data _⊢a_⇛_⇛_ : Context → Hint → Term → Type → Set
+data _⊢r_⇛_⇛_ : Context → Hint → Record → Type → Set
 
 data _⊢a_≤_⇝_ where
   ≤a-int : ∀ {Γ}
@@ -67,11 +80,17 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a B ≤ τ D ⇝ D
     ---------------------------
     → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (C ⇒ D)
+  ≤a-rcd : ∀ {Γ l A B}
+    → Γ ⊢a A ≤ τ B ⇝ B
+    → Γ ⊢a τ⟦ l ↦ A ⟧ ≤ τ (τ⟦ l ↦ B ⟧) ⇝ τ⟦ l ↦ B ⟧
   ≤a-hint : ∀ {Γ A B H e D}
     → Γ ⊢a τ A ⇛ e ⇛ A
     → Γ ⊢a B ≤ H ⇝ D
     ------------------------
     → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H ⇝ (A ⇒ D)
+  ≤a-hint-l : ∀ {Γ H l A A'}
+    → Γ ⊢a A ≤ H ⇝ A'
+    → Γ ⊢a τ⟦ l ↦ A ⟧ ≤  ⌊ l ⌋⇒ H ⇝ τ⟦ l ↦ A' ⟧
   ≤a-and-l : ∀ {Γ A B H C}
     → Γ ⊢a A ≤ H ⇝ C
     → H ≢ □
@@ -128,6 +147,30 @@ data _⊢a_⇛_⇛_ where
     → Γ ⊢a τ B ⇛ e ⇛ B
     → Γ ⊢a τ (A & B) ⇛ e ⇛ (A & B)
 
+  -- record
+  ⊢a-rcd : ∀ {Γ rs A}  
+    → Γ ⊢r □ ⇛ rs ⇛ A
+    → Γ ⊢a □ ⇛ 𝕣 rs ⇛ A
+
+  ⊢a-prj : ∀ {Γ H e l A}
+    → Γ ⊢a ⌊ l ⌋⇒ H ⇛ e ⇛ τ⟦ l ↦ A ⟧
+    → Γ ⊢a H ⇛ e 𝕡 l ⇛ A
+
+data _⊢r_⇛_⇛_ where
+
+  ⊢a-nil : ∀ {Γ}
+    → Γ ⊢r □ ⇛ rnil ⇛ Top
+
+  ⊢a-one : ∀ {Γ e A l}
+    → Γ ⊢a □ ⇛ e ⇛ A
+    → Γ ⊢r □ ⇛ r⟦ l ↦ e ⟧ rnil ⇛ τ⟦ l ↦ A ⟧
+
+  ⊢a-cons : ∀ {Γ e A Bs rs l}
+    → Γ ⊢a □ ⇛ e ⇛ A
+    → Γ ⊢r □ ⇛ rs ⇛ Bs
+    → Γ ⊢r □ ⇛ r⟦ l ↦ e ⟧ rs ⇛ τ⟦ l ↦ A ⟧ & Bs
+
+
 
 
 ----------------------------------------------------------------------
@@ -143,60 +186,61 @@ data _⊢a_⇛_⇛_ where
 ≤a-refl {A = Top} = ≤a-top
 ≤a-refl {A = A ⇒ A₁} = ≤a-arr ≤a-refl ≤a-refl
 ≤a-refl {A = A & B} = ≤a-and (≤a-and-l ≤a-refl λ ()) (≤a-and-r ≤a-refl λ ())
+≤a-refl {A = τ⟦ l ↦ A ⟧} = ≤a-rcd ≤a-refl
 
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Transform                            +--
 --+                                                                +--
 ----------------------------------------------------------------------
+data Apps : Set where
+  [] : Apps
+  _∷a_ : Term → Apps → Apps
+  _∷l_ : Label → Apps → Apps
 
-_▻_ : Term → List Term → Term
+data AppsType : Set where
+  [] : AppsType
+  _∷a_ : Type → AppsType → AppsType
+  _∷l_ : Label → AppsType → AppsType
+
+
+_▻_ : Term → Apps → Term
 e ▻ [] = e
-e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
+e ▻ (e' ∷a es) = (e · e') ▻ es
+e ▻ (l ∷l es) = (e 𝕡 l) ▻ es
 
-infix 4 ❪_,_❫↣❪_,_,_,_❫
+_↑ : Apps → Apps
+[] ↑ = []
+(e ∷a es) ↑ = (e ↑ 0) ∷a (es ↑)
+(l ∷l es) ↑ = l ∷l (es ↑)
 
-data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List Type → Type → Set where
+infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
+
+data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → Apps → Hint → AppsType → Type → Set where
 
   none-□ : ∀ {A}
-    → ❪ □ , A ❫↣❪ [] , □ , [] , A ❫
+    → ⟦ □ , A ⟧→⟦ [] , □ , [] , A ⟧
 
   none-τ : ∀ {A B}
-    → ❪ τ A , B ❫↣❪ [] , τ A , [] , B ❫
+    → ⟦ τ A , B ⟧→⟦ [] , τ A , [] , B ⟧
 
-  have : ∀ {e H A B es A' B' Bs}
-    → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
-    → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
+  have-a : ∀ {e H A B es A' B' Bs}
+    → ⟦ H , B ⟧→⟦ es , A' , Bs , B' ⟧
+    → ⟦ ⟦ e ⟧⇒ H , A ⇒ B ⟧→⟦ e ∷a es , A' , A ∷a Bs , B' ⟧
+
+  have-l : ∀ {l H A es A' B' Bs}
+    → ⟦ H , A ⟧→⟦ es , A' , Bs , B' ⟧
+    → ⟦ ⌊ l ⌋⇒ H , (τ⟦ l ↦ A ⟧) ⟧→⟦ l ∷l es , A' , l ∷l Bs , B' ⟧
 
 ⊢a-id : ∀ {Γ H e A A' T es As}
   → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
   → T ≡ A'
 
 ≤a-id : ∀ {Γ H A B Bs B' es T}
   → Γ ⊢a A ≤ H ⇝ B
-  → ❪ H , B ❫↣❪ es , τ T , Bs , B' ❫
+  → ⟦ H , B ⟧→⟦ es , τ T , Bs , B' ⟧
   → T ≡ B'
-≤a-id ≤a-int none-τ = refl
-≤a-id ≤a-base none-τ = refl
-≤a-id ≤a-top none-τ = refl
-≤a-id (≤a-arr A≤H A≤H₁) none-τ = refl
-≤a-id (≤a-hint x A≤H) (have spl) = ≤a-id A≤H spl
-≤a-id (≤a-and-l A≤H H≢□) spl = ≤a-id A≤H spl
-≤a-id (≤a-and-r A≤H H≢□) spl = ≤a-id A≤H spl
-≤a-id (≤a-and A≤H A≤H₁) none-τ = refl
-
-⊢a-id (⊢a-app ⊢e) spl = ⊢a-id ⊢e (have spl)
-⊢a-id (⊢a-lam₁ ⊢e) none-τ rewrite ⊢a-id ⊢e none-τ = refl
-⊢a-id (⊢a-lam₂ ⊢e ⊢e₁) (have spl) = ⊢a-id ⊢e₁ (spl-⇧ spl)
-  where
-    spl-⇧ : ∀ {H B es T Bs A'}
-      → ❪ H , B ❫↣❪ es , τ T , Bs , A' ❫
-      → ❪ H ⇧ 0 , B ❫↣❪ map (_↑ 0) es , τ T , Bs , A' ❫
-    spl-⇧ none-τ = none-τ
-    spl-⇧ (have spl) = have (spl-⇧ spl)
-⊢a-id (⊢a-sub x ⊢e x₁) spl = ≤a-id x₁ spl
-⊢a-id (⊢a-& ⊢e ⊢e₁) none-τ rewrite ⊢a-id ⊢e none-τ | ⊢a-id ⊢e₁ none-τ = refl
 
 ⊢a-id-0 : ∀ {Γ e A B}
   → Γ ⊢a τ B ⇛ e ⇛ A
@@ -207,3 +251,7 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List T
   → Γ ⊢a A ≤ τ B ⇝ C
   → C ≡ B
 ≤a-id-0 A≤B = sym (≤a-id A≤B none-τ)
+
+≤a-id = {!!}
+⊢a-id = {!!}
+
