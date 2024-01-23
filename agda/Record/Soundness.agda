@@ -36,7 +36,6 @@ subst :  ∀ {Γ A B e e₁ i} (es : Apps)
   → Γ ⊢d i # ((ƛ e) · e₁) ▻ es ⦂ B
 subst {B = B} {i = i} es ⊢1 ⊢2 = {!!}
 
-
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Soundness                            +--
@@ -62,7 +61,6 @@ app-elim ⊢e none-□ ⊩none⇚ = ⊢e
 app-elim ⊢e (have-a spl) (⊩cons⇚ ⊢as x) = app-elim (⊢d-app⇐ ⊢e x) spl ⊢as
 app-elim ⊢e (have-l spl) (⊩consl ⊢as) = app-elim (⊢d-prj ⊢e) spl ⊢as
   
-
 sound-inf : ∀ {Γ e H A es As A'}
   → Γ ⊢a H ⇛ e ⇛ A
   → ⟦ H , A ⟧→⟦ es , □ , As , A' ⟧
@@ -83,13 +81,20 @@ sound-chk-0 : ∀ {Γ e A}
   → Γ ⊢d ♭ ∞ # e ⦂ A
 sound-chk-0 ⊢e = sound-chk ⊢e none-τ
 
+sound-r : ∀ {Γ rs A}
+  → Γ ⊢r □ ⇛ rs ⇛ A
+  → Γ ⊢r ♭ Z # rs ⦂ A
+sound-r ⊢a-nil = ⊢r-nil
+sound-r (⊢a-one x) = ⊢r-one (sound-inf-0 x)
+sound-r (⊢a-cons x ⊢rs) = ⊢r-cons (sound-inf-0 x) (sound-r ⊢rs)
+
 sound-inf ⊢a-lit none-□ = ⊢d-int
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk-0 ⊢e)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have-a spl)
 sound-inf {es = e ∷a es} (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = subst es (sound-inf ⊢e₁ (spl-weaken spl)) (sound-inf-0 ⊢e)
 sound-inf (⊢a-sub x ⊢e x₁) spl = app-elim (⊢d-sub' (sound-inf-0 ⊢e) {!!}) spl {!!}
-sound-inf (⊢a-rcd x) none-□ = {!!} -- trivial
+sound-inf (⊢a-rcd x) none-□ = ⊢d-rcd (sound-r x)
 sound-inf (⊢a-prj ⊢e) spl = sound-inf ⊢e (have-l spl)
 
 sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have-a spl)

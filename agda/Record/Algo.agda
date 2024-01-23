@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Record.Algo where
 
 open import Record.Prelude
@@ -209,11 +208,6 @@ e ▻ [] = e
 e ▻ (e' ∷a es) = (e · e') ▻ es
 e ▻ (l ∷l es) = (e 𝕡 l) ▻ es
 
-_↑ : Apps → Apps
-[] ↑ = []
-(e ∷a es) ↑ = (e ↑ 0) ∷a (es ↑)
-(l ∷l es) ↑ = l ∷l (es ↑)
-
 infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
 
 data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → Apps → Hint → AppsType → Type → Set where
@@ -232,26 +226,5 @@ data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → Apps → Hint → AppsType �
     → ⟦ H , A ⟧→⟦ es , A' , Bs , B' ⟧
     → ⟦ ⌊ l ⌋⇒ H , (τ⟦ l ↦ A ⟧) ⟧→⟦ l ∷l es , A' , l ∷l Bs , B' ⟧
 
-⊢a-id : ∀ {Γ H e A A' T es As}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
-  → T ≡ A'
 
-≤a-id : ∀ {Γ H A B Bs B' es T}
-  → Γ ⊢a A ≤ H ⇝ B
-  → ⟦ H , B ⟧→⟦ es , τ T , Bs , B' ⟧
-  → T ≡ B'
-
-⊢a-id-0 : ∀ {Γ e A B}
-  → Γ ⊢a τ B ⇛ e ⇛ A
-  → A ≡ B
-⊢a-id-0 ⊢e = sym (⊢a-id ⊢e none-τ)
-
-≤a-id-0 : ∀ {Γ A B C}
-  → Γ ⊢a A ≤ τ B ⇝ C
-  → C ≡ B
-≤a-id-0 A≤B = sym (≤a-id A≤B none-τ)
-
-≤a-id = {!!}
-⊢a-id = {!!}
 
