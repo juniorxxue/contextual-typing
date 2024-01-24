@@ -300,7 +300,6 @@ Proof.
       * destruct i.
         ++ destruct c.
            ** eapply D_Sub; eauto.
-              eapply IHk2. admit. admit. info_eauto.
               eapply IHk2; eauto. simpl in *.
               rewrite length_append in *. lia. 
               rewrite rw_apps. assumption.

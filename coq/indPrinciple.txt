@@ -1,0 +1,26 @@
+Previously, we want to induction on es in the reverse, since
+
+when len es > 0
+
+e > es should be like (e > es') e' and es = es' ++ [e'], then we can case analysis on this application term
+
+however things become more complicates, since es is no longer List Term, Rather is should be List (Term `U` Label)
+
+I use a new datatype to represent them
+
+apps := nil
+      | cons_a term apps
+      | cons_l label apps
+
+thus, when len es >0
+
+e > es should be
+
+(e > es') e'        and     es = es' ++a (cons_a e' nil)
+(e > es').l         and     es = es' ++l (cons_l l nil)
+
+
+Then we case analysis on two cases
+
+
+

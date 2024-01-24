@@ -116,7 +116,8 @@ sound-inf ⊢a-lit none-□ = ⊢d-int
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk-0 ⊢e)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have-a spl)
-sound-inf {es = e ∷a es} (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = subst es (sound-inf ⊢e₁ (spl-weaken spl)) (sound-inf-0 ⊢e)
+sound-inf {es = e ∷a es} (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = subst es {!!} {!!}
+-- subst es (sound-inf ⊢e₁ (spl-weaken spl)) (sound-inf-0 ⊢e)
 sound-inf (⊢a-sub x ⊢e x₁) spl = app-elim (⊢d-sub' (sound-inf-0 ⊢e) (sound-≤ x₁ spl)) spl (sound-es x₁ spl)
 sound-inf (⊢a-rcd x) none-□ = ⊢d-rcd (sound-r x)
 sound-inf (⊢a-prj ⊢e) spl = sound-inf ⊢e (have-l spl)
