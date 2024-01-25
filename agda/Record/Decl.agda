@@ -17,7 +17,7 @@ data CCounter : Set where
 
    
 data Counter : Set where
-   ♭ : CCounter → Counter
+   ♭ : (j : CCounter) → Counter
    S⇒ : Counter → Counter
 
 

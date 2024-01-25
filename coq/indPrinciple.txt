@@ -1,3 +1,18 @@
+T |- H => e => A
+H ~> es, A'
+-------------- Subst
+e > es : A'
+
+=> e > (es' ++ [e'])
+=> (e > es') e'  e > es
+
+e > [] = e
+e > (e' :: es') = (e e') > es'
+
+e > [] acc = acc
+e > (e' :: es') acc = e es' 
+
+
 Previously, we want to induction on es in the reverse, since
 
 when len es > 0
@@ -21,6 +36,23 @@ e > es should be
 
 
 Then we case analysis on two cases
+
+
+subst-3 : ∀ k₁ k₂ k₃ es {Γ A B e e₁ j}
+  → len es < k₁
+  → size j < k₂
+  → size-t B < k₃
+  → Γ , A ⊢d j # e ▻ (es ⇈) ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d j # ((ƛ e) · e₁) ▻ es ⦂ B
+
+subst-3m' : ∀ k₁ k₂ k₃ xs x {Γ A B e e₁ i}
+  → 1 + len xs < k₁
+  → size i < k₂
+  → size-t B < k₃
+  → Γ , A ⊢d i # (e ▻ (xs ⇈)) · (x ↑ 0) ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d i #  (((ƛ e) · e₁) ▻ xs) · x ⦂ B
 
 
 

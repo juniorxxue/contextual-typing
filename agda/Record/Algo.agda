@@ -138,7 +138,8 @@ data _⊢a_⇛_⇛_ where
   ⊢a-sub : ∀ {Γ H p A B}
     → pv p
     → Γ ⊢a □ ⇛ p ⇛ A
-    → Γ ⊢a A ≤ H ⇝ B -- to forbid H to be □, we can try to achive this via restricting subtyping behavior
+    → Γ ⊢a A ≤ H ⇝ B
+    → (H≢□ : H ≢ □)
     → Γ ⊢a H ⇛ p ⇛ B
 
   ⊢a-& : ∀ {Γ A B e}
