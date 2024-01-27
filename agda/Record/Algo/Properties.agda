@@ -75,6 +75,22 @@ open import Record.Algo
 ⇧-⇩-id (⟦ e ⟧⇒ H) n rewrite ↑-↓-id e n | ⇧-⇩-id H n = refl
 ⇧-⇩-id (⌊ l ⌋⇒ H) n rewrite ⇧-⇩-id H n = refl
 
+H≢□→H⇧≢□ : ∀ {H n}
+  → H ≢ □
+  → (H ⇧ n) ≢ □
+H≢□→H⇧≢□ {□} neq = ⊥-elim (neq refl)
+H≢□→H⇧≢□ {τ x} neq = neq
+H≢□→H⇧≢□ {⟦ x ⟧⇒ H} neq = λ ()
+H≢□→H⇧≢□ {⌊ x ⌋⇒ H} neq = λ ()
+
+H≢□→H⇩≢□ : ∀ {H n}
+  → H ≢ □
+  → (H ⇩ n) ≢ □
+H≢□→H⇩≢□ {□} neq = ⊥-elim (neq refl)
+H≢□→H⇩≢□ {τ x} neq = neq
+H≢□→H⇩≢□ {⟦ x ⟧⇒ H} neq = λ ()
+H≢□→H⇩≢□ {⌊ x ⌋⇒ H} neq = λ ()
+
 
 infix 4 _~⇧~_
 data _~⇧~_ : Hint → ℕ → Set where
@@ -179,7 +195,7 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 ⊢a-weaken {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken {n≤l = s≤s n≤l} ⊢e)
 ⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
-⊢a-weaken (⊢a-sub pv ⊢e B≤H) = ⊢a-sub (↑-pv-prv pv) (⊢a-weaken ⊢e) (≤a-weaken B≤H)
+⊢a-weaken (⊢a-sub pv ⊢e B≤H H≢□) = ⊢a-sub (↑-pv-prv pv) (⊢a-weaken ⊢e) (≤a-weaken B≤H) (H≢□→H⇧≢□ H≢□)
 ⊢a-weaken (⊢a-& ⊢e₁ ⊢e₂) = ⊢a-& (⊢a-weaken ⊢e₁) (⊢a-weaken ⊢e₂)
 ⊢a-weaken {e = 𝕣 x} (⊢a-rcd ⊢rs) = ⊢a-rcd (⊢r-weaken ⊢rs)
 ⊢a-weaken {e = e 𝕡 x} (⊢a-prj ⊢e) = ⊢a-prj (⊢a-weaken ⊢e)
@@ -234,7 +250,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ⊢a-id (⊢a-app ⊢e) spl = ⊢a-id ⊢e (have-a spl)
 ⊢a-id (⊢a-lam₁ ⊢e) none-τ = refl
 ⊢a-id (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = ⊢a-id ⊢e₁ (spl-weaken spl)
-⊢a-id (⊢a-sub pe ⊢e A≤H) spl = ≤a-id A≤H spl
+⊢a-id (⊢a-sub pe ⊢e A≤H H≢□) spl = ≤a-id A≤H spl
 ⊢a-id (⊢a-& ⊢e ⊢e₁) none-τ = refl
 ⊢a-id (⊢a-prj ⊢e) spl = ⊢a-id ⊢e (have-l spl)
 
@@ -283,7 +299,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ⊢a-strengthen (⊢a-lam₁ ⊢e) (sd-lam sd) sdh n≤l = ⊢a-lam₁ (⊢a-strengthen ⊢e sd sdh-τ (s≤s n≤l))
 ⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
 ... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
-⊢a-strengthen (⊢a-sub pv ⊢e A≤H) sd sdh n≤l = ⊢a-sub (↓-pv-prv pv) (⊢a-strengthen ⊢e sd sdh-□ n≤l) (≤a-strengthen A≤H sdh n≤l)
+⊢a-strengthen (⊢a-sub pv ⊢e A≤H H≢□) sd sdh n≤l = ⊢a-sub (↓-pv-prv pv) (⊢a-strengthen ⊢e sd sdh-□ n≤l) (≤a-strengthen A≤H sdh n≤l) (H≢□→H⇩≢□ H≢□)
 ⊢a-strengthen (⊢a-& ⊢e₁ ⊢e₂) sd sdh n≤l = ⊢a-& (⊢a-strengthen ⊢e₁ sd sdh-τ n≤l) (⊢a-strengthen ⊢e₂ sd sdh-τ n≤l)
 ⊢a-strengthen (⊢a-rcd x₃) (sd-rcd x) x₁ n≤l = ⊢a-rcd (⊢r-strengthen x₃ x n≤l)
 ⊢a-strengthen (⊢a-prj x₃) (sd-prj x) x₁ n≤l = ⊢a-prj (⊢a-strengthen x₃ x (sdh-l x₁) n≤l)
@@ -398,24 +414,34 @@ subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H
       → Γ ⊢a B ≤ τ A ⇝ B'
       → Γ ⊢a τ A ⇛ e ⇛ B'
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
-⊢a-to-≤a (⊢a-sub x ⊢e x₁) = ≤a-refined x₁
+⊢a-to-≤a (⊢a-sub x ⊢e x₁ H≢□) = ≤a-refined x₁
 ⊢a-to-≤a (⊢a-& ⊢e ⊢e₁) = ≤a-and (≤a-and-l (⊢a-to-≤a ⊢e) (λ ())) (≤a-and-r (⊢a-to-≤a ⊢e₁) (λ ()))
 ⊢a-to-≤a (⊢a-rcd x) = ≤a-□
 ⊢a-to-≤a (⊢a-prj ⊢e) with ⊢a-to-≤a ⊢e
 ... | ≤a-hint-l r = r
 
-subsumption ⊢a-lit none-□ ch-none A≤H' = ⊢a-sub pv-i ⊢a-lit A≤H'
-subsumption (⊢a-var x) none-□ ch-none A≤H' = ⊢a-sub pv-var (⊢a-var x) A≤H'
-subsumption (⊢a-ann ⊢e) none-□ ch-none A≤H' = ⊢a-sub pv-ann (⊢a-ann ⊢e) A≤H'
-subsumption (⊢a-app ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
-... | ≤a-hint x r = ⊢a-app (subsumption ⊢e (have-a spl) (ch-cons-h ch) (≤a-hint x A≤H'))
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) (ch-cons-h ch) (≤a-hint x A≤H') =
-  ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} A≤H'))
-subsumption (⊢a-sub x ⊢e x₁) spl ch A≤H' = ⊢a-sub x ⊢e (≤a-trans x₁ spl ch A≤H')
-subsumption (⊢a-rcd x) none-□ ch-none A≤H' = ⊢a-sub pv-rcd (⊢a-rcd x) A≤H'
-subsumption (⊢a-prj ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
-... | ≤a-hint-l r = ⊢a-prj (subsumption ⊢e (have-l spl) (ch-cons-l ch) (≤a-hint-l A≤H'))
+□-dec : ∀ H
+  → Dec (H ≡ □)
+□-dec □ = yes refl
+□-dec (τ x) = no (λ ())
+□-dec (⟦ x ⟧⇒ H) = no (λ ())
+□-dec (⌊ x ⌋⇒ H) = no (λ ())
 
+subsumption {H' = H'} ⊢e spl ch A≤H' with □-dec H'
+subsumption {H' = .□} ⊢e none-□ ch-none ≤a-□ | yes refl = ⊢e
+subsumption {H' = .□} ⊢e none-□ ch-none (≤a-and-l A≤H' x) | yes refl = ⊥-elim (x refl)
+subsumption {H' = .□} ⊢e none-□ ch-none (≤a-and-r A≤H' x) | yes refl = ⊥-elim (x refl)
+subsumption {H' = H'} ⊢a-lit spl ch A≤H' | no ¬p = ⊢a-sub pv-i ⊢a-lit A≤H' ¬p
+subsumption {H' = H'} (⊢a-var x) spl ch A≤H' | no ¬p = ⊢a-sub pv-var (⊢a-var x) A≤H' ¬p
+subsumption {H' = H'} (⊢a-ann ⊢e) spl ch A≤H' | no ¬p = ⊢a-sub pv-ann (⊢a-ann ⊢e) A≤H' ¬p
+subsumption {H' = H'} (⊢a-app ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a ⊢e
+... | ≤a-hint x r = ⊢a-app (subsumption ⊢e (have-a spl) (ch-cons-h ch) (≤a-hint x A≤H'))
+subsumption {H' = .(⟦ _ ⟧⇒ _)} (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) (ch-cons-h ch) (≤a-hint x A≤H') | no ¬p =
+  ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≤a-weaken {n≤l = z≤n} A≤H'))
+subsumption {H' = H'} (⊢a-sub x ⊢e x₁ H≢□) spl ch A≤H' | no ¬p = ⊢a-sub x ⊢e (≤a-trans x₁ spl ch A≤H') ¬p
+subsumption {H' = H'} (⊢a-rcd x) spl ch A≤H' | no ¬p = ⊢a-sub pv-rcd (⊢a-rcd x) A≤H' ¬p
+subsumption {H' = H'} (⊢a-prj ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a ⊢e
+... | ≤a-hint-l r = ⊢a-prj (subsumption ⊢e (have-l spl) (ch-cons-l ch) (≤a-hint-l A≤H'))
 
 ⊢a-spl-τ : ∀ {Γ H e A es As A' T}
   → Γ ⊢a H ⇛ e ⇛ A
@@ -430,7 +456,7 @@ subsumption (⊢a-prj ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
 ⊢a-spl-τ (⊢a-app ⊢e) spl = ⊢a-spl-τ ⊢e (have-a spl)
 ⊢a-spl-τ (⊢a-lam₁ ⊢e) none-τ = refl
 ⊢a-spl-τ (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = ⊢a-spl-τ ⊢e₁ (spl-weaken spl)
-⊢a-spl-τ (⊢a-sub x ⊢e x₁) spl = ≤a-spl-τ x₁ spl
+⊢a-spl-τ (⊢a-sub x ⊢e x₁ _) spl = ≤a-spl-τ x₁ spl
 ⊢a-spl-τ (⊢a-& ⊢e ⊢e₁) none-τ = refl
 ⊢a-spl-τ (⊢a-prj ⊢e) spl = ⊢a-spl-τ ⊢e (have-l spl)
 
@@ -444,9 +470,3 @@ subsumption (⊢a-prj ⊢e) spl ch A≤H' with ⊢a-to-≤a ⊢e
 ≤a-spl-τ (≤a-and-l A≤H x) spl = ≤a-spl-τ A≤H spl
 ≤a-spl-τ (≤a-and-r A≤H x) spl = ≤a-spl-τ A≤H spl
 ≤a-spl-τ (≤a-and A≤H A≤H₁) none-τ = refl
-
-----------------------------------------------------------------------
---+                                                                +--
---+                              Dec                               +--
---+                                                                +--
-----------------------------------------------------------------------
