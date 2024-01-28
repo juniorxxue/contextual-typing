@@ -30,7 +30,7 @@ _⇩_ : Hint → ℕ → Hint
 data pv : Term → Set where
 
   pv-i : ∀ {n}
-    → pv (lit n)
+    → pv (𝕔 n)
 
   pv-var : ∀ {x}
     → pv (` x)
@@ -68,6 +68,8 @@ data _⊢r_⇛_⇛_ : Context → Hint → Record → Type → Set
 data _⊢a_≤_⇝_ where
   ≤a-int : ∀ {Γ}
     → Γ ⊢a Int ≤ τ Int ⇝ Int
+  ≤a-float : ∀ {Γ}
+    → Γ ⊢a Float ≤ τ Float ⇝ Float
   ≤a-base : ∀ {Γ n}
     → Γ ⊢a * n ≤ τ (* n) ⇝ (* n)
   ≤a-top : ∀ {Γ A}
@@ -105,9 +107,9 @@ data _⊢a_≤_⇝_ where
 
 data _⊢a_⇛_⇛_ where
 
-  ⊢a-lit : ∀ {Γ n}
+  ⊢a-c : ∀ {Γ c}
     -----------------------
-    → Γ ⊢a □ ⇛ lit n ⇛ Int
+    → Γ ⊢a □ ⇛ 𝕔 c ⇛ c-τ c
 
   ⊢a-var : ∀ {Γ A x}
     → Γ ∋ x ⦂ A
@@ -182,6 +184,7 @@ data _⊢r_⇛_⇛_ where
 ≤a-refl : ∀ {Γ A}
   → Γ ⊢a A ≤ τ A ⇝ A
 ≤a-refl {A = Int} = ≤a-int
+≤a-refl {A = Float} = ≤a-float
 ≤a-refl {A = * x} = ≤a-base
 ≤a-refl {A = Top} = ≤a-top
 ≤a-refl {A = A ⇒ A₁} = ≤a-arr ≤a-refl ≤a-refl
@@ -193,6 +196,7 @@ data _⊢r_⇛_⇛_ where
 --+                           Transform                            +--
 --+                                                                +--
 ----------------------------------------------------------------------
+
 data Apps : Set where
   [] : Apps
   _∷a_ : Term → Apps → Apps

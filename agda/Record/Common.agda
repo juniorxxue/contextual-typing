@@ -20,17 +20,25 @@ Label = ℕ
 
 data Type : Set where
   Int : Type
+  Float : Type
   *_ : ℕ → Type
   Top : Type
   _⇒_ : Type → Type → Type
   _&_ : Type → Type → Type
   τ⟦_↦_⟧ : Label → Type → Type
 
+data Constant : Set where
+  lit      : ℕ → Constant
+  flt      : 𝔽 → Constant
+  +s       : Constant
+  +i       : ℕ → Constant
+  +f       : 𝔽 → Constant
+
 data Term : Set
 data Record : Set
 
 data Term where
-  lit      : ℕ → Term
+  𝕔_       : Constant → Term
   `_       : ℕ → Term
   ƛ_       : Term → Term
   _·_      : Term → Term → Term
@@ -40,7 +48,14 @@ data Term where
 
 data Record where
   rnil : Record
-  r⟦_↦_⟧_ : Label → Term → Record → Record  
+  r⟦_↦_⟧_ : Label → Term → Record → Record
+
+c-τ : Constant → Type
+c-τ (lit n) = Int
+c-τ (flt n) = Float
+c-τ +s = (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
+c-τ (+i n) = Int ⇒ Int
+c-τ (+f n) = Float ⇒ Float
 
 infixl 5  _,_
 
@@ -80,7 +95,7 @@ infixl 7 _↑r_
 _↑_ : Term → ℕ → Term
 _↑r_ : Record → ℕ → Record
 
-lit i ↑ n = lit i
+(𝕔 c) ↑ n = 𝕔 c
 ` x ↑ n = ` (↑-var n x)
 (ƛ e) ↑ n = ƛ (e ↑ (suc n))
 e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
@@ -102,7 +117,7 @@ infixl 7 _↓r_
 _↓_ : Term → ℕ → Term
 _↓r_ : Record → ℕ → Record
 
-lit i ↓ n = lit i
+𝕔 c ↓ n = 𝕔 c
 ` x ↓ n = ` (↓-var n x)
 (ƛ e) ↓ n = ƛ (e ↓ (suc n))
 e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
@@ -131,7 +146,7 @@ rnil ↓r n = rnil
 ↑r-↓r-id : ∀ rs n
   → rs ↑r n ↓r n ≡ rs
 
-↑-↓-id (lit _) n = refl
+↑-↓-id (𝕔 _) n = refl
 ↑-↓-id (` x) n = cong `_ (↑-↓-var x n)
 ↑-↓-id (ƛ e) n rewrite ↑-↓-id e (suc n) = refl
 ↑-↓-id (e₁ · e₂) n rewrite ↑-↓-id e₁ n | ↑-↓-id e₂ n = refl
@@ -172,7 +187,7 @@ rnil ↓r n = rnil
 ↑-↑-comm : ∀ e m n → m ≤ n → e ↑ m ↑ suc n ≡ e ↑ n ↑ m
 ↑r-↑r-comm : ∀ rs m n → m ≤ n → rs ↑r m ↑r suc n ≡ rs ↑r n ↑r m
 
-↑-↑-comm (lit _) m n m≤n = refl
+↑-↑-comm (𝕔 _) m n m≤n = refl
 ↑-↑-comm (` x) m n m≤n = cong `_ (↑-↑-comm-var m n x m≤n)
 ↑-↑-comm (ƛ e) m n m≤n rewrite ↑-↑-comm e (suc m) (suc n) (s≤s m≤n) = refl
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
@@ -190,8 +205,8 @@ data _~↑r~_ : Record → ℕ → Set
 
 data _~↑~_ where
 
-  sd-lit : ∀ {n i}
-    → (lit i) ~↑~ n
+  sd-c : ∀ {n c}
+    → (𝕔 c) ~↑~ n
 
   sd-var : ∀ {n x}
     → n ≢ x
@@ -234,7 +249,7 @@ data _~↑r~_ where
 ↑r-shifted : ∀ {rs n}
   → (rs ↑r n) ~↑r~ n
 
-↑-shifted {lit i} {n} = sd-lit
+↑-shifted {𝕔 c} {n} = sd-c
 ↑-shifted {` x} {n} with n ≤? x
 ... | yes p = sd-var (<⇒≢ (s≤s p))
 ... | no ¬p = sd-var (>⇒≢ (≰⇒> ¬p))
@@ -282,7 +297,7 @@ data _~↑r~_ where
   → m ≤ n
   → rs ~↑r~ n
   → rs ↓r n ↑r m ≡ rs ↑r m ↓r (suc n)  
-↓-↑-comm (lit x) m n m≤n sd = refl
+↓-↑-comm (𝕔 x) m n m≤n sd = refl
 ↓-↑-comm (` x) m n m≤n (sd-var n≢x) = cong `_ (↓-↑-comm-var m n x m≤n n≢x)
 ↓-↑-comm (ƛ e) m n m≤n (sd-lam sd) rewrite ↓-↑-comm e (suc m) (suc n) (s≤s m≤n) sd = refl
 ↓-↑-comm (e₁ · e₂) m n m≤n (sd-app sd₁ sd₂) rewrite ↓-↑-comm e₁ m n m≤n sd₁ | ↓-↑-comm e₂ m n m≤n sd₂ = refl
@@ -302,7 +317,7 @@ data _~↑r~_ where
   → m ≤ suc n
   → rs ~↑r~ n
   → (rs ↑r m) ~↑r~ suc n  
-↑-shifted-n {lit x} m≤n+1 sd = sd-lit
+↑-shifted-n {𝕔 x} m≤n+1 sd = sd-c
 ↑-shifted-n {` x} {m} m≤n+1 (sd-var x₁) with m ≤? x
 ... | yes p = sd-var λ n+1≡x+1 → x₁ (cong pred n+1≡x+1)
 ... | no ¬p = sd-var (≢-sym (<⇒≢ (<-transˡ (m≰n⇒n<m ¬p) m≤n+1)))

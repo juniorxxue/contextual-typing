@@ -58,6 +58,7 @@ size-counter (S⇒ i) = 1 + size-counter i
 
 size-type : Type → ℕ
 size-type Int = 0
+size-type Float = 0
 size-type (* x) = 0
 size-type Top = 0
 size-type (A ⇒ B) = 1 + size-type A + size-type B
@@ -92,14 +93,6 @@ _+++_ : Apps → Apps → Apps
 [] +++ as₂ = as₂
 (e ∷a as₁) +++ as₂ = e ∷a (as₁ +++ as₂)
 (l ∷l as₁) +++ as₂ = l ∷l (as₁ +++ as₂)
-
-apps-consa>0 : ∀ {e as}
-  → size-apps (e ∷a as) > 0
-apps-consa>0 = s≤s z≤n
-
-apps-consl>0 : ∀ {l as}
-  → size-apps (l ∷l as) > 0
-apps-consl>0 = s≤s z≤n  
 
 data AppsDes (as : Apps) : Set where
 
@@ -363,7 +356,7 @@ sound-r ⊢a-nil = ⊢r-nil
 sound-r (⊢a-one x) = ⊢r-one (sound-inf-0 x)
 sound-r (⊢a-cons x ⊢rs) = ⊢r-cons (sound-inf-0 x) (sound-r ⊢rs)
 
-sound-inf ⊢a-lit none-□ = ⊢d-int
+sound-inf ⊢a-c none-□ = ⊢d-c
 sound-inf (⊢a-var x) none-□ = ⊢d-var x
 sound-inf (⊢a-ann ⊢e) none-□ = ⊢d-ann (sound-chk-0 ⊢e)
 sound-inf (⊢a-app ⊢e) spl = sound-inf ⊢e (have-a spl)
@@ -386,6 +379,7 @@ sound-≤ (≤a-and-l A≤H x) spl = ≤d-and₁ (sound-≤ A≤H spl) (H≢□�
 sound-≤ (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤ A≤H spl) (H≢□→j≢Z x spl)
 
 sound-≤-chk ≤a-int none-τ = ≤d-int∞
+sound-≤-chk ≤a-float none-τ = ≤d-float∞
 sound-≤-chk ≤a-base none-τ = ≤d-base∞
 sound-≤-chk ≤a-top none-τ = ≤d-top
 sound-≤-chk (≤a-arr A≤H A≤H₁) none-τ = ≤d-arr-∞ (sound-≤-chk A≤H none-τ) (sound-≤-chk A≤H₁ none-τ)
@@ -397,6 +391,7 @@ sound-≤-chk (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤-chk A≤H spl) (
 sound-≤-chk (≤a-and A≤H A≤H₁) none-τ = ≤d-and (sound-≤-chk A≤H none-τ) (sound-≤-chk A≤H₁ none-τ)
 
 sound-es ≤a-int none-τ = ⊩none⇚
+sound-es ≤a-float none-τ = ⊩none⇚
 sound-es ≤a-base none-τ = ⊩none⇚
 sound-es ≤a-top none-τ = ⊩none⇚
 sound-es ≤a-□ none-□ = ⊩none⇚

@@ -33,6 +33,8 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → A ≤d ♭ Z # A
   ≤d-int∞ :
       Int ≤d ♭ ∞ # Int
+  ≤d-float∞ :
+      Float ≤d ♭ ∞ # Float
   ≤d-base∞ : ∀ {n}
     → * n ≤d ♭ ∞ # * n
   ≤d-top : ∀ {A}
@@ -69,6 +71,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
 
 ≤d-refl∞ : ∀ {A} → A ≤d ♭ ∞ # A
 ≤d-refl∞ {A = Int} = ≤d-int∞
+≤d-refl∞ {A = Float} = ≤d-float∞
 ≤d-refl∞ {A = * x} = ≤d-base∞
 ≤d-refl∞ {A = Top} = ≤d-top
 ≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
@@ -81,6 +84,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
+
 infix 4 _⊢d_#_⦂_
 infix 4 _⊢r_#_⦂_
 
@@ -89,8 +93,8 @@ data _⊢r_#_⦂_ : Context → Counter → Record → Type → Set
 
 data _⊢d_#_⦂_ where
 
-  ⊢d-int : ∀ {Γ n}
-    → Γ ⊢d ♭ Z # (lit n) ⦂ Int
+  ⊢d-c : ∀ {Γ c}
+    → Γ ⊢d ♭ Z # 𝕔 c ⦂ c-τ c
 
   ⊢d-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
@@ -167,6 +171,3 @@ id-fun-& = (ƛ ` 0) ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
 example-1-sub : (τ⟦ 1 ↦ (Int ⇒ Int) & (* 1 ⇒ * 1) ⟧ & (τ⟦ 2 ↦ Int ⟧))
                     ≤d ♭ (Sl (S⇐ Z)) # (τ⟦ 1 ↦ Int ⇒ Int ⟧)
 example-1-sub = ≤d-and₁ (≤d-rcd-Sl (≤d-and₁ (≤d-arr-S⇐ ≤d-int∞ ≤d-Z) (λ ()))) (λ ())
-
-example-1 : ∅ ⊢d ♭ Z # ((𝕣 r⟦ 1 ↦ id-fun-& ⟧ r⟦ 2 ↦ (lit 2) ⟧ rnil) 𝕡 1) · (lit 1) ⦂ Int
-example-1 = ⊢d-app⇐ (⊢d-prj (⊢d-sub (⊢d-rcd (⊢r-cons ⊢id-fun-& (⊢r-one ⊢d-int))) example-1-sub λ ())) (⊢d-sub ⊢d-int ≤d-int∞ (λ ()))

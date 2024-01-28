@@ -168,6 +168,7 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
   → Γ ↑ n [ n≤l ] A ⊢r □ ⇛ rs ↑r n ⇛ B
 
 ≤a-weaken ≤a-int = ≤a-int
+≤a-weaken ≤a-float = ≤a-float
 ≤a-weaken ≤a-base = ≤a-base
 ≤a-weaken ≤a-top = ≤a-top
 ≤a-weaken ≤a-□ = ≤a-□
@@ -188,7 +189,7 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
   → H ⇧ n ⇧ 0 ≡ H ⇧ 0 ⇧ (suc n)
 ⇧-⇧-comm-0 H n rewrite ⇧-⇧-comm H 0 n z≤n = refl
 
-⊢a-weaken ⊢a-lit = ⊢a-lit
+⊢a-weaken ⊢a-c = ⊢a-c
 ⊢a-weaken {n≤l = n≤l} (⊢a-var x∈Γ) = ⊢a-var (∋-weaken x∈Γ n≤l)
 ⊢a-weaken (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken ⊢e)
 ⊢a-weaken (⊢a-ann ⊢e) = ⊢a-ann (⊢a-weaken ⊢e)
@@ -238,6 +239,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ≤a-id-0 A≤B = sym (≤a-id A≤B none-τ)
 
 ≤a-id ≤a-int none-τ = refl
+≤a-id ≤a-float none-τ = refl
 ≤a-id ≤a-base none-τ = refl
 ≤a-id ≤a-top none-τ = refl
 ≤a-id (≤a-arr A≤H A≤H₁) none-τ = refl
@@ -281,6 +283,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
   → Γ ↓ n [ n≤l ] ⊢r □ ⇛ rs ↓r n ⇛ A
 
 ≤a-strengthen ≤a-int sdh n≤l = ≤a-int
+≤a-strengthen ≤a-float sdh n≤l = ≤a-float
 ≤a-strengthen ≤a-base sdh n≤l = ≤a-base
 ≤a-strengthen ≤a-top sdh n≤l = ≤a-top
 ≤a-strengthen ≤a-□ sdh n≤l = ≤a-□
@@ -292,7 +295,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ≤a-strengthen (≤a-rcd x₁) x n≤l = ≤a-rcd (≤a-strengthen x₁ sdh-τ n≤l)
 ≤a-strengthen (≤a-hint-l x₁) (sdh-l x) n≤l = ≤a-hint-l (≤a-strengthen x₁ x n≤l)
 
-⊢a-strengthen ⊢a-lit sd sdh n≤l = ⊢a-lit
+⊢a-strengthen ⊢a-c sd sdh n≤l = ⊢a-c
 ⊢a-strengthen (⊢a-var x∈Γ) sd sdh n≤l = ⊢a-var (∋-strenghthen x∈Γ sd n≤l)
 ⊢a-strengthen (⊢a-app ⊢e) (sd-app sd₁ sd₂) sdh n≤l = ⊢a-app (⊢a-strengthen ⊢e sd₁ (sdh-h sd₂ sdh) n≤l)
 ⊢a-strengthen (⊢a-ann ⊢e) (sd-ann sd) sdh n≤l = ⊢a-ann (⊢a-strengthen ⊢e sd sdh-τ n≤l)
@@ -331,6 +334,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
   → Γ ⊢a A ≤ H ⇝ B
   → Γ ⊢a B ≤ H ⇝ B
 ≤a-refined ≤a-int = ≤a-int
+≤a-refined ≤a-float = ≤a-float
 ≤a-refined ≤a-base = ≤a-base
 ≤a-refined ≤a-top = ≤a-top
 ≤a-refined ≤a-□ = ≤a-□
@@ -400,7 +404,7 @@ subsumption-0 : ∀ {Γ H e A A'}
   → Γ ⊢a H ⇛ e ⇛ A'
 subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H  
 
-⊢a-to-≤a ⊢a-lit = ≤a-□
+⊢a-to-≤a ⊢a-c = ≤a-□
 ⊢a-to-≤a (⊢a-var x) = ≤a-□
 ⊢a-to-≤a (⊢a-ann ⊢e) = ≤a-□
 ⊢a-to-≤a (⊢a-app ⊢e) with ⊢a-to-≤a ⊢e
@@ -431,7 +435,7 @@ subsumption {H' = H'} ⊢e spl ch A≤H' with □-dec H'
 subsumption {H' = .□} ⊢e none-□ ch-none ≤a-□ | yes refl = ⊢e
 subsumption {H' = .□} ⊢e none-□ ch-none (≤a-and-l A≤H' x) | yes refl = ⊥-elim (x refl)
 subsumption {H' = .□} ⊢e none-□ ch-none (≤a-and-r A≤H' x) | yes refl = ⊥-elim (x refl)
-subsumption {H' = H'} ⊢a-lit spl ch A≤H' | no ¬p = ⊢a-sub pv-i ⊢a-lit A≤H' ¬p
+subsumption {H' = H'} ⊢a-c spl ch A≤H' | no ¬p = ⊢a-sub pv-i ⊢a-c A≤H' ¬p
 subsumption {H' = H'} (⊢a-var x) spl ch A≤H' | no ¬p = ⊢a-sub pv-var (⊢a-var x) A≤H' ¬p
 subsumption {H' = H'} (⊢a-ann ⊢e) spl ch A≤H' | no ¬p = ⊢a-sub pv-ann (⊢a-ann ⊢e) A≤H' ¬p
 subsumption {H' = H'} (⊢a-app ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a ⊢e
@@ -461,6 +465,7 @@ subsumption {H' = H'} (⊢a-prj ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a �
 ⊢a-spl-τ (⊢a-prj ⊢e) spl = ⊢a-spl-τ ⊢e (have-l spl)
 
 ≤a-spl-τ ≤a-int none-τ = refl
+≤a-spl-τ ≤a-float none-τ = refl
 ≤a-spl-τ ≤a-base none-τ = refl
 ≤a-spl-τ ≤a-top none-τ = refl
 ≤a-spl-τ (≤a-arr A≤H A≤H₁) none-τ = refl

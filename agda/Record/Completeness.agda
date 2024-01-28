@@ -85,7 +85,7 @@ complete-r ⊢r-nil = ⊢a-nil
 complete-r (⊢r-one x) = ⊢a-one (complete x (~j ~Z))
 complete-r (⊢r-cons x ⊢r) = ⊢a-cons (complete x (~j ~Z)) (complete-r ⊢r)
   
-complete ⊢d-int (~j ~Z) = ⊢a-lit
+complete ⊢d-c (~j ~Z) = ⊢a-c
 complete (⊢d-var x) (~j ~Z) = ⊢a-var x
 complete (⊢d-ann ⊢e) (~j ~Z) = ⊢a-ann (complete ⊢e (~j ~∞))
 complete (⊢d-lam₁ ⊢e) (~j ~∞) = ⊢a-lam₁ (complete ⊢e (~j ~∞))
@@ -100,6 +100,7 @@ complete (⊢d-prj ⊢e) (~j x) = ⊢a-prj (complete ⊢e (~j (~Sl x)))
 
 complete-≤ ≤d-Z (~j ~Z) = ≤a-□
 complete-≤ ≤d-int∞ (~j ~∞) = ≤a-int
+complete-≤ ≤d-float∞ (~j ~∞) = ≤a-float
 complete-≤ ≤d-base∞ (~j ~∞) = ≤a-base
 complete-≤ ≤d-top (~j ~∞) = ≤a-top
 complete-≤ (≤d-arr-∞ B≤A B≤A₁) (~j ~∞) = ≤a-arr (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))

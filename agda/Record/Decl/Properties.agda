@@ -21,7 +21,7 @@ open import Record.Properties
   → (n≤l : n ≤ length Γ)
   → Γ ↑ n [ n≤l ] A ⊢r ♭ Z # (rs ↑r n) ⦂ B
 
-⊢d-weaken ⊢d-int n≤l = ⊢d-int
+⊢d-weaken ⊢d-c n≤l = ⊢d-c
 ⊢d-weaken (⊢d-var x∈Γ) n≤l = ⊢d-var (∋-weaken x∈Γ n≤l)
 ⊢d-weaken (⊢d-lam₁ ⊢e) n≤l = ⊢d-lam₁ (⊢d-weaken ⊢e (s≤s n≤l))
 ⊢d-weaken (⊢d-lam₂ ⊢e) n≤l = ⊢d-lam₂ (⊢d-weaken ⊢e (s≤s n≤l))
@@ -60,7 +60,7 @@ open import Record.Properties
   → (n≤l : n ≤ length Γ)
   → Γ ↓ n [ n≤l ] ⊢r ♭ Z # rs ↓r n ⦂ A
   
-⊢d-strengthen ⊢d-int sd n≤l = ⊢d-int
+⊢d-strengthen ⊢d-c sd n≤l = ⊢d-c
 ⊢d-strengthen (⊢d-var x∈Γ) sd n≤l = ⊢d-var (∋-strenghthen x∈Γ sd n≤l)
 ⊢d-strengthen (⊢d-lam₁ ⊢e) (sd-lam sd) n≤l = ⊢d-lam₁ (⊢d-strengthen ⊢e sd (s≤s n≤l))
 ⊢d-strengthen (⊢d-lam₂ ⊢e) (sd-lam sd) n≤l = ⊢d-lam₂ (⊢d-strengthen ⊢e sd (s≤s n≤l))
@@ -158,6 +158,10 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = Int} ≤d-int∞ ≤2 = ≤2
 ≤d-trans {B = Int} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = Int} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = Float} ≤d-Z ≤d-Z = ≤d-Z
+≤d-trans {B = Float} ≤d-float∞ ≤2 = ≤2
+≤d-trans {B = Float} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
+≤d-trans {B = Float} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = * x} ≤d-Z ≤d-Z = ≤d-Z
 ≤d-trans {B = * x} ≤d-base∞ ≤2 = ≤2
 ≤d-trans {B = * x} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
