@@ -30,6 +30,16 @@ import Intersection.Algo.Properties
 import Intersection.Completeness
 import Intersection.Soundness
 
+import Record.Prelude
+import Record.Common
+import Record.Properties
+import Record.Decl
+import Record.Decl.Properties
+import Record.Algo
+import Record.Algo.Properties
+import Record.Completeness
+import Record.Soundness
+
 -- elaboration semantics
 import TypeSound.Elaboration.STLC.Common
 import TypeSound.Elaboration.STLC.Source

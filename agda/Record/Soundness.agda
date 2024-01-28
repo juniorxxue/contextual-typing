@@ -134,46 +134,21 @@ pattern ⟦_⟧l z = z ∷l []
 
 -- tinker with size
 
-cons-+++-size : ∀ {e es xs x}
-  → (e ∷a es) ≡ (xs +++ ⟦ x ⟧a)
-  → size-apps es ≡ size-apps xs
-cons-+++-size = {!!}
+size-+++-distri : ∀ xs ys
+  → size-apps (xs +++ ys) ≡ size-apps xs + size-apps ys
+size-+++-distri [] ys = refl
+size-+++-distri (x ∷a xs) ys rewrite size-+++-distri xs ys = refl
+size-+++-distri (x ∷l xs) ys rewrite size-+++-distri xs ys = refl
 
-size-apps-+++a : ∀ {e es x xs k}
-  → suc (suc (size-apps es)) ≤ suc k
-  → (e ∷a es) ≡ (xs +++ ⟦ x ⟧a)
+size-apps-+++a : ∀ x xs k
+  → suc (size-apps (xs +++ ⟦ x ⟧a)) ≤ suc k
   → suc (size-apps xs) < suc k
-size-apps-+++a = {!!}  
+size-apps-+++a x xs k (s≤s sz) rewrite size-+++-distri xs ⟦ x ⟧a | +-comm 1 (size-apps xs) = s≤s sz
 
-size-apps-+++l : ∀ {e es x xs k}
-  → suc (suc (size-apps es)) ≤ suc k
-  → (e ∷l es) ≡ (xs +++ ⟦ x ⟧l)
+size-apps-+++l : ∀ l xs k
+  → suc (size-apps (xs +++ ⟦ l ⟧l)) ≤ suc k
   → suc (size-apps xs) < suc k
-size-apps-+++l = {!!}  
-
-rw-+++-app : ∀ {Γ e₁ e₂ es j B xs x}
-  → Γ ⊢d j # e₁ ▻ (xs +++ ⟦ x ⟧a) ⦂ B
-  → (e₂ ∷a es) ≡ (xs +++ ⟦ x ⟧a)
-  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
-rw-+++-app ⊢e eq rewrite (sym eq) = ⊢e
-
-rw-+++-app' : ∀ {Γ e₁ e₂ es j B xs x}
-  → Γ ⊢d j # (e₁ · e₂) ▻ es ⦂ B
-  → (e₂ ∷a es) ≡ (xs +++ ⟦ x ⟧a)
-  → Γ ⊢d j # e₁ ▻ (xs +++ ⟦ x ⟧a) ⦂ B
-rw-+++-app' ⊢e eq rewrite (sym eq) = ⊢e
-
-rw-+++-prj : ∀ {Γ e₁ e₂ es j B xs x}
-  → Γ ⊢d j # e₁ ▻ (xs +++ ⟦ x ⟧l) ⦂ B
-  → (e₂ ∷l es) ≡ (xs +++ ⟦ x ⟧l)
-  → Γ ⊢d j # (e₁ 𝕡 e₂) ▻ es ⦂ B
-rw-+++-prj ⊢e eq rewrite (sym eq) = ⊢e
-
-rw-+++-prj' : ∀ {Γ e₁ e₂ es j B xs x}
-  → Γ ⊢d j # (e₁ 𝕡 e₂) ▻ es ⦂ B
-  → (e₂ ∷l es) ≡ (xs +++ ⟦ x ⟧l)
-  → Γ ⊢d j # e₁ ▻ (xs +++ ⟦ x ⟧l) ⦂ B
-rw-+++-prj' ⊢e eq rewrite (sym eq) = ⊢e
+size-apps-+++l l xs k (s≤s sz) rewrite size-+++-distri xs ⟦ l ⟧l | +-comm 1 (size-apps xs) = s≤s sz
 
 rw-apps-gen : ∀ (es) {e es'}
   → e ▻ (es +++ es') ≡ (e ▻ es) ▻ es'
@@ -181,40 +156,41 @@ rw-apps-gen [] = refl
 rw-apps-gen (x ∷a es) = rw-apps-gen es
 rw-apps-gen (x ∷l es) = rw-apps-gen es
 
-rw-apps-a : ∀ {es e x}
+rw-apps-a : ∀ es e x
   → e ▻ (es +++ ⟦ x ⟧a) ≡ (e ▻ es) · x
-rw-apps-a {es} {e} {x} = rw-apps-gen es {e = e} {es' = ⟦ x ⟧a}
+rw-apps-a es e x = rw-apps-gen es {e = e} {es' = ⟦ x ⟧a}
 
-rw-apps-l : ∀ {es e x}
+up-+++-distri-a : ∀ xs x
+  → up 0 (xs +++ ⟦ x ⟧a) ≡ (up 0 xs) +++ (up 0 ⟦ x ⟧a)
+up-+++-distri-a [] x = refl
+up-+++-distri-a (x₁ ∷a xs) x rewrite up-+++-distri-a xs x = refl
+up-+++-distri-a (x₁ ∷l xs) x rewrite up-+++-distri-a xs x = refl
+
+up-+++-distri-l : ∀ xs l
+  → up 0 (xs +++ ⟦ l ⟧l) ≡ (up 0 xs) +++ (up 0 ⟦ l ⟧l)
+up-+++-distri-l [] x = refl
+up-+++-distri-l (x₁ ∷a xs) x rewrite up-+++-distri-l xs x = refl
+up-+++-distri-l (x₁ ∷l xs) x rewrite up-+++-distri-l xs x = refl
+
+rw-apps-l : ∀ es e x
   → e ▻ (es +++ ⟦ x ⟧l) ≡ (e ▻ es) 𝕡 x
-rw-apps-l {es} {e} {x} = rw-apps-gen es {e = e} {es' = ⟦ x ⟧l}
-
-rw-⊢apps-a : ∀ {Γ j es e x A}
-  → Γ ⊢d j # e ▻ (es +++ ⟦ x ⟧a) ⦂ A
-  → Γ ⊢d j # (e ▻ es) · x ⦂ A
-rw-⊢apps-a {es = es} {e = e} {x = x} ⊢e rewrite rw-apps-a {es} {e} {x} = ⊢e
-
-rw-⊢apps-a' : ∀ {Γ j es e x A}
-  → Γ ⊢d j # (e ▻ es) · x ⦂ A
-  → Γ ⊢d j # e ▻ (es +++ ⟦ x ⟧a) ⦂ A
-rw-⊢apps-a' {es = es} {e = e} {x = x} ⊢e rewrite rw-apps-a {es} {e} {x} = ⊢e
-
-rw-⊢apps-l : ∀ {Γ j es e x A}
-  → Γ ⊢d j # e ▻ (es +++ ⟦ x ⟧l) ⦂ A
-  → Γ ⊢d j # (e ▻ es) 𝕡 x ⦂ A
-rw-⊢apps-l {es = es} {e = e} {x = x} ⊢e rewrite rw-apps-l {es} {e} {x} = ⊢e
-
-rw-⊢apps-l' : ∀ {Γ j es e x A}
-  → Γ ⊢d j # (e ▻ es) 𝕡 x ⦂ A
-  → Γ ⊢d j # e ▻ (es +++ ⟦ x ⟧l) ⦂ A
-rw-⊢apps-l' {es = es} {e = e} {x = x} ⊢e rewrite rw-apps-l {es} {e} {x} = ⊢e
-
-eq-consa-↑ : ∀ {e es xs x}
-  → e ∷a es ≡ xs +++ ⟦ x ⟧a
-  → (e ↑ 0) ∷a up 0 es ≡ (up 0 xs) +++ ⟦ x ↑ 0 ⟧a
-eq-consa-↑ {xs = xs} {x = x} eq = {!!}
+rw-apps-l es e x = rw-apps-gen es {e = e} {es' = ⟦ x ⟧l}
 
 -- main proof
+¬<0→nil : ∀ {es}
+  → ¬ 1 ≤ size-apps es
+  → es ≡ []
+¬<0→nil {[]} sz = refl
+¬<0→nil {x ∷a es} sz = ⊥-elim (sz (s≤s z≤n))
+¬<0→nil {x ∷l es} sz = ⊥-elim (sz (s≤s z≤n))
+
+subst-case-0 : ∀ {Γ A B es i e e₁}
+  → ¬ 1 ≤ size-apps es
+  → Γ , A ⊢d i # e ▻ up 0 es ⦂ B
+  → Γ ⊢d ♭ Z # e₁ ⦂ A
+  → Γ ⊢d i # ((ƛ e) · e₁) ▻ es ⦂ B
+subst-case-0 {es = es} sz ⊢1 ⊢2 rewrite ¬<0→nil {es = es} sz = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2  
+
 subst-3 : ∀ k₁ k₂ k₃ es {Γ A B e e₁ i}
   → size-apps es < k₁
   → size-counter i < k₂
@@ -239,17 +215,19 @@ subst-3-prj : ∀ k₁ k₂ k₃ xs l {Γ A B e e₁ i}
   → Γ ⊢d ♭ Z # e₁ ⦂ A
   → Γ ⊢d i #  (((ƛ e) · e₁) ▻ xs) 𝕡 l ⦂ B
 
-subst-3 (suc k₁) (suc k₂) (suc k₃) [] sz₁ sz₂ sz₃ ⊢1 ⊢2 = ⊢d-app⇒ (⊢d-lam₂ ⊢1) ⊢2
-subst-3 (suc k₁) (suc k₂) (suc k₃) (e ∷a es) {i = i} sz₁ sz₂ sz₃ ⊢1 ⊢2 with (λ x xs eq →
-  rw-+++-app (rw-⊢apps-a' {es = xs} (subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x
-                                                 (size-apps-+++a sz₁ eq) sz₂ sz₃
-                                                   (rw-⊢apps-a {es = xs ⇈} (rw-+++-app' ⊢1 (eq-consa-↑ eq))) ⊢2)) eq)
-                                                   | apps-destruct (e ∷a es) (apps-consa>0 {e} {es})
-... | rec | des-app x xs eq = rec x xs eq                                                       
-... | rec | des-prj l xs eq = {!!}
-subst-3 (suc k₁) (suc k₂) (suc k₃) (l ∷l es) sz₁ sz₂ sz₃ ⊢1 ⊢2 with apps-destruct (l ∷l es) (apps-consl>0 {l} {es})
-... | des-app x xs eq = {!!}
-... | des-prj l' xs eq = {!!}
+subst-3 (suc k₁) (suc k₂) (suc k₃) es sz₁ sz₂ sz₃ ⊢1 ⊢2 with size-apps es >? 0
+subst-3 (suc k₁) (suc k₂) (suc k₃) es {e = e} {e₁ = e₁} sz₁ sz₂ sz₃ ⊢1 ⊢2 | yes p with apps-destruct es p
+... | des-app x xs eq rewrite eq
+                            | rw-apps-a xs ((ƛ e) · e₁) x
+                            | up-+++-distri-a xs x
+                            | rw-apps-a (up 0 xs) e (x ↑ 0)
+  = subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x (size-apps-+++a x xs k₁ sz₁) sz₂ sz₃ ⊢1 ⊢2
+... | des-prj l xs eq rewrite eq
+                            | rw-apps-l xs ((ƛ e) · e₁) l
+                            | up-+++-distri-l xs l
+                            | rw-apps-l (up 0 xs) e l
+  = subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l (size-apps-+++l l xs k₁ sz₁) sz₂ sz₃ ⊢1 ⊢2
+subst-3 (suc k₁) (suc k₂) (suc k₃) es sz₁ sz₂ sz₃ ⊢1 ⊢2 | no ¬p = subst-case-0 {es = es} ¬p ⊢1 ⊢2
 
 subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-app⇐ {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
   let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A) + (size-type B))) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
@@ -308,6 +286,22 @@ subst {B = B} {i = i} es ⊢1 ⊢2 =
 ⅉ' [] = ∞
 ⅉ' (_ ∷a as) = S⇐ (ⅉ' as)
 ⅉ' (_ ∷l as) = Sl (ⅉ' as)
+
+H≢□→j≢Z : ∀ {H A' es As A''}
+  → H ≢ □
+  → ⟦ H , A' ⟧→⟦ es , □ , As , A'' ⟧
+  → ♭ (ⅉ es) ≢ ♭ Z
+H≢□→j≢Z {H = □} H≢□ spl = ⊥-elim (H≢□ refl)
+H≢□→j≢Z {H = ⟦ x ⟧⇒ H} H≢□ (have-a spl) = λ ()
+H≢□→j≢Z {H = ⌊ x ⌋⇒ H} H≢□ (have-l spl) = λ ()
+
+H≢□→j≢Z' : ∀ {H A' es As A'' T}
+  → H ≢ □
+  → ⟦ H , A' ⟧→⟦ es , τ T , As , A'' ⟧
+  → ♭ (ⅉ' es) ≢ ♭ Z
+H≢□→j≢Z' {H = τ x} H≢□ none-τ = λ ()
+H≢□→j≢Z' {H = ⟦ x ⟧⇒ H} H≢□ (have-a spl) = λ ()
+H≢□→j≢Z' {H = ⌊ x ⌋⇒ H} H≢□ (have-l spl) = λ ()
 
 app-elim : ∀ {Γ e as H A A' As}
   → Γ ⊢d ♭ (ⅉ as) # e ⦂ A
@@ -388,8 +382,8 @@ sound-chk (⊢a-prj ⊢e) spl = sound-chk ⊢e (have-l spl)
 sound-≤ ≤a-□ none-□ = ≤d-Z
 sound-≤ (≤a-hint x A≤H) (have-a spl) = ≤d-arr-S⇐ ≤d-refl∞ (sound-≤ A≤H spl)
 sound-≤ (≤a-hint-l A≤H) (have-l spl) = ≤d-rcd-Sl (sound-≤ A≤H spl)
-sound-≤ (≤a-and-l A≤H x) spl = ≤d-and₁ (sound-≤ A≤H spl) {!!}
-sound-≤ (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤ A≤H spl) {!!}
+sound-≤ (≤a-and-l A≤H x) spl = ≤d-and₁ (sound-≤ A≤H spl) (H≢□→j≢Z x spl)
+sound-≤ (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤ A≤H spl) (H≢□→j≢Z x spl)
 
 sound-≤-chk ≤a-int none-τ = ≤d-int∞
 sound-≤-chk ≤a-base none-τ = ≤d-base∞
@@ -398,8 +392,8 @@ sound-≤-chk (≤a-arr A≤H A≤H₁) none-τ = ≤d-arr-∞ (sound-≤-chk A�
 sound-≤-chk (≤a-rcd A≤H) none-τ = ≤d-rcd∞ (sound-≤-chk A≤H none-τ)
 sound-≤-chk (≤a-hint x A≤H) (have-a spl) = ≤d-arr-S⇐ ≤d-refl∞ (sound-≤-chk A≤H spl)
 sound-≤-chk (≤a-hint-l A≤H) (have-l spl) = ≤d-rcd-Sl (sound-≤-chk A≤H spl)
-sound-≤-chk (≤a-and-l A≤H x) spl = ≤d-and₁ (sound-≤-chk A≤H spl) {!!}
-sound-≤-chk (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤-chk A≤H spl) {!!}
+sound-≤-chk (≤a-and-l A≤H x) spl = ≤d-and₁ (sound-≤-chk A≤H spl) (H≢□→j≢Z' x spl)
+sound-≤-chk (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤-chk A≤H spl) (H≢□→j≢Z' x spl)
 sound-≤-chk (≤a-and A≤H A≤H₁) none-τ = ≤d-and (sound-≤-chk A≤H none-τ) (sound-≤-chk A≤H₁ none-τ)
 
 sound-es ≤a-int none-τ = ⊩none⇚
