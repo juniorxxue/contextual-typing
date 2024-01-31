@@ -59,9 +59,9 @@ data _~_⊢_⇒_ : Context → AppContext → Term → Type → Set where
   ⊢int : ∀ {Γ n}
     → Γ ~ ∅ ⊢ lit n ⇒ Int
 
-  ⊢var : ∀ {Γ x A}
+  ⊢var : ∀ {Γ Ψ x A}
     → Γ ∋ x ⦂ A
-    → Γ ~ ∅ ⊢ ` x ⇒ A
+    → Γ ~ Ψ ⊢ ` x ⇒ A
 
   ⊢lam : ∀ {Γ : Context} {Ψ : AppContext} {e x A B}
     → (Γ , x ⦂ A) ~ Ψ ⊢ e ⇒ B
@@ -71,6 +71,20 @@ data _~_⊢_⇒_ : Context → AppContext → Term → Type → Set where
     → Γ ~ ∅ ⊢ e₂ ⇒ A
     → Γ ~ Ψ ,, A ⊢ e₁ ⇒ (A ⇒ B)
     → Γ ~ Ψ ⊢ e₁ · e₂ ⇒ B
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                            Examples                            +--
+--+                                                                +--
+----------------------------------------------------------------------
++-ctx : Context
++-ctx = ∅ , "+" ⦂ Int ⇒ Int ⇒ Int
+
++-lam : Term
++-lam = ƛ "x" ⇒ ƛ "y" ⇒ ` "+" · (lit 1) · (lit 2)
+
+ex-1 : +-ctx ~ ∅ ⊢ +-lam · (lit 1) · (lit 2) ⇒ Int
+ex-1 = ⊢app ⊢int (⊢app ⊢int (⊢lam (⊢lam (⊢app ⊢int (⊢app ⊢int (⊢var (S (λ ()) (S (λ ()) Z))))))))
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -142,5 +156,6 @@ complete : ∀ {Γ Ψ j e A}
   → Γ ⊢d j # e ⦂ A
 complete ⊢int R-Z = ⊢d-int
 complete (⊢var x) R-Z = ⊢d-var x
+complete (⊢var x) (R-S r) = ⊢d-sub (⊢d-var x) (λ ())
 complete (⊢lam ⊢e) (R-S ψj) = ⊢d-lam-n (complete ⊢e ψj)
 complete (⊢app ⊢e₂ ⊢e₁) ψj = ⊢d-app₂ (complete ⊢e₁ (R-S ψj)) (complete ⊢e₂ R-Z)
