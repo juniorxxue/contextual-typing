@@ -13,6 +13,13 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl) pub
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
 
+data Singleton {a} {A : Set a} (x : A) : Set a where
+  _with≡_ : (y : A) → x ≡ y → Singleton x
+
+inspect : ∀ {a} {A : Set a} (x : A) → Singleton x
+inspect x = x with≡ refl
+
+
 Id : Set
 Id = String
 

@@ -1,6 +1,4 @@
-I found the complete is not that easy, the point is how to determine the counter
+The similarity between lam and inj is
+they both're introductions forms
 
-
-we have type assignment
-T |- e : A
---------------------
+\x. e
