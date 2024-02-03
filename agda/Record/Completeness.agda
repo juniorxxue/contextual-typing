@@ -74,7 +74,6 @@ complete : ∀ {Γ H i e A}
 
 complete-≤ : ∀ {Γ H i A B}
   → B ≤d i # A
---  → i ≢ ♭ Z
   → Γ ⊢ ⟨ i , A ⟩ ~ H
   → Γ ⊢a B ≤ H ⇝ A
 

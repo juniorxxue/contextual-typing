@@ -9,7 +9,7 @@ open import Data.String using (String; _≟_) public
 open import Data.Unit using (tt) public
 open import Relation.Nullary using (Dec; yes; no; ¬_) public
 open import Relation.Nullary.Decidable using (False; toWitnessFalse) public
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl) public
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; cong₂) public
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
 open import Agda.Builtin.Float renaming (Float to 𝔽; primFloatPlus to _++f_) public

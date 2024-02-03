@@ -207,3 +207,21 @@ data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List T
   → Γ ⊢a A ≤ τ B ⇝ C
   → C ≡ B
 ≤a-id-0 A≤B = sym (≤a-id A≤B none-τ)
+
+size-H : Hint → ℕ
+size-e : Term → ℕ
+
+size-H □ = 0
+size-H (τ x) = 1
+size-H (⟦ x ⟧⇒ H) = 1 + size-H H
+
+size-e (lit x) = 0
+size-e (` x) = 0
+size-e (ƛ e) = 1 + size-e e
+size-e (e · e₁) = size-e e + size-e e₁
+size-e (e ⦂ x) = 1 + size-e e
+
+⊢a-dec : ∀ k₁ k₂ Γ H e A
+  → size-e e < k₁
+  → size-H H < k₂
+  → Dec (Γ ⊢a H ⇛ e ⇛ A)

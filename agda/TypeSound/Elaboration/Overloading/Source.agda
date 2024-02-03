@@ -66,6 +66,9 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
   ⊢d-int : ∀ {Γ n}
     → Γ ⊢d ♭ Z # (lit n) ⦂ Int
 
+  ⊢d-flt : ∀ {Γ n}
+    → Γ ⊢d ♭ Z # (flt n) ⦂ Float
+
   ⊢d-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
     → Γ ⊢d ♭ Z # ` x ⦂ A
@@ -111,6 +114,14 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-+f : ∀ {Γ m}
     → Γ ⊢d ♭ Z # (+f m) ⦂ Float ⇒ Float
+
+
+≤d-refl∞ : ∀ {A} → A ≤d ♭ ∞ # A
+≤d-refl∞ {A = Int} = ≤d-int∞
+≤d-refl∞ {Float}  = ≤d-float∞
+≤d-refl∞ {A = Top} = ≤d-top
+≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
+≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
 
 
 ----------------------------------------------------------------------

@@ -1,0 +1,6 @@
+I found the complete is not that easy, the point is how to determine the counter
+
+
+we have type assignment
+T |- e : A
+--------------------
