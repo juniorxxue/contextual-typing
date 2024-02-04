@@ -232,3 +232,11 @@ subsumption-0 ⊢e A≈H = subsumption ⊢e none-□ ch-none A≈H
   → A ≡ B
 ⊢a-hint-self ⊢e with ⊢a-to-≈a ⊢e
 ... | ≈τ = refl
+
+
+⊢a-spl-eq : ∀ {Γ H A e es T As A'}
+  → Γ ⊢a H ⇛ e ⇛ A
+  → ❪ H , A ❫↣❪ es , τ T , As , A' ❫
+  → T ≡ A'
+⊢a-spl-eq ⊢e none-τ = ⊢a-hint-self ⊢e
+⊢a-spl-eq ⊢e (have spl) = ⊢a-spl-eq (⊢a-app ⊢e) spl
