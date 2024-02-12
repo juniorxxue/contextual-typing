@@ -1,0 +1,4 @@
+The similarity between lam and inj is
+they both're introductions forms
+
+\x. e
