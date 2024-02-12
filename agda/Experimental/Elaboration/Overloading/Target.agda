@@ -113,10 +113,12 @@ data _⊢_⦂_ : Context → Term → Type → Set where
       -------------
     → Γ ⊢ L · M ⦂ B
 
+{-
   ⊢& : ∀ {Γ M A B}
     → Γ ⊢ M ⦂ A
     → Γ ⊢ M ⦂ B
     → Γ ⊢ M ⦂ (A & B)
+-}    
 
   ⊢+ : ∀ {Γ}
     → Γ ⊢ + ⦂ (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
@@ -213,8 +215,6 @@ elim-int : ∀ {Γ n A B C}
   → Γ ⊢ lit n ⦂ A
   → A ≤ B ⇒ C
   → ⊥
-elim-int (⊢& ⊢e ⊢e₁) (s-and-l A≤B) = elim-int ⊢e A≤B
-elim-int (⊢& ⊢e ⊢e₁) (s-and-r A≤B) = elim-int ⊢e₁ A≤B
 elim-int (⊢sub ⊢e x) A≤B = elim-int ⊢e (≤-trans x A≤B)
 
 elim-int' : ∀ {Γ n A B}
@@ -226,8 +226,6 @@ elim-flt : ∀ {Γ n A B C}
   → Γ ⊢ flt n ⦂ A
   → A ≤ B ⇒ C
   → ⊥
-elim-flt (⊢& ⊢e ⊢e₁) (s-and-l A≤B) = elim-flt ⊢e A≤B
-elim-flt (⊢& ⊢e ⊢e₁) (s-and-r A≤B) = elim-flt ⊢e₁ A≤B
 elim-flt (⊢sub ⊢e x) A≤B = elim-flt ⊢e (≤-trans x A≤B)
 
 elim-flt' : ∀ {Γ n A B}
@@ -242,9 +240,7 @@ canonical-int : ∀ {Γ M A}
   → ∃[ n ](M ≡ lit n)
 canonical-int {A = Int} (⊢n {n = n}) x₁ x₂ = ⟨ n , refl ⟩
 canonical-int {A = Int} (⊢sub x x₃) x₁ x₂ = canonical-int x x₃ x₂
-canonical-int (⊢& ⊢M ⊢M₁) (s-and-l A≤Int) VM = canonical-int ⊢M A≤Int VM
 canonical-int (⊢sub ⊢M x) (s-and-l A≤Int) VM = canonical-int ⊢M (≤-trans (inv-&-l x) A≤Int) VM
-canonical-int (⊢& ⊢M ⊢M₁) (s-and-r A≤Int) VM = canonical-int ⊢M₁ A≤Int VM
 canonical-int (⊢sub ⊢M x) (s-and-r A≤Int) VM = canonical-int ⊢M (≤-trans (inv-&-r x) A≤Int) VM
 
 canonical-flt : ∀ {Γ M A}
@@ -254,9 +250,7 @@ canonical-flt : ∀ {Γ M A}
   → ∃[ m ](M ≡ flt m)
 canonical-flt (⊢m {m = m}) s-flt VM = ⟨ m , refl ⟩
 canonical-flt (⊢sub ⊢M x) s-flt VM = canonical-flt ⊢M x VM
-canonical-flt (⊢& ⊢M ⊢M₁) (s-and-l A≤F) VM = canonical-flt ⊢M A≤F VM
 canonical-flt (⊢sub ⊢M x) (s-and-l A≤F) VM = canonical-flt ⊢M (≤-trans (inv-&-l x) A≤F) VM
-canonical-flt (⊢& ⊢M ⊢M₁) (s-and-r A≤F) VM = canonical-flt ⊢M₁ A≤F VM
 canonical-flt (⊢sub ⊢M x) (s-and-r A≤F) VM = canonical-flt ⊢M (≤-trans (inv-&-r x) A≤F) VM
 
 inv-arr-l : ∀ {A B C D}
@@ -274,8 +268,6 @@ progress-+' : ∀ {M T A B}
   → ∅ ⊢ M ⦂ A
   → Value M
   → Progress (+ · M)
-progress-+' (⊢& ⊢T ⊢T₁) (s-and-l T≤AB) ⊢M VM = progress-+' ⊢T T≤AB ⊢M VM
-progress-+' (⊢& ⊢T ⊢T₁) (s-and-r T≤AB) ⊢M VM = progress-+' ⊢T₁ T≤AB ⊢M VM
 progress-+' ⊢+ (s-and-l (s-arr T≤AB T≤AB₁)) ⊢M VM with canonical-int ⊢M T≤AB VM
 ... | ⟨ n , eq ⟩ rewrite eq = step β-+-i
 progress-+' ⊢+ (s-and-r (s-arr T≤AB T≤AB₁)) ⊢M VM with canonical-flt ⊢M T≤AB VM
@@ -295,8 +287,6 @@ progress-+i' : ∀ {T M A B n}
   → ∅ ⊢ M ⦂ A
   → Value M
   → Progress (+i n · M)
-progress-+i' (⊢& ⊢T ⊢T₁) (s-and-l T≤A⇒B) ⊢M VM = progress-+i' ⊢T T≤A⇒B ⊢M VM
-progress-+i' (⊢& ⊢T ⊢T₁) (s-and-r T≤A⇒B) ⊢M VM = progress-+i' ⊢T₁ T≤A⇒B ⊢M VM
 progress-+i' ⊢+i (s-arr T≤A⇒B T≤A⇒B₁) ⊢M VM with canonical-int ⊢M T≤A⇒B VM
 ... | ⟨ n , eq ⟩ rewrite eq = step β-+i
 progress-+i' (⊢sub ⊢T x) T≤A⇒B ⊢M VM = progress-+i' ⊢T (≤-trans x T≤A⇒B) ⊢M VM
@@ -316,8 +306,6 @@ progress-+f' : ∀ {T M A B n}
   → ∅ ⊢ M ⦂ A
   → Value M
   → Progress (+f n · M)
-progress-+f' (⊢& ⊢T ⊢T₁) (s-and-l T≤A⇒B) ⊢M VM = progress-+f' ⊢T T≤A⇒B ⊢M VM
-progress-+f' (⊢& ⊢T ⊢T₁) (s-and-r T≤A⇒B) ⊢M VM = progress-+f' ⊢T₁ T≤A⇒B ⊢M VM
 progress-+f' ⊢+f (s-arr T≤A⇒B T≤A⇒B₁) ⊢M VM with canonical-flt ⊢M T≤A⇒B VM
 ... | ⟨ n , eq ⟩ rewrite eq = step β-+f
 progress-+f' (⊢sub ⊢T x) T≤A⇒B ⊢M VM = progress-+f' ⊢T (≤-trans x T≤A⇒B) ⊢M VM
@@ -346,7 +334,6 @@ progress (⊢· ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
 ... | done V-+ | done v₂ = progress-+ ⊢e₁ ⊢e₂ v₂
 ... | done V-+i | done v₂ = progress-+i ⊢e₁ ⊢e₂ v₂
 ... | done V-+f | done v₂ = progress-+f ⊢e₁ ⊢e₂ v₂
-progress (⊢& ⊢e ⊢e₁) = progress ⊢e
 progress ⊢+ = done V-+
 progress ⊢+i = done V-+i
 progress ⊢+f = done V-+f
@@ -368,7 +355,6 @@ rename ρ ⊢m = ⊢m
 rename ρ (⊢` ∋w)    =  ⊢` (ρ ∋w)
 rename ρ (⊢ƛ ⊢N)    =  ⊢ƛ (rename (ext ρ) ⊢N)
 rename ρ (⊢· ⊢L ⊢M) =  ⊢· (rename ρ ⊢L) (rename ρ ⊢M)
-rename ρ (⊢& ⊢L ⊢M) =  ⊢& (rename ρ ⊢L) (rename ρ ⊢M)
 rename ρ (⊢sub ⊢L s) = ⊢sub (rename ρ ⊢L) s
 rename ρ ⊢+ = ⊢+
 rename ρ ⊢+i = ⊢+i
@@ -432,7 +418,6 @@ subst {x = y} ⊢V (⊢ƛ {x = x} ⊢N) with x ≟ y
 ... | yes refl      =  ⊢ƛ (drop ⊢N)
 ... | no  x≢y       =  ⊢ƛ (subst ⊢V (swap x≢y ⊢N))
 subst ⊢V (⊢· ⊢L ⊢M) = ⊢· (subst ⊢V ⊢L) (subst ⊢V ⊢M)
-subst ⊢V (⊢& ⊢L ⊢M) = ⊢& (subst ⊢V ⊢L) (subst ⊢V ⊢M)
 subst ⊢V (⊢sub ⊢L s) = ⊢sub (subst ⊢V ⊢L) s
 subst ⊢V ⊢+ = ⊢+
 subst ⊢V ⊢+i = ⊢+i
@@ -444,9 +429,7 @@ inv-lam' : ∀ {Γ x e A B T}
   → ∃[ A' ]( ∃[ B' ] ((Γ , x ⦂ A' ⊢ e ⦂ B') × (A ≤ A') × (B' ≤ B)))
 inv-lam' (⊢ƛ {A = A} {B} ⊢e) (s-arr T≤AB T≤AB₁) = ⟨ A , ⟨ B , ⟨ ⊢e , ⟨ T≤AB , T≤AB₁ ⟩ ⟩ ⟩ ⟩
 inv-lam' (⊢sub ⊢e x) (s-arr T≤AB T≤AB₁) = inv-lam' ⊢e (≤-trans x (s-arr T≤AB T≤AB₁))
-inv-lam' (⊢& ⊢e ⊢e₁) (s-and-l T≤AB) = inv-lam' ⊢e T≤AB
 inv-lam' (⊢sub ⊢e x) (s-and-l T≤AB) = inv-lam' ⊢e (≤-trans (inv-&-l x) T≤AB)
-inv-lam' (⊢& ⊢e ⊢e₁) (s-and-r T≤AB) = inv-lam' ⊢e₁ T≤AB
 inv-lam' (⊢sub ⊢e x) (s-and-r T≤AB) = inv-lam' ⊢e (≤-trans (inv-&-r x) T≤AB)
 
 inv-lam : ∀ {Γ x e A B}
@@ -459,14 +442,12 @@ inv-int : ∀ {Γ n A}
   → Γ ⊢ lit n ⦂ A
   → Int ≤ A
 inv-int ⊢n = s-refl
-inv-int (⊢& ⊢e ⊢e₁) = s-and (inv-int ⊢e) (inv-int ⊢e₁)
 inv-int (⊢sub ⊢e x) = ≤-trans (inv-int ⊢e) x
 
 inv-flt : ∀ {Γ m A}
   → Γ ⊢ flt m ⦂ A
   → Float ≤ A
 inv-flt ⊢m = s-flt
-inv-flt (⊢& ⊢M ⊢M₁) = s-and (inv-flt ⊢M) (inv-flt ⊢M₁)
 inv-flt (⊢sub ⊢M x) = ≤-trans (inv-flt ⊢M) x
 
 ¬Int≤Float : Int ≤ Float → ⊥
@@ -480,8 +461,6 @@ inv-+-i+' : ∀ {Γ T A B}
   → T ≤ A ⇒ B
   → Int ≤ A
   → Int ⇒ Int ≤ B
-inv-+-i+' (⊢& ⊢T ⊢T₁) (s-and-l T≤AB) Int≤A = inv-+-i+' ⊢T T≤AB Int≤A
-inv-+-i+' (⊢& ⊢T ⊢T₁) (s-and-r T≤AB) Int≤A = inv-+-i+' ⊢T₁ T≤AB Int≤A
 inv-+-i+' ⊢+ (s-and-l (s-arr T≤AB T≤AB₁)) Int≤A = T≤AB₁
 inv-+-i+' ⊢+ (s-and-r (s-arr T≤AB T≤AB₁)) Int≤A = ⊥-elim (¬Int≤Float (≤-trans Int≤A T≤AB))
 inv-+-i+' (⊢sub ⊢T x) T≤AB Int≤A = inv-+-i+' ⊢T (≤-trans x T≤AB) Int≤A
@@ -497,8 +476,6 @@ inv-+-f+' : ∀ {Γ T A B}
   → T ≤ A ⇒ B
   → Float ≤ A
   → Float ⇒ Float ≤ B
-inv-+-f+' (⊢& ⊢T ⊢T₁) (s-and-l T≤AB) Int≤A = inv-+-f+' ⊢T T≤AB Int≤A
-inv-+-f+' (⊢& ⊢T ⊢T₁) (s-and-r T≤AB) Int≤A = inv-+-f+' ⊢T₁ T≤AB Int≤A
 inv-+-f+' ⊢+ (s-and-l (s-arr T≤AB T≤AB₁)) Int≤A = ⊥-elim (¬Float≤Int (≤-trans Int≤A T≤AB))
 inv-+-f+' ⊢+ (s-and-r (s-arr T≤AB T≤AB₁)) Int≤A = T≤AB₁
 inv-+-f+' (⊢sub ⊢T x) T≤AB Int≤A = inv-+-f+' ⊢T (≤-trans x T≤AB) Int≤A
@@ -513,8 +490,6 @@ inv-+i' : ∀ {n A B T}
   → ∅ ⊢ +i n ⦂ T
   → T ≤ A ⇒ B
   → Int ≤ B
-inv-+i' (⊢& ⊢M ⊢M₁) (s-and-l T≤AB) = inv-+i' ⊢M T≤AB
-inv-+i' (⊢& ⊢M ⊢M₁) (s-and-r T≤AB) = inv-+i' ⊢M₁ T≤AB
 inv-+i' ⊢+i (s-arr T≤AB T≤AB₁) = T≤AB₁
 inv-+i' (⊢sub ⊢M x) T≤AB = inv-+i' ⊢M (≤-trans x T≤AB)
 
@@ -528,8 +503,6 @@ inv-+f' : ∀ {m A B T}
   → ∅ ⊢ +f m ⦂ T
   → T ≤ A ⇒ B
   → Float ≤ B
-inv-+f' (⊢& ⊢M ⊢M₁) (s-and-l T≤AB) = inv-+f' ⊢M T≤AB
-inv-+f' (⊢& ⊢M ⊢M₁) (s-and-r T≤AB) = inv-+f' ⊢M₁ T≤AB
 inv-+f' ⊢+f (s-arr T≤AB T≤AB₁) = T≤AB₁
 inv-+f' (⊢sub ⊢M x) T≤AB = inv-+f' ⊢M (≤-trans x T≤AB)
 
@@ -553,5 +526,4 @@ preserve (⊢· ⊢e ⊢e₁) β-+-i = ⊢sub ⊢+i (inv-+-i+ ⊢e (inv-int ⊢e
 preserve (⊢· ⊢e ⊢e₁) β-+-f = ⊢sub ⊢+f (inv-+-f+ ⊢e (inv-flt ⊢e₁))
 preserve (⊢· ⊢e ⊢e₁) β-+i = ⊢sub ⊢n (inv-+i ⊢e)
 preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
-preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
 preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x
