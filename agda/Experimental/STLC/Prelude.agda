@@ -11,6 +11,7 @@ open import Data.Empty public
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom; _∷ʳ_) renaming (length to len) public
 open import Data.List.Properties using (map-++) public
+open import Data.Maybe using (Maybe; just; nothing) public
 
 open import Relation.Binary.Core using (Rel)
 open import Level using (0ℓ)
