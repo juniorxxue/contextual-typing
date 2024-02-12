@@ -1,7 +1,6 @@
+module Elaboration.Overloading.Source where
 
-module TypeSound.Elaboration.Overloading.Source where
-
-open import TypeSound.Elaboration.Overloading.Common
+open import Elaboration.Overloading.Common
 
 infixr 5  ƛ_⇒_
 infixl 7  _·_
@@ -122,6 +121,16 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 ≤d-refl∞ {A = Top} = ≤d-top
 ≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
 ≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
+
+⊢d-sub' : ∀ {Γ e j A}
+  → Γ ⊢d ♭ Z # e ⦂ A
+  → Γ ⊢d j # e ⦂ A
+⊢d-sub' = {!!}
+
+⊢d-∞ : ∀ {Γ e j A}
+  → Γ ⊢d j # e ⦂ A
+  → Γ ⊢d ♭ ∞ # e ⦂ A
+⊢d-∞ ⊢e = {!!}
 
 
 ----------------------------------------------------------------------

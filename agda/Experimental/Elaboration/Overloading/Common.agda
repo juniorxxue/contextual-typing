@@ -1,4 +1,4 @@
-module TypeSound.Elaboration.Overloading.Common where
+module Elaboration.Overloading.Common where
 
 open import Data.Bool using (Bool; true; false; T; not) public
 open import Data.Empty using (⊥; ⊥-elim) public

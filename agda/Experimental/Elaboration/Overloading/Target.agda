@@ -1,7 +1,6 @@
+module Elaboration.Overloading.Target where
 
-module TypeSound.Elaboration.Overloading.Target where
-
-open import TypeSound.Elaboration.Overloading.Common
+open import Elaboration.Overloading.Common
 
 infixr 5  ƛ_⇒_
 infixl 7  _·_
