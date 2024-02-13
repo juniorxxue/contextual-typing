@@ -18,6 +18,12 @@ Inductive term : Set :=
 | App : term -> term -> term
 | Ann : term -> type -> term.
 
+Inductive p : term -> Prop :=
+| PLit : forall n, p (Lit n)
+| PVar : forall x, p (Var x)
+| PAnn : forall e A, p (Ann e A)
+.              
+
 Notation "e ∷ A" := (Ann e A) (at level 20).
 Notation "ƛ A . e : B" := (Lam A e B) (at level 20).
 
@@ -68,6 +74,7 @@ with aty : context -> hint -> term -> type -> Prop :=
 | A_Sub : forall Gamma e A H,
     aty Gamma Noth e A ->
     H <> Noth ->
+    p e ->
     awf Gamma A H ->
     aty Gamma H e A
 .
@@ -160,17 +167,17 @@ Proof.
       * apply H. apply H2.
       * apply H3. reflexivity.
    - destruct t; destruct A.
-    + left. eapply A_Sub; eauto. intro Rev. inversion Rev.
+    + left. eapply A_Sub; eauto. intro Rev. inversion Rev. econstructor.
     + right. intro Rev. dependent destruction Rev.
       dependent destruction Rev. eapply H2. reflexivity.
     + right. intros Rev. dependent destruction Rev.
-      dependent destruction H3.
+      dependent destruction H4.
     + right. intros Rev. dependent destruction Rev.
       dependent destruction Rev. dependent destruction H3.
       apply H2. reflexivity.
   - destruct (eqt_dec t A); destruct (inCon_dec Gamma n A).
     + subst. left. apply A_Sub; eauto.
-      intros Rev. inversion Rev.
+      intros Rev. inversion Rev. econstructor.
     + subst. right. intros Rev.
       dependent destruction Rev.
       dependent destruction Rev.
@@ -178,36 +185,27 @@ Proof.
       * apply H3. reflexivity.
     + right. intros Rev.
       dependent destruction Rev.
-      dependent destruction H5. apply H. reflexivity.
+      dependent destruction H6. apply H. reflexivity.
     + right. intros Rev.
       dependent destruction Rev.
-      dependent destruction H5. apply H. reflexivity.
+      dependent destruction H6. apply H. reflexivity.
 Qed.
 
-(*
-Lemma a_decidable_h_zero : forall k2 Gamma e A H,
+Lemma a_decidable_h_zero : forall Gamma e H,
     size_h H = 0 ->
-    size_e e < k2 ->
-    aty Gamma H e A \/ ~ (aty Gamma H e A).
+    (exists A, aty Gamma H e A) \/ ~ (exists A, aty Gamma H e A).
 Proof.
-  induction k2; intros.
-  lia.
+  intros.
   destruct H; try (inversion H0).
-  - destruct e.
-    + eapply a_decidable_h_e_zero; eauto.
-    + eapply a_decidable_h_e_zero; eauto.
-    + right. intros Rev. dependent destruction Rev.
-      apply H2. reflexivity.
-    + admit.
-*) 
+Admitted.
   
-Lemma a_decidable : forall k1 k2 Gamma e A H,
+Lemma a_decidable : forall k1 k2 Gamma e H,
     size_e e < k1 ->
     size_h H < k2 ->
-    aty Gamma H e A \/ ~ (aty Gamma H e A).
+    (exists A, aty Gamma H e A) \/ ~ (exists A, aty Gamma H e A).
 Proof.
   induction k1; induction k2; intros.
-  lia. lia. lia.  
+  lia. lia. lia.
   destruct e.
   - admit.
   - admit.
@@ -215,7 +213,25 @@ Proof.
   - simpl in *.
     assert (sz1 : size_e e1 < k1). lia.
     assert (sz2 : size_h (Hole e2 H) < S (S (size_h H))). simpl. lia.
-    pose proof (IHk1 (2 + (size_h H)) Gamma e1 (Arr A A) (Hole e2 H) sz1 sz2).
+    pose proof (IHk1 (2 + (size_h H)) Gamma e1 (Hole e2 H) sz1 sz2).
     destruct H2.
-    + left. eapply A_App. apply H2.
-    + right. intros Rev. dependent destruction Rev.
+    + left. destruct H2.
+      admit.
+    + right. intros Rev. destruct Rev.
+      apply H2.
+      dependent destruction H3.
+      * exists (Arr A B). assumption.
+      * inversion H5.
+  - simpl in *.
+    assert (sz1 : size_e e < k1). lia.
+    assert (sz2 : size_h (TT t) < 2 + size_h H). simpl. lia.
+    pose proof (IHk1 (2 + (size_h H)) Gamma e (TT t) sz1 sz2) as IHUlt.
+    destruct H.
+    + destruct IHUlt.
+      * left. destruct H.
+        exists t. eapply A_Ann. apply H.
+      * right. intros Inv. destruct Inv. dependent destruction H2.
+        ++ apply H. exists B. apply H2.
+        ++ apply H4. reflexivity.
+    + 
+
