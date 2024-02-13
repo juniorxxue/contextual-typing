@@ -60,6 +60,21 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⇩-⇧-comm (τ A) m n m≤n sdh = refl
 ⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm H m n m≤n sdh = refl
 
+H≢□→H⇧≢□ : ∀ {H n}
+  → H ≢ □
+  → (H ⇧ n) ≢ □
+H≢□→H⇧≢□ {□} neq = ⊥-elim (neq refl)
+H≢□→H⇧≢□ {τ x} neq = neq
+H≢□→H⇧≢□ {⟦ x ⟧⇒ H} neq = λ ()
+
+H≢□→H⇩≢□ : ∀ {H n}
+  → H ≢ □
+  → (H ⇩ n) ≢ □
+H≢□→H⇩≢□ {□} neq = ⊥-elim (neq refl)
+H≢□→H⇩≢□ {τ x} neq = neq
+H≢□→H⇩≢□ {⟦ x ⟧⇒ H} neq = λ ()
+
+
 ----------------------------------------------------------------------
 --+                                                                +--
 --+                           Weakening                            +--
@@ -103,7 +118,7 @@ data _~⇧~_ : Hint → ℕ → Set where
 ⊢a-weaken {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken {n≤l = s≤s n≤l} ⊢e)
 ⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
-⊢a-weaken (⊢a-sub ⊢e B≈H p) = ⊢a-sub (⊢a-weaken ⊢e) (≈a-weaken B≈H) (↑-pv p)
+⊢a-weaken (⊢a-sub ⊢e B≈H p H≢□) = ⊢a-sub (⊢a-weaken ⊢e) (≈a-weaken B≈H) (↑-pv p) (H≢□→H⇧≢□ H≢□)
 
 spl-weaken : ∀ {H A es T As A' n}
   → ❪ H , A ❫↣❪ es , T , As , A' ❫
@@ -143,7 +158,7 @@ spl-weaken (have spl) = have (spl-weaken spl)
 ⊢a-strengthen (⊢a-lam₁ ⊢e) (sd-lam sd) sdh n≤l = ⊢a-lam₁ (⊢a-strengthen ⊢e sd sdh-τ (s≤s n≤l))
 ⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
 ... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
-⊢a-strengthen (⊢a-sub ⊢e A≈H p) en Hn n≤l = ⊢a-sub (⊢a-strengthen ⊢e en sdh-□ n≤l) (≈a-strengthen A≈H Hn n≤l) (↓-pv p)
+⊢a-strengthen (⊢a-sub ⊢e A≈H p H≢□) en Hn n≤l = ⊢a-sub (⊢a-strengthen ⊢e en sdh-□ n≤l) (≈a-strengthen A≈H Hn n≤l) (↓-pv p) (H≢□→H⇩≢□ H≢□)
 
 ≈a-strengthen-0 : ∀ {Γ A B H}
   → Γ , A ⊢a B ≈ H ⇧ 0
@@ -203,17 +218,24 @@ subsumption : ∀ {Γ H e A H' H'' es As A'}
       → Γ ⊢a B ≈ τ A
       → Γ ⊢a τ A ⇛ e ⇛ B
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
-⊢a-to-≈a (⊢a-sub ⊢e x x₁) = x
+⊢a-to-≈a (⊢a-sub ⊢e x x₁ _) = x
 
-subsumption ⊢a-lit spl ch A≈H' = ⊢a-sub ⊢a-lit A≈H' pv-lit
-subsumption (⊢a-var x) spl ch A≈H' = ⊢a-sub (⊢a-var x) A≈H' pv-var
-subsumption (⊢a-ann ⊢e) spl ch A≈H' = ⊢a-sub (⊢a-ann ⊢e) A≈H' pv-ann
-subsumption (⊢a-app ⊢e) spl ch A≈H with ⊢a-to-≈a ⊢e
+□-dec : ∀ H
+  → Dec (H ≡ □)
+□-dec □ = yes refl
+□-dec (τ x) = no (λ ())
+□-dec (⟦ x ⟧⇒ H) = no (λ ())
+
+subsumption {H' = H'} ⊢e spl ch A≈H' with □-dec H'
+subsumption {H' = .□} ⊢e none-□ ch-none A≈H' | yes refl = ⊢e
+subsumption ⊢a-lit none-□ ch-none A≈H' | no ¬p = ⊢a-sub ⊢a-lit A≈H' pv-lit ¬p
+subsumption (⊢a-var x) spl ch A≈H' | no ¬p = ⊢a-sub (⊢a-var x) A≈H' pv-var ¬p
+subsumption (⊢a-ann ⊢e) spl ch A≈H' | no ¬p = ⊢a-sub (⊢a-ann ⊢e) A≈H' pv-ann ¬p
+subsumption (⊢a-app ⊢e) spl ch A≈H | no ¬p with ⊢a-to-≈a ⊢e
 ... | ≈hole ⊢e' A≈H' = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≈hole ⊢e' A≈H))
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H') =
+subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H') | no ¬p =
   ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈a-weaken {n≤l = z≤n} A≈H'))
-subsumption (⊢a-sub ⊢e x x₁) spl ch A≈H' = ⊢a-sub ⊢e A≈H' x₁
-
+subsumption (⊢a-sub ⊢e x x₁ H≢□) spl ch A≈H' | no ¬p = ⊢a-sub ⊢e A≈H' x₁ ¬p
 
 subsumption-0 : ∀ {Γ H e A}
   → Γ ⊢a □  ⇛ e ⇛ A
