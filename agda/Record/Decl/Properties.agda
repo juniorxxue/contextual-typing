@@ -177,6 +177,7 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-arr-∞ ≤2 ≤4) = ≤d-arr-∞ (≤d-trans ≤2 ≤1) (≤d-trans ≤3 ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-∞ ≤1 ≤3) (≤d-and ≤2 ≤4) = ≤d-and (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤2) (≤d-trans (≤d-arr-∞ ≤1 ≤3) ≤4)
 ≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇐ ≤1 ≤3) (≤d-arr-S⇐ ≤2 ≤4) = ≤d-arr-S⇐ ≤2 (≤d-trans ≤3 ≤4)
+≤d-trans {B = B ⇒ B₁} (≤d-arr-S⇒ x₁ x₂) (≤d-arr-S⇒ x x₃) = ≤d-arr-S⇒ x (≤d-trans x₂ x₃)
 
 ≤d-trans {B = B ⇒ B₁} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = B ⇒ B₁} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq

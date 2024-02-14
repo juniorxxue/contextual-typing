@@ -46,10 +46,14 @@ data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-rcd∞ : ∀ {A B l}
     → A ≤d ♭ ∞ # B
     → τ⟦ l ↦ A ⟧ ≤d ♭ ∞ # τ⟦ l ↦ B ⟧
-  ≤d-arr-S⇐ : ∀ {A B C D j}
-    → C ≤d ♭ ∞ # A
+  ≤d-arr-S⇐ : ∀ {A B D j}
+    → A ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
-    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D
+    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D -- this is wrong
+  ≤d-arr-S⇒ : ∀ {A B D i}
+    → A ≤d ♭ ∞ # A
+    → B ≤d i # D
+    → A ⇒ B ≤d S⇒ i # A ⇒ D    
   ≤d-rcd-Sl : ∀ {A B l j}
     → A ≤d ♭ j # B
     → τ⟦ l ↦ A ⟧ ≤d ♭ (Sl j) # (τ⟦ l ↦ B ⟧)

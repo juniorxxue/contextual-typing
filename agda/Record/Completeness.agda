@@ -105,6 +105,7 @@ complete-≤ ≤d-top (~j ~∞) = ≤a-top
 complete-≤ (≤d-arr-∞ B≤A B≤A₁) (~j ~∞) = ≤a-arr (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
 complete-≤ (≤d-rcd∞ B≤A) (~j ~∞) = ≤a-rcd (complete-≤ B≤A (~j ~∞))
 complete-≤ (≤d-arr-S⇐ B≤A B≤A₁) (~j (~S⇐ x x₁)) = ≤a-hint x (complete-≤ B≤A₁ (~j x₁))
+complete-≤ (≤d-arr-S⇒ x x₃) (~S⇒ x₁ x₂) = ≤a-hint (subsumption-0 x₁ ≤a-refl) (complete-≤ x₃ x₂)
 complete-≤ (≤d-rcd-Sl B≤A) (~j (~Sl x)) = ≤a-hint-l (complete-≤ B≤A (~j x))
 complete-≤ (≤d-and₁ B≤A x) newH = ≤a-and-l (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
 complete-≤ (≤d-and₂ B≤A x) newH = ≤a-and-r (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
