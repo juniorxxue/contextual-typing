@@ -34,6 +34,16 @@ data plusS⇒∞ : S.Counter → Set where
     → plusS⇒∞ i
     → plusS⇒∞ (S.S⇒ i)
 
+data plusS⇒∞A : S.Counter → Type → Set where
+
+  plusS⇒-base∞A : ∀ {A}
+    → plusS⇒∞A (S.♭ S.∞) A
+
+  plusS-S⇒∞A : ∀ {i A B}
+    → plusS⇒∞A i B
+    → plusS⇒∞A (S.S⇒ i) (A ⇒ B)
+
+
 req-plusS⇒ : ∀ e
   → plusS⇒ (req e)
 req-plusS⇒ (T.lit x) = plusS⇒-base
@@ -48,47 +58,73 @@ req-plusS⇒ (T.+i x) = plusS⇒-base
 req-plusS⇒ (T.+f x) = plusS⇒-base
 
 ≤d-refl∞' : ∀ {i A}
-  → plusS⇒∞ i
+  → plusS⇒∞A i A
   → A S.≤d i # A
-≤d-refl∞' plusS⇒-base∞ = S.≤d-refl∞
-≤d-refl∞' (plusS-S⇒∞ ps) = S.≤d-S⇒ (≤d-refl∞' ps)
+≤d-refl∞' plusS⇒-base∞A = S.≤d-refl∞
+≤d-refl∞' (plusS-S⇒∞A ps) = S.≤d-arr-S⇒ S.≤d-refl∞ (≤d-refl∞' ps)
 
-plusS∞-¬Z : ∀ {i}
-  → plusS⇒∞ i
+plusS∞-¬Z : ∀ {i A}
+  → plusS⇒∞A i A
   → i ≢ S.♭ S.Z
-plusS∞-¬Z plusS⇒-base∞ = λ ()
-plusS∞-¬Z (plusS-S⇒∞ ps) = λ ()
+plusS∞-¬Z plusS⇒-base∞A = λ ()
+plusS∞-¬Z (plusS-S⇒∞A ps) = λ ()
+
 
 ≤d-∞-z-plus : ∀ {i i' B A}
   → B S.≤d i # A
   → plusS⇒ i
-  → plusS⇒∞ i'
+  → plusS⇒∞A i' A
   → B S.≤d i' # A
 ≤d-∞-z-plus S.≤d-Z plusS⇒-base ps' = ≤d-refl∞' ps'
+≤d-∞-z-plus (S.≤d-arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.≤d-arr-∞ (≤d-∞-z-plus S.≤d-Z plusS⇒-base plusS⇒-base∞A)
+                                                                  (≤d-∞-z-plus B≤A₁ ps plusS⇒-base∞A)
+≤d-∞-z-plus (S.≤d-arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.≤d-arr-S⇒ B≤A (≤d-∞-z-plus B≤A₁ ps ps')
+≤d-∞-z-plus (S.≤d-and₁ B≤A x) ps ps' = S.≤d-and₁ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
+≤d-∞-z-plus (S.≤d-and₂ B≤A x) ps ps' = S.≤d-and₂ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
+
+{-
+≤d-∞-z-plus S.≤d-Z plusS⇒-base ps' = {!!}
 ≤d-∞-z-plus (S.≤d-and₁ B≤A x) plusS⇒-base ps' = ⊥-elim (x refl)
 ≤d-∞-z-plus (S.≤d-and₂ B≤A x) plusS⇒-base ps' = ⊥-elim (x refl)
-≤d-∞-z-plus (S.≤d-S⇒ B≤A) (plusS-S⇒ ps) ps' = ≤d-∞-z-plus B≤A ps ps'
-≤d-∞-z-plus (S.≤d-and₁ B≤A x) (plusS-S⇒ ps) ps' = S.≤d-and₁ (≤d-∞-z-plus B≤A (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
-≤d-∞-z-plus (S.≤d-and₂ B≤A x) (plusS-S⇒ ps) ps' = S.≤d-and₂ (≤d-∞-z-plus B≤A (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
+-- ≤d-∞-z-plus (S.≤d-S⇒ B≤A) (plusS-S⇒ ps) ps' = ≤d-∞-z-plus B≤A ps ps'
+≤d-∞-z-plus (S.≤d-and₁ B≤A x) (plusS-S⇒ ps) ps' = S.≤d-and₁ (≤d-∞-z-plus B≤A (plusS-S⇒ ps) ps') (plusS∞-¬Z ?)
+≤d-∞-z-plus (S.≤d-and₂ B≤A x) (plusS-S⇒ ps) ps' = S.≤d-and₂ (≤d-∞-z-plus B≤A (plusS-S⇒ ps) ps') (plusS∞-¬Z ?)
+-}
 
+{-
 ⊢d-sub-∞' : ∀ {Γ i e A i'}
   → Γ S.⊢d i # e ⦂ A
   → plusS⇒ i
-  → plusS⇒∞ i'
+  → plusS⇒∞ i' -- i' might be consistent with A
   → Γ S.⊢d i' # e ⦂ A
 ⊢d-sub-∞' ⊢e plusS⇒-base plusS⇒-base∞ = S.⊢d-sub ⊢e S.≤d-refl∞ (λ ())
-⊢d-sub-∞' ⊢e plusS⇒-base (plusS-S⇒∞ ps') = S.⊢d-sub ⊢e (≤d-refl∞' (plusS-S⇒∞ ps')) (λ ())
+⊢d-sub-∞' ⊢e plusS⇒-base (plusS-S⇒∞ ps') = S.⊢d-sub ⊢e {!!} (λ ())
 ⊢d-sub-∞' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) plusS⇒-base∞ = S.⊢d-lam₁ (⊢d-sub-∞' ⊢e ps plusS⇒-base∞)
 ⊢d-sub-∞' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) (plusS-S⇒∞ ps') = S.⊢d-lam₂ (⊢d-sub-∞' ⊢e ps ps')
 ⊢d-sub-∞' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) plusS⇒-base∞ = S.⊢d-app⇒ (⊢d-sub-∞' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞ plusS⇒-base∞)) ⊢e₁
 ⊢d-sub-∞' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) (plusS-S⇒∞ ps') = S.⊢d-app⇒ (⊢d-sub-∞' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞ (plusS-S⇒∞ ps'))) ⊢e₁
-⊢d-sub-∞' (S.⊢d-sub ⊢e x x₁) (plusS-S⇒ ps) ps' = S.⊢d-sub ⊢e (≤d-∞-z-plus x (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
+⊢d-sub-∞' (S.⊢d-sub ⊢e x x₁) (plusS-S⇒ ps) ps' = {!!}
+-- S.⊢d-sub ⊢e (≤d-∞-z-plus x (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
+-}
+
+⊢d-sub-∞'' : ∀ {Γ i e A i'}
+  → Γ S.⊢d i # e ⦂ A
+  → plusS⇒ i
+  → plusS⇒∞A i' A
+  → Γ S.⊢d i' # e ⦂ A
+⊢d-sub-∞'' ⊢e plusS⇒-base plusS⇒-base∞A = S.⊢d-sub ⊢e S.≤d-refl∞ (λ ())
+⊢d-sub-∞'' ⊢e plusS⇒-base (plusS-S⇒∞A ps') = S.⊢d-sub ⊢e (S.≤d-arr-S⇒ S.≤d-refl∞ (≤d-refl∞' ps')) λ ()
+⊢d-sub-∞'' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢d-lam₁ (⊢d-sub-∞'' ⊢e ps plusS⇒-base∞A)
+⊢d-sub-∞'' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢d-lam₂ (⊢d-sub-∞'' ⊢e ps ps')
+⊢d-sub-∞'' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢d-app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A plusS⇒-base∞A)) ⊢e₁
+⊢d-sub-∞'' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢d-app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A (plusS-S⇒∞A ps'))) ⊢e₁
+⊢d-sub-∞'' (S.⊢d-sub ⊢e x x₁) (plusS-S⇒ ps) ps' = S.⊢d-sub ⊢e (≤d-∞-z-plus x (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
   
 ⊢d-sub-∞ : ∀ {Γ i e A}
   → Γ S.⊢d i # e ⦂ A
   → plusS⇒ i
   → Γ S.⊢d S.♭ S.∞ # e ⦂ A
-⊢d-sub-∞ ⊢e ps = ⊢d-sub-∞' ⊢e ps plusS⇒-base∞
+⊢d-sub-∞ ⊢e ps = ⊢d-sub-∞'' ⊢e ps plusS⇒-base∞A
 
 infix 3 _⊢_⦂_⟶_
 

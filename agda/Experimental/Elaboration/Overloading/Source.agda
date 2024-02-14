@@ -32,9 +32,13 @@ infix 5 _≤d_#_
 data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-Z : ∀ {A}
     → A ≤d ♭ Z # A
+  -- warning! this is appended
+{-  
   ≤d-S⇒ : ∀ {A B i}
     → A ≤d i # B
     → A ≤d (S⇒ i) # B
+-}    
+    
   ≤d-int∞ :
       Int ≤d ♭ ∞ # Int
   ≤d-float∞ :
@@ -48,7 +52,11 @@ data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-arr-S⇐ : ∀ {A B C D j}
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
-    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D  
+    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D -- ?
+  ≤d-arr-S⇒ : ∀ {A B C D i}
+    → C ≤d ♭ ∞ # A
+    → B ≤d i # D
+    → A ⇒ B ≤d S⇒ i # A ⇒ D     
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → j ≢ ♭ Z
