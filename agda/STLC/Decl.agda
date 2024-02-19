@@ -14,6 +14,10 @@ data Counter : Set where
   Z : Counter
   S : Counter → Counter
 
+data ¬Z : Counter → Set where
+  ¬Z-∞ : ¬Z ∞
+  ¬Z-S : ∀ {j} → ¬Z (S j)
+
 infix 4 _⊢d_#_⦂_
 
 data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
@@ -49,5 +53,5 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-sub : ∀ {Γ e A j}
     → Γ ⊢d Z # e ⦂ A
-    → j ≢ Z
+    → ¬Z j
     → Γ ⊢d j # e ⦂ A

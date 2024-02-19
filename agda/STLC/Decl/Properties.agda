@@ -65,6 +65,6 @@ open import STLC.Properties
 ⊢d-sub' : ∀ {Γ e A j}
   → Γ ⊢d Z # e ⦂ A
   → Γ ⊢d j # e ⦂ A
-⊢d-sub' {j = ∞} ⊢e = ⊢d-sub ⊢e (λ ())
+⊢d-sub' {j = ∞} ⊢e = ⊢d-sub ⊢e ¬Z-∞
 ⊢d-sub' {j = Z} ⊢e = ⊢e
-⊢d-sub' {j = S j} ⊢e = ⊢d-sub ⊢e (λ ())
+⊢d-sub' {j = S j} ⊢e = ⊢d-sub ⊢e ¬Z-S

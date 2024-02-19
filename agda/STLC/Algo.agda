@@ -10,6 +10,10 @@ data Hint : Set where
   τ : Type → Hint
   ⟦_⟧⇒_ : Term → Hint → Hint
 
+data ¬□ : Hint → Set where
+  ¬□-τ : ∀ {A} → ¬□ (τ A)
+  ¬□-term : ∀ {e H} → ¬□ (⟦ e ⟧⇒ H)
+
 infixl 7 _⇧_
 _⇧_ : Hint → ℕ → Hint
 τ A ⇧ n = τ A
@@ -83,6 +87,7 @@ data _⊢a_⇛_⇛_ where
     → Γ ⊢a □ ⇛ e ⇛ A
     → Γ ⊢a A ≈ H
     → pv e
+    → ¬□ H
     → Γ ⊢a H ⇛ e ⇛ A
 
 ----------------------------------------------------------------------
