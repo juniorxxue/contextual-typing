@@ -10,7 +10,6 @@ data TTerm : Set where
   tlam : TTerm → TTerm
   tapp : TTerm → TTerm → TTerm
 
-{-
 infix  4  _⊢_⦂_
 
 data _⊢_⦂_ : Context → TTerm → Type → Set where
@@ -33,7 +32,6 @@ data _⊢_⦂_ : Context → TTerm → Type → Set where
     → Γ ⊢ e₂ ⦂ A
       -------------
     → Γ ⊢ tapp e₁ e₂ ⦂ B
--}
 
 req : TTerm → Counter
 req (tlit x) = Z
@@ -138,3 +136,33 @@ annotability (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with r
                                                             | req e₂ | req-plusS⇒ e₂
                                                             | annotability ⊢e₁ | annotability ⊢e₂
 ... | S r1 | r1S | S r2 | r2S | ⊢e₁' | ⊢e₂' = ⊢d-app₂ ⊢e₁' (⊢d-ann (⊢d-sub-∞ ⊢e₂' r2S))
+
+
+annotatability : ∀ {Γ e A e'}
+  → Γ ⊢1 e ⦂ A ⟶ e'
+  → Γ ⊢d Z # (e' ⦂ A) ⦂ A
+annotatability {e = e} ⊢e = ⊢d-ann (⊢d-sub-∞ (annotability ⊢e) (req-plusS⇒ e))  
+
+∥_∥ : Term → TTerm
+∥ lit x ∥ = tlit x
+∥ ` x ∥ = tvar x
+∥ ƛ e ∥ = tlam (∥ e ∥)
+∥ e₁ · e₂ ∥ = tapp ∥ e₁ ∥ ∥ e₂ ∥
+∥ e ⦂ A ∥ = ∥ e ∥
+
+data Complete (Γ : Context) (e : TTerm) (A : Type) : Set where
+
+  ok : ∀ {e'}
+    → (eq : ∥ e' ∥ ≡ e)
+    → (⊢e : Γ ⊢d Z # e' ⦂ A)
+    → Complete Γ e A
+
+complete : ∀ {Γ e A}
+  → Γ ⊢ e ⦂ A
+  → Complete Γ e A
+complete ⊢n = ok refl ⊢d-int
+complete (⊢` x) = ok refl (⊢d-var x)
+complete (⊢ƛ ⊢e) with complete ⊢e
+... | ok eq ⊢e₁ = ok (cong tlam eq) (⊢d-ann (⊢d-lam-∞ (⊢d-sub ⊢e₁ (λ ()))))
+complete (⊢· ⊢e₁ ⊢e₂) with complete ⊢e₁ | complete ⊢e₂
+... | ok eq₁ ⊢e₁' | ok eq₂ ⊢e₂' = ok (cong₂ tapp eq₁ eq₂) (⊢d-app₁ ⊢e₁' (⊢d-sub ⊢e₂' (λ ())))
