@@ -144,94 +144,56 @@ Proof.
   eapply eqt_dec_k1_k2; eauto.
 Qed.
 
-Lemma inCon_dec : forall Gamma x A,
-    inCon Gamma x A \/ ~ (inCon Gamma x A).
+Lemma inCon_dec : forall Gamma x,
+    (exists A, inCon Gamma x A) \/ ~ (exists A, inCon Gamma x A).
 Proof.
-  intros.
+Admitted. (* this is proved *)
+
+Inductive allsmaller : hint -> nat -> Prop :=
+| as_empty:
+  forall k, allsmaller Noth k
+| as_type :
+  forall A k, allsmaller (TT A) k
+| as_term :
+  forall H e k,
+    size_e e < k ->
+    allsmaller H k ->
+    allsmaller (Hole e H) k               
+.
+
+Notation "H << k" := (allsmaller H k) (at level 40).
+
+(* dec of matching is not a exist form since they're all inputs *)
+Lemma awf_decidable : forall H Gamma k A,
+    allsmaller H (k + size_h H) ->
+    (awf Gamma A H) \/ ~ (awf Gamma A H).
+Proof.
+  induction H; intros.
+  - left. econstructor.
+  - destruct (eqt_dec t A).
+    + subst. left. econstructor.
+    + right. intro Inv. dependent destruction Inv.
+      apply H0. reflexivity.
+  - dependent destruction A.
+    + right. intro Inv. dependent destruction Inv.
+    + dependent destruction H0.
+      (* here we need the dec of typing, and the measure we can only use is H1 *)
 Admitted.
       
-Lemma a_decidable_h_e_zero : forall Gamma e A H,
-    size_h H = 0 ->
-    size_e e = 0 ->
-    aty Gamma H e A \/ ~ (aty Gamma H e A).
-Proof.
-  intros.
-  destruct H; destruct e; try (inversion H0; inversion H1).
-  - destruct A.
-    + left. eapply A_Int.
-    + right. intro Inv. inversion Inv.
-      apply H3. reflexivity.
-  - destruct (inCon_dec Gamma n A).
-    + left. eapply A_Var; eauto.
-    + right. intros Rev. dependent destruction Rev.
-      * apply H. apply H2.
-      * apply H3. reflexivity.
-   - destruct t; destruct A.
-    + left. eapply A_Sub; eauto. intro Rev. inversion Rev. econstructor.
-    + right. intro Rev. dependent destruction Rev.
-      dependent destruction Rev. eapply H2. reflexivity.
-    + right. intros Rev. dependent destruction Rev.
-      dependent destruction H4.
-    + right. intros Rev. dependent destruction Rev.
-      dependent destruction Rev. dependent destruction H3.
-      apply H2. reflexivity.
-  - destruct (eqt_dec t A); destruct (inCon_dec Gamma n A).
-    + subst. left. apply A_Sub; eauto.
-      intros Rev. inversion Rev. econstructor.
-    + subst. right. intros Rev.
-      dependent destruction Rev.
-      dependent destruction Rev.
-      * apply H2. apply H.
-      * apply H3. reflexivity.
-    + right. intros Rev.
-      dependent destruction Rev.
-      dependent destruction H6. apply H. reflexivity.
-    + right. intros Rev.
-      dependent destruction Rev.
-      dependent destruction H6. apply H. reflexivity.
-Qed.
-
-Lemma a_decidable_h_zero : forall Gamma e H,
-    size_h H = 0 ->
+Lemma aty_decidable : forall k Gamma e H,
+    size_e e < k ->
     (exists A, aty Gamma H e A) \/ ~ (exists A, aty Gamma H e A).
 Proof.
-  intros.
-  destruct H; try (inversion H0).
-Admitted.
-  
-Lemma a_decidable : forall k1 k2 Gamma e H,
-    size_e e < k1 ->
-    size_h H < k2 ->
-    (exists A, aty Gamma H e A) \/ ~ (exists A, aty Gamma H e A).
-Proof.
-  induction k1; induction k2; intros.
-  lia. lia. lia.
+  induction k; intros.
+  lia. 
   destruct e.
   - admit.
   - admit.
   - admit.
+  - (* App Case *) admit.
   - simpl in *.
-    assert (sz1 : size_e e1 < k1). lia.
-    assert (sz2 : size_h (Hole e2 H) < S (S (size_h H))). simpl. lia.
-    pose proof (IHk1 (2 + (size_h H)) Gamma e1 (Hole e2 H) sz1 sz2).
-    destruct H2.
-    + left. destruct H2.
-      admit.
-    + right. intros Rev. destruct Rev.
-      apply H2.
-      dependent destruction H3.
-      * exists (Arr A B). assumption.
-      * inversion H5.
-  - simpl in *.
-    assert (sz1 : size_e e < k1). lia.
-    assert (sz2 : size_h (TT t) < 2 + size_h H). simpl. lia.
-    pose proof (IHk1 (2 + (size_h H)) Gamma e (TT t) sz1 sz2) as IHUlt.
-    destruct H.
-    + destruct IHUlt.
-      * left. destruct H.
-        exists t. eapply A_Ann. apply H.
-      * right. intros Inv. destruct Inv. dependent destruction H2.
-        ++ apply H. exists B. apply H2.
-        ++ apply H4. reflexivity.
-    + 
-
+    pose proof (IHk Gamma e (TT t)) as IH. destruct IH. lia.
+    + destruct H1. left.
+      pose proof (awf_decidable H Gamma k t).
+      (* here we sending the measure to matching, the measure is k *)
+Admitted.
