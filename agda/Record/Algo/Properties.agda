@@ -475,3 +475,4 @@ subsumption {H' = H'} (⊢a-prj ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a �
 ≤a-spl-τ (≤a-and-l A≤H x) spl = ≤a-spl-τ A≤H spl
 ≤a-spl-τ (≤a-and-r A≤H x) spl = ≤a-spl-τ A≤H spl
 ≤a-spl-τ (≤a-and A≤H A≤H₁) none-τ = refl
+

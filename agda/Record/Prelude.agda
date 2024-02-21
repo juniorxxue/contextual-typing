@@ -12,6 +12,7 @@ open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renamin
 open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom) renaming (length to len) public
 open import Data.List.Properties using (map-++) public
 open import Agda.Builtin.Float renaming (Float to 𝔽; primFloatPlus to _++f_) public
+open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
 
 m+1≤n→m≤n : ∀ {m n}
   → suc m ≤ n
