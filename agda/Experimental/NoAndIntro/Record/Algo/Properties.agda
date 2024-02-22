@@ -91,6 +91,17 @@ H≢□→H⇩≢□ {τ x} neq = neq
 H≢□→H⇩≢□ {⟦ x ⟧⇒ H} neq = λ ()
 H≢□→H⇩≢□ {⌊ x ⌋⇒ H} neq = λ ()
 
+rs≢rnil→rs↓r : ∀ {rs n}
+  → rs ≢ rnil
+  → rs ↓r n ≢ rnil
+rs≢rnil→rs↓r {rnil} {n} rs≢rnil = ⊥-elim (rs≢rnil refl)
+rs≢rnil→rs↓r {r⟦ x ↦ x₁ ⟧ rs} {n} rs≢rnil = λ ()
+
+rs≢rnil→rs↑r : ∀ {rs n}
+  → rs ≢ rnil
+  → rs ↑r n ≢ rnil
+rs≢rnil→rs↑r {rnil} {n} rs≢rnil = ⊥-elim (rs≢rnil refl)
+rs≢rnil→rs↑r {r⟦ x ↦ x₁ ⟧ rs} {n} rs≢rnil = λ ()
 
 infix 4 _~⇧~_
 data _~⇧~_ : Hint → ℕ → Set where
@@ -201,7 +212,7 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 
 ⊢r-weaken ⊢a-nil = ⊢a-nil
 ⊢r-weaken (⊢a-one x) = ⊢a-one (⊢a-weaken x)
-⊢r-weaken (⊢a-cons x ⊢r) = ⊢a-cons (⊢a-weaken x) (⊢r-weaken ⊢r)
+⊢r-weaken (⊢a-cons x ⊢r rs≢) = ⊢a-cons (⊢a-weaken x) (⊢r-weaken ⊢r) (rs≢rnil→rs↑r rs≢)
 
 up : ℕ → Apps → Apps
 up n [] = []
@@ -303,7 +314,7 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 
 ⊢r-strengthen ⊢a-nil sd n≤l = ⊢a-nil
 ⊢r-strengthen (⊢a-one x) (sdr-cons x₁ sd) n≤l = ⊢a-one (⊢a-strengthen x x₁ sdh-□ n≤l)
-⊢r-strengthen (⊢a-cons x ⊢r) (sdr-cons x₁ sd) n≤l = ⊢a-cons (⊢a-strengthen x x₁ sdh-□ n≤l) (⊢r-strengthen ⊢r sd n≤l)
+⊢r-strengthen (⊢a-cons x ⊢r rs≢) (sdr-cons x₁ sd) n≤l = ⊢a-cons (⊢a-strengthen x x₁ sdh-□ n≤l) (⊢r-strengthen ⊢r sd n≤l) (rs≢rnil→rs↓r rs≢)
 
 ≤a-strengthen-0 : ∀ {Γ A B C H}
   → Γ , A ⊢a B ≤ H ⇧ 0 ⇝ C

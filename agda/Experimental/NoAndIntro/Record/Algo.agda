@@ -163,6 +163,7 @@ data _⊢r_⇛_⇛_ where
   ⊢a-cons : ∀ {Γ e A Bs rs l}
     → Γ ⊢a □ ⇛ e ⇛ A
     → Γ ⊢r □ ⇛ rs ⇛ Bs
+    → rs ≢ rnil
     → Γ ⊢r □ ⇛ r⟦ l ↦ e ⟧ rs ⇛ τ⟦ l ↦ A ⟧ & Bs
 
 
