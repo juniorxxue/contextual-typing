@@ -169,7 +169,6 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 
 ≤a-weaken ≤a-int = ≤a-int
 ≤a-weaken ≤a-float = ≤a-float
-≤a-weaken ≤a-base = ≤a-base
 ≤a-weaken ≤a-top = ≤a-top
 ≤a-weaken ≤a-□ = ≤a-□
 ≤a-weaken (≤a-arr C≤A B≤D) = ≤a-arr (≤a-weaken C≤A) (≤a-weaken B≤D)
@@ -197,7 +196,6 @@ H≢□-⇧ {⟦ x ⟧⇒ H} H≢□ = λ ()
 ⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
 ... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
 ⊢a-weaken (⊢a-sub pv ⊢e B≤H H≢□) = ⊢a-sub (↑-pv-prv pv) (⊢a-weaken ⊢e) (≤a-weaken B≤H) (H≢□→H⇧≢□ H≢□)
-⊢a-weaken (⊢a-& ⊢e₁ ⊢e₂) = ⊢a-& (⊢a-weaken ⊢e₁) (⊢a-weaken ⊢e₂)
 ⊢a-weaken {e = 𝕣 x} (⊢a-rcd ⊢rs) = ⊢a-rcd (⊢r-weaken ⊢rs)
 ⊢a-weaken {e = e 𝕡 x} (⊢a-prj ⊢e) = ⊢a-prj (⊢a-weaken ⊢e)
 
@@ -240,7 +238,6 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 
 ≤a-id ≤a-int none-τ = refl
 ≤a-id ≤a-float none-τ = refl
-≤a-id ≤a-base none-τ = refl
 ≤a-id ≤a-top none-τ = refl
 ≤a-id (≤a-arr A≤H A≤H₁) none-τ = refl
 ≤a-id (≤a-rcd A≤H) none-τ = refl
@@ -250,10 +247,9 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ≤a-id (≤a-and-r A≤H x) spl = ≤a-id A≤H spl
 ≤a-id (≤a-and A≤H A≤H₁) none-τ = refl
 ⊢a-id (⊢a-app ⊢e) spl = ⊢a-id ⊢e (have-a spl)
-⊢a-id (⊢a-lam₁ ⊢e) none-τ = refl
+⊢a-id (⊢a-lam₁ ⊢e) none-τ rewrite ⊢a-id-0 ⊢e = refl
 ⊢a-id (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = ⊢a-id ⊢e₁ (spl-weaken spl)
 ⊢a-id (⊢a-sub pe ⊢e A≤H H≢□) spl = ≤a-id A≤H spl
-⊢a-id (⊢a-& ⊢e ⊢e₁) none-τ = refl
 ⊢a-id (⊢a-prj ⊢e) spl = ⊢a-id ⊢e (have-l spl)
 
 ----------------------------------------------------------------------
@@ -284,7 +280,6 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 
 ≤a-strengthen ≤a-int sdh n≤l = ≤a-int
 ≤a-strengthen ≤a-float sdh n≤l = ≤a-float
-≤a-strengthen ≤a-base sdh n≤l = ≤a-base
 ≤a-strengthen ≤a-top sdh n≤l = ≤a-top
 ≤a-strengthen ≤a-□ sdh n≤l = ≤a-□
 ≤a-strengthen (≤a-arr A≤H A≤H₁) sdh n≤l = ≤a-arr (≤a-strengthen A≤H sdh-τ n≤l) (≤a-strengthen A≤H₁ sdh-τ n≤l)
@@ -303,7 +298,6 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 ⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
 ... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
 ⊢a-strengthen (⊢a-sub pv ⊢e A≤H H≢□) sd sdh n≤l = ⊢a-sub (↓-pv-prv pv) (⊢a-strengthen ⊢e sd sdh-□ n≤l) (≤a-strengthen A≤H sdh n≤l) (H≢□→H⇩≢□ H≢□)
-⊢a-strengthen (⊢a-& ⊢e₁ ⊢e₂) sd sdh n≤l = ⊢a-& (⊢a-strengthen ⊢e₁ sd sdh-τ n≤l) (⊢a-strengthen ⊢e₂ sd sdh-τ n≤l)
 ⊢a-strengthen (⊢a-rcd x₃) (sd-rcd x) x₁ n≤l = ⊢a-rcd (⊢r-strengthen x₃ x n≤l)
 ⊢a-strengthen (⊢a-prj x₃) (sd-prj x) x₁ n≤l = ⊢a-prj (⊢a-strengthen x₃ x (sdh-l x₁) n≤l)
 
@@ -335,7 +329,6 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
   → Γ ⊢a B ≤ H ⇝ B
 ≤a-refined ≤a-int = ≤a-int
 ≤a-refined ≤a-float = ≤a-float
-≤a-refined ≤a-base = ≤a-base
 ≤a-refined ≤a-top = ≤a-top
 ≤a-refined ≤a-□ = ≤a-□
 ≤a-refined (≤a-arr A≤H A≤H₁) = ≤a-arr ≤a-refl (≤a-refined A≤H₁)
@@ -419,7 +412,6 @@ subsumption-0 ⊢e A≤H = subsumption ⊢e none-□ ch-none A≤H
       → Γ ⊢a τ A ⇛ e ⇛ B'
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
 ⊢a-to-≤a (⊢a-sub x ⊢e x₁ H≢□) = ≤a-refined x₁
-⊢a-to-≤a (⊢a-& ⊢e ⊢e₁) = ≤a-and (≤a-and-l (⊢a-to-≤a ⊢e) (λ ())) (≤a-and-r (⊢a-to-≤a ⊢e₁) (λ ()))
 ⊢a-to-≤a (⊢a-rcd x) = ≤a-□
 ⊢a-to-≤a (⊢a-prj ⊢e) with ⊢a-to-≤a ⊢e
 ... | ≤a-hint-l r = r
@@ -458,15 +450,13 @@ subsumption {H' = H'} (⊢a-prj ⊢e) spl ch A≤H' | no ¬p with ⊢a-to-≤a �
   → T ≡ A'
 
 ⊢a-spl-τ (⊢a-app ⊢e) spl = ⊢a-spl-τ ⊢e (have-a spl)
-⊢a-spl-τ (⊢a-lam₁ ⊢e) none-τ = refl
+⊢a-spl-τ (⊢a-lam₁ ⊢e) none-τ rewrite ⊢a-spl-τ ⊢e none-τ = refl
 ⊢a-spl-τ (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = ⊢a-spl-τ ⊢e₁ (spl-weaken spl)
 ⊢a-spl-τ (⊢a-sub x ⊢e x₁ _) spl = ≤a-spl-τ x₁ spl
-⊢a-spl-τ (⊢a-& ⊢e ⊢e₁) none-τ = refl
 ⊢a-spl-τ (⊢a-prj ⊢e) spl = ⊢a-spl-τ ⊢e (have-l spl)
 
 ≤a-spl-τ ≤a-int none-τ = refl
 ≤a-spl-τ ≤a-float none-τ = refl
-≤a-spl-τ ≤a-base none-τ = refl
 ≤a-spl-τ ≤a-top none-τ = refl
 ≤a-spl-τ (≤a-arr A≤H A≤H₁) none-τ = refl
 ≤a-spl-τ (≤a-rcd A≤H) none-τ = refl

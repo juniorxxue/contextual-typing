@@ -28,7 +28,6 @@ open import Record.Properties
 ⊢d-weaken (⊢d-app⇐ ⊢f ⊢e) n≤l = ⊢d-app⇐ (⊢d-weaken ⊢f n≤l) (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-app⇒ ⊢f ⊢e) n≤l = ⊢d-app⇒ (⊢d-weaken ⊢f n≤l) (⊢d-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-ann ⊢e) n≤l = ⊢d-ann (⊢d-weaken ⊢e n≤l)
-⊢d-weaken (⊢d-& ⊢e₁ ⊢e₂) n≤l = ⊢d-& (⊢d-weaken ⊢e₁ n≤l) (⊢d-weaken ⊢e₂ n≤l)
 ⊢d-weaken (⊢d-sub ⊢e A≤B neq) n≤l = ⊢d-sub (⊢d-weaken ⊢e n≤l) A≤B neq
 ⊢d-weaken (⊢d-rcd ⊢e) n≤l = ⊢d-rcd (⊢r-weaken ⊢e n≤l)
 ⊢d-weaken (⊢d-prj ⊢e) n≤l = ⊢d-prj (⊢d-weaken ⊢e n≤l)
@@ -67,7 +66,6 @@ open import Record.Properties
 ⊢d-strengthen (⊢d-app⇐ ⊢f ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app⇐ (⊢d-strengthen ⊢f sd n≤l) (⊢d-strengthen ⊢e sd₁ n≤l)
 ⊢d-strengthen (⊢d-app⇒ ⊢f ⊢e) (sd-app sd sd₁) n≤l = ⊢d-app⇒ (⊢d-strengthen ⊢f sd n≤l) (⊢d-strengthen ⊢e sd₁ n≤l)
 ⊢d-strengthen (⊢d-ann ⊢e) (sd-ann sd) n≤l = ⊢d-ann (⊢d-strengthen ⊢e sd n≤l)
-⊢d-strengthen (⊢d-& ⊢e₁ ⊢e₂) sd n≤l = ⊢d-& (⊢d-strengthen ⊢e₁ sd n≤l) (⊢d-strengthen ⊢e₂ sd n≤l)
 ⊢d-strengthen (⊢d-sub ⊢e A≤B neq) sd n≤l = ⊢d-sub (⊢d-strengthen ⊢e sd n≤l) A≤B neq
 ⊢d-strengthen (⊢d-rcd ⊢e) (sd-rcd x) n≤l = ⊢d-rcd (⊢r-strengthen ⊢e x n≤l)
 ⊢d-strengthen (⊢d-prj ⊢e) (sd-prj sd) n≤l = ⊢d-prj (⊢d-strengthen ⊢e sd n≤l)
@@ -162,10 +160,6 @@ data wf-j : Type → Counter → Set where
 ≤d-trans {B = Float} ≤d-float∞ ≤2 = ≤2
 ≤d-trans {B = Float} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = Float} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
-≤d-trans {B = * x} ≤d-Z ≤d-Z = ≤d-Z
-≤d-trans {B = * x} ≤d-base∞ ≤2 = ≤2
-≤d-trans {B = * x} (≤d-and₁ ≤1 neq) ≤2 = ≤d-and₁ (≤d-trans ≤1 ≤2) neq
-≤d-trans {B = * x} (≤d-and₂ ≤1 neq) ≤2 = ≤d-and₂ (≤d-trans ≤1 ≤2) neq
 ≤d-trans {B = Top} ≤d-Z ≤d-Z = ≤d-Z
 ≤d-trans {B = Top} ≤d-top ≤d-top = ≤d-top
 ≤d-trans {B = Top} ≤d-top (≤d-and ≤2 ≤3) = ≤d-and (≤d-trans ≤d-top ≤2) (≤d-trans ≤d-top ≤3)

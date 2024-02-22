@@ -59,7 +59,6 @@ size-counter (S⇒ i) = 1 + size-counter i
 size-type : Type → ℕ
 size-type Int = 0
 size-type Float = 0
-size-type (* x) = 0
 size-type Top = 0
 size-type (A ⇒ B) = 1 + size-type A + size-type B
 size-type (A & B) = 1 + size-type A + size-type B
@@ -237,9 +236,6 @@ subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {i = ♭ (Sl j)} sz₁ sz₂ s
  ⊢d-sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) xs x sz₁ (size-ccounter>0 {j = j} (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
 subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {i = S⇒ i} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B j≢Z) ⊢2 =
   ⊢d-sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) xs x sz₁ (size-counter>0 {i = i} (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢d-& {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
-  ⊢d-& (subst-3-app (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ (size-type-+-l {A = A} {B = B} (<-pred sz₃)) ⊢1 ⊢2)
-       (subst-3-app (suc k₁) (suc k₂) k₃ xs x sz₁ sz₂ (size-type-+-r {A = A} {B = B} (<-pred sz₃)) ⊢3 ⊢2)
 
 subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l {i = ♭ Z} sz₁ sz₂ sz₃ (⊢d-sub ⊢1 A≤B i≢Z) ⊢2 = ⊥-elim (i≢Z refl)
 subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l {i = ♭ ∞} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B i≢Z) ⊢2 =
@@ -250,9 +246,6 @@ subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l {i = ♭ (Sl j)} sz₁ sz₂ s
  ⊢d-sub' (subst-3-prj (suc k₁) k₂ (suc (size-type B)) xs l sz₁ (size-ccounter>0 {j = j} (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
 subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l {i = S⇒ i} sz₁ sz₂ sz₃ (⊢d-sub {B = B} ⊢1 A≤B i≢Z) ⊢2 =
   ⊢d-sub' (subst-3-prj (suc k₁) k₂ (suc (size-type B)) xs l sz₁ (size-counter>0 {i = i} (<-pred sz₂)) (s≤s m≤m) ⊢1 ⊢2) A≤B
-subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l sz₁ sz₂ sz₃ (⊢d-& {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
-  ⊢d-& (subst-3-prj (suc k₁) (suc k₂) k₃ xs l sz₁ sz₂ (size-type-+-l {A = A} {B = B} (<-pred sz₃)) ⊢1 ⊢2)
-       (subst-3-prj (suc k₁) (suc k₂) k₃ xs l sz₁ sz₂ (size-type-+-r {A = A} {B = B} (<-pred sz₃)) ⊢3 ⊢2)
 subst-3-prj (suc k₁) (suc k₂) (suc k₃) xs l sz₁ sz₂ sz₃ (⊢d-prj {l = l} {A = A} ⊢1) ⊢2 =
   let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A))) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
   in (⊢d-prj ind-e₁)
@@ -344,8 +337,8 @@ sound-inf-0 : ∀ {Γ e A}
   → Γ ⊢d ♭ Z # e ⦂ A
 sound-inf-0 ⊢e = sound-inf ⊢e none-□
 
-sound-chk-0 : ∀ {Γ e A}
-  → Γ ⊢a τ A ⇛ e ⇛ A
+sound-chk-0 : ∀ {Γ e A B}
+  → Γ ⊢a τ A ⇛ e ⇛ B
   → Γ ⊢d ♭ ∞ # e ⦂ A
 sound-chk-0 ⊢e = sound-chk ⊢e none-τ
 
@@ -369,7 +362,6 @@ sound-chk (⊢a-app ⊢e) spl = sound-chk ⊢e (have-a spl)
 sound-chk (⊢a-lam₁ ⊢e) none-τ = ⊢d-lam₁ (sound-chk ⊢e none-τ)
 sound-chk {es = e ∷a es} (⊢a-lam₂ ⊢e ⊢e₁) (have-a spl) = subst es (sound-chk ⊢e₁ (spl-weaken spl)) (sound-inf-0 ⊢e)
 sound-chk ⊢e'@(⊢a-sub pv-e ⊢e A≤H H≢□) spl rewrite ⊢a-spl-τ ⊢e' spl = app-elim' (⊢d-sub' (sound-inf-0 ⊢e) (sound-≤-chk A≤H spl)) spl (sound-es A≤H spl)
-sound-chk (⊢a-& ⊢e ⊢e₁) none-τ = ⊢d-& (sound-chk ⊢e none-τ) (sound-chk ⊢e₁ none-τ)
 sound-chk (⊢a-prj ⊢e) spl = sound-chk ⊢e (have-l spl)
 
 sound-≤ ≤a-□ none-□ = ≤d-Z
@@ -380,7 +372,6 @@ sound-≤ (≤a-and-r A≤H x) spl = ≤d-and₂ (sound-≤ A≤H spl) (H≢□�
 
 sound-≤-chk ≤a-int none-τ = ≤d-int∞
 sound-≤-chk ≤a-float none-τ = ≤d-float∞
-sound-≤-chk ≤a-base none-τ = ≤d-base∞
 sound-≤-chk ≤a-top none-τ = ≤d-top
 sound-≤-chk (≤a-arr A≤H A≤H₁) none-τ = ≤d-arr-∞ (sound-≤-chk A≤H none-τ) (sound-≤-chk A≤H₁ none-τ)
 sound-≤-chk (≤a-rcd A≤H) none-τ = ≤d-rcd∞ (sound-≤-chk A≤H none-τ)
@@ -392,7 +383,6 @@ sound-≤-chk (≤a-and A≤H A≤H₁) none-τ = ≤d-and (sound-≤-chk A≤H 
 
 sound-es ≤a-int none-τ = ⊩none⇚
 sound-es ≤a-float none-τ = ⊩none⇚
-sound-es ≤a-base none-τ = ⊩none⇚
 sound-es ≤a-top none-τ = ⊩none⇚
 sound-es ≤a-□ none-□ = ⊩none⇚
 sound-es (≤a-arr A≤H A≤H₁) none-τ = ⊩none⇚

@@ -106,7 +106,7 @@ postulate
     → B ≡ C
 
   ⊢a-unique : ∀ {Γ A B H e}
-    → WFG Γ → WFH H → WFE e
+--    → WFG Γ → WFH H → WFE e
     → Γ ⊢a H ⇛ e ⇛ A
     → Γ ⊢a H ⇛ e ⇛ B
     → A ≡ B
@@ -146,16 +146,48 @@ size-e (ƛ e) = 1 + size-e e
 size-e (e₁ · e₂) = 2 + size-e e₁ + size-e e₂
 size-e (e ⦂ _) = 1 + size-e e
 size-e (𝕣 rs) = size-r rs
-size-e (e 𝕡 l) = 1 + size-e e
+size-e (e 𝕡 l) = 2 + size-e e
 
 size-r rnil = 1
 size-r (r⟦ l ↦ e ⟧ rs) = 1 + size-e e + size-r rs
 
 size-H : Hint → ℕ
 size-H □ = 0
-size-H (τ _) = 0
+size-H (τ A) = 0
 size-H (⟦ e ⟧⇒ H) = 1 + size-e e + size-H H
 size-H (⌊ l ⌋⇒ H) = 1 + size-H H -- unsure
+
+size-t : Type → ℕ
+size-t Int = 0
+size-t Float = 0
+size-t Top = 0
+size-t (A ⇒ B) = 1 + size-t A + size-t B
+size-t (A & B) = 1 + size-t A + size-t B
+size-t τ⟦ l ↦ A ⟧ = 2 + size-t A
+
+size-↑ : ∀ e {n}
+  → size-e e ≡ size-e (e ↑ n)
+
+size-↑r : ∀ rs {n}
+  → size-r rs ≡ size-r (rs ↑r n)
+
+size-↑ (𝕔 x) {n} = refl
+size-↑ (` x) {n} = refl
+size-↑ (ƛ e) {n} rewrite size-↑ e {suc n} = refl
+size-↑ (e₁ · e₂) {n} rewrite size-↑ e₁ {n} | size-↑ e₂ {n}  = refl
+size-↑ (e ⦂ A) {n} rewrite size-↑ e {n} = refl
+size-↑ (𝕣 rs) {n} = size-↑r rs {n}
+size-↑ (e 𝕡 l) {n} rewrite size-↑ e {n} = refl
+
+size-↑r rnil {n} = refl
+size-↑r (r⟦ l ↦ e ⟧ rs) {n} rewrite size-↑ e {n} | size-↑r rs {n} = refl
+
+size-⇧ : ∀ H {n}
+  → size-H H ≡ size-H (H ⇧ n)
+size-⇧ □ = refl
+size-⇧ (τ _) = refl
+size-⇧ (⟦ e ⟧⇒ H) {n} rewrite size-⇧ H {n} | size-↑ e {n} = refl
+size-⇧ (⌊ x ⌋⇒ H) {n} rewrite size-⇧ H {n} = refl
 
 x∈Γ-dec : ∀ Γ n
   → Dec (∃[ A ] (Γ ∋ n ⦂ A))
@@ -173,47 +205,23 @@ x∈Γ-unique : ∀ {Γ x A B}
 x∈Γ-unique {x = zero} Z Z = refl
 x∈Γ-unique {x = suc x} (S A∈Γ) (S B∈Γ) rewrite x∈Γ-unique A∈Γ B∈Γ = refl
 
-sub-inv : ∀ {Γ H e A A'}
-  → Γ ⊢a H ⇛ e ⇛ A'
-  → Γ ⊢a □ ⇛ e ⇛ A
-  → Γ ⊢a A ≤ H ⇝ A'
-sub-inv ⊢a-c ⊢nif = {!!}
-sub-inv (⊢a-var x) ⊢nif = {!!}
-sub-inv (⊢a-ann ⊢e) ⊢nif = {!!}
-sub-inv (⊢a-app ⊢e) ⊢nif = {!!}
-sub-inv (⊢a-lam₁ ⊢e) ⊢nif = {!!}
-sub-inv (⊢a-lam₂ ⊢e ⊢e₁) ⊢nif = {!!}
-sub-inv (⊢a-sub x ⊢e x₁ H≢□) ⊢nif = {!!}
-sub-inv (⊢a-& ⊢e ⊢e₁) ⊢nif = ≤a-and (sub-inv ⊢e ⊢nif) (sub-inv ⊢e₁ ⊢nif)
-sub-inv (⊢a-rcd x) ⊢nif = {!!}
-sub-inv (⊢a-prj ⊢e) ⊢nif = {!!}
-{-
-sub-inv ⊢a-c ⊢a-c = ≤a-□
-sub-inv (⊢a-sub x ⊢a-c x₁ H≢□) ⊢a-c = x₁
-sub-inv (⊢a-sub x (⊢a-sub x₂ ⊢e x₃ H≢□₁) x₁ H≢□) ⊢a-c = ⊥-elim (H≢□₁ refl)
-sub-inv (⊢a-& ⊢e ⊢e₁) ⊢a-c = ≤a-and (sub-inv ⊢e ⊢a-c) (sub-inv ⊢e₁ ⊢a-c)
-sub-inv (⊢a-var x₁) (⊢a-var x) rewrite x∈Γ-unique x x₁ = ≤a-□
-sub-inv (⊢a-sub x₁ (⊢a-var x₃) x₂ H≢□) (⊢a-var x) rewrite x∈Γ-unique x₃ x = x₂
-sub-inv (⊢a-sub x₁ (⊢a-sub x₃ ⊢e x₄ H≢□₁) x₂ H≢□) (⊢a-var x) = ⊥-elim (H≢□₁ refl)
-sub-inv (⊢a-& ⊢e ⊢e₁) (⊢a-var x) = ≤a-and (sub-inv ⊢e (⊢a-var x)) (sub-inv ⊢e₁ (⊢a-var x))
-
-sub-inv (⊢a-ann ⊢e) (⊢a-ann ⊢e-inf) = ≤a-□
-sub-inv (⊢a-sub x ⊢e x₁ H≢□) (⊢a-ann ⊢e-inf) = {!!}
-sub-inv (⊢a-& ⊢e ⊢e₁) (⊢a-ann ⊢e-inf) = ≤a-and (sub-inv ⊢e (⊢a-ann ⊢e-inf)) (sub-inv ⊢e₁ (⊢a-ann ⊢e-inf))
-
-sub-inv ⊢e (⊢a-app ⊢e-inf) = {!!}
-sub-inv ⊢e (⊢a-sub x ⊢e-inf x₁ H≢□) = {!!}
-sub-inv ⊢e (⊢a-rcd x) = {!!}
-sub-inv ⊢e (⊢a-prj ⊢e-inf) = {!!}
--}
-
 ≤a-dec : ∀ k Γ H A
   → size-H H < k
+  → Dec (∃[ B ](Γ ⊢a A ≤ H ⇝ B))
+
+≤a-dec' : ∀ k₁ k₂ Γ H A
+  → size-H H < k₁
+  → size-t A < k₂
   → Dec (∃[ B ](Γ ⊢a A ≤ H ⇝ B))
 
 ⊢a-dec : ∀ k Γ H e
   → size-e e + size-H H < k
   → Dec (∃[ A ](Γ ⊢a H ⇛ e ⇛ A))
+
+⊢r-dec : ∀ k Γ rs
+  → size-r rs < k
+  → Dec (∃[ A ](Γ ⊢r □ ⇛ rs ⇛ A))
+
 
 private
   inv-case-const : ∀ {Γ H c A}
@@ -223,8 +231,7 @@ private
   inv-case-const {c = c} ¬p ⊢a-c = ¬p ⟨ c-τ c , ≤a-□ ⟩
   inv-case-const {A = A} ¬p (⊢a-sub x ⊢a-c x₁ H≢□) = ¬p ⟨ A , x₁ ⟩
   inv-case-const ¬p (⊢a-sub x (⊢a-sub x₂ ⊢e x₃ H≢□₁) x₁ H≢□) = ⊥-elim (H≢□₁ refl)
-  inv-case-const ¬p (⊢a-& {A = A} {B = B} ⊢e ⊢e₁) = ¬p ⟨ A & B , sub-inv (⊢a-& ⊢e ⊢e₁) ⊢a-c ⟩
-
+  
   inv-case-var : ∀ {Γ H x A A₁}
     → ¬ (∃[ A' ](Γ ⊢a A₁ ≤ H ⇝ A'))
     → Γ ∋ x ⦂ A₁
@@ -233,8 +240,7 @@ private
   inv-case-var {A₁ = A₁} ¬p x∈Γ (⊢a-var x∈Γ') rewrite sym (x∈Γ-unique x∈Γ x∈Γ') = ¬p ⟨ A₁ , ≤a-□ ⟩
   inv-case-var {A = A} ¬p x∈Γ (⊢a-sub x (⊢a-var x∈Γ') x₁ H≢□) rewrite sym (x∈Γ-unique x∈Γ x∈Γ') = ¬p ⟨ A , x₁ ⟩
   inv-case-var ¬p x∈Γ (⊢a-sub x (⊢a-sub x₂ ⊢e x₃ H≢□₁) x₁ H≢□) = ⊥-elim (H≢□₁ refl)
-  inv-case-var ¬p x∈Γ (⊢a-& {A = A} {B = B} ⊢e ⊢e₁) = ¬p ⟨ (A & B) , sub-inv (⊢a-& ⊢e ⊢e₁) (⊢a-var x∈Γ) ⟩
-
+  
   inv-case-var' : ∀ {Γ H x A}
     → Γ ⊢a H ⇛ ` x ⇛ A
     → ¬ (∃[ B ](Γ ∋ x ⦂ B))
@@ -242,10 +248,140 @@ private
   inv-case-var' {A = A} (⊢a-var x∈Γ) ¬p = ¬p ⟨ A , x∈Γ ⟩
   inv-case-var' (⊢a-sub p-e (⊢a-var {A = A₁} x∈Γ) A≤H H≢□) ¬p = ¬p ⟨ A₁ , x∈Γ ⟩
   inv-case-var' {A = A} (⊢a-sub p-e (⊢a-sub p-e₁ ⊢e A≤H₁ H≢□₁) A≤H H≢□) ¬p = ⊥-elim (H≢□₁ refl)
-  inv-case-var' (⊢a-& {A = A} {B = B} ⊢e ⊢e₁) ¬p = inv-case-var' ⊢e ¬p
-  
 
+  sz-case-1 : ∀ {m n o k}
+    → m + suc (n + o) < k
+    → n + 0 < k
+  sz-case-1 {m} {n} {o} {k} m+1+n+o<k rewrite +-comm n 0
+                                            | +-comm n o
+                                            | sym (+-assoc m (1 + o) n)
+                                            | +-comm m (1 + o)
+                                            = <-trans (m<n+m n (s≤s z≤n)) m+1+n+o<k
+  sz-case-2 : ∀ {m n o k}
+    → suc (m + n + o) < k
+    → m + suc (n + o) < k
+  sz-case-2 {m} {n} {o} {k} sz rewrite +-comm m (1 + n + o) | +-comm (n + o) m | +-assoc m n o = sz
+
+  sz-case-3' : ∀ {m n o k}
+    → m + (1 + n + o) < k
+    → m + o < k
+  sz-case-3' {m} {n} {o} {k} sz rewrite +-comm (1 + n) o | sym (+-assoc m o (suc n)) = <-trans (m<m+n (m + o) (s≤s z≤n)) sz
+
+  sz-case-3 : ∀ {e H e' k}
+    → suc (size-e e + suc (size-e e' + size-H H)) ≤n k
+    → size-e e + size-H (H ⇧ 0) < k
+  sz-case-3 {H = H} sz rewrite sym (size-⇧ H {0}) = sz-case-3' sz
+
+  inv-case-lam' : ∀ {Γ e e' H A}
+    → Γ ⊢a □ ⇛ e' ⇛ A
+    → ¬ (∃[ C ](Γ , A ⊢a H ⇧ 0 ⇛ e ⇛ C))
+    → ¬ (∃[ D ](Γ ⊢a (⟦ e' ⟧⇒ H) ⇛ ƛ e ⇛ D))
+  inv-case-lam' ⊢e ¬p ⟨ D ⇒ E , ⊢a-lam₂ ⊢e' ⊢e'' ⟩ rewrite ⊢a-unique ⊢e ⊢e' = ¬p ⟨ E , ⊢e'' ⟩
+
+  inv-case-lam'' : ∀ {Γ e' e H}
+    → ¬ (∃[ C ](Γ ⊢a □ ⇛ e' ⇛ C))
+    → ∃[ D ](Γ ⊢a ⟦ e' ⟧⇒ H ⇛ ƛ e ⇛ D)
+    → ⊥
+  inv-case-lam'' ¬p ⟨ A ⇒ B , ⊢a-lam₂ ⊢e ⊢e₁ ⟩ = ¬p ⟨ A , ⊢e ⟩
+
+  data HoType : Type → Set where
+    ht-int : HoType Int
+    ht-flt : HoType Float
+    ht-top : HoType Top
+    ht-and : ∀ {A B} → HoType (A & B)
+    ht-rcd : ∀ {l A} → HoType τ⟦ l ↦ A ⟧
+
+  inv-case-sub-hole : ∀ {Γ A H A' e H' B C}
+    → Γ ⊢a A ≤ H ⇝ A'
+    → H ≡ ⟦ e ⟧⇒ H'
+    → A' ≡ B & C
+    → ⊥
+  inv-case-sub-hole (≤a-and-l A≤H x) refl refl = inv-case-sub-hole A≤H refl refl
+  inv-case-sub-hole (≤a-and-r A≤H x) refl refl = inv-case-sub-hole A≤H refl refl
+
+  inv-case-app : ∀ {Γ H e₁ e₂ A}
+    → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A
+    → HoType A
+    → ⊥
+  inv-case-app {A = Int} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-app {A = Float} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-app {A = Top} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-app {A = A & B} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | r = inv-case-sub-hole r refl refl
+  inv-case-app {A = τ⟦ x ↦ A ⟧} ⊢e neq  with ⊢a-to-≤a ⊢e
+  ... | ()
+
+  data HoTypeRcd : Type → Set where
+    htr-int : HoTypeRcd Int
+    htr-flt : HoTypeRcd Float
+    htr-top : HoTypeRcd Top
+    htr-and : ∀ {A B} → HoTypeRcd (A & B)
+    htr-arr : ∀ {A B} → HoTypeRcd (A ⇒ B)
+
+  inv-case-sub-hole-prj : ∀ {Γ A H A' e H' B C}
+    → Γ ⊢a A ≤ H ⇝ A'
+    → H ≡ ⌊ e ⌋⇒ H'
+    → A' ≡ B & C
+    → ⊥
+  inv-case-sub-hole-prj (≤a-and-l A≤H x) refl refl = inv-case-sub-hole-prj A≤H refl refl
+  inv-case-sub-hole-prj (≤a-and-r A≤H x) refl refl = inv-case-sub-hole-prj A≤H refl refl
+
+  inv-case-prj : ∀ {Γ H e l A}
+    → Γ ⊢a ⌊ l ⌋⇒ H ⇛ e ⇛ A
+    → HoTypeRcd A
+    → ⊥
+  inv-case-prj {A = Int} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-prj {A = Float} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-prj {A = Top} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | ()
+  inv-case-prj {A = A & B} ⊢e neq with ⊢a-to-≤a ⊢e
+  ... | r = inv-case-sub-hole-prj r refl refl
+  inv-case-prj {A = A ⇒ B⟧} ⊢e neq  with ⊢a-to-≤a ⊢e
+  ... | ()
+
+  inv-and : ∀ {Γ A B C}
+    → Γ ⊢a A & B ≤ τ C ⇝ C
+    → (Γ ⊢a A ≤ τ C ⇝ C) ⊎ (Γ ⊢a B ≤ τ C ⇝ C)
+  inv-and ≤a-top = inj₁ ≤a-top
+  inv-and (≤a-and-l s x) = inj₁ s
+  inv-and (≤a-and-r s x) = inj₂ s
+  inv-and (≤a-and s s₁) with inv-and s | inv-and s₁
+  ... | inj₁ x | inj₁ y = inj₁ (≤a-and x y)
+  ... | inj₁ x | inj₂ y = {!!}
+  ... | inj₂ y | r2 = {!!}
+
+  inv-sub-and : ∀ {Γ H A B C}
+    → H ≢ □
+    → ¬ (∃[ A' ](Γ ⊢a A ≤ H ⇝ A'))
+    → ¬ (∃[ B' ](Γ ⊢a B ≤ H ⇝ B'))
+    → ¬ (Γ ⊢a A & B ≤ H ⇝ C)
+  inv-sub-and H≢□ ¬p1 ¬p2 ≤a-top = ¬p1 ⟨ Top , ≤a-top ⟩
+  inv-sub-and H≢□ ¬p1 ¬p2 ≤a-□ = ⊥-elim (H≢□ refl)
+  inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-l s x) = {!!}
+  inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-r s x) = {!!}
+  inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and s s₁) = {!!}
+    
 ≤a-dec k Γ H A sz = {!!}
+
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H Int (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H Float (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H Top (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H (A & B) (s≤s sz₁) (s≤s sz₂) with □-dec H
+                                                             | ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) {!!}
+                                                             | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) {!!}
+... | yes p  | _ | _ rewrite p = yes ⟨ A & B , ≤a-□ ⟩
+... | no H≢□ | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s H≢□) ⟩
+... | no H≢□ | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s H≢□) ⟩
+... | no H≢□ | no ¬p1 | no ¬p2 = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ H τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = {!!}
+
 -- const
 ⊢a-dec (suc k) Γ H (𝕔 c) (s≤s sz) with ≤a-dec k Γ H (c-τ c) sz
 ... | yes ⟨ A' , s ⟩ = yes ⟨ A' , (subsumption-0 ⊢a-c s) ⟩
@@ -262,18 +398,77 @@ private
 -- lam
 ⊢a-dec k Γ □ (ƛ e) sz = no λ where
   ⟨ A , ⊢a-sub p-e ⊢e' A≤H H≢□ ⟩ → ⊥-elim (H≢□ refl)
--- lam1  
-⊢a-dec (suc k) Γ (τ A) (ƛ e) (s≤s sz) = {!!}
+-- lam false
+⊢a-dec (suc k) Γ (τ Int) (ƛ e) (s≤s sz) = no λ where
+  ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
+⊢a-dec (suc k) Γ (τ Float) (ƛ e) (s≤s sz) = no λ where
+  ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
+⊢a-dec (suc k) Γ (τ Top) (ƛ e) (s≤s sz) = no λ where
+  ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
+-- lam 1
+⊢a-dec (suc k) Γ (τ (A ⇒ B)) (ƛ e) (s≤s sz) with ⊢a-dec k (Γ , A) (τ B) e sz
+... | yes ⟨ C , ⊢e ⟩ = yes ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
+... | no ¬p = no λ where
+  ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩ → ¬p ⟨ C , ⊢e' ⟩
+-- lam false
+⊢a-dec (suc k) Γ (τ (A & A₁)) (ƛ e) (s≤s sz) = no λ where
+  ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
+⊢a-dec (suc k) Γ (τ τ⟦ x ↦ A ⟧) (ƛ e) (s≤s sz) = no λ where
+  ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- lam2
-⊢a-dec (suc k) Γ (⟦ x ⟧⇒ H) (ƛ e) (s≤s sz) = {!!}
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) with ⊢a-dec k Γ □ e' (sz-case-1 sz)
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) | yes ⟨ A , ⊢e' ⟩ with ⊢a-dec k (Γ , A) (H ⇧ 0) e (sz-case-3 {e = e} {H = H} {e' = e'} sz)
+... | yes ⟨ B , ⊢e'' ⟩ = yes ⟨ (A ⇒ B) , (⊢a-lam₂ ⊢e' ⊢e'') ⟩
+... | no ¬p = no (inv-case-lam' ⊢e' ¬p)
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) | no ¬p = no λ ih → inv-case-lam'' ¬p ih
 -- lam-false
 ⊢a-dec k Γ (⌊ x ⌋⇒ H) (ƛ e) sz = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- app
-⊢a-dec k Γ H (e₁ · e₂) sz = {!!}
+⊢a-dec (suc k) Γ H (e₁ · e₂) (s≤s sz) with ⊢a-dec k Γ (⟦ e₂ ⟧⇒ H) e₁ (sz-case-2 sz)
+... | yes ⟨ Int , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-int)
+... | yes ⟨ Float , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-flt)
+... | yes ⟨ Top , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-top)
+... | yes ⟨ A ⇒ B , ⊢e ⟩ = yes ⟨ B , (⊢a-app ⊢e) ⟩
+... | yes ⟨ A & B , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-and)
+... | yes ⟨ τ⟦ x ↦ A ⟧ , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-rcd)
+... | no ¬p = no λ where
+  ⟨ A' , ⊢a-app {A = A''} ⊢e' ⟩ → ¬p ⟨ A'' ⇒ A' , ⊢e' ⟩
 -- ann
-⊢a-dec k Γ H (e ⦂ A) sz = {!!}
+⊢a-dec (suc k) Γ H (e ⦂ A) (s≤s sz) with ⊢a-dec k Γ (τ A) e (n<o⇒n+0<o (m+n<o⇒m<o sz)) | ≤a-dec k Γ H A (m+n<o⇒n<o sz)
+... | yes ⟨ A' , ⊢e' ⟩ | yes ⟨ B' , s ⟩ = yes ⟨ B' , subsumption-0 (⊢a-ann ⊢e') s ⟩
+... | yes p | no ¬p  = no λ where
+  ⟨ A' , ⊢a-ann ⊢e' ⟩ → ¬p ⟨ A , ≤a-□ ⟩
+  ⟨ A' , ⊢a-sub p-e (⊢a-ann ⊢e') A≤H H≢□ ⟩ → ¬p ⟨ A' , A≤H ⟩
+  ⟨ A' , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
+... | no ¬p | _      = no λ where
+  ⟨ A' , ⊢a-ann {B = B} ⊢e' ⟩ → ¬p ⟨ B , ⊢e' ⟩
+  ⟨ A' , ⊢a-sub p-e (⊢a-ann {B = B} ⊢e') A≤H H≢□ ⟩ → ¬p ⟨ B , ⊢e' ⟩
+  ⟨ A' , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- record
 ⊢a-dec k Γ H (𝕣 rs) sz = {!!}
 -- proj
-⊢a-dec k Γ H (e 𝕡 l) sz = {!!}
+⊢a-dec (suc k) Γ H (e 𝕡 l) (s≤s sz) with ⊢a-dec k Γ (⌊ l ⌋⇒ H) e {!!}
+... | yes ⟨ Int , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-int)
+... | yes ⟨ Float , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-flt)
+... | yes ⟨ Top , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-top)
+... | yes ⟨ A' ⇒ A'' , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-arr)
+... | yes ⟨ A' & A'' , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-and)
+... | yes ⟨ τ⟦ x ↦ A' ⟧ , ⊢e' ⟩ = yes ⟨ A' , ⊢a-prj ⊢e' ⟩
+... | no ¬p = no λ where
+  ⟨ A'' , ⊢a-prj {l₂ = l'} ⊢e'' ⟩ → ¬p ⟨ τ⟦ l' ↦ A'' ⟧ , ⊢e'' ⟩
+
+⊢r-dec k Γ rnil sz = yes ⟨ Top , ⊢a-nil ⟩
+⊢r-dec (suc k) Γ (r⟦ l ↦ e ⟧ rs) (s≤s sz) = {!!}
+{-
+with ⊢a-dec k Γ □ e {!!} | ⊢r-dec k Γ rs {!!}
+... | yes ⟨ A' , ⊢e' ⟩ | yes ⟨ A'' , ⊢r' ⟩ = yes ⟨ (τ⟦ l ↦ A' ⟧ & A'') , ⊢a-cons ⊢e' ⊢r' ⟩
+-}
+{-
+⊢r-dec (suc k) Γ (r⟦ l ↦ e ⟧ rnil) (s≤s sz) with ⊢a-dec k Γ □ e {!!}
+... | yes ⟨ A' , ⊢e' ⟩ = yes ⟨ τ⟦ l ↦ A' ⟧ , ⊢a-one ⊢e' ⟩
+... | no ¬p = no λ where
+  ⟨ (τ⟦ l ↦ A' ⟧) , ⊢a-one x ⟩ → ¬p ⟨ A' , x ⟩
+  ⟨ (τ⟦ l ↦ A' ⟧ & _) , ⊢a-cons x ⊢e' ⟩ → ¬p ⟨ A' , x ⟩
+⊢r-dec (suc k) Γ (r⟦ l₁ ↦ e₁ ⟧ r⟦ l₂ ↦ e₂ ⟧ rs) (s≤s sz) = {!!}
+-}

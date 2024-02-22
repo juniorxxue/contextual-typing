@@ -35,8 +35,6 @@ data _≤d_#_ : Type → Counter → Type → Set where
       Int ≤d ♭ ∞ # Int
   ≤d-float∞ :
       Float ≤d ♭ ∞ # Float
-  ≤d-base∞ : ∀ {n}
-    → * n ≤d ♭ ∞ # * n
   ≤d-top : ∀ {A}
     → A ≤d ♭ ∞ # Top
   ≤d-arr-∞ : ∀ {A B C D}
@@ -76,7 +74,6 @@ data _≤d_#_ : Type → Counter → Type → Set where
 ≤d-refl∞ : ∀ {A} → A ≤d ♭ ∞ # A
 ≤d-refl∞ {A = Int} = ≤d-int∞
 ≤d-refl∞ {A = Float} = ≤d-float∞
-≤d-refl∞ {A = * x} = ≤d-base∞
 ≤d-refl∞ {A = Top} = ≤d-top
 ≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
 ≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
@@ -132,11 +129,6 @@ data _⊢d_#_⦂_ where
     → i ≢ ♭ Z
     → Γ ⊢d i # e ⦂ A
 
-  ⊢d-& : ∀ {Γ e A B}
-    → Γ ⊢d ♭ ∞ # e ⦂ A
-    → Γ ⊢d ♭ ∞ # e ⦂ B
-    → Γ ⊢d ♭ ∞ # e ⦂ A & B
-
   ⊢d-rcd : ∀ {Γ rs As}
     → Γ ⊢r ♭ Z # rs ⦂ As
     → Γ ⊢d ♭ Z # (𝕣 rs) ⦂ As
@@ -158,20 +150,3 @@ data _⊢r_#_⦂_ where
     → Γ ⊢d ♭ Z # e ⦂ A
     → Γ ⊢r ♭ Z # rs ⦂ As
     → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rs ⦂ (τ⟦ l ↦ A ⟧ & As)
-
-
-----------------------------------------------------------------------
---+                                                                +--
---+                            Examples                            +--
---+                                                                +--
-----------------------------------------------------------------------
-
-id-fun-& : Term
-id-fun-& = (ƛ ` 0) ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
-
-⊢id-fun-& : ∅ ⊢d ♭ Z # id-fun-& ⦂ (Int ⇒ Int) & (* 1 ⇒ * 1)
-⊢id-fun-& = ⊢d-ann (⊢d-& (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-int∞ (λ ()))) (⊢d-lam₁ (⊢d-sub (⊢d-var Z) ≤d-base∞ (λ ()))))
-
-example-1-sub : (τ⟦ 1 ↦ (Int ⇒ Int) & (* 1 ⇒ * 1) ⟧ & (τ⟦ 2 ↦ Int ⟧))
-                    ≤d ♭ (Sl (S⇐ Z)) # (τ⟦ 1 ↦ Int ⇒ Int ⟧)
-example-1-sub = ≤d-and₁ (≤d-rcd-Sl (≤d-and₁ (≤d-arr-S⇐ ≤d-int∞ ≤d-Z) (λ ()))) (λ ())

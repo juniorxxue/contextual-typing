@@ -11,17 +11,15 @@ infixl 7  _·_
 infix  9  `_
 infix  5  _⦂_
 infixr 8 _⇒_
--- infixr 8 _&_
+infixr 8 _&_
 infix  2 𝕣_
 infixr 5 r⟦_↦_⟧_
 
-infix 9 *_ 
 Label = ℕ
 
 data Type : Set where
   Int : Type
   Float : Type
-  *_ : ℕ → Type
   Top : Type
   _⇒_ : Type → Type → Type
   _&_ : Type → Type → Type

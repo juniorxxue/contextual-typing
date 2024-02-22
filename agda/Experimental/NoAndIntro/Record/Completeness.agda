@@ -93,14 +93,12 @@ complete (⊢d-app⇐ ⊢e ⊢e₁) (~j x) = ⊢a-app (complete ⊢e (~j (~S⇐ 
 complete (⊢d-app⇒ ⊢e ⊢e₁) (~j x) = ⊢a-app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
 complete (⊢d-app⇒ ⊢e ⊢e₁) (~S⇒ x newH) = ⊢a-app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newH)))
 complete (⊢d-sub ⊢e x x₁) newH = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newH )
-complete (⊢d-& ⊢e ⊢e₁) (~j ~∞) = ⊢a-& (complete ⊢e (~j ~∞)) (complete ⊢e₁ (~j ~∞))
 complete (⊢d-rcd x) (~j ~Z) = ⊢a-rcd (complete-r x)
 complete (⊢d-prj ⊢e) (~j x) = ⊢a-prj (complete ⊢e (~j (~Sl x)))
 
 complete-≤ ≤d-Z (~j ~Z) = ≤a-□
 complete-≤ ≤d-int∞ (~j ~∞) = ≤a-int
 complete-≤ ≤d-float∞ (~j ~∞) = ≤a-float
-complete-≤ ≤d-base∞ (~j ~∞) = ≤a-base
 complete-≤ ≤d-top (~j ~∞) = ≤a-top
 complete-≤ (≤d-arr-∞ B≤A B≤A₁) (~j ~∞) = ≤a-arr (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
 complete-≤ (≤d-rcd∞ B≤A) (~j ~∞) = ≤a-rcd (complete-≤ B≤A (~j ~∞))
