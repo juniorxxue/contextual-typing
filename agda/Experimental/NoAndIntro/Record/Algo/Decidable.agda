@@ -137,6 +137,15 @@ n<o⇒n+0<o : ∀ {n o}
 n<o⇒n+0<o {n} {o} n<o rewrite +-comm n 0 = n<o
 
 
+size-t : Type → ℕ
+size-t Int = 0
+size-t Float = 0
+size-t Top = 0
+size-t (A ⇒ B) = 1 + size-t A + size-t B
+size-t (A & B) = 1 + size-t A + size-t B
+size-t τ⟦ l ↦ A ⟧ = 2 + size-t A
+
+
 size-e : Term → ℕ
 size-r : Record → ℕ
 
@@ -144,7 +153,7 @@ size-e (𝕔 x) = 1
 size-e (` x) = 1
 size-e (ƛ e) = 1 + size-e e
 size-e (e₁ · e₂) = 2 + size-e e₁ + size-e e₂
-size-e (e ⦂ _) = 1 + size-e e
+size-e (e ⦂ A) = 1 + size-t A + size-e e
 size-e (𝕣 rs) = size-r rs
 size-e (e 𝕡 l) = 2 + size-e e
 
@@ -153,17 +162,10 @@ size-r (r⟦ l ↦ e ⟧ rs) = 1 + size-e e + size-r rs
 
 size-H : Hint → ℕ
 size-H □ = 0
-size-H (τ A) = 0
+size-H (τ A) = size-t A
 size-H (⟦ e ⟧⇒ H) = 1 + size-e e + size-H H
 size-H (⌊ l ⌋⇒ H) = 1 + size-H H -- unsure
 
-size-t : Type → ℕ
-size-t Int = 0
-size-t Float = 0
-size-t Top = 0
-size-t (A ⇒ B) = 1 + size-t A + size-t B
-size-t (A & B) = 1 + size-t A + size-t B
-size-t τ⟦ l ↦ A ⟧ = 2 + size-t A
 
 size-↑ : ∀ e {n}
   → size-e e ≡ size-e (e ↑ n)
@@ -365,10 +367,23 @@ private
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-l s x) = {!!}
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-r s x) = {!!}
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and s s₁) = {!!}
+
+  sub-inv-and-r : ∀ {Γ A B C}
+    → Γ ⊢a C ≤ τ (A & B) ⇝ (A & B)
+    → (Γ ⊢a C ≤ τ A ⇝ A) × (Γ ⊢a C ≤ τ B ⇝ B)
+  sub-inv-and-r (≤a-and-l s x) with sub-inv-and-r s
+  ... | ⟨ s1 , s2 ⟩ = ⟨ (≤a-and-l s1 (λ ())) , (≤a-and-l s2 (λ ())) ⟩
+  sub-inv-and-r (≤a-and-r s x) with sub-inv-and-r s
+  ... | ⟨ s1 , s2 ⟩ = ⟨ (≤a-and-r s1 (λ ())) , (≤a-and-r s2 (λ ())) ⟩
+  sub-inv-and-r (≤a-and s s₁) = ⟨ s , s₁ ⟩
     
 ≤a-dec k Γ H A sz = {!!}
 
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C (s≤s sz₁) (s≤s sz₂) with ≤a-dec' k₁ (suc k₂) Γ (τ A) C {!!} (s≤s sz₂)
+                                                                 | ≤a-dec' k₁ (suc k₂) Γ (τ B) C {!!} (s≤s sz₂)
+... | yes ⟨ A' , s1 ⟩ | yes ⟨ B' , s2 ⟩ = yes ⟨ (A' & B') , {!≤a-and!} ⟩
+... | yes p | no ¬p = {!!}
+... | no ¬p | _ = {!!}
 ≤a-dec' (suc k₁) (suc k₂) Γ H Int (s≤s sz₁) (s≤s sz₂) = {!!}
 ≤a-dec' (suc k₁) (suc k₂) Γ H Float (s≤s sz₁) (s≤s sz₂) = {!!}
 ≤a-dec' (suc k₁) (suc k₂) Γ H Top (s≤s sz₁) (s≤s sz₂) = {!!}
@@ -406,7 +421,7 @@ private
 ⊢a-dec (suc k) Γ (τ Top) (ƛ e) (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- lam 1
-⊢a-dec (suc k) Γ (τ (A ⇒ B)) (ƛ e) (s≤s sz) with ⊢a-dec k (Γ , A) (τ B) e sz
+⊢a-dec (suc k) Γ (τ (A ⇒ B)) (ƛ e) (s≤s sz) with ⊢a-dec k (Γ , A) (τ B) e {!!}
 ... | yes ⟨ C , ⊢e ⟩ = yes ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
 ... | no ¬p = no λ where
   ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩ → ¬p ⟨ C , ⊢e' ⟩
@@ -435,7 +450,7 @@ private
 ... | no ¬p = no λ where
   ⟨ A' , ⊢a-app {A = A''} ⊢e' ⟩ → ¬p ⟨ A'' ⇒ A' , ⊢e' ⟩
 -- ann
-⊢a-dec (suc k) Γ H (e ⦂ A) (s≤s sz) with ⊢a-dec k Γ (τ A) e (n<o⇒n+0<o (m+n<o⇒m<o sz)) | ≤a-dec k Γ H A (m+n<o⇒n<o sz)
+⊢a-dec (suc k) Γ H (e ⦂ A) (s≤s sz) with ⊢a-dec k Γ (τ A) e {!!} | ≤a-dec k Γ H A (m+n<o⇒n<o sz)
 ... | yes ⟨ A' , ⊢e' ⟩ | yes ⟨ B' , s ⟩ = yes ⟨ B' , subsumption-0 (⊢a-ann ⊢e') s ⟩
 ... | yes p | no ¬p  = no λ where
   ⟨ A' , ⊢a-ann ⊢e' ⟩ → ¬p ⟨ A , ≤a-□ ⟩

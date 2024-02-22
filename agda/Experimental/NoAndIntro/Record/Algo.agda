@@ -74,16 +74,16 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a A ≤ τ Top ⇝ Top
   ≤a-□ : ∀ {Γ A}
     → Γ ⊢a A ≤ □ ⇝ A
-  ≤a-arr : ∀ {Γ A B C D}
-    → Γ ⊢a C ≤ τ A ⇝ A
-    → Γ ⊢a B ≤ τ D ⇝ D
+  ≤a-arr : ∀ {Γ A B C D A' D'}
+    → Γ ⊢a C ≤ τ A ⇝ A'
+    → Γ ⊢a B ≤ τ D ⇝ D'
     ---------------------------
     → Γ ⊢a (A ⇒ B) ≤ τ (C ⇒ D) ⇝ (C ⇒ D)
-  ≤a-rcd : ∀ {Γ l A B}
-    → Γ ⊢a A ≤ τ B ⇝ B
-    → Γ ⊢a τ⟦ l ↦ A ⟧ ≤ τ (τ⟦ l ↦ B ⟧) ⇝ τ⟦ l ↦ B ⟧
-  ≤a-hint : ∀ {Γ A B H e D}
-    → Γ ⊢a τ A ⇛ e ⇛ A
+  ≤a-rcd : ∀ {Γ l A B B'}
+    → Γ ⊢a A ≤ τ B ⇝ B'
+    → Γ ⊢a τ⟦ l ↦ A ⟧ ≤ τ (τ⟦ l ↦ B ⟧) ⇝ τ⟦ l ↦ B' ⟧
+  ≤a-hint : ∀ {Γ A B C H e D}
+    → Γ ⊢a τ A ⇛ e ⇛ C
     → Γ ⊢a B ≤ H ⇝ D
     ------------------------
     → Γ ⊢a A ⇒ B ≤ ⟦ e ⟧⇒ H ⇝ (A ⇒ D)
@@ -98,10 +98,10 @@ data _⊢a_≤_⇝_ where
     → Γ ⊢a B ≤ H ⇝ C
     → H ≢ □
     → Γ ⊢a A & B ≤ H ⇝ C
-  ≤a-and : ∀ {Γ A B C}
-    → Γ ⊢a A ≤ τ B ⇝ B
-    → Γ ⊢a A ≤ τ C ⇝ C
-    → Γ ⊢a A ≤ τ (B & C) ⇝ (B & C)
+  ≤a-and : ∀ {Γ A B C B' C'}
+    → Γ ⊢a A ≤ τ B ⇝ B'
+    → Γ ⊢a A ≤ τ C ⇝ C'
+    → Γ ⊢a A ≤ τ (B & C) ⇝ (B' & C')
 
 data _⊢a_⇛_⇛_ where
 
