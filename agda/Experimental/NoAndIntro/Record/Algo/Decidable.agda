@@ -99,14 +99,14 @@ does it contribute to B = C
 -}
 
 postulate
+{-
   ≤a-unique : ∀ {Γ A H B C}
     → WFG Γ → WF A → WFH H
     → Γ ⊢a A ≤ H ⇝ B
     → Γ ⊢a A ≤ H ⇝ C
     → B ≡ C
-
+-}
   ⊢a-unique : ∀ {Γ A B H e}
---    → WFG Γ → WFH H → WFE e
     → Γ ⊢a H ⇛ e ⇛ A
     → Γ ⊢a H ⇛ e ⇛ B
     → A ≡ B
@@ -346,9 +346,10 @@ private
   inv-case-prj {A = A ⇒ B⟧} ⊢e neq  with ⊢a-to-≤a ⊢e
   ... | ()
 
+{-
   inv-and : ∀ {Γ A B C}
     → Γ ⊢a A & B ≤ τ C ⇝ C
-    → (Γ ⊢a A ≤ τ C ⇝ C) ⊎ (Γ ⊢a B ≤ τ C ⇝ C)
+    → (Γ ⊢a A ≤ τ C ⇝ C) ⊎ (Γ ⊢a B ≤ τ C ⇝ C) -- wrong inversion lemmas
   inv-and ≤a-top = inj₁ ≤a-top
   inv-and (≤a-and-l s x) = inj₁ s
   inv-and (≤a-and-r s x) = inj₂ s
@@ -367,34 +368,106 @@ private
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-l s x) = {!!}
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and-r s x) = {!!}
   inv-sub-and H≢□ ¬p1 ¬p2 (≤a-and s s₁) = {!!}
+-}  
 
-  sub-inv-and-r : ∀ {Γ A B C}
-    → Γ ⊢a C ≤ τ (A & B) ⇝ (A & B)
+  sub-inv-and-r : ∀ {Γ A B C D}
+    → Γ ⊢a C ≤ τ (A & B) ⇝ D
     → (Γ ⊢a C ≤ τ A ⇝ A) × (Γ ⊢a C ≤ τ B ⇝ B)
   sub-inv-and-r (≤a-and-l s x) with sub-inv-and-r s
   ... | ⟨ s1 , s2 ⟩ = ⟨ (≤a-and-l s1 (λ ())) , (≤a-and-l s2 (λ ())) ⟩
   sub-inv-and-r (≤a-and-r s x) with sub-inv-and-r s
   ... | ⟨ s1 , s2 ⟩ = ⟨ (≤a-and-r s1 (λ ())) , (≤a-and-r s2 (λ ())) ⟩
-  sub-inv-and-r (≤a-and s s₁) = ⟨ s , s₁ ⟩
+  sub-inv-and-r (≤a-and s s₁) = ⟨ ≤a-rigid s , ≤a-rigid s₁ ⟩
+
+  inv-case-and-r : ∀ {Γ A B C A'}
+    → Γ ⊢a C ≤ τ (A & B) ⇝ A'
+    → ¬ (∃[ B' ](Γ ⊢a C ≤ τ B ⇝ B'))
+    → ⊥
+  inv-case-and-r {B = B} ⊢e ¬p with sub-inv-and-r ⊢e
+  ... | ⟨ l , r ⟩ = ¬p ⟨ B , r ⟩
+
+  inv-case-and-l : ∀ {Γ A B C A'}
+    → Γ ⊢a C ≤ τ (A & B) ⇝ A'
+    → ¬ (∃[ A' ](Γ ⊢a C ≤ τ A ⇝ A'))
+    → ⊥
+  inv-case-and-l {A = A} ⊢e ¬p with sub-inv-and-r ⊢e
+  ... | ⟨ l , r ⟩ = ¬p ⟨ A , l ⟩
     
 ≤a-dec k Γ H A sz = {!!}
-
+-- H is and case, we exclude this case out
 ≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C (s≤s sz₁) (s≤s sz₂) with ≤a-dec' k₁ (suc k₂) Γ (τ A) C {!!} (s≤s sz₂)
                                                                  | ≤a-dec' k₁ (suc k₂) Γ (τ B) C {!!} (s≤s sz₂)
-... | yes ⟨ A' , s1 ⟩ | yes ⟨ B' , s2 ⟩ = yes ⟨ (A' & B') , {!≤a-and!} ⟩
-... | yes p | no ¬p = {!!}
-... | no ¬p | _ = {!!}
-≤a-dec' (suc k₁) (suc k₂) Γ H Int (s≤s sz₁) (s≤s sz₂) = {!!}
-≤a-dec' (suc k₁) (suc k₂) Γ H Float (s≤s sz₁) (s≤s sz₂) = {!!}
-≤a-dec' (suc k₁) (suc k₂) Γ H Top (s≤s sz₁) (s≤s sz₂) = {!!}
-≤a-dec' (suc k₁) (suc k₂) Γ H (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = {!!}
+... | yes ⟨ A' , s1 ⟩ | yes ⟨ B' , s2 ⟩ = yes ⟨ (A' & B') , ≤a-and s1 s2 ⟩
+... | yes p | no ¬p = no λ where
+  ⟨ A' , s ⟩ → inv-case-and-r s ¬p
+... | no ¬p | _ = no λ where
+  ⟨ A' , s ⟩ → inv-case-and-l s ¬p
+-- int
+≤a-dec' (suc k₁) (suc k₂) Γ □ Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-int ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+-- float
+≤a-dec' (suc k₁) (suc k₂) Γ □ Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-float ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+-- top
+≤a-dec' (suc k₁) (suc k₂) Γ □ Top (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Top (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (x ⇒ x₁)) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ x ⟧⇒ H) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ x ⌋⇒ H) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+-- arrow
+≤a-dec' (suc k₁) (suc k₂) Γ □ (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = yes ⟨ A ⇒ B , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A' ⇒ B')) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' k₁ (suc k₂) Γ (τ A) A' {!!} {!!}
+                                                                         | ≤a-dec' k₁ (suc k₂) Γ (τ B') B {!!} {!!}
+... | r | r' = {!!} -- problem due to contra-variance
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A' ⟧) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = {!!}
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+  ⟨ A' , () ⟩
+-- and
 ≤a-dec' (suc k₁) (suc k₂) Γ H (A & B) (s≤s sz₁) (s≤s sz₂) with □-dec H
                                                              | ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) {!!}
                                                              | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) {!!}
 ... | yes p  | _ | _ rewrite p = yes ⟨ A & B , ≤a-□ ⟩
 ... | no H≢□ | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s H≢□) ⟩
 ... | no H≢□ | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s H≢□) ⟩
-... | no H≢□ | no ¬p1 | no ¬p2 = {!!}
+... | no H≢□ | no ¬p1 | no ¬p2 = {!!} -- it's doable
 ≤a-dec' (suc k₁) (suc k₂) Γ H τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = {!!}
 
 -- const

@@ -324,6 +324,12 @@ spl-weaken (have-l spl) = have-l (spl-weaken spl)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+≤a-rigid : ∀ {Γ A B C}
+  → Γ ⊢a A ≤ τ B ⇝ C
+  → Γ ⊢a A ≤ τ B ⇝ B
+≤a-rigid s with ≤a-id-0 s
+... | refl = s  
+
 ≤a-refined : ∀ {Γ A B H}
   → Γ ⊢a A ≤ H ⇝ B
   → Γ ⊢a B ≤ H ⇝ B
