@@ -8,13 +8,7 @@ open import Record.Algo.Properties
 open import Record.Algo.Sizes
 
 postulate
-{-
-  ≤a-unique : ∀ {Γ A H B C}
-    → WFG Γ → WF A → WFH H
-    → Γ ⊢a A ≤ H ⇝ B
-    → Γ ⊢a A ≤ H ⇝ C
-    → B ≡ C
--}
+
   ⊢r-unique : ∀ {Γ A B rs}
     → Γ ⊢r □ ⇛ rs ⇛ A
     → Γ ⊢r □ ⇛ rs ⇛ B
@@ -100,12 +94,6 @@ x∈Γ-dec (Γ , A) (suc n) with x∈Γ-dec Γ n
 ... | no ¬p = no λ where
   ⟨ A' , S x∈Γ ⟩ → ¬p ⟨ A' , x∈Γ ⟩
 
-x∈Γ-unique : ∀ {Γ x A B}
-  → Γ ∋ x ⦂ A
-  → Γ ∋ x ⦂ B
-  → A ≡ B
-x∈Γ-unique {x = zero} Z Z = refl
-x∈Γ-unique {x = suc x} (S A∈Γ) (S B∈Γ) rewrite x∈Γ-unique A∈Γ B∈Γ = refl
 
 ≤a-dec : ∀ k Γ H A
   → size-H H < k

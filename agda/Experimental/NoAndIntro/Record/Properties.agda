@@ -89,3 +89,17 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Context
 ∋-strenghthen {Γ , B} {n} {x} {A} x∈Γ sd n≤l with n ≤? x
 ... | yes n≤x = ↓-var₁ x∈Γ sd n≤x n≤l
 ... | no  n≰x = ↓-var₂ x∈Γ (m≰n⇒n<m n≰x) n≤l
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Uniqueness                           +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+
+x∈Γ-unique : ∀ {Γ x A B}
+  → Γ ∋ x ⦂ A
+  → Γ ∋ x ⦂ B
+  → A ≡ B
+x∈Γ-unique {x = zero} Z Z = refl
+x∈Γ-unique {x = suc x} (S A∈Γ) (S B∈Γ) rewrite x∈Γ-unique A∈Γ B∈Γ = refl
