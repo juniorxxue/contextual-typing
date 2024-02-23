@@ -2,6 +2,25 @@ module Record.Algo.Sizes where
 
 open import Record.Prelude hiding (_≤?_) renaming (_≤_ to _≤n_)
 
+sz-case-1 : ∀ {m n o k}
+  → m + suc (n + o) < k
+  → n + 0 < k
+sz-case-1 {m} {n} {o} {k} m+1+n+o<k rewrite +-comm n 0
+                                          | +-comm n o
+                                          | sym (+-assoc m (1 + o) n)
+                                          | +-comm m (1 + o)
+                                          = <-trans (m<n+m n (s≤s z≤n)) m+1+n+o<k
+sz-case-2 : ∀ {m n o k}
+  → suc (m + n + o) < k
+  → m + suc (n + o) < k
+sz-case-2 {m} {n} {o} {k} sz rewrite +-comm m (1 + n + o) | +-comm (n + o) m | +-assoc m n o = sz
+
+sz-case-3' : ∀ {m n o k}
+  → m + (1 + n + o) < k
+  → m + o < k
+sz-case-3' {m} {n} {o} {k} sz rewrite +-comm (1 + n) o | sym (+-assoc m o (suc n)) = <-trans (m<m+n (m + o) (s≤s z≤n)) sz
+
+
 sz-case-4 : ∀ n {m o k}
   → n + m + o < k
   → n + o < k
