@@ -1,36 +1,14 @@
 module Record.Common where
 
 open import Record.Prelude hiding (_≤?_)
-
-  
-Id : Set
-Id = String
+open import Record.PreCommon public
 
 infixr 5  ƛ_
 infixl 7  _·_
 infix  9  `_
 infix  5  _⦂_
-infixr 8 _⇒_
-infixr 8 _&_
 infix  2 𝕣_
 infixr 5 r⟦_↦_⟧_
-
-Label = ℕ
-
-data Type : Set where
-  Int : Type
-  Float : Type
-  Top : Type
-  _⇒_ : Type → Type → Type
-  _&_ : Type → Type → Type
-  τ⟦_↦_⟧ : Label → Type → Type
-
-data Constant : Set where
-  lit      : ℕ → Constant
-  flt      : 𝔽 → Constant
-  +s       : Constant
-  +i       : ℕ → Constant
-  +f       : 𝔽 → Constant
 
 data Term : Set
 data Record : Set
@@ -47,32 +25,6 @@ data Term where
 data Record where
   rnil : Record
   r⟦_↦_⟧_ : Label → Term → Record → Record
-
-c-τ : Constant → Type
-c-τ (lit n) = Int
-c-τ (flt n) = Float
-c-τ +s = (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
-c-τ (+i n) = Int ⇒ Int
-c-τ (+f n) = Float ⇒ Float
-
-infixl 5  _,_
-
-data Context : Set where
-  ∅     : Context
-  _,_   : Context → Type → Context
-
-infix  4  _∋_⦂_
-
-data _∋_⦂_ : Context → ℕ → Type → Set where
-
-  Z : ∀ {Γ A}
-      ------------------
-    → Γ , A ∋ zero ⦂ A
-
-  S : ∀ {Γ A B n}
-    → Γ ∋ n ⦂ A
-      ------------------
-    → Γ , B ∋ (suc n) ⦂ A
 
 ----------------------------------------------------------------------
 --+                                                                +--
