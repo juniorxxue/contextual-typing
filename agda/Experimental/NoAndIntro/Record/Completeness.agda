@@ -82,7 +82,7 @@ complete-r : ∀ {Γ rs A}
   → Γ ⊢r □ ⇛ rs ⇛ A
 complete-r ⊢r-nil = ⊢a-nil
 complete-r (⊢r-one x) = ⊢a-one (complete x (~j ~Z))
-complete-r (⊢r-cons x ⊢r) = ⊢a-cons (complete x (~j ~Z)) (complete-r ⊢r)
+complete-r (⊢r-cons x ⊢r neq) = ⊢a-cons (complete x (~j ~Z)) (complete-r ⊢r) neq
   
 complete ⊢d-c (~j ~Z) = ⊢a-c
 complete (⊢d-var x) (~j ~Z) = ⊢a-var x

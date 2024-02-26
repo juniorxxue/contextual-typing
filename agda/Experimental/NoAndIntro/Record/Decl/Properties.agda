@@ -11,6 +11,18 @@ open import Record.Properties
 --+                                                                +--
 ----------------------------------------------------------------------
 
+rs≢rnil-↑r : ∀ {rs n}
+  → rs ≢ rnil
+  → rs ↑r n ≢ rnil
+rs≢rnil-↑r {rnil} neq = neq
+rs≢rnil-↑r {r⟦ x ↦ x₁ ⟧ rs} neq = λ ()
+
+rs≢rnil-↓r : ∀ {rs n}
+  → rs ≢ rnil
+  → rs ↓r n ≢ rnil
+rs≢rnil-↓r {rnil} neq = neq
+rs≢rnil-↓r {r⟦ x ↦ x₁ ⟧ rs} neq = λ ()
+
 ⊢d-weaken : ∀ {Γ cc e A B n}
   → Γ ⊢d cc # e ⦂ B
   → (n≤l : n ≤ length Γ)
@@ -34,7 +46,7 @@ open import Record.Properties
 
 ⊢r-weaken ⊢r-nil n≤l = ⊢r-nil
 ⊢r-weaken (⊢r-one x) n≤l = ⊢r-one (⊢d-weaken x n≤l)
-⊢r-weaken (⊢r-cons x ⊢rs) n≤l = ⊢r-cons (⊢d-weaken x n≤l) (⊢r-weaken ⊢rs n≤l)
+⊢r-weaken (⊢r-cons x ⊢rs nnil) n≤l = ⊢r-cons (⊢d-weaken x n≤l) (⊢r-weaken ⊢rs n≤l) (rs≢rnil-↑r nnil)
 
 ⊢d-weaken-0 : ∀ {Γ cc e A B}
   → Γ ⊢d cc # e ⦂ B
@@ -72,7 +84,7 @@ open import Record.Properties
 
 ⊢r-strengthen ⊢r-nil rs~n n≤l = ⊢r-nil
 ⊢r-strengthen (⊢r-one x) (sdr-cons x₁ rs~n) n≤l = ⊢r-one (⊢d-strengthen x x₁ n≤l)
-⊢r-strengthen (⊢r-cons x ⊢rs) (sdr-cons x₁ rs~n) n≤l = ⊢r-cons (⊢d-strengthen x x₁ n≤l) (⊢r-strengthen ⊢rs rs~n n≤l)
+⊢r-strengthen (⊢r-cons x ⊢rs nnil) (sdr-cons x₁ rs~n) n≤l = ⊢r-cons (⊢d-strengthen x x₁ n≤l) (⊢r-strengthen ⊢rs rs~n n≤l) (rs≢rnil-↓r nnil)
 
 ⊢d-strengthen-0 : ∀ {Γ cc e A B}
   → Γ , A ⊢d cc # e ↑ 0 ⦂ B

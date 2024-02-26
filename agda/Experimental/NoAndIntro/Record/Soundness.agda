@@ -347,7 +347,7 @@ sound-r : ∀ {Γ rs A}
   → Γ ⊢r ♭ Z # rs ⦂ A
 sound-r ⊢a-nil = ⊢r-nil
 sound-r (⊢a-one x) = ⊢r-one (sound-inf-0 x)
-sound-r (⊢a-cons x ⊢rs) = ⊢r-cons (sound-inf-0 x) (sound-r ⊢rs)
+sound-r (⊢a-cons x ⊢rs neq) = ⊢r-cons (sound-inf-0 x) (sound-r ⊢rs) neq
 
 sound-inf ⊢a-c none-□ = ⊢d-c
 sound-inf (⊢a-var x) none-□ = ⊢d-var x

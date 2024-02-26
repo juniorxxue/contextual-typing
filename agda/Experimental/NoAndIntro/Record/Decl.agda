@@ -149,4 +149,5 @@ data _⊢r_#_⦂_ where
   ⊢r-cons : ∀ {Γ l e rs A As}
     → Γ ⊢d ♭ Z # e ⦂ A
     → Γ ⊢r ♭ Z # rs ⦂ As
+    → rs ≢ rnil
     → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rs ⦂ (τ⟦ l ↦ A ⟧ & As)
