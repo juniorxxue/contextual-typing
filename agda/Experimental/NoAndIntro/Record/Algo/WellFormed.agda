@@ -8,6 +8,9 @@ open import Record.Algo.Properties
 
 data _#_ : Type → Type → Set where
 
+  #-simpl1 : Int # Float
+  #-simpl2 : Float # Int
+
   #-and-l : ∀ {A B C}
     → A # C
     → B # C
@@ -17,16 +20,23 @@ data _#_ : Type → Type → Set where
     → A # B
     → A # C
     → A # (B & C)
-
   #-arr : ∀ {A B C D}
     → B # D
     → (A ⇒ B) # (C ⇒ D)
 
+{-
   #-base-1 : ∀ {A B}
     → (A ⇒ Int) # (B ⇒ Float)
 
   #-base-2 : ∀ {A B}
     → (A ⇒ Float) # (B ⇒ Int)
+-}
+{-
+
+  #-base-1 : (Int ⇒ Int ⇒ Int) # (Float ⇒ Float ⇒ Float)
+  
+  #-base-2 : (Float ⇒ Float ⇒ Float) # (Int ⇒ Int ⇒ Int)
+-}  
 
   #-rcd : ∀ {x y A B}
     → x ≢ y
@@ -89,10 +99,9 @@ data WFR where
 
 data WFH : Hint → Set where
   wfh-□ : WFH □
-  wfh-τ : ∀ {A} → WF A → WFH (τ A)
+--   wfh-τ : ∀ {A} → WF A → WFH (τ A)
   wfh-e : ∀ {e H} → WFH H → WFE e → WFH (⟦ e ⟧⇒ H)
   wfh-l : ∀ {l H} → WFH H → WFH (⌊ l ⌋⇒ H)
-
 
 ∉-↑r : ∀ {rs l n}
   → l ∉ rs
@@ -123,7 +132,7 @@ wf-⇧ : ∀ {H n}
   → WFH H
   → WFH (H ⇧ n)
 wf-⇧ wfh-□ = wfh-□
-wf-⇧ (wfh-τ x) = wfh-τ x
+-- wf-⇧ (wfh-τ x) = wfh-τ x
 wf-⇧ (wfh-e wfh x) = wfh-e (wf-⇧ wfh) (wf-↑ x)
 wf-⇧ (wfh-l wfh) = wfh-l (wf-⇧ wfh)
 
@@ -173,25 +182,25 @@ x∈Γ-wf (wfg-, wfg x) (S x∈Γ) = x∈Γ-wf wfg x∈Γ
 ≤a-wf wfg wfh wfA ≤a-float = wfA
 ≤a-wf wfg wfh wfA ≤a-top = wf-top
 ≤a-wf wfg wfh wfA ≤a-□ = wfA
-≤a-wf wfg (wfh-τ (wf-arr x x₁)) (wf-arr wfA wfA₁) (≤a-arr s s₁) = wf-arr x x₁
-≤a-wf wfg (wfh-τ (wf-rcd x)) (wf-rcd wfA) (≤a-rcd s) = wf-rcd (≤a-wf wfg (wfh-τ x) wfA s)
+-- ≤a-wf wfg (wfh-τ (wf-arr x x₁)) (wf-arr wfA wfA₁) (≤a-arr s s₁) = wf-arr x x₁
+-- ≤a-wf wfg (wfh-τ (wf-rcd x)) (wf-rcd wfA) (≤a-rcd s) = wf-rcd (≤a-wf wfg (wfh-τ x) wfA s)
 ≤a-wf wfg (wfh-e wfh x₁) (wf-arr wfA wfA₁) (≤a-hint x s) = wf-arr wfA (≤a-wf wfg wfh wfA₁ s)
 ≤a-wf wfg (wfh-l wfh) (wf-rcd wfA) (≤a-hint-l s) = wf-rcd (≤a-wf wfg wfh wfA s)
 ≤a-wf wfg wfh (wf-and wfA wfA₁ A#B) (≤a-and-l s x) = ≤a-wf wfg wfh wfA s
 ≤a-wf wfg wfh (wf-and wfA wfA₁ A#B) (≤a-and-r s x) = ≤a-wf wfg wfh wfA₁ s
-≤a-wf wfg (wfh-τ (wf-and x x₁ A#B)) wfA (≤a-and s s₁) with ≤a-id-0 s | ≤a-id-0 s₁
-... | refl | refl = wf-and x x₁ A#B
+-- ≤a-wf wfg (wfh-τ (wf-and x x₁ A#B)) wfA (≤a-and s s₁) with ≤a-id-0 s | ≤a-id-0 s₁
+-- ... | refl | refl = wf-and x x₁ A#B
 
 ⊢a-wf wfg wfh wfe (⊢a-c {c = lit x}) = wf-int
 ⊢a-wf wfg wfh wfe (⊢a-c {c = flt x}) = wf-float
-⊢a-wf wfg wfh wfe (⊢a-c {c = +s}) = wf-and (wf-arr wf-int (wf-arr wf-int wf-int)) (wf-arr wf-float (wf-arr wf-float wf-float)) (#-arr #-base-1)
+⊢a-wf wfg wfh wfe (⊢a-c {c = +s}) = wf-and (wf-arr wf-int (wf-arr wf-int wf-int)) (wf-arr wf-float (wf-arr wf-float wf-float)) (#-arr (#-arr #-simpl1))
 ⊢a-wf wfg wfh wfe (⊢a-c {c = +i x}) = wf-arr wf-int wf-int
 ⊢a-wf wfg wfh wfe (⊢a-c {c = +f x}) = wf-arr wf-float wf-float
 ⊢a-wf wfg wfh wfe (⊢a-var x∈Γ) = x∈Γ-wf wfg x∈Γ
 ⊢a-wf wfg wfh (wfe-ann wfe x) (⊢a-ann ⊢e) = x
 ⊢a-wf wfg wfh (wfe-app wfe wfe₁) (⊢a-app ⊢e) with ⊢a-wf wfg (wfh-e wfh wfe₁) wfe ⊢e
 ... | wf-arr r r₁ = r₁
-⊢a-wf wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢e) = wf-arr x (⊢a-wf (wfg-, wfg x) (wfh-τ x₁) wfe ⊢e)
+-- ⊢a-wf wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢e) = wf-arr x (⊢a-wf (wfg-, wfg x) (wfh-τ x₁) wfe ⊢e)
 ⊢a-wf wfg (wfh-e wfh x) (wfe-lam wfe) (⊢a-lam₂ ⊢e ⊢e₁) =
   wf-arr (⊢a-wf wfg wfh-□ x ⊢e) (⊢a-wf (wfg-, wfg (⊢a-wf wfg wfh-□ x ⊢e)) (wf-⇧ wfh) wfe ⊢e₁)
 ⊢a-wf wfg wfh wfe (⊢a-sub p-e ⊢e A≤H H≢□) = ≤a-wf wfg wfh (⊢a-wf wfg wfh-□ wfe ⊢e) A≤H
@@ -202,11 +211,13 @@ x∈Γ-wf (wfg-, wfg x) (S x∈Γ) = x∈Γ-wf wfg x∈Γ
 #-comm : ∀ {A B}
   → A # B
   → B # A
+#-comm {Int} {Float} x = #-simpl2
+#-comm {Float} {Int} x = #-simpl1
 #-comm (#-and-l A#B A#B₁) = #-and-r (#-comm A#B) (#-comm A#B₁)
 #-comm (#-and-r A#B A#B₁) = #-and-l (#-comm A#B) (#-comm A#B₁)
-#-comm (#-arr A#B) = #-arr (#-comm A#B)
-#-comm #-base-1 = #-base-2
-#-comm #-base-2 = #-base-1
+#-comm {A ⇒ A₁} {B ⇒ B₁} (#-arr x) = #-arr (#-comm x)
+-- #-comm #-base-1 = {!!}
+-- #-comm #-base-2 = {!!}
 #-comm (#-rcd x) = #-rcd (λ x₂ → x (sym x₂))
 
 

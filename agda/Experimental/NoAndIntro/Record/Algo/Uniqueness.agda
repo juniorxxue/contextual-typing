@@ -7,112 +7,6 @@ open import Record.Algo
 open import Record.Algo.Properties
 open import Record.Algo.WellFormed
 
-data toplike : Hint → Set where
-  tl-base1 : toplike (τ Top)
-  tl-base2 : toplike □
-  tl-cons1 : ∀ {A B}
-    → toplike (τ B)
-    → toplike (τ (A ⇒ B))
-  tl-cons2 : ∀ {e H}
-    → toplike H
-    → toplike (⟦ e ⟧⇒ H)
-  tl-cons3 : ∀ {e H}
-    → toplike H
-    → toplike (⌊ e ⌋⇒ H)
-
-toplike-dec : ∀ {H}
-  → WFH H
-  → Dec (toplike H)
-
-{-
-toplike-spec : ∀ {Γ A B H C₁ C₂}
-  → WFG Γ → WF A → WF B → WFH H
-  → A # B
-  → Γ ⊢a A ≤ H ⇝ C₁
-  → Γ ⊢a B ≤ H ⇝ C₂
-  → toplike H
-toplike-spec wfg (wf-and wfA wfA₁ A#B₂) wfB wfh (#-and-l A#B A#B₁) ≤a-top s2 = tl-base1
-toplike-spec wfg (wf-and wfA wfA₁ A#B₂) wfB wfh (#-and-l A#B A#B₁) ≤a-□ s2 = tl-base2
-toplike-spec wfg (wf-and wfA wfA₁ A#B₂) wfB wfh (#-and-l A#B A#B₁) (≤a-and-l s1 x) s2 = toplike-spec wfg wfA wfB wfh A#B s1 s2
-toplike-spec wfg (wf-and wfA wfA₁ A#B₂) wfB wfh (#-and-l A#B A#B₁) (≤a-and-r s1 x) s2 = toplike-spec wfg wfA₁ wfB wfh A#B₁ s1 s2
-toplike-spec wfg (wf-and wfA wfA₁ A#B₂) wfB wfh (#-and-l A#B A#B₁) (≤a-and s1 s3) s2 = {!!}
-toplike-spec wfg wfA wfB wfh (#-and-r A#B A#B₁) s1 ≤a-top = tl-base1
-toplike-spec wfg wfA wfB wfh (#-and-r A#B A#B₁) s1 ≤a-□ = tl-base2
-toplike-spec wfg wfA (wf-and wfB wfB₁ A#B₂) wfh (#-and-r A#B A#B₁) s1 (≤a-and-l s2 x) = toplike-spec wfg wfA wfB wfh A#B s1 s2
-toplike-spec wfg wfA (wf-and wfB wfB₁ A#B₂) wfh (#-and-r A#B A#B₁) s1 (≤a-and-r s2 x) = toplike-spec wfg wfA wfB₁ wfh A#B₁ s1 s2
-toplike-spec wfg wfA wfB wfh (#-and-r A#B A#B₁) s1 (≤a-and s2 s3) = {!!}
-toplike-spec wfg wfA wfB wfh (#-arr A#B) ≤a-top ≤a-top = tl-base1
-toplike-spec wfg wfA wfB wfh (#-arr A#B) ≤a-□ ≤a-□ = tl-base2
-toplike-spec wfg (wf-arr wfA wfA₁) (wf-arr wfB wfB₁) (wfh-τ (wf-arr x x₁)) (#-arr A#B) (≤a-arr s1 s3) (≤a-arr s2 s4) =
-  tl-cons1 (toplike-spec wfg wfA₁ wfB₁ (wfh-τ x₁) A#B s3 s4)
-toplike-spec wfg (wf-arr wfA wfA₁) (wf-arr wfB wfB₁) (wfh-e wfh x₂) (#-arr A#B) (≤a-hint x s1) (≤a-hint x₁ s2) =
-  tl-cons2 ( toplike-spec wfg wfA₁ wfB₁ wfh A#B s1 s2)
-toplike-spec wfg wfA wfB (wfh-τ x) (#-arr A#B) (≤a-and s1 s3) (≤a-and s2 s4) = {!!}
-toplike-spec wfg wfA wfB wfh #-base-1 ≤a-top s2 = tl-base1
-toplike-spec wfg wfA wfB wfh #-base-1 ≤a-□ s2 = tl-base2
-toplike-spec wfg wfA wfB wfh #-base-1 (≤a-arr s1 ≤a-int) (≤a-arr s2 ())
-toplike-spec wfg wfA wfB wfh #-base-1 (≤a-arr s1 ≤a-top) s2 = tl-cons1 tl-base1
-toplike-spec wfg wfA wfB wfh #-base-1 (≤a-arr s1 (≤a-and s3 s4)) (≤a-arr s2 (≤a-and s5 s6)) = {!!}
-toplike-spec wfg (wf-arr wfA wfA₁) (wf-arr wfB wfB₁) (wfh-e wfh x₂) #-base-1 (≤a-hint x s1) (≤a-hint x₁ s2) = tl-cons2 {!!}
-toplike-spec wfg wfA wfB wfh #-base-1 (≤a-and s1 s3) s2 = {!!}
-toplike-spec wfg wfA wfB wfh #-base-2 s1 s2 = {!!}
-toplike-spec wfg wfA wfB wfh (#-rcd x) ≤a-top ≤a-top = tl-base1
-toplike-spec wfg wfA wfB wfh (#-rcd x) ≤a-□ s2 = tl-base2
-toplike-spec wfg wfA wfB wfh (#-rcd x) (≤a-rcd s1) (≤a-rcd s2) = ⊥-elim (x refl)
-toplike-spec wfg (wf-rcd wfA) (wf-rcd wfB) (wfh-l wfh) (#-rcd x) (≤a-hint-l s1) (≤a-hint-l s2) = ⊥-elim (x refl)
-toplike-spec wfg wfA wfB wfh (#-rcd x) (≤a-and s1 s3) s2 = {!!}
-
-sub-unique : ∀ {Γ A B H C₁ C₂ C₃}
-  → WFG Γ → WF A → WF B → WFH H
-  → A # B
-  → Γ ⊢a (A & B) ≤ H ⇝ C₁
-  → ¬ (toplike H)
-  → ¬ (Γ ⊢a A ≤ H ⇝ C₂ × Γ ⊢a B ≤ H ⇝ C₃)
-sub-unique wfg wfA wfB wfh A#B ≤a-top notl = {!!}
-sub-unique wfg wfA wfB wfh A#B ≤a-□ notl = {!!}
-sub-unique wfg wfA wfB wfh A#B (≤a-and-l s x) notl = {!!}
-sub-unique wfg wfA wfB wfh A#B (≤a-and-r s x) notl = {!!}
-sub-unique wfg wfA wfB wfh A#B (≤a-and s s₁) notl = {!!}
--}
-
-#-eq-gen : ∀ {Γ A B C D H}
-  → H ≢ □
-  → WFG Γ
-  → WFH H
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A ≤ H ⇝ C
-  → Γ ⊢a B ≤ H ⇝ D
-  → (toplike H) × (C ≡ D)
-
-#-eq-toplike : ∀ {Γ A B C D H}
-  → H ≢ □
-  → WFG Γ
-  → WFH H
-  → WF A
-  → WF B
-  → A # B
-  → toplike H
-  → Γ ⊢a A ≤ H ⇝ C
-  → Γ ⊢a B ≤ H ⇝ D
-  → C ≡ D
-#-eq-toplike H≢□ wfg wfh wfA wfB A#B tl s1 s2 = proj₂ (#-eq-gen H≢□ wfg wfh wfA wfB A#B s1 s2)
-
-#-eq-no-toplike : ∀ {Γ A B C D H}
-  → H ≢ □
-  → WFG Γ
-  → WFH H
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A ≤ H ⇝ C
-  → Γ ⊢a B ≤ H ⇝ D
-  → toplike H
-#-eq-no-toplike H≢□ wfg wfh wfA wfB A#B s1 s2 = proj₁ (#-eq-gen H≢□ wfg wfh wfA wfB A#B s1 s2)  
-
-
--- the essential lemma
 #-eq : ∀ {Γ A B C D H}
   → H ≢ □
   → WFG Γ
@@ -122,10 +16,27 @@ sub-unique wfg wfA wfB wfh A#B (≤a-and s s₁) notl = {!!}
   → A # B
   → Γ ⊢a A ≤ H ⇝ C
   → Γ ⊢a B ≤ H ⇝ D
-  → C ≡ D
-#-eq H≢□ wfg wfh wfA wfB A#B s1 s2 with toplike-dec wfh
-... | yes p = #-eq-toplike H≢□ wfg wfh wfA wfB A#B p s1 s2
-... | no ¬p = ⊥-elim (¬p (#-eq-no-toplike H≢□ wfg wfh wfA wfB A#B s1 s2))
+  → ⊥
+#-eq H≢□ wfg wfh wfA wfB #-simpl1 ≤a-□ s2 = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg wfh wfA wfB #-simpl2 ≤a-□ s2 = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) ≤a-□ s2 = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-l s1 x) s2 = #-eq H≢□ wfg wfh wfA wfB A#B s1 s2
+#-eq H≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-r s1 x) s2 = #-eq H≢□ wfg wfh wfA₁ wfB A#B₁ s1 s2
+#-eq H≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 ≤a-□ = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤a-and-l s2 x) = #-eq H≢□ wfg wfh wfA wfB A#B s1 s2
+#-eq H≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤a-and-r s2 x) = #-eq H≢□ wfg wfh wfA wfB₁ A#B₁ s1 s2
+#-eq H≢□ wfg wfh wfA wfB (#-arr A#B) ≤a-□ ≤a-□ = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg (wfh-e wfh x₂) (wf-arr wfA wfA₁) (wf-arr wfB wfB₁) (#-arr A#B) (≤a-hint x s1) (≤a-hint x₁ s2) = {!!}
+--  #-eq {!!} wfg wfh wfA₁ wfB₁ A#B s1 s2
+-- #-eq H≢□ wfg wfh wfA wfB #-base-1 ≤a-□ s2 = ⊥-elim (H≢□ refl)
+-- #-eq H≢□ wfg (wfh-e wfh x₂) wfA wfB #-base-1 (≤a-hint x ≤a-□) (≤a-hint x₁ ≤a-□) = {!!}
+-- #-eq H≢□ wfg (wfh-e wfh x₂) wfA wfB #-base-1 (≤a-hint x s1) (≤a-hint x₁ (≤a-hint x₃ s2)) = {!!}
+-- #-eq {!!} wfg wfh wf-int wf-float #-simpl1 s1 s2
+-- #-eq H≢□ wfg wfh wfA wfB #-base-2 ≤a-□ s2 = ⊥-elim (H≢□ refl)
+-- #-eq H≢□ wfg (wfh-e wfh x₂) wfA wfB #-base-2 (≤a-hint x s1) (≤a-hint x₁ s2) = {!!}
+-- #-eq {!!} wfg wfh wf-float wf-int #-simpl2 s1 s2
+#-eq H≢□ wfg wfh wfA wfB (#-rcd x) ≤a-□ s2 = ⊥-elim (H≢□ refl)
+#-eq H≢□ wfg wfh wfA wfB (#-rcd x) (≤a-hint-l s1) (≤a-hint-l s2) = ⊥-elim (x refl)
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -168,8 +79,8 @@ sub-unique wfg wfA wfB wfh A#B (≤a-and s s₁) notl = {!!}
 ⊢a-unique wfg wfh wfe (⊢a-ann ⊢1) (⊢a-sub p-e ⊢2 A≤H H≢□) = ⊥-elim (H≢□ refl)
 ⊢a-unique wfg wfh (wfe-app wfe wfe₁) (⊢a-app ⊢1) (⊢a-app ⊢2) with ⊢a-unique wfg (wfh-e wfh wfe₁) wfe ⊢1 ⊢2
 ... | refl = refl
-⊢a-unique wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢1) (⊢a-lam₁ ⊢2) with ⊢a-unique (wfg-, wfg x) (wfh-τ x₁) wfe ⊢1 ⊢2
-... | refl = refl
+-- ⊢a-unique wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢1) (⊢a-lam₁ ⊢2) with ⊢a-unique (wfg-, wfg x) (wfh-τ x₁) wfe ⊢1 ⊢2
+-- ... | refl = refl
 ⊢a-unique wfg (wfh-e wfh x) (wfe-lam wfe) (⊢a-lam₂ ⊢1 ⊢3) (⊢a-lam₂ ⊢2 ⊢4) with ⊢a-unique wfg wfh-□ x ⊢1 ⊢2 
 ... | refl with ⊢a-unique (wfg-, wfg (⊢a-wf wfg wfh-□ x ⊢1)) (wf-⇧ wfh) wfe ⊢3 ⊢4
 ... | refl = refl
@@ -193,26 +104,26 @@ sub-unique wfg wfA wfB wfh A#B (≤a-and s s₁) notl = {!!}
 ≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-□ (≤a-and-l s2 x) = ⊥-elim (x refl)
 ≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-□ (≤a-and-r s2 x) = ⊥-elim (x refl)
 ≤a-unique wfg wf wfh (≤a-arr s1 s3) (≤a-arr s2 s4) = refl
-≤a-unique wfg (wf-rcd wf) (wfh-τ (wf-rcd x)) (≤a-rcd s1) (≤a-rcd s2) rewrite ≤a-unique wfg wf (wfh-τ x) s1 s2 = refl
+-- ≤a-unique wfg (wf-rcd wf) (wfh-τ (wf-rcd x)) (≤a-rcd s1) (≤a-rcd s2) rewrite ≤a-unique wfg wf (wfh-τ x) s1 s2 = refl
 ≤a-unique wfg (wf-arr wf wf₁) (wfh-e wfh x₂) (≤a-hint x s1) (≤a-hint x₁ s2) rewrite ≤a-unique wfg wf₁ wfh s1 s2 = refl
 -- andl case
 ≤a-unique wfg wf wfh (≤a-and-l s1 x) ≤a-top = ≤a-id-0 s1
 ≤a-unique wfg wf wfh (≤a-and-l s1 x) ≤a-□ = ⊥-elim (x refl)
 ≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-l s1 x) (≤a-and-l s2 x₁) = ≤a-unique wfg wf wfh s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-l s1 x) (≤a-and-r s2 x₁) = #-eq x wfg wfh wf wf₁ A#B s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-l s1 x) (≤a-and s2 s3)
-  rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
+≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-l s1 x) (≤a-and-r s2 x₁) = ⊥-elim (#-eq x wfg wfh wf wf₁ A#B s1 s2)
+-- ≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-l s1 x) (≤a-and s2 s3)
+--   rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
 -- andr case
 ≤a-unique wfg wf wfh (≤a-and-r s1 x) ≤a-top = ≤a-id-0 s1
 ≤a-unique wfg wf wfh (≤a-and-r s1 x) ≤a-□ = ⊥-elim (x refl)
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-r s1 x) (≤a-and-l s2 x₁) = #-eq x wfg wfh wf₁ wf (#-comm A#B) s1 s2
+≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-r s1 x) (≤a-and-l s2 x₁) = ⊥-elim (#-eq x wfg wfh wf₁ wf (#-comm A#B) s1 s2)
 ≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-r s1 x) (≤a-and-r s2 x₁) = ≤a-unique wfg wf₁ wfh s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-r s1 x) (≤a-and s2 s3)
-  rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-l s2 x)
-  rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-r s2 x)
-  rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
+-- ≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-r s1 x) (≤a-and s2 s3)
+--   rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
+-- ≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-l s2 x)
+--   rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
+-- ≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-r s2 x)
+--  rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
 ≤a-unique wfg wf wfh (≤a-and s1 s3) (≤a-and s2 s4)
   rewrite ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3 | ≤a-id-0 s4 = refl
 ≤a-unique wfg (wf-rcd wf) (wfh-l wfh) (≤a-hint-l s1) (≤a-hint-l s2) with ≤a-unique wfg wf wfh s1 s2
