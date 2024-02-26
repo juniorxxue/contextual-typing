@@ -18,11 +18,11 @@ data _#_ : Type → Type → Set where
     → A # C
     → A # (B & C)
 
-  #-base-1 :
-     (Int ⇒ Int ⇒ Int) # (Float ⇒ Float ⇒ Float)
+  #-base-1 : ∀ {A B}
+    → (Int ⇒ A) # (Float ⇒ B)
 
-  #-base-2 :
-     (Float ⇒ Float ⇒ Float) # (Int ⇒ Int ⇒ Int)
+  #-base-2 : ∀ {A B}
+    → (Float ⇒ A) # (Int ⇒ B)
 
   #-rcd : ∀ {x y A B}
     → x ≢ y
@@ -218,139 +218,6 @@ x∈Γ-wf (wfg-, wfg x) (S x∈Γ) = x∈Γ-wf wfg x∈Γ
 #-comm #-base-2 = #-base-1
 #-comm (#-rcd x) = #-rcd (λ x₂ → x (sym x₂))
 
-
-data _~_ : Hint → Hint → Set where
-
-  ~H : ∀ {H₁ H₂ e}
-    → H₁ ~ H₂
-    → (⟦ e ⟧⇒ H₁) ~ (⟦ e ⟧⇒ H₂)
-
-  ~B : τ Int ~ τ Float
-
-
-data endInt : Hint → Set where
-
-  endInt-Z : endInt (τ Int)
-  
-  endInt-S : ∀ {e H}
-    → endInt H
-    → endInt (⟦ e ⟧⇒ H)
-
-data endFloat : Hint → Set where
-
-  endFloat-Z : endFloat (τ Float)
-  
-  endFloat-S : ∀ {e H}
-    → endFloat H
-    → endFloat (⟦ e ⟧⇒ H)
-  
-out-to-in-int : ∀ {Γ A A' B e H}
-  → WFG Γ
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A & B ≤ ⟦ e ⟧⇒ H ⇝ A'
-  → endInt H
-  → Γ ⊢a τ Int ⇛ e ⇛ Int
-out-to-in-int wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-l s x) eh = out-to-in-int wfg wfA wfA₁ A#B₂ s eh
-out-to-in-int wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-l s x) eh = out-to-in-int wfg wfA wfB₁ A#B₁ (≤a-and-l s x) eh
-out-to-in-int wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-r s x) eh = out-to-in-int wfg wfA₁ wfB A#B₁ (≤a-and-r s x) eh
-out-to-in-int wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-r s x) eh = out-to-in-int wfg wfB wfB₁ A#B₂ s eh
-out-to-in-int wfg wfA wfB #-base-1 (≤a-and-l (≤a-hint x₁ s) x) eh with ⊢a-id-0 x₁
-... | refl = x₁
-out-to-in-int wfg wfA wfB #-base-2 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-float)) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-2 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-top)) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-2 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-□)) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-2 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ (≤a-and s s₁))) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-1 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-float)) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-1 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-top)) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-1 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-□)) x)  (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-1 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ (≤a-and s s₁))) x) (endInt-S ())
-out-to-in-int wfg wfA wfB #-base-2 (≤a-and-r (≤a-hint x₁ s) x) eh with ⊢a-id-0 x₁
-... | refl = x₁
-
-out-to-in-flt : ∀ {Γ A A' B e H}
-  → WFG Γ
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A & B ≤ ⟦ e ⟧⇒ H ⇝ A'
-  → endFloat H
-  → Γ ⊢a τ Float ⇛ e ⇛ Float
-out-to-in-flt wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-l s x) eh = out-to-in-flt wfg wfA wfA₁ A#B₂ s eh
-out-to-in-flt wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-l s x) eh = out-to-in-flt wfg wfA wfB₁ A#B₁ (≤a-and-l s x) eh
-out-to-in-flt wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-r s x) eh = out-to-in-flt wfg wfA₁ wfB A#B₁ (≤a-and-r s x) eh
-out-to-in-flt wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-r s x) eh = out-to-in-flt wfg wfB wfB₁ A#B₂ s eh
-out-to-in-flt wfg wfA wfB #-base-1 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-int)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-1 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-top)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-1 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ ≤a-□)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-1 (≤a-and-l (≤a-hint x₁ (≤a-hint x₂ (≤a-and s s₁))) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-1 (≤a-and-r (≤a-hint x₁ s) x) eh with ⊢a-id-0 x₁
-... | refl = x₁
-out-to-in-flt wfg wfA wfB #-base-2 (≤a-and-l (≤a-hint x₁ s) x) eh with ⊢a-id-0 x₁
-... | refl = x₁
-out-to-in-flt wfg wfA wfB #-base-2 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-int)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-2 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-top)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-2 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ ≤a-□)) x) (endFloat-S ())
-out-to-in-flt wfg wfA wfB #-base-2 (≤a-and-r (≤a-hint x₁ (≤a-hint x₂ (≤a-and s s₁))) x) (endFloat-S ())
-
-out-to-in-flt' : ∀ {Γ A A' B e H}
-  → WFG Γ
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A ≤ ⟦ e ⟧⇒ H ⇝ A'
-  → endFloat H
-  → Γ ⊢a τ Float ⇛ e ⇛ Float
-out-to-in-flt' wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) s eh = out-to-in-flt wfg wfA wfA₁ A#B₂ s eh
-out-to-in-flt' wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s eh = out-to-in-flt' wfg wfA wfB₁ A#B₁ s eh
-out-to-in-flt' wfg wfA wfB #-base-1 (≤a-hint x (≤a-hint x₁ ≤a-int)) (endFloat-S ())
-out-to-in-flt' wfg wfA wfB #-base-1 (≤a-hint x (≤a-hint x₁ ≤a-top)) (endFloat-S ())
-out-to-in-flt' wfg wfA wfB #-base-1 (≤a-hint x (≤a-hint x₁ ≤a-□)) (endFloat-S ())
-out-to-in-flt' wfg wfA wfB #-base-1 (≤a-hint x (≤a-hint x₁ (≤a-and s s₁))) (endFloat-S ())
-out-to-in-flt' wfg wfA wfB #-base-2 (≤a-hint x s) eh with ⊢a-id-0 x
-... | refl = x
-
-out-to-in-int' : ∀ {Γ A A' B e H}
-  → WFG Γ
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A ≤ ⟦ e ⟧⇒ H ⇝ A'
-  → endInt H
-  → Γ ⊢a τ Int ⇛ e ⇛ Int
-out-to-in-int' wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) s eh = out-to-in-int wfg wfA wfA₁ A#B₂ s eh
-out-to-in-int' wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s eh = out-to-in-int' wfg wfA wfB₁ A#B₁ s eh
-out-to-in-int' wfg wfA wfB #-base-1 (≤a-hint x s) eh with ⊢a-id-0 x
-... | refl = x
-out-to-in-int' wfg wfA wfB #-base-2 (≤a-hint x (≤a-hint x₁ ≤a-float)) (endInt-S ())
-out-to-in-int' wfg wfA wfB #-base-2 (≤a-hint x (≤a-hint x₁ ≤a-top)) (endInt-S ())
-out-to-in-int' wfg wfA wfB #-base-2 (≤a-hint x (≤a-hint x₁ ≤a-□)) (endInt-S ())
-out-to-in-int' wfg wfA wfB #-base-2 (≤a-hint x (≤a-hint x₁ (≤a-and s s₁)))  (endInt-S ())
-
-#-float-false : ∀ {A}
-  → Float # A
-  → ⊥
-#-float-false (#-and-r f#A f#A₁) = #-float-false f#A
-
-inv-flt : ∀ {Γ A B}
-  → WFG Γ
-  → WF A
-  → WF B
-  → A # B
-  → Γ ⊢a A ≤ τ Float ⇝ Float
-  → ⊥
-inv-flt wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-l s x) = inv-flt wfg wfA wfB A#B s
-inv-flt wfg (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-r s x) = inv-flt wfg wfA₁ wfB A#B₁ s
-inv-flt wfg wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) ≤a-float = #-float-false A#B
-inv-flt wfg (wf-and wfA wfA₁ A#B₃) (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-l s x) = inv-flt wfg wfA wfB (#-inv-l A#B) s
-inv-flt wfg (wf-and wfA wfA₁ A#B₃) (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) (≤a-and-r s x) = inv-flt wfg wfA₁ wfB₁ (#-inv-r A#B₁) s
-
-~End : ∀ {H₁ H₂}
-  → H₁ ~ H₂
-  → endInt H₁ × endFloat H₂
-~End (~H h~h) = ⟨ (endInt-S (proj₁ (~End h~h))) , (endFloat-S (proj₂ (~End h~h))) ⟩
-~End ~B = ⟨ endInt-Z , endFloat-Z ⟩
 
 wf-c : ∀ c
   → WF (c-τ c)
