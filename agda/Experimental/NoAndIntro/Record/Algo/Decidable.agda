@@ -6,19 +6,9 @@ open import Record.Properties
 open import Record.Algo
 open import Record.Algo.Properties
 open import Record.Algo.Sizes
-
-postulate
-
-  ⊢r-unique : ∀ {Γ A B rs}
-    → Γ ⊢r □ ⇛ rs ⇛ A
-    → Γ ⊢r □ ⇛ rs ⇛ B
-    → A ≡ B
-    
-  ⊢a-unique : ∀ {Γ A B H e}
-    → Γ ⊢a H ⇛ e ⇛ A
-    → Γ ⊢a H ⇛ e ⇛ B
-    → A ≡ B
-
+open import Record.Algo.WellFormed
+open import Record.Algo.Uniqueness
+  
 n<o⇒n+0<o : ∀ {n o}
   → n < o
   → n + 0 < o
@@ -96,19 +86,23 @@ x∈Γ-dec (Γ , A) (suc n) with x∈Γ-dec Γ n
 
 
 ≤a-dec : ∀ k Γ H A
+  → WFG Γ → WFH H → WF A
   → size-H H < k
   → Dec (∃[ B ](Γ ⊢a A ≤ H ⇝ B))
 
 ≤a-dec' : ∀ k₁ k₂ Γ H A
+  → WFG Γ → WFH H → WF A
   → size-H H < k₁
   → size-t A + size-H' H < k₂
   → Dec (∃[ B ](Γ ⊢a A ≤ H ⇝ B))
 
 ⊢a-dec : ∀ k Γ H e
+  → WFG Γ → WFH H → WFE e
   → size-e e + size-H H < k
   → Dec (∃[ A ](Γ ⊢a H ⇛ e ⇛ A))
 
 ⊢r-dec : ∀ k Γ rs
+  → WFG Γ → WFR rs
   → size-r rs < k
   → Dec (∃[ A ](Γ ⊢r □ ⇛ rs ⇛ A))
 
@@ -145,11 +139,12 @@ private
   sz-case-3 {H = H} sz rewrite sym (size-⇧ H {0}) = sz-case-3' sz
 
   inv-case-lam' : ∀ {Γ e e' H A}
+    → WFG Γ → WFE e → WFE e' → WFH H → WF A
     → Γ ⊢a □ ⇛ e' ⇛ A
     → ¬ (∃[ C ](Γ , A ⊢a H ⇧ 0 ⇛ e ⇛ C))
     → ¬ (∃[ D ](Γ ⊢a (⟦ e' ⟧⇒ H) ⇛ ƛ e ⇛ D))
-  inv-case-lam' ⊢e ¬p ⟨ D ⇒ E , ⊢a-lam₂ ⊢e' ⊢e'' ⟩ = {!!}
-  -- rewrite ⊢a-unique ⊢e ⊢e' = ¬p ⟨ E , ⊢e'' ⟩
+  inv-case-lam' wfg wfe wfe' wfh wfA ⊢e ¬p ⟨ D ⇒ E , ⊢a-lam₂ ⊢e' ⊢e'' ⟩ with ⊢a-unique-0 wfg wfe' ⊢e ⊢e'
+  ... | refl = ¬p ⟨ E , ⊢e'' ⟩
 
   inv-case-lam'' : ∀ {Γ e' e H}
     → ¬ (∃[ C ](Γ ⊢a □ ⇛ e' ⇛ C))
@@ -274,132 +269,142 @@ private
   ... | ⟨ l , r ⟩ = ¬p ⟨ A , l ⟩
 
   inv-case-rcd : ∀ {A A' H rs Γ B'}
+    → WFG Γ → WFR rs
     → Γ ⊢r □ ⇛ rs ⇛ A
     → Γ ⊢r □ ⇛ rs ⇛ A'
     → Γ ⊢a A ≤ H ⇝ B'
     → ¬ (∃[ C ](Γ ⊢a A' ≤ H ⇝ C))
     → ⊥
-  inv-case-rcd {B' = B'} ⊢1 ⊢2 s ¬p with ⊢r-unique ⊢1 ⊢2
+  inv-case-rcd {B' = B'} wfg wfr ⊢1 ⊢2 s ¬p with ⊢r-unique wfg wfh-□ wfr ⊢1 ⊢2
   ... | refl = ¬p ⟨ B' , s ⟩
 
     
-≤a-dec k Γ H A sz = ≤a-dec' k (suc (size-t A + size-H' H)) Γ H A sz (s≤s m≤m)
+≤a-dec k Γ H A wfg wfh wfA sz = ≤a-dec' k (suc (size-t A + size-H' H)) Γ H A wfg wfh wfA sz (s≤s m≤m)
 -- H is and case, we exclude this case out
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ (τ A) C (s≤s sz₁) (sz-case-6 sz₂)
-                                                                 | ≤a-dec' (suc k₁) k₂ Γ (τ B) C (s≤s sz₁) (sz-case-7 sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A & B)) C wfg (wfh-τ (wf-and wfA' wfB' A#B)) wfA (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ (τ A) C wfg (wfh-τ wfA') wfA (s≤s sz₁) (sz-case-6 sz₂)
+                                                                 | ≤a-dec' (suc k₁) k₂ Γ (τ B) C wfg (wfh-τ wfB') wfA (s≤s sz₁) (sz-case-7 sz₂)
 ... | yes ⟨ A' , s1 ⟩ | yes ⟨ B' , s2 ⟩ = yes ⟨ (A' & B') , ≤a-and s1 s2 ⟩
 ... | yes p | no ¬p = no λ where
   ⟨ A' , s ⟩ → inv-case-and-r s ¬p
 ... | no ¬p | _ = no λ where
   ⟨ A' , s ⟩ → inv-case-and-l s ¬p
 -- int
-≤a-dec' (suc k₁) (suc k₂) Γ □ Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-int ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ □ Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Int , ≤a-int ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Int (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Int (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Int wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
 -- float
-≤a-dec' (suc k₁) (suc k₂) Γ □ Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ □ Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-float ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Float (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Float , ≤a-float ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A ⇒ B)) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Float (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) Float wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
 -- top
-≤a-dec' (suc k₁) (suc k₂) Γ □ Top (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ □ Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Top (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (x ⇒ x₁)) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (x ⇒ x₁)) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A ⟧) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⟦ x ⟧⇒ H) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ x ⟧⇒ H) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⌊ x ⌋⇒ H) Top (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ x ⌋⇒ H) Top wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
 -- arrow
-≤a-dec' (suc k₁) (suc k₂) Γ □ (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = yes ⟨ A ⇒ B , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ □ (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ A ⇒ B , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (A' ⇒ B')) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ (τ A) A' (s≤s sz₁) (sz-case-8 (size-t A') (size-t A) sz₂)
-                                                                         | ≤a-dec' (suc k₁) k₂ Γ (τ B') B (s≤s sz₁) (sz-case-9 (size-t B) (size-t B') sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (A' ⇒ B')) (A ⇒ B) wfg (wfh-τ (wf-arr wfA' wfB')) (wf-arr wfA wfB) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ (τ A) A' wfg (wfh-τ wfA) wfA' (s≤s sz₁) (sz-case-8 (size-t A') (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ (τ B') B wfg (wfh-τ wfB') wfB (s≤s sz₁) (sz-case-9 (size-t B) (size-t B') sz₂)
 ... | yes ⟨ C , s ⟩ | yes ⟨ D , s' ⟩ = yes ⟨ (A' ⇒ B') , (≤a-arr s s') ⟩
 ... | yes p | no ¬p = no λ where
   ⟨ C ⇒ D , ≤a-arr {D' = D'} s s₁ ⟩ → ¬p ⟨ D' , s₁ ⟩
 ... | no ¬p | _ =  no λ where
   ⟨ C ⇒ D , ≤a-arr {A' = A'} s s₁ ⟩ → ¬p ⟨ A' , s ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A' ⟧) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l ↦ A' ⟧) (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H B (sz-case-10 sz₁) (sz-case-9 (size-t B) (size-H' H) sz₂)
-                                                                      | ⊢a-dec k₁ Γ (τ A) e (sz-case-11 sz₁)
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) (A ⇒ B) wfg (wfh-e wfh wfe ve) (wf-arr wfA wfB) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H B wfg wfh wfB (sz-case-10 sz₁) (sz-case-9 (size-t B) (size-H' H) sz₂)
+     | ⊢a-dec k₁ Γ (τ A) e wfg (wfh-τ wfA) wfe (sz-case-11 sz₁)
 ... | yes ⟨ C , s ⟩ | yes ⟨ A' , ⊢e' ⟩ = yes ⟨ (A ⇒ C) , (≤a-hint ⊢e' s) ⟩
 ... | yes p | no ¬p = no λ where
   ⟨ A' ⇒ B' , ≤a-hint {C = C} x s ⟩ → ¬p ⟨ C , x ⟩
 ... | no ¬p | _ = no λ where
   ⟨ A' ⇒ B' , ≤a-hint x s ⟩ → ¬p ⟨ B' , s ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) (A ⇒ B) (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) (A ⇒ B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩
 -- and, many repetitions here
-≤a-dec' (suc k₁) (suc k₂) Γ □ (A & B) (s≤s sz₁) (s≤s sz₂) = yes ⟨ A & B , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Int) (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                     | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ □ (A & B) wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ A & B , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Int) (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg (wfh-τ wf-int) wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg (wfh-τ wf-int) wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and (¬&τ-tau ¬&-int) ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Float) (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                       | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Float) (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg (wfh-τ wf-float) wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg (wfh-τ wf-float) wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and (¬&τ-tau ¬&-flt) ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Top) (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                     | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(τ Top) (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg (wfh-τ wf-top) wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg (wfh-τ wf-top) wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and (¬&τ-tau ¬&-top) ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(τ (x ⇒ x₁)) (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                          | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(τ (x ⇒ x₁)) (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg wfh wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg wfh wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and (¬&τ-tau ¬&-arr) ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(τ τ⟦ x ↦ x₁ ⟧) (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                             | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(τ τ⟦ x ↦ x₁ ⟧) (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg wfh wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg wfh wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and (¬&τ-tau ¬&-rcd) ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(⟦ e ⟧⇒ H') (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                         | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(⟦ e ⟧⇒ H') (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg wfh wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg wfh wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
   ⟨ A' , s ⟩ → inv-sub-and ¬&τ-hole ¬p1 ¬p2 s
-≤a-dec' (suc k₁) (suc k₂) Γ H@(⌊ l ⌋⇒ H') (A & B) (s≤s sz₁) (s≤s sz₂) with ≤a-dec' (suc k₁) k₂ Γ H A (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
-                                                                         | ≤a-dec' (suc k₁) k₂ Γ H B (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ H@(⌊ l ⌋⇒ H') (A & B) wfg wfh (wf-and wfA wfB A#B) (s≤s sz₁) (s≤s sz₂)
+  with ≤a-dec' (suc k₁) k₂ Γ H A wfg wfh wfA (s≤s sz₁) (sz-case-4 (size-t A) sz₂)
+     | ≤a-dec' (suc k₁) k₂ Γ H B wfg wfh wfB (s≤s sz₁) (sz-case-5 (size-t B) sz₂)
 ... | yes ⟨ A' , s ⟩ | _ = yes ⟨ A' , (≤a-and-l s λ ()) ⟩
 ... | no ¬p | yes ⟨ A' , s ⟩ = yes ⟨ A' , (≤a-and-r s λ ()) ⟩
 ... | no ¬p1 | no ¬p2 = no λ where
@@ -414,23 +419,25 @@ private
 ... | no H≢□ | no ¬p1 | no ¬p2 = {!no!} -- it's doable
 -}
 -- rcd
-≤a-dec' (suc k₁) (suc k₂) Γ □ τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = yes ⟨ τ⟦ l ↦ A ⟧ , ≤a-□ ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ □ τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ τ⟦ l ↦ A ⟧ , ≤a-□ ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Int) τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩  
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Float) τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩  
-≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
-≤a-dec' (suc k₁) (suc k₂) Γ (τ (x ⇒ x₁)) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (τ Top) τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = yes ⟨ Top , ≤a-top ⟩
+≤a-dec' (suc k₁) (suc k₂) Γ (τ (x ⇒ x₁)) τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩  
-≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l' ↦ A' ⟧) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) with l ≟ l' | ≤a-dec' (suc k₁) k₂ Γ (τ A') A (s≤s sz₁) (sz-case-12 sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ (τ τ⟦ l' ↦ A' ⟧) τ⟦ l ↦ A ⟧ wfg (wfh-τ (wf-rcd wfA')) (wf-rcd wfA) (s≤s sz₁) (s≤s sz₂)
+  with l ≟ l' | ≤a-dec' (suc k₁) k₂ Γ (τ A') A wfg (wfh-τ wfA') wfA (s≤s sz₁) (sz-case-12 sz₂)
 ... | yes refl | yes ⟨ B , s ⟩ = yes ⟨ τ⟦ l ↦ B ⟧ , (≤a-rcd s) ⟩
 ... | yes refl | no ¬p = no λ where
   ⟨ (τ⟦ l' ↦ B ⟧) , ≤a-rcd s ⟩ → ¬p ⟨ B , s ⟩
 ... | no ¬p | _ = no λ where
   ⟨ (τ⟦ l' ↦ B ⟧) , ≤a-rcd s ⟩ → ¬p refl 
-≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) τ⟦ l ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) = no λ where
+≤a-dec' (suc k₁) (suc k₂) Γ (⟦ e ⟧⇒ H) τ⟦ l ↦ A ⟧ wfg wfh wfA (s≤s sz₁) (s≤s sz₂) = no λ where
   ⟨ A' , () ⟩  
-≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) τ⟦ l' ↦ A ⟧ (s≤s sz₁) (s≤s sz₂) with l ≟ l' | ≤a-dec' (suc k₁) k₂ Γ H A (s≤s (≤-trans (m≤n+m (size-H H) 1) sz₁)) (sz-case-13 sz₂)
+≤a-dec' (suc k₁) (suc k₂) Γ (⌊ l ⌋⇒ H) τ⟦ l' ↦ A ⟧ wfg (wfh-l wfh) (wf-rcd wfA) (s≤s sz₁) (s≤s sz₂)
+  with l ≟ l' | ≤a-dec' (suc k₁) k₂ Γ H A wfg wfh wfA (s≤s (≤-trans (m≤n+m (size-H H) 1) sz₁)) (sz-case-13 sz₂)
 ... | yes refl | yes ⟨ B , s ⟩ = yes ⟨ τ⟦ l ↦ B ⟧ , (≤a-hint-l s) ⟩
 ... | yes refl | no ¬p = no λ where
   ⟨ (τ⟦ l' ↦ B ⟧) , ≤a-hint-l s ⟩ → ¬p ⟨ B , s ⟩
@@ -438,50 +445,51 @@ private
   ⟨ (τ⟦ l' ↦ B ⟧) , ≤a-hint-l s ⟩ → ¬p refl 
 
 -- const
-⊢a-dec (suc k) Γ H (𝕔 c) (s≤s sz) with ≤a-dec k Γ H (c-τ c) sz
+⊢a-dec (suc k) Γ H (𝕔 c) wfg wfh wfe (s≤s sz) with ≤a-dec k Γ H (c-τ c) wfg wfh (wf-c c) sz
 ... | yes ⟨ A' , s ⟩ = yes ⟨ A' , (subsumption-0 ⊢a-c s) ⟩
 ... | no ¬p = no λ where
   ⟨ A , ⊢e' ⟩ → inv-case-const ¬p ⊢e'
 -- var
-⊢a-dec (suc k) Γ H (` x) (s≤s sz) with x∈Γ-dec Γ x
-⊢a-dec (suc k) Γ H (` x) (s≤s sz) | yes ⟨ A , x∈Γ ⟩ with ≤a-dec k Γ H A sz
+⊢a-dec (suc k) Γ H (` x) wfg wfh wfe (s≤s sz) with x∈Γ-dec Γ x
+⊢a-dec (suc k) Γ H (` x) wfg wfh wfe (s≤s sz) | yes ⟨ A , x∈Γ ⟩ with ≤a-dec k Γ H A wfg wfh (x∈Γ-wf wfg x∈Γ) sz
 ... | yes ⟨ A' , s ⟩ = yes ⟨ A' , subsumption-0 (⊢a-var x∈Γ) s ⟩
 ... | no ¬p = no λ where
   ⟨ A , ⊢e' ⟩ → inv-case-var ¬p x∈Γ ⊢e'
-⊢a-dec (suc k) Γ H (` x) (s≤s sz) | no ¬p = no λ where
+⊢a-dec (suc k) Γ H (` x) wfg wfh wfe (s≤s sz) | no ¬p = no λ where
   ⟨ A , ⊢e ⟩ → inv-case-var' ⊢e ¬p
 -- lam
-⊢a-dec k Γ □ (ƛ e) sz = no λ where
+⊢a-dec k Γ □ (ƛ e) wfg wfh wfe sz = no λ where
   ⟨ A , ⊢a-sub p-e ⊢e' A≤H H≢□ ⟩ → ⊥-elim (H≢□ refl)
 -- lam false
-⊢a-dec (suc k) Γ (τ Int) (ƛ e) (s≤s sz) = no λ where
+⊢a-dec (suc k) Γ (τ Int) (ƛ e) wfg wfh wfe (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
-⊢a-dec (suc k) Γ (τ Float) (ƛ e) (s≤s sz) = no λ where
+⊢a-dec (suc k) Γ (τ Float) (ƛ e) wfg wfh wfe (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
-⊢a-dec (suc k) Γ (τ Top) (ƛ e) (s≤s sz) = no λ where
+⊢a-dec (suc k) Γ (τ Top) (ƛ e) wfg wfh wfe (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- lam 1
-⊢a-dec (suc k) Γ (τ (A ⇒ B)) (ƛ e) (s≤s sz) with ⊢a-dec k (Γ , A) (τ B) e sz
+⊢a-dec (suc k) Γ (τ (A ⇒ B)) (ƛ e) wfg (wfh-τ (wf-arr wfA wfB)) (wfe-lam wfe) (s≤s sz)
+  with ⊢a-dec k (Γ , A) (τ B) e (wfg-, wfg wfA) (wfh-τ wfB) wfe sz
 ... | yes ⟨ C , ⊢e ⟩ = yes ⟨ A ⇒ C , ⊢a-lam₁ ⊢e ⟩
 ... | no ¬p = no λ where
   ⟨ A ⇒ C , ⊢a-lam₁ ⊢e' ⟩ → ¬p ⟨ C , ⊢e' ⟩
 -- lam false
-⊢a-dec (suc k) Γ (τ (A & A₁)) (ƛ e) (s≤s sz) = no λ where
+⊢a-dec (suc k) Γ (τ (A & A₁)) (ƛ e) wfg wfh wfe (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
-⊢a-dec (suc k) Γ (τ τ⟦ x ↦ A ⟧) (ƛ e) (s≤s sz) = no λ where
+⊢a-dec (suc k) Γ (τ τ⟦ x ↦ A ⟧) (ƛ e) wfg wfh wfe (s≤s sz) = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- lam2
-⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) with ⊢a-dec k Γ □ e' (sz-case-1 sz)
-⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) | yes ⟨ A , ⊢e' ⟩ with ⊢a-dec k (Γ , A) (H ⇧ 0) e (sz-case-3 {e = e} {H = H} {e' = e'} sz)
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) wfg (wfh-e wfh wfe' ve) (wfe-lam wfe) (s≤s sz) with ⊢a-dec k Γ □ e' wfg wfh-□ wfe' (sz-case-1 sz)
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) wfg (wfh-e wfh wfe' ve) (wfe-lam wfe) (s≤s sz) | yes ⟨ A , ⊢e' ⟩
+  with ⊢a-dec k (Γ , A) (H ⇧ 0) e (wfg-, wfg (⊢a-wf wfg wfh-□ wfe' ⊢e')) (wf-⇧ wfh) wfe (sz-case-3 {e = e} {H = H} {e' = e'} sz)
 ... | yes ⟨ B , ⊢e'' ⟩ = yes ⟨ (A ⇒ B) , (⊢a-lam₂ ⊢e' ⊢e'') ⟩
-... | no ¬p = no {!!}
--- (inv-case-lam' ⊢e' ¬p)
-⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) (s≤s sz) | no ¬p = no λ ih → inv-case-lam'' ¬p ih
+... | no ¬p = no (inv-case-lam' wfg wfe wfe' wfh ((⊢a-wf wfg wfh-□ wfe' ⊢e')) ⊢e' ¬p)
+⊢a-dec (suc k) Γ (⟦ e' ⟧⇒ H) (ƛ e) wfg wfh wfe (s≤s sz) | no ¬p = no λ ih → inv-case-lam'' ¬p ih
 -- lam-false
-⊢a-dec k Γ (⌊ x ⌋⇒ H) (ƛ e) sz = no λ where
+⊢a-dec k Γ (⌊ x ⌋⇒ H) (ƛ e) wfg wfh wfe sz = no λ where
   ⟨ A , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- app
-⊢a-dec (suc k) Γ H (e₁ · e₂) (s≤s sz) with ⊢a-dec k Γ (⟦ e₂ ⟧⇒ H) e₁ (sz-case-2 sz)
+⊢a-dec (suc k) Γ H (e₁ · e₂) wfg wfh (wfe-app wfe1 wfe2 ve) (s≤s sz) with ⊢a-dec k Γ (⟦ e₂ ⟧⇒ H) e₁ wfg (wfh-e wfh wfe2 ve) wfe1 (sz-case-2 sz)
 ... | yes ⟨ Int , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-int)
 ... | yes ⟨ Float , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-flt)
 ... | yes ⟨ Top , ⊢e ⟩ = ⊥-elim (inv-case-app ⊢e ht-top)
@@ -491,7 +499,9 @@ private
 ... | no ¬p = no λ where
   ⟨ A' , ⊢a-app {A = A''} ⊢e' ⟩ → ¬p ⟨ A'' ⇒ A' , ⊢e' ⟩
 -- ann
-⊢a-dec (suc k) Γ H (e ⦂ A) (s≤s sz) with ⊢a-dec k Γ (τ A) e (sz-case-11 sz) | ≤a-dec k Γ H A (m+n<o⇒n<o sz)
+⊢a-dec (suc k) Γ H (e ⦂ A) wfg wfh (wfe-ann wfe wfA) (s≤s sz)
+  with ⊢a-dec k Γ (τ A) e wfg (wfh-τ wfA) wfe (sz-case-11 sz)
+     | ≤a-dec k Γ H A wfg wfh wfA (m+n<o⇒n<o sz)
 ... | yes ⟨ A' , ⊢e' ⟩ | yes ⟨ B' , s ⟩ = yes ⟨ B' , subsumption-0 (⊢a-ann ⊢e') s ⟩
 ... | yes p | no ¬p  = no λ where
   ⟨ A' , ⊢a-ann ⊢e' ⟩ → ¬p ⟨ A , ≤a-□ ⟩
@@ -502,19 +512,20 @@ private
   ⟨ A' , ⊢a-sub p-e (⊢a-ann {B = B} ⊢e') A≤H H≢□ ⟩ → ¬p ⟨ B , ⊢e' ⟩
   ⟨ A' , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e' A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
 -- record
-⊢a-dec (suc k) Γ H (𝕣 rs) (s≤s sz) with ⊢r-dec k Γ rs (≤-trans (s≤s (m≤m+n (size-r rs) (size-H H))) sz)
-⊢a-dec (suc k) Γ H (𝕣 rs) (s≤s sz) | yes ⟨ A' , ⊢r' ⟩ with ≤a-dec k Γ H A' (≤-trans (s≤s (m≤n+m (size-H H) (size-r rs))) sz)
+⊢a-dec (suc k) Γ H (𝕣 rs) wfg wfh (wfe-rcd wfr) (s≤s sz) with ⊢r-dec k Γ rs wfg wfr (≤-trans (s≤s (m≤m+n (size-r rs) (size-H H))) sz)
+⊢a-dec (suc k) Γ H (𝕣 rs) wfg wfh (wfe-rcd wfr) (s≤s sz) | yes ⟨ A' , ⊢r' ⟩
+  with ≤a-dec k Γ H A' wfg wfh (⊢r-wf wfg wfh-□ wfr ⊢r') (≤-trans (s≤s (m≤n+m (size-H H) (size-r rs))) sz)
 ... | yes ⟨ B' , s ⟩ = yes ⟨ B' , (subsumption-0 (⊢a-rcd ⊢r') s) ⟩
 ... | no ¬p = no λ where
   ⟨ B' , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
-  ⟨ B' , ⊢a-sub p-e (⊢a-rcd x) A≤H H≢□ ⟩ → inv-case-rcd x ⊢r' A≤H ¬p
+  ⟨ B' , ⊢a-sub p-e (⊢a-rcd x) A≤H H≢□ ⟩ → inv-case-rcd wfg wfr x ⊢r' A≤H ¬p
   ⟨ B' , ⊢a-rcd x ⟩ → ¬p ⟨ A' , ≤a-□ ⟩
-⊢a-dec (suc k) Γ H (𝕣 rs) (s≤s sz) | no ¬p = no λ where
+⊢a-dec (suc k) Γ H (𝕣 rs) wfg wfh wfe (s≤s sz) | no ¬p = no λ where
   ⟨ B' , ⊢a-sub p-e (⊢a-sub p-e₁ ⊢e A≤H₁ H≢□₁) A≤H H≢□ ⟩ → ⊥-elim (H≢□₁ refl)
   ⟨ B' , ⊢a-sub p-e (⊢a-rcd {A = A} x) A≤H H≢□ ⟩ → ¬p ⟨ A , x ⟩
   ⟨ B' , ⊢a-rcd x ⟩ → ¬p ⟨ B' , x ⟩
 -- proj
-⊢a-dec (suc k) Γ H (e 𝕡 l) (s≤s sz) with ⊢a-dec k Γ (⌊ l ⌋⇒ H) e (sz-case-14 sz)
+⊢a-dec (suc k) Γ H (e 𝕡 l) wfg wfh (wfe-prj wfe) (s≤s sz) with ⊢a-dec k Γ (⌊ l ⌋⇒ H) e wfg (wfh-l wfh) wfe (sz-case-14 sz)
 ... | yes ⟨ Int , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-int)
 ... | yes ⟨ Float , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-flt)
 ... | yes ⟨ Top , ⊢e' ⟩ = ⊥-elim (inv-case-prj ⊢e' htr-top)
@@ -524,13 +535,16 @@ private
 ... | no ¬p = no λ where
   ⟨ A'' , ⊢a-prj {l₂ = l'} ⊢e'' ⟩ → ¬p ⟨ τ⟦ l' ↦ A'' ⟧ , ⊢e'' ⟩
 
-⊢r-dec k Γ rnil sz = yes ⟨ Top , ⊢a-nil ⟩
-⊢r-dec (suc k) Γ (r⟦ l ↦ e ⟧ rnil) (s≤s sz) with ⊢a-dec k Γ □ e (sz-case-15 sz)
+⊢r-dec k Γ rnil wfg wfr sz = yes ⟨ Top , ⊢a-nil ⟩
+⊢r-dec (suc k) Γ (r⟦ l ↦ e ⟧ rnil) wfg (wfr-cons wfe wfr l∉rs) (s≤s sz)
+  with ⊢a-dec k Γ □ e wfg wfh-□ wfe (sz-case-15 sz)
 ... | yes ⟨ A' , ⊢e' ⟩ = yes ⟨ τ⟦ l ↦ A' ⟧ , ⊢a-one ⊢e' ⟩
 ... | no ¬p = no λ where
   ⟨ (τ⟦ l ↦ A' ⟧) , ⊢a-one x ⟩ → ¬p ⟨ A' , x ⟩
   ⟨ (τ⟦ l ↦ A' ⟧ & _) , ⊢a-cons x ⊢e' rs≢ ⟩ → ¬p ⟨ A' , x ⟩
-⊢r-dec (suc k) Γ (r⟦ l₁ ↦ e₁ ⟧ rs'@(r⟦ l₂ ↦ e₂ ⟧ rs)) (s≤s sz) with ⊢a-dec k Γ □ e₁ (sz-case-16 (size-e e₁) (size-e e₂) sz) | ⊢r-dec k Γ rs' (sz-case-17 {n = size-e e₂} sz)
+⊢r-dec (suc k) Γ (r⟦ l₁ ↦ e₁ ⟧ rs'@(r⟦ l₂ ↦ e₂ ⟧ rs)) wfg (wfr-cons wfe1 (wfr-cons wfe2 wfr l∉rs') l∉rs) (s≤s sz)
+  with ⊢a-dec k Γ □ e₁ wfg wfh-□ wfe1 (sz-case-16 (size-e e₁) (size-e e₂) sz)
+     | ⊢r-dec k Γ rs' wfg ((wfr-cons wfe2 wfr l∉rs')) (sz-case-17 {n = size-e e₂} sz)
 ... | yes ⟨ A' , ⊢e' ⟩ | yes ⟨ B' , ⊢r' ⟩ = yes ⟨ (τ⟦ l₁ ↦ A' ⟧ & B') , (⊢a-cons ⊢e' ⊢r' (λ ())) ⟩
 ... | yes ⟨ A' , ⊢e' ⟩ | no ¬p = no λ where
   ⟨ τ⟦ l₁ ↦ _ ⟧ & B' , ⊢a-cons x ⊢r' x₁ ⟩ → ¬p ⟨ B' , ⊢r' ⟩
