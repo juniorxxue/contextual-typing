@@ -214,7 +214,7 @@ select : Record → Label → Maybe Term
 select rnil l = nothing
 select (r⟦ l₁ ↦ e ⟧ rs) l₂ with l₁ ≟n l₂
 ... | yes p = just e
-... | no ¬p = select rs l₁
+... | no ¬p = select rs l₂
 
 data Value : Term → Set
 data ValueR : Record → Set
@@ -472,6 +472,75 @@ elim-rcd-arr (⊢& ⊢r ⊢r₁) (s-and-r sub) = elim-rcd-arr ⊢r₁ sub
 elim-rcd-arr (⊢rcd x) sub = elim-rcd-arr-r x sub
 elim-rcd-arr (⊢sub ⊢r x) sub = elim-rcd-arr ⊢r (≤-trans x sub)
 
+{-
+select-prv : ∀ {rs l A e}
+  → ValueR rs
+  → ∅ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
+  → select rs l ≡ just e
+  → ∅ ⊢ e ⦂ A
+select-prv vr ⊢r eq = {!!}
+-}
+
+infix 3 _∉_
+
+data _∉_ : Label → Record → Set where
+  notin-empty : ∀ {l}
+    → l ∉ rnil
+
+  notin-cons : ∀ {l₁ l₂ rs e}
+    → l₁ ≢ l₂
+    → l₁ ∉ rs
+    → l₁ ∉ r⟦ l₂ ↦ e ⟧ rs
+
+data WFE : Term → Set 
+data WFR : Record → Set
+
+data WFE where
+  wfe-n : ∀ {n} → WFE (lit n)
+  wfe-m : ∀ {m} → WFE (flt m)
+  wfe-+i : ∀ {m} → WFE (+i m)
+  wfe-+f : ∀ {n} → WFE (+f n)
+  wfe-+ : WFE +
+  wfe-var : ∀ {x} → WFE (` x)
+  wfe-lam : ∀ {x e} → WFE e → WFE (ƛ x ⇒ e)
+  wfe-app : ∀ {e₁ e₂} → WFE e₁ → WFE e₂ → WFE (e₁ · e₂)
+  wfe-rcd : ∀ {rs} → WFR rs → WFE (𝕣 rs)
+  wfe-prj : ∀ {e l} → WFE e → WFE (e 𝕡 l)
+
+data WFR where
+  wfr-nil : WFR rnil
+  wfr-cons : ∀ {e l rs}
+    → WFE e
+    → WFR rs
+    → l ∉ rs
+    → WFR (r⟦ l ↦ e ⟧ rs)
+
+select-v-r : ∀ {rs A l A₁}
+  → ValueR rs
+  → ∅ ⊢r rs ⦂ A₁
+  → A₁ ≤ τ⟦ l ↦ A ⟧
+  → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
+select-v-r {l = l} vr (⊢r-one {e = e} x) (s-rcd s) with l ≟n l
+... | yes p = ⟨ e , ⟨ refl , ⊢sub x s ⟩ ⟩
+... | no ¬p = ⊥-elim (¬p refl)
+select-v-r {l = l} (VR-S x vr) (⊢r-cons {e = e} ⊢e ⊢r) (s-and-l (s-rcd s)) with l ≟n l
+... | yes p = ⟨ e , ⟨ refl , ⊢sub ⊢e s ⟩ ⟩
+... | no ¬p = ⊥-elim (¬p refl)
+select-v-r {l = l} (VR-S x vr) (⊢r-cons {l = l'} ⊢e ⊢r) (s-and-r s) with select-v-r vr ⊢r s
+select-v-r {l = l} {A₁ = A'} (VR-S {v = v} x vr) (⊢r-cons {l = l'} ⊢e ⊢r) s'@(s-and-r s) | ⟨ e , ⟨ eq , ⊢e' ⟩ ⟩ with l' ≟n l
+... | yes p = ⟨ v , ⟨ refl , {!!} ⟩ ⟩
+... | no ¬p = ⟨ e , ⟨ eq , ⊢e' ⟩ ⟩
+
+select-value' : ∀ {rs l A A₁}
+  → ValueR rs
+  → ∅ ⊢ 𝕣 rs ⦂ A₁
+  → A₁ ≤ τ⟦ l ↦ A ⟧
+  → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
+select-value' vr (⊢& ⊢e ⊢e₁) (s-and-l s) = select-value' vr ⊢e s
+select-value' vr (⊢& ⊢e ⊢e₁) (s-and-r s) = select-value' vr ⊢e₁ s
+select-value' vr (⊢rcd x) s = select-v-r vr x s
+select-value' vr (⊢sub ⊢e x) s = select-value' vr ⊢e (≤-trans x s)
+
 select-value : ∀ {rs l A}
   → ValueR rs
   → ∅ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
@@ -479,7 +548,7 @@ select-value : ∀ {rs l A}
 select-value {l = l} vr (⊢rcd (⊢r-one {e = e} {l = l} x)) with l ≟n l
 ... | yes p = ⟨ e , ⟨ refl , x ⟩ ⟩
 ... | no ¬p = ⊥-elim (¬p refl)
-select-value vr (⊢sub ⊢e x) = {!!}
+select-value vr (⊢sub ⊢e x) = select-value' vr ⊢e x
 
 
 -- inversion cases
@@ -691,12 +760,7 @@ subst ⊢V ⊢+f = ⊢+f
 subst ⊢V (⊢rcd ⊢r) = ⊢rcd (subst-r ⊢V ⊢r)
 subst ⊢V (⊢prj ⊢e) = ⊢prj (subst ⊢V ⊢e)
 
-select-prv : ∀ {Γ rs l A e}
-  → ValueR rs
-  → Γ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
-  → select rs l ≡ just e
-  → Γ ⊢ e ⦂ A
-select-prv vr ⊢r eq = {!!}
+
 
 inv-lam' : ∀ {Γ x e A B T}
   → Γ ⊢ ƛ x ⇒ e ⦂ T
@@ -798,6 +862,12 @@ inv-+f : ∀ {m A B}
   → Float ≤ B
 inv-+f ⊢+f = s-flt
 inv-+f (⊢sub ⊢M x) = inv-+f' ⊢M x
+
+rw-case : ∀ {e N A}
+  → just e ≡ just N
+  → ∅ ⊢ e ⦂ A
+  → ∅ ⊢ N ⦂ A
+rw-case refl ⊢e = ⊢e
   
 
 preserve : ∀ {M N A}
@@ -826,5 +896,6 @@ preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
 preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
 preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x
 preserve (⊢prj ⊢e) (ξ-prj M→N) = ⊢prj (preserve ⊢e M→N)
-preserve (⊢prj ⊢e) (β-prj vr eq) = select-prv vr ⊢e eq
+preserve (⊢prj ⊢e) (β-prj vr eq) with select-value vr ⊢e
+preserve (⊢prj ⊢e) (β-prj vr eq) | ⟨ e , ⟨ eq' , ⊢e' ⟩ ⟩ rewrite eq' = rw-case eq ⊢e'
 preserve (⊢rcd ⊢r) (ξ-rcd x₁) = ⊢rcd (preserve-r ⊢r x₁)
