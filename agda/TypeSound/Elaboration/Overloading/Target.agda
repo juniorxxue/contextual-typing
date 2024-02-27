@@ -515,40 +515,51 @@ data WFR where
     → l ∉ rs
     → WFR (r⟦ l ↦ e ⟧ rs)
 
-select-v-r : ∀ {rs A l A₁}
+false-case : ∀ {l rs e}
+  → l ∉ rs
+  → select rs l ≡ just e
+  → ⊥
+false-case {l = l} (notin-cons {l₂ = l₂} x notin) eq with l₂ ≟n l
+... | yes p = x (sym p)
+... | no ¬p = false-case notin eq
+
+select-v-r-wf : ∀ {rs A l A₁}
+  → WFR rs
   → ValueR rs
   → ∅ ⊢r rs ⦂ A₁
   → A₁ ≤ τ⟦ l ↦ A ⟧
   → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
-select-v-r {l = l} vr (⊢r-one {e = e} x) (s-rcd s) with l ≟n l
+select-v-r-wf {l = l} wfr vr (⊢r-one {e = e} x) (s-rcd s) with l ≟n l
 ... | yes p = ⟨ e , ⟨ refl , ⊢sub x s ⟩ ⟩
 ... | no ¬p = ⊥-elim (¬p refl)
-select-v-r {l = l} (VR-S x vr) (⊢r-cons {e = e} ⊢e ⊢r) (s-and-l (s-rcd s)) with l ≟n l
+select-v-r-wf {l = l} wfr (VR-S x vr) (⊢r-cons {e = e} ⊢e ⊢r) (s-and-l (s-rcd s)) with l ≟n l
 ... | yes p = ⟨ e , ⟨ refl , ⊢sub ⊢e s ⟩ ⟩
 ... | no ¬p = ⊥-elim (¬p refl)
-select-v-r {l = l} (VR-S x vr) (⊢r-cons {l = l'} ⊢e ⊢r) (s-and-r s) with select-v-r vr ⊢r s
-select-v-r {l = l} {A₁ = A'} (VR-S {v = v} x vr) (⊢r-cons {l = l'} ⊢e ⊢r) s'@(s-and-r s) | ⟨ e , ⟨ eq , ⊢e' ⟩ ⟩ with l' ≟n l
-... | yes p = ⟨ v , ⟨ refl , {!!} ⟩ ⟩
+select-v-r-wf {l = l} (wfr-cons x wfr x₁) (VR-S {v = v} x₂ vr) (⊢r-cons {l = l'} ⊢e ⊢r) (s-and-r s) with select-v-r-wf wfr vr ⊢r s
+select-v-r-wf {l = l} (wfr-cons x wfr x₁) (VR-S {v = v} x₂ vr) (⊢r-cons {l = l'} ⊢e ⊢r) (s-and-r s) | ⟨ e , ⟨ eq , ⊢e' ⟩ ⟩ with l' ≟n l
+... | yes p rewrite p = ⊥-elim (false-case x₁ eq)
 ... | no ¬p = ⟨ e , ⟨ eq , ⊢e' ⟩ ⟩
 
 select-value' : ∀ {rs l A A₁}
+  → WFR rs
   → ValueR rs
   → ∅ ⊢ 𝕣 rs ⦂ A₁
   → A₁ ≤ τ⟦ l ↦ A ⟧
   → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
-select-value' vr (⊢& ⊢e ⊢e₁) (s-and-l s) = select-value' vr ⊢e s
-select-value' vr (⊢& ⊢e ⊢e₁) (s-and-r s) = select-value' vr ⊢e₁ s
-select-value' vr (⊢rcd x) s = select-v-r vr x s
-select-value' vr (⊢sub ⊢e x) s = select-value' vr ⊢e (≤-trans x s)
+select-value' wfr vr (⊢& ⊢e ⊢e₁) (s-and-l s) = select-value' wfr vr ⊢e s
+select-value' wfr vr (⊢& ⊢e ⊢e₁) (s-and-r s) = select-value' wfr vr ⊢e₁ s
+select-value' wfr vr (⊢rcd x) s = select-v-r-wf wfr vr x s
+select-value' wfr vr (⊢sub ⊢e x) s = select-value' wfr vr ⊢e (≤-trans x s)
 
 select-value : ∀ {rs l A}
+  → WFR rs
   → ValueR rs
   → ∅ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
   → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
-select-value {l = l} vr (⊢rcd (⊢r-one {e = e} {l = l} x)) with l ≟n l
+select-value {l = l} wfr vr (⊢rcd (⊢r-one {e = e} {l = l} x)) with l ≟n l
 ... | yes p = ⟨ e , ⟨ refl , x ⟩ ⟩
 ... | no ¬p = ⊥-elim (¬p refl)
-select-value vr (⊢sub ⊢e x) = select-value' vr ⊢e x
+select-value wfr vr (⊢sub ⊢e x) = select-value' wfr vr ⊢e x
 
 
 -- inversion cases
@@ -646,7 +657,7 @@ progress (⊢prj ⊢e) with progress ⊢e
 ... | done V-+ = ⊥-elim (inv-+-rcd ⊢e s-refl)
 ... | done V-+i = ⊥-elim (inv-+i-rcd ⊢e s-refl)
 ... | done V-+f = ⊥-elim (inv-+f-rcd ⊢e s-refl)
-... | done (V-r x) = let ⟨ e , ⟨ eq , ⊢e ⟩ ⟩ = select-value x ⊢e
+... | done (V-r x) = let ⟨ e , ⟨ eq , ⊢e ⟩ ⟩ = select-value {!!} x ⊢e
                      in step (β-prj x eq)
 
 
@@ -896,6 +907,6 @@ preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
 preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
 preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x
 preserve (⊢prj ⊢e) (ξ-prj M→N) = ⊢prj (preserve ⊢e M→N)
-preserve (⊢prj ⊢e) (β-prj vr eq) with select-value vr ⊢e
+preserve (⊢prj ⊢e) (β-prj vr eq) with select-value {!!} vr ⊢e
 preserve (⊢prj ⊢e) (β-prj vr eq) | ⟨ e , ⟨ eq' , ⊢e' ⟩ ⟩ rewrite eq' = rw-case eq ⊢e'
 preserve (⊢rcd ⊢r) (ξ-rcd x₁) = ⊢rcd (preserve-r ⊢r x₁)
