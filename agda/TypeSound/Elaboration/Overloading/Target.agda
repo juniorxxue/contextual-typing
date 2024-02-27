@@ -613,27 +613,34 @@ inv-+f-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-+f-rcd ⊢e s
 inv-+f-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-+f-rcd ⊢e₁ s
 inv-+f-rcd (⊢sub ⊢e x) s = inv-+f-rcd ⊢e (≤-trans x s)
 
+wfr-inv : ∀ {rs}
+  → WFE (𝕣 rs)
+  → WFR rs
+wfr-inv (wfe-rcd x) = x
+
 progress : ∀ {e A}
+  → WFE e
   → ∅ ⊢ e ⦂ A
   → Progress e
 
 progress-r : ∀ {rs A}
+  → WFR rs
   → ∅ ⊢r rs ⦂ A
   → Progress (𝕣 rs)
 
-progress-r ⊢r-nil = done (V-r VR-0)
-progress-r (⊢r-one ⊢e) with progress ⊢e
+progress-r wfe ⊢r-nil = done (V-r VR-0)
+progress-r (wfr-cons wfe wfr l∉) (⊢r-one ⊢e) with progress wfe ⊢e
 ... | step x = step (ξ-rcd (rstep-1 x))
 ... | done x = done (V-r (VR-S x VR-0))
-progress-r (⊢r-cons ⊢e ⊢r ) with progress ⊢e | progress-r ⊢r
+progress-r (wfr-cons wfe wfr l∉) (⊢r-cons ⊢e ⊢r ) with progress wfe ⊢e | progress-r wfr ⊢r
 ... | step x | p2 = step (ξ-rcd (rstep-1 x))
 ... | done x | step (ξ-rcd x₁) = step (ξ-rcd (rstep-2 x x₁))
 ... | done x | done (V-r x₁) = done (V-r (VR-S x x₁))
 
-progress ⊢n = done V-n
-progress ⊢m = done V-m
-progress (⊢ƛ ⊢e) = done V-ƛ
-progress (⊢· ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
+progress wfe ⊢n = done V-n
+progress wfe ⊢m = done V-m
+progress wfe (⊢ƛ ⊢e) = done V-ƛ
+progress (wfe-app wfe1 wfe2) (⊢· ⊢e₁ ⊢e₂) with progress wfe1 ⊢e₁ | progress wfe2 ⊢e₂
 ... | step s₁ | _ = step (ξ-·₁ s₁)
 ... | done v₁ | step s₂ = step (ξ-·₂ v₁ s₂)
 ... | done V-n | done v₂ = ⊥-elim (elim-int' ⊢e₁)
@@ -643,13 +650,13 @@ progress (⊢· ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
 ... | done V-+i | done v₂ = progress-+i ⊢e₁ ⊢e₂ v₂
 ... | done V-+f | done v₂ = progress-+f ⊢e₁ ⊢e₂ v₂
 ... | done (V-r vr) | done v₂ = ⊥-elim (elim-rcd-arr ⊢e₁ s-refl)
-progress (⊢& ⊢e ⊢e₁) = progress ⊢e
-progress ⊢+ = done V-+
-progress ⊢+i = done V-+i
-progress ⊢+f = done V-+f
-progress (⊢sub ⊢e x) = progress ⊢e
-progress (⊢rcd ⊢r) = progress-r ⊢r
-progress (⊢prj ⊢e) with progress ⊢e
+progress wfe (⊢& ⊢e ⊢e₁) = progress wfe ⊢e
+progress wfe ⊢+ = done V-+
+progress wfe ⊢+i = done V-+i
+progress wfe ⊢+f = done V-+f
+progress wfe (⊢sub ⊢e x) = progress wfe ⊢e
+progress (wfe-rcd x) (⊢rcd ⊢r) = progress-r x ⊢r
+progress (wfe-prj wfe) (⊢prj ⊢e) with progress wfe ⊢e
 ... | step x = step (ξ-prj x)
 ... | done V-n = ⊥-elim (inv-n-rcd ⊢e s-refl)
 ... | done V-m = ⊥-elim (inv-m-rcd ⊢e s-refl)
@@ -657,8 +664,8 @@ progress (⊢prj ⊢e) with progress ⊢e
 ... | done V-+ = ⊥-elim (inv-+-rcd ⊢e s-refl)
 ... | done V-+i = ⊥-elim (inv-+i-rcd ⊢e s-refl)
 ... | done V-+f = ⊥-elim (inv-+f-rcd ⊢e s-refl)
-... | done (V-r x) = let ⟨ e , ⟨ eq , ⊢e ⟩ ⟩ = select-value {!!} x ⊢e
-                     in step (β-prj x eq)
+... | done (V-r x) = let ⟨ e , ⟨ eq , ⊢e ⟩ ⟩ = select-value (wfr-inv wfe) x ⊢e
+                     in step (β-prj x eq)                       
 
 
 
@@ -882,31 +889,33 @@ rw-case refl ⊢e = ⊢e
   
 
 preserve : ∀ {M N A}
+  → WFE M
   → ∅ ⊢ M ⦂ A
   → M —→ N
     ----------
   → ∅ ⊢ N ⦂ A
 
 preserve-r : ∀ {rs rs' A}
+  → WFR rs
   → ∅ ⊢r rs ⦂ A
   → rs →r rs'
     ----------
   → ∅ ⊢r rs' ⦂ A
-preserve-r (⊢r-one x) (rstep-1 x₁) = ⊢r-one (preserve x x₁)
-preserve-r (⊢r-cons ⊢e ⊢r) (rstep-1 x) = ⊢r-cons (preserve ⊢e x) ⊢r
-preserve-r (⊢r-cons ⊢e ⊢r) (rstep-2 x st) = ⊢r-cons ⊢e (preserve-r ⊢r st)
+preserve-r (wfr-cons x₂ wfr x₃) (⊢r-one x) (rstep-1 x₁) = ⊢r-one (preserve x₂ x x₁)
+preserve-r (wfr-cons x₁ wfr x₂) (⊢r-cons ⊢e ⊢r) (rstep-1 x) = ⊢r-cons (preserve x₁ ⊢e x) ⊢r
+preserve-r (wfr-cons x₁ wfr x₂) (⊢r-cons ⊢e ⊢r) (rstep-2 x st) = ⊢r-cons ⊢e (preserve-r wfr ⊢r st)
   
-preserve (⊢· ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢· (preserve ⊢e M→N) ⊢e₁
-preserve (⊢· ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢· ⊢e (preserve ⊢e₁ M→N)
-preserve (⊢· ⊢e ⊢e₁) (β-ƛ x) with inv-lam ⊢e
+preserve (wfe-app wfe wfe₁) (⊢· ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢· (preserve wfe ⊢e M→N) ⊢e₁
+preserve (wfe-app wfe wfe₁) (⊢· ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢· ⊢e (preserve wfe₁ ⊢e₁ M→N)
+preserve wfe (⊢· ⊢e ⊢e₁) (β-ƛ x) with inv-lam ⊢e
 ... | ⟨ A' , ⟨ B' , ⟨ ⊢e' , ⟨ A≤A' , B'≤B ⟩ ⟩ ⟩ ⟩ = subst (⊢sub ⊢e₁ A≤A') (⊢sub ⊢e' B'≤B)
-preserve (⊢· ⊢e ⊢e₁) β-+-i = ⊢sub ⊢+i (inv-+-i+ ⊢e (inv-int ⊢e₁))
-preserve (⊢· ⊢e ⊢e₁) β-+-f = ⊢sub ⊢+f (inv-+-f+ ⊢e (inv-flt ⊢e₁))
-preserve (⊢· ⊢e ⊢e₁) β-+i = ⊢sub ⊢n (inv-+i ⊢e)
-preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
-preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
-preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x
-preserve (⊢prj ⊢e) (ξ-prj M→N) = ⊢prj (preserve ⊢e M→N)
-preserve (⊢prj ⊢e) (β-prj vr eq) with select-value {!!} vr ⊢e
-preserve (⊢prj ⊢e) (β-prj vr eq) | ⟨ e , ⟨ eq' , ⊢e' ⟩ ⟩ rewrite eq' = rw-case eq ⊢e'
-preserve (⊢rcd ⊢r) (ξ-rcd x₁) = ⊢rcd (preserve-r ⊢r x₁)
+preserve wfe (⊢· ⊢e ⊢e₁) β-+-i = ⊢sub ⊢+i (inv-+-i+ ⊢e (inv-int ⊢e₁))
+preserve wfe (⊢· ⊢e ⊢e₁) β-+-f = ⊢sub ⊢+f (inv-+-f+ ⊢e (inv-flt ⊢e₁))
+preserve wfe (⊢· ⊢e ⊢e₁) β-+i = ⊢sub ⊢n (inv-+i ⊢e)
+preserve wfe (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
+preserve wfe (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve wfe ⊢e M→N) (preserve wfe ⊢e₁ M→N)
+preserve wfe (⊢sub ⊢e x) M→N = ⊢sub (preserve wfe ⊢e M→N) x
+preserve (wfe-prj wfe) (⊢prj ⊢e) (ξ-prj M→N) = ⊢prj (preserve wfe ⊢e M→N)
+preserve (wfe-prj (wfe-rcd wfr)) (⊢prj ⊢e) (β-prj vr eq) with select-value wfr vr ⊢e
+preserve (wfe-prj (wfe-rcd wfr)) (⊢prj ⊢e) (β-prj vr eq) | ⟨ e , ⟨ eq' , ⊢e' ⟩ ⟩ rewrite eq' = rw-case eq ⊢e'
+preserve (wfe-rcd x) (⊢rcd ⊢r) (ξ-rcd x₁) = ⊢rcd (preserve-r x ⊢r x₁)
