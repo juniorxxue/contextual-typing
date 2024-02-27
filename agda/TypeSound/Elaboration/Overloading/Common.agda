@@ -3,7 +3,7 @@ module TypeSound.Elaboration.Overloading.Common where
 open import Data.Bool using (Bool; true; false; T; not) public
 open import Data.Empty using (⊥; ⊥-elim) public
 open import Data.List using (List; _∷_; []) public
-open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _++n_) public
+open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _++n_; _≟_ to _≟n_) public
 open import Data.Product using (∃-syntax; _×_) public
 open import Data.String using (String; _≟_) public
 open import Data.Unit using (tt) public
@@ -13,9 +13,13 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; con
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
 open import Agda.Builtin.Float renaming (Float to 𝔽; primFloatPlus to _++f_) public
+open import Data.Maybe using (Maybe; just; nothing) public
 
 Id : Set
 Id = String
+
+Label : Set
+Label = ℕ
 
 infixr 8 _⇒_
 infixr 8 _&_
@@ -26,6 +30,7 @@ data Type : Set where
   Float : Type
   _⇒_ : Type → Type → Type
   _&_ : Type → Type → Type
+  τ⟦_↦_⟧ : Label → Type → Type
 
 infixl 5  _,_⦂_
 

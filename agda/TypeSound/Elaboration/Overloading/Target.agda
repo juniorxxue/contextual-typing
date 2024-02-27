@@ -7,7 +7,10 @@ infixr 5  ƛ_⇒_
 infixl 7  _·_
 infix  9  `_
 
-data Term : Set where
+data Record : Set
+data Term : Set
+
+data Term where
   lit      : ℕ → Term
   flt      : 𝔽 → Term
   `_       : Id → Term
@@ -16,7 +19,12 @@ data Term : Set where
   +        : Term
   +i       : ℕ → Term
   +f       : 𝔽 → Term
+  𝕣_       : Record → Term
+  _𝕡_      : Term → Label → Term
 
+data Record where
+  rnil : Record
+  r⟦_↦_⟧_ : Label → Term → Record → Record
 
 infix 4 _≤_
 
@@ -42,6 +50,9 @@ data _≤_ : Type → Type → Set where
     → A ≤ B
     → A ≤ C
     → A ≤ B & C
+  s-rcd : ∀ {l A B}
+    → A ≤ B
+    → τ⟦ l ↦ A ⟧ ≤ τ⟦ l ↦ B ⟧
 
 s-refl : ∀ {A}
   → A ≤ A
@@ -50,6 +61,7 @@ s-refl {Int} = s-int
 s-refl {Float} = s-flt
 s-refl {A ⇒ A₁} = s-arr s-refl s-refl
 s-refl {A & A₁} = s-and (s-and-l s-refl) (s-and-r s-refl)
+s-refl {τ⟦ x ↦ A ⟧} = s-rcd s-refl
 
 inv-&-l : ∀ {A B C}
   → A ≤ B & C
@@ -88,9 +100,19 @@ inv-&-r (s-and A≤BC A≤BC₁) = A≤BC₁
 ≤-trans {B = B & B₁} A≤B (s-and-r B≤C) = ≤-trans (inv-&-r A≤B) B≤C
 ≤-trans {B = B & B₁} A≤B (s-and B≤C B≤C₁) = s-and (≤-trans A≤B B≤C) (≤-trans A≤B B≤C₁)
 
-infix  4  _⊢_⦂_
+≤-trans {B = τ⟦ x₁ ↦ B ⟧} x s-top = s-top
+≤-trans {B = τ⟦ x₁ ↦ B ⟧} x (s-and x₂ x₃) = s-and (≤-trans x x₂) (≤-trans x x₃)
+≤-trans {B = τ⟦ x₁ ↦ B ⟧} (s-and-l x) (s-rcd s) = s-and-l (≤-trans x (s-rcd s))
+≤-trans {B = τ⟦ x₁ ↦ B ⟧} (s-and-r x) (s-rcd s) = s-and-r (≤-trans x (s-rcd s))
+≤-trans {B = τ⟦ x₁ ↦ B ⟧} (s-rcd x) (s-rcd s) = s-rcd (≤-trans x s)
 
-data _⊢_⦂_ : Context → Term → Type → Set where
+infix  4  _⊢_⦂_
+infix  4  _⊢r_⦂_
+
+data _⊢_⦂_ : Context → Term → Type → Set
+data _⊢r_⦂_ : Context → Record → Type → Set
+
+data _⊢_⦂_ where
 
   ⊢n : ∀ {Γ n}
     → Γ ⊢ (lit n) ⦂ Int
@@ -128,14 +150,39 @@ data _⊢_⦂_ : Context → Term → Type → Set where
   ⊢+f : ∀ {Γ m}
     → Γ ⊢ (+f m) ⦂ Float ⇒ Float
 
+  ⊢rcd : ∀ {Γ rs As}
+    → Γ ⊢r rs ⦂ As
+    → Γ ⊢ (𝕣 rs) ⦂ As
+
+  ⊢prj : ∀ {Γ e l A}
+    → Γ ⊢ e ⦂ τ⟦ l ↦ A ⟧
+    → Γ ⊢ e 𝕡 l ⦂ A
+
   ⊢sub : ∀ {Γ M A B}
     → Γ ⊢ M ⦂ A
     → A ≤ B
     → Γ ⊢ M ⦂ B
 
+data _⊢r_⦂_ where
+
+  ⊢r-nil : ∀ {Γ}
+    → Γ ⊢r rnil ⦂ Top
+
+  ⊢r-one : ∀ {Γ e A l}
+    → Γ ⊢ e ⦂ A
+    → Γ ⊢r r⟦ l ↦ e ⟧ rnil ⦂ τ⟦ l ↦ A ⟧
+
+  ⊢r-cons : ∀ {Γ l e rs A As}
+    → (⊢e : Γ ⊢ e ⦂ A)
+    → Γ ⊢r rs ⦂ As
+--    → (rs≢nil : rs ≢ rnil)
+    → Γ ⊢r r⟦ l ↦ e ⟧ rs ⦂ (τ⟦ l ↦ A ⟧ & As)
+
 infix 9 _[_:=_]
 
 _[_:=_] : Term → Id → Term → Term
+_[_:=_]r : Record → Id → Term → Record
+
 (` x) [ y := V ] with x ≟ y
 ... | yes _         = V
 ... | no  _         = ` x
@@ -148,8 +195,39 @@ _[_:=_] : Term → Id → Term → Term
 + [ x := x₁ ] = +
 +i n [ x := x₁ ] = +i n
 +f m [ x := x₁ ] = +f m
+(𝕣 rs) [ y := V ] = 𝕣 (rs [ y := V ]r)
+(e 𝕡 l) [ y := V ] = (e [ y := V ]) 𝕡 l
 
-data Value : Term → Set where
+rnil [ y := V ]r = rnil
+(r⟦ l ↦ e ⟧ rs) [ y := V ]r = r⟦ l ↦ (e [ y := V ]) ⟧ (rs [ y := V ]r)
+
+{-
+rs≢rnil-subst : ∀ {rs V y}
+  → rs ≢ rnil
+  → (rs [ y := V ]r) ≢ rnil
+rs≢rnil-subst {rs = rnil} neq = neq
+rs≢rnil-subst {rs = r⟦ x ↦ x₁ ⟧ rs} neq = {!!}
+-}
+
+
+select : Record → Label → Maybe Term
+select rnil l = nothing
+select (r⟦ l₁ ↦ e ⟧ rs) l₂ with l₁ ≟n l₂
+... | yes p = just e
+... | no ¬p = select rs l₁
+
+data Value : Term → Set
+data ValueR : Record → Set
+
+data ValueR where
+
+  VR-0 : ValueR rnil
+  VR-S : ∀ {v rs l}
+    → Value v
+    → ValueR rs
+    → ValueR (r⟦ l ↦ v ⟧ rs)
+
+data Value where
 
   V-n : ∀ {n}
     → Value (lit n)
@@ -169,9 +247,27 @@ data Value : Term → Set where
   V-+f : ∀ {m}
     → Value (+f m)
 
+  V-r : ∀ {rs}
+    → ValueR rs
+    → Value (𝕣 rs)
+
 infix 4 _—→_
 
-data _—→_ : Term → Term → Set where
+data _—→_ : Term → Term → Set
+data _→r_ : Record → Record → Set
+
+data _→r_ where
+
+  rstep-1 : ∀ {e e' l rs}
+    → e —→ e'
+    → (r⟦ l ↦ e ⟧ rs) →r (r⟦ l ↦ e' ⟧ rs)
+
+  rstep-2 : ∀ {v rs rs' l}
+    → Value v
+    → rs →r rs'
+    → (r⟦ l ↦ v ⟧ rs) →r (r⟦ l ↦ v ⟧ rs')
+
+data _—→_ where
 
   ξ-·₁ : ∀ {L L′ M}
     → L —→ L′
@@ -181,6 +277,14 @@ data _—→_ : Term → Term → Set where
     → Value V
     → M —→ M′
     → V · M —→ V · M′
+
+  ξ-prj : ∀ {M M' l}
+    → M —→ M'
+    → (M 𝕡 l) —→  (M' 𝕡 l)
+
+  ξ-rcd : ∀ {rs rs'}
+    → rs →r rs'
+    → (𝕣 rs) —→ (𝕣 rs')
 
   β-ƛ : ∀ {x N V}
     → Value V
@@ -197,6 +301,11 @@ data _—→_ : Term → Term → Set where
 
   β-+f : ∀ {m₁ m₂}
     → (+f m₁) · (flt m₂) —→ (flt (m₁ ++f m₂))
+
+  β-prj : ∀ {rs l e}
+    → ValueR rs
+    → select rs l ≡ just e
+    → (𝕣 rs) 𝕡 l —→ e
 
 data Progress (M : Term) : Set where
 
@@ -236,6 +345,18 @@ elim-flt' : ∀ {Γ n A B}
   → ⊥
 elim-flt' (⊢sub ⊢e x) = elim-flt ⊢e x
 
+elim-int-rcd : ∀ {Γ rs A}
+  → Γ ⊢r rs ⦂ A
+  → A ≤ Int
+  → ⊥
+elim-int-rcd (⊢r-cons x ⊢r) (s-and-r A≤Int) = elim-int-rcd ⊢r A≤Int
+
+elim-flt-rcd : ∀ {Γ rs A}
+  → Γ ⊢r rs ⦂ A
+  → A ≤ Float
+  → ⊥
+elim-flt-rcd (⊢r-cons x ⊢r) (s-and-r A≤Flo) = elim-flt-rcd ⊢r A≤Flo
+
 canonical-int : ∀ {Γ M A}
   → Γ ⊢ M ⦂ A
   → A ≤ Int
@@ -247,6 +368,8 @@ canonical-int (⊢& ⊢M ⊢M₁) (s-and-l A≤Int) VM = canonical-int ⊢M A≤
 canonical-int (⊢sub ⊢M x) (s-and-l A≤Int) VM = canonical-int ⊢M (≤-trans (inv-&-l x) A≤Int) VM
 canonical-int (⊢& ⊢M ⊢M₁) (s-and-r A≤Int) VM = canonical-int ⊢M₁ A≤Int VM
 canonical-int (⊢sub ⊢M x) (s-and-r A≤Int) VM = canonical-int ⊢M (≤-trans (inv-&-r x) A≤Int) VM
+canonical-int (⊢rcd ⊢r) (s-and-l A≤Int) VM = ⊥-elim (elim-int-rcd ⊢r (s-and-l A≤Int))
+canonical-int (⊢rcd ⊢r) (s-and-r A≤Int) VM = ⊥-elim (elim-int-rcd ⊢r (s-and-r A≤Int))
 
 canonical-flt : ∀ {Γ M A}
   → Γ ⊢ M ⦂ A
@@ -259,6 +382,8 @@ canonical-flt (⊢& ⊢M ⊢M₁) (s-and-l A≤F) VM = canonical-flt ⊢M A≤F 
 canonical-flt (⊢sub ⊢M x) (s-and-l A≤F) VM = canonical-flt ⊢M (≤-trans (inv-&-l x) A≤F) VM
 canonical-flt (⊢& ⊢M ⊢M₁) (s-and-r A≤F) VM = canonical-flt ⊢M₁ A≤F VM
 canonical-flt (⊢sub ⊢M x) (s-and-r A≤F) VM = canonical-flt ⊢M (≤-trans (inv-&-r x) A≤F) VM
+canonical-flt (⊢rcd x₁) (s-and-l x₂) x = ⊥-elim (elim-flt-rcd x₁ (s-and-l x₂))
+canonical-flt (⊢rcd x₁) (s-and-r x₂) x = ⊥-elim (elim-flt-rcd x₁ (s-and-r x₂))
 
 inv-arr-l : ∀ {A B C D}
   → A ⇒ B ≤ C ⇒ D
@@ -332,9 +457,99 @@ progress-+f ⊢+f ⊢M VM with canonical-flt ⊢M s-flt VM
 ... | ⟨ n , eq ⟩ rewrite eq = step β-+f
 progress-+f (⊢sub ⊢N x) ⊢M VM = progress-+f' ⊢N x ⊢M VM
 
+elim-rcd-arr-r : ∀ {Γ rs A B C}
+  → Γ ⊢r rs ⦂ C
+  → C ≤ A ⇒ B
+  → ⊥
+elim-rcd-arr-r (⊢r-cons x ⊢r) (s-and-r sub) = elim-rcd-arr-r ⊢r sub
+
+elim-rcd-arr : ∀ {Γ rs A B C}
+  → Γ ⊢ 𝕣 rs ⦂ C
+  → C ≤ A ⇒ B
+  → ⊥
+elim-rcd-arr (⊢& ⊢r ⊢r₁) (s-and-l sub) = elim-rcd-arr ⊢r sub
+elim-rcd-arr (⊢& ⊢r ⊢r₁) (s-and-r sub) = elim-rcd-arr ⊢r₁ sub
+elim-rcd-arr (⊢rcd x) sub = elim-rcd-arr-r x sub
+elim-rcd-arr (⊢sub ⊢r x) sub = elim-rcd-arr ⊢r (≤-trans x sub)
+
+select-value : ∀ {rs l A}
+  → ValueR rs
+  → ∅ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
+  → ∃[ e ](select rs l ≡ just e × (∅ ⊢ e ⦂ A))
+select-value {l = l} vr (⊢rcd (⊢r-one {e = e} {l = l} x)) with l ≟n l
+... | yes p = ⟨ e , ⟨ refl , x ⟩ ⟩
+... | no ¬p = ⊥-elim (¬p refl)
+select-value vr (⊢sub ⊢e x) = {!!}
+
+
+-- inversion cases
+inv-n-rcd : ∀ {n l A B}
+  → ∅ ⊢ lit n ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-n-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-n-rcd ⊢e s
+inv-n-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-n-rcd ⊢e₁ s
+inv-n-rcd (⊢sub ⊢e x) s = inv-n-rcd ⊢e (≤-trans x s)
+
+inv-m-rcd : ∀ {m l A B}
+  → ∅ ⊢ flt m ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-m-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-m-rcd ⊢e s
+inv-m-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-m-rcd ⊢e₁ s
+inv-m-rcd (⊢sub ⊢e x) s = inv-m-rcd ⊢e (≤-trans x s)
+
+inv-lam-rcd : ∀ {x e l A B}
+  → ∅ ⊢ ƛ x ⇒ e ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-lam-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-lam-rcd ⊢e s
+inv-lam-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-lam-rcd ⊢e₁ s
+inv-lam-rcd (⊢sub ⊢e x) s = inv-lam-rcd ⊢e (≤-trans x s)
+
+inv-+-rcd : ∀ {l A B}
+  → ∅ ⊢ + ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-+-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-+-rcd ⊢e s
+inv-+-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-+-rcd ⊢e₁ s
+inv-+-rcd ⊢+ (s-and-l ())
+inv-+-rcd ⊢+ (s-and-r ())
+inv-+-rcd (⊢sub ⊢e x) s = inv-+-rcd ⊢e (≤-trans x s)
+
+inv-+i-rcd : ∀ {l n A B}
+  → ∅ ⊢ +i n ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-+i-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-+i-rcd ⊢e s
+inv-+i-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-+i-rcd ⊢e₁ s
+inv-+i-rcd (⊢sub ⊢e x) s = inv-+i-rcd ⊢e (≤-trans x s)
+
+inv-+f-rcd : ∀ {l n A B}
+  → ∅ ⊢ +f n ⦂ A
+  → A ≤ τ⟦ l ↦ B ⟧
+  → ⊥
+inv-+f-rcd (⊢& ⊢e ⊢e₁) (s-and-l s) = inv-+f-rcd ⊢e s
+inv-+f-rcd (⊢& ⊢e ⊢e₁) (s-and-r s) = inv-+f-rcd ⊢e₁ s
+inv-+f-rcd (⊢sub ⊢e x) s = inv-+f-rcd ⊢e (≤-trans x s)
+
 progress : ∀ {e A}
   → ∅ ⊢ e ⦂ A
   → Progress e
+
+progress-r : ∀ {rs A}
+  → ∅ ⊢r rs ⦂ A
+  → Progress (𝕣 rs)
+
+progress-r ⊢r-nil = done (V-r VR-0)
+progress-r (⊢r-one ⊢e) with progress ⊢e
+... | step x = step (ξ-rcd (rstep-1 x))
+... | done x = done (V-r (VR-S x VR-0))
+progress-r (⊢r-cons ⊢e ⊢r ) with progress ⊢e | progress-r ⊢r
+... | step x | p2 = step (ξ-rcd (rstep-1 x))
+... | done x | step (ξ-rcd x₁) = step (ξ-rcd (rstep-2 x x₁))
+... | done x | done (V-r x₁) = done (V-r (VR-S x x₁))
+
 progress ⊢n = done V-n
 progress ⊢m = done V-m
 progress (⊢ƛ ⊢e) = done V-ƛ
@@ -347,11 +562,25 @@ progress (⊢· ⊢e₁ ⊢e₂) with progress ⊢e₁ | progress ⊢e₂
 ... | done V-+ | done v₂ = progress-+ ⊢e₁ ⊢e₂ v₂
 ... | done V-+i | done v₂ = progress-+i ⊢e₁ ⊢e₂ v₂
 ... | done V-+f | done v₂ = progress-+f ⊢e₁ ⊢e₂ v₂
+... | done (V-r vr) | done v₂ = ⊥-elim (elim-rcd-arr ⊢e₁ s-refl)
 progress (⊢& ⊢e ⊢e₁) = progress ⊢e
 progress ⊢+ = done V-+
 progress ⊢+i = done V-+i
 progress ⊢+f = done V-+f
 progress (⊢sub ⊢e x) = progress ⊢e
+progress (⊢rcd ⊢r) = progress-r ⊢r
+progress (⊢prj ⊢e) with progress ⊢e
+... | step x = step (ξ-prj x)
+... | done V-n = ⊥-elim (inv-n-rcd ⊢e s-refl)
+... | done V-m = ⊥-elim (inv-m-rcd ⊢e s-refl)
+... | done V-ƛ = ⊥-elim (inv-lam-rcd ⊢e s-refl)
+... | done V-+ = ⊥-elim (inv-+-rcd ⊢e s-refl)
+... | done V-+i = ⊥-elim (inv-+i-rcd ⊢e s-refl)
+... | done V-+f = ⊥-elim (inv-+f-rcd ⊢e s-refl)
+... | done (V-r x) = let ⟨ e , ⟨ eq , ⊢e ⟩ ⟩ = select-value x ⊢e
+                     in step (β-prj x eq)
+
+
 
 ext : ∀ {Γ Δ}
   → (∀ {x A}     →         Γ ∋ x ⦂ A →         Δ ∋ x ⦂ A)
@@ -364,6 +593,16 @@ rename : ∀ {Γ Δ}
   → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
     ----------------------------------
   → (∀ {M A} → Γ ⊢ M ⦂ A → Δ ⊢ M ⦂ A)
+
+rename-r : ∀ {Γ Δ}
+  → (∀ {x A} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A)
+    ----------------------------------
+  → (∀ {M A} → Γ ⊢r M ⦂ A → Δ ⊢r M ⦂ A)
+
+rename-r ρ ⊢r-nil = ⊢r-nil
+rename-r ρ (⊢r-one x) = ⊢r-one (rename ρ x)
+rename-r ρ (⊢r-cons ⊢e ⊢r) = ⊢r-cons (rename ρ ⊢e) (rename-r ρ ⊢r)
+
 rename ρ ⊢n = ⊢n
 rename ρ ⊢m = ⊢m
 rename ρ (⊢` ∋w)    =  ⊢` (ρ ∋w)
@@ -374,6 +613,8 @@ rename ρ (⊢sub ⊢L s) = ⊢sub (rename ρ ⊢L) s
 rename ρ ⊢+ = ⊢+
 rename ρ ⊢+i = ⊢+i
 rename ρ ⊢+f = ⊢+f
+rename ρ (⊢rcd ⊢r) = ⊢rcd (rename-r ρ ⊢r)
+rename ρ (⊢prj ⊢e) = ⊢prj (rename ρ ⊢e)
 
 weaken : ∀ {Γ M A}
   → ∅ ⊢ M ⦂ A
@@ -421,6 +662,15 @@ subst : ∀ {Γ x N V A B}
   → Γ , x ⦂ A ⊢ N ⦂ B
     --------------------
   → Γ ⊢ N [ x := V ] ⦂ B
+
+subst-r : ∀ {Γ x N V A B}
+  → ∅ ⊢ V ⦂ A
+  → Γ , x ⦂ A ⊢r N ⦂ B
+  → Γ ⊢r N [ x := V ]r ⦂ B
+subst-r {x = y} ⊢V ⊢r-nil = ⊢r-nil
+subst-r {x = y} ⊢V (⊢r-one ⊢e) = ⊢r-one (subst ⊢V ⊢e)
+subst-r {x = y} ⊢V (⊢r-cons ⊢e ⊢r) = ⊢r-cons (subst ⊢V ⊢e) (subst-r ⊢V ⊢r)
+
 subst {x = y} ⊢V ⊢n = ⊢n
 subst {x = y} ⊢V ⊢m = ⊢m
 subst {x = y} ⊢V (⊢` {x = x} Z) with x ≟ y
@@ -438,6 +688,15 @@ subst ⊢V (⊢sub ⊢L s) = ⊢sub (subst ⊢V ⊢L) s
 subst ⊢V ⊢+ = ⊢+
 subst ⊢V ⊢+i = ⊢+i
 subst ⊢V ⊢+f = ⊢+f
+subst ⊢V (⊢rcd ⊢r) = ⊢rcd (subst-r ⊢V ⊢r)
+subst ⊢V (⊢prj ⊢e) = ⊢prj (subst ⊢V ⊢e)
+
+select-prv : ∀ {Γ rs l A e}
+  → ValueR rs
+  → Γ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
+  → select rs l ≡ just e
+  → Γ ⊢ e ⦂ A
+select-prv vr ⊢r eq = {!!}
 
 inv-lam' : ∀ {Γ x e A B T}
   → Γ ⊢ ƛ x ⇒ e ⦂ T
@@ -546,6 +805,16 @@ preserve : ∀ {M N A}
   → M —→ N
     ----------
   → ∅ ⊢ N ⦂ A
+
+preserve-r : ∀ {rs rs' A}
+  → ∅ ⊢r rs ⦂ A
+  → rs →r rs'
+    ----------
+  → ∅ ⊢r rs' ⦂ A
+preserve-r (⊢r-one x) (rstep-1 x₁) = ⊢r-one (preserve x x₁)
+preserve-r (⊢r-cons ⊢e ⊢r) (rstep-1 x) = ⊢r-cons (preserve ⊢e x) ⊢r
+preserve-r (⊢r-cons ⊢e ⊢r) (rstep-2 x st) = ⊢r-cons ⊢e (preserve-r ⊢r st)
+  
 preserve (⊢· ⊢e ⊢e₁) (ξ-·₁ M→N) = ⊢· (preserve ⊢e M→N) ⊢e₁
 preserve (⊢· ⊢e ⊢e₁) (ξ-·₂ x M→N) = ⊢· ⊢e (preserve ⊢e₁ M→N)
 preserve (⊢· ⊢e ⊢e₁) (β-ƛ x) with inv-lam ⊢e
@@ -556,3 +825,6 @@ preserve (⊢· ⊢e ⊢e₁) β-+i = ⊢sub ⊢n (inv-+i ⊢e)
 preserve (⊢· ⊢e ⊢e₁) β-+f = ⊢sub ⊢m (inv-+f ⊢e)
 preserve (⊢& ⊢e ⊢e₁) M→N = ⊢& (preserve ⊢e M→N) (preserve ⊢e₁ M→N)
 preserve (⊢sub ⊢e x) M→N = ⊢sub (preserve ⊢e M→N) x
+preserve (⊢prj ⊢e) (ξ-prj M→N) = ⊢prj (preserve ⊢e M→N)
+preserve (⊢prj ⊢e) (β-prj vr eq) = select-prv vr ⊢e eq
+preserve (⊢rcd ⊢r) (ξ-rcd x₁) = ⊢rcd (preserve-r ⊢r x₁)
