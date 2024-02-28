@@ -5,15 +5,22 @@ import TypeSound.Elaboration.Overloading.Target as T
 import TypeSound.Elaboration.Overloading.Source as S
 
 ∥_∥ : S.Term → T.Term
-∥ S.lit x ∥ = T.lit x
-∥ S.flt x ∥ = T.flt x
+∥_∥r : S.Record → T.Record
+
+∥ S.rnil ∥r = T.rnil
+∥ S.r⟦ l ↦ e ⟧ rs ∥r =  T.r⟦ l  ↦ ∥ e ∥ ⟧ (∥ rs ∥r)
+
+∥ S.𝕔 S.lit x ∥ = T.lit x
+∥ S.𝕔 S.flt x ∥ = T.flt x
+∥ S.𝕔 S.+s ∥ = T.+
+∥ S.𝕔 S.+i x ∥ = T.+i x
+∥ S.𝕔 S.+f x ∥ = T.+f x
 ∥ S.` x ∥ = T.` x
-∥ S.ƛ x ⇒ s ∥ = T.ƛ x ⇒ ∥ s ∥
-∥ s S.· s₁ ∥ = ∥ s ∥ T.· ∥ s₁ ∥ 
-∥ s S.⦂ x ∥ = ∥ s ∥
-∥ S.+ ∥ = T.+
-∥ S.+i x ∥ = T.+i x
-∥ S.+f x ∥ = T.+f x
+∥ S.ƛ x ⇒ e ∥ = T.ƛ x ⇒ ∥ e ∥
+∥ e S.· e₁ ∥ = ∥ e ∥ T.· ∥ e₁ ∥ 
+∥ e S.⦂ x ∥ = ∥ e ∥
+∥ S.𝕣 x ∥ = T.𝕣 ∥ x ∥r
+∥ e S.𝕡 x ∥ = ∥ e ∥ T.𝕡 x
 
 preserve-sub : ∀ {B j A}
   → B S.≤d j # A
@@ -27,12 +34,26 @@ preserve-sub (S.≤d-arr-S⇐ B≤A B≤A₁) = T.s-arr T.s-refl (preserve-sub B
 preserve-sub (S.≤d-and₁ B≤A x) = T.s-and-l (preserve-sub B≤A)
 preserve-sub (S.≤d-and₂ B≤A x) = T.s-and-r (preserve-sub B≤A)
 preserve-sub (S.≤d-and B≤A B≤A₁) = T.s-and (preserve-sub B≤A) (preserve-sub B≤A₁)
+preserve-sub (S.≤d-rcd∞ x) = T.s-rcd (preserve-sub x)
+preserve-sub (S.≤d-arr-S⇒ x x₁) = T.s-arr (preserve-sub x) (preserve-sub x₁)
+preserve-sub (S.≤d-rcd-Sl x) = T.s-rcd (preserve-sub x)
 
 preserve : ∀ {Γ e j A}
   → Γ S.⊢d j # e ⦂ A
   → Γ T.⊢ ∥ e ∥ ⦂ A
-preserve S.⊢d-int = T.⊢n
-preserve S.⊢d-flt = T.⊢m
+preserve-r : ∀ {Γ j rs As}
+  → Γ S.⊢r j # rs ⦂ As
+  → Γ T.⊢r ∥ rs ∥r ⦂ As
+
+preserve-r S.⊢r-nil = T.⊢r-nil
+preserve-r (S.⊢r-one x) = T.⊢r-one (preserve x)
+preserve-r (S.⊢r-cons x ⊢rs x₁) = T.⊢r-cons (preserve x) (preserve-r ⊢rs)
+
+preserve (S.⊢d-c {c = S.lit x}) = T.⊢n
+preserve (S.⊢d-c {c = S.flt x}) = T.⊢m
+preserve (S.⊢d-c {c = S.+s}) = T.⊢+
+preserve (S.⊢d-c {c = S.+i x}) = T.⊢+i
+preserve (S.⊢d-c {c = S.+f x}) = T.⊢+f
 preserve (S.⊢d-var x) = T.⊢` x
 preserve (S.⊢d-ann ⊢e) = preserve ⊢e
 preserve (S.⊢d-lam₁ ⊢e) = T.⊢ƛ (preserve ⊢e)
@@ -40,57 +61,5 @@ preserve (S.⊢d-lam₂ ⊢e) = T.⊢ƛ (preserve ⊢e)
 preserve (S.⊢d-app⇐ ⊢e ⊢e₁) = T.⊢· (preserve ⊢e) (preserve ⊢e₁)
 preserve (S.⊢d-app⇒ ⊢e ⊢e₁) = T.⊢· (preserve ⊢e) (preserve ⊢e₁)
 preserve (S.⊢d-sub ⊢e x x₁) = T.⊢sub (preserve ⊢e) (preserve-sub x)
-preserve (S.⊢d-& ⊢e ⊢e₁) = T.⊢& (preserve ⊢e) (preserve ⊢e₁)
-preserve S.⊢d-+ = T.⊢+
-preserve S.⊢d-+i = T.⊢+i
-preserve S.⊢d-+f = T.⊢+f
-
-data Complete (Γ : Context) (e : T.Term) (A : Type) : Set where
-
-  ok : ∀ {e'}
-    → (eq : ∥ e' ∥ ≡ e)
-    → (⊢e : Γ S.⊢d S.♭ S.Z # e' ⦂ A)
-    → Complete Γ e A
-
-complete : ∀ {Γ e A}
-  → Γ T.⊢ e ⦂ A
-  → Complete Γ e A
-complete T.⊢n = {!!}
-complete T.⊢m = {!!}
-complete (T.⊢` x) = {!!}
-complete (T.⊢ƛ ⊢e) = {!!}
-complete (T.⊢· ⊢e ⊢e₁)  with complete ⊢e | complete ⊢e₁
-... | ok eq ⊢e₂ | ok eq₁ ⊢e₃ = ok (cong₂ {!!} eq eq₁) (S.⊢d-app⇐ {!!} (S.⊢d-sub ⊢e₃ {!≤d-refl∞!} {!!})) 
-complete (T.⊢& ⊢e ⊢e₁) with complete ⊢e | complete ⊢e₁
-... | ok eq ⊢e₂ | ok eq₁ ⊢e₃ = {!!}
-complete T.⊢+ = {!!}
-complete T.⊢+i = {!!}
-complete T.⊢+f = {!!}
-complete (T.⊢sub ⊢e x) = {!!}
-
-{-
-
-data Complete (Γ : Context) (e : T.Term) (A : Type) : Set where
-
-  ok : ∀ j e'
-    → ∥ e' ∥ ≡ e
-    → Γ S.⊢d j # e' ⦂ A
-    → Complete Γ e A
-
-complete : ∀ {Γ e A}
-  → Γ T.⊢ e ⦂ A
-  → Complete Γ e A
-complete (T.⊢n {n = n}) = ok (S.♭ S.Z) (S.lit n) refl S.⊢d-int
-complete (T.⊢m {m = m}) = ok (S.♭ S.Z) (S.flt m) refl S.⊢d-flt
-complete (T.⊢` {x = x₁} x) = ok (S.♭ S.Z) (S.` x₁) refl (S.⊢d-var x)
-complete (T.⊢ƛ {x = x} {N = N} ⊢e) with complete ⊢e
-... | ok j e' x' x₁ = ok (S.S⇒ j) (S.ƛ x ⇒ e') (cong (T.ƛ_⇒_ x) x') (S.⊢d-lam₂ x₁)
-complete (T.⊢· ⊢e ⊢e₁) with complete ⊢e | complete ⊢e₁
-... | ok j e' x x₁ | ok j₁ e'' x₂ x₃ = ok {!!} {!!} (cong₂ T._·_ x x₂) {!!}
-complete (T.⊢& ⊢e ⊢e₁) = {!!}
-complete T.⊢+ = ok (S.♭ S.Z) S.+ refl S.⊢d-+
-complete (T.⊢+i {n = n}) = ok (S.♭ S.Z) (S.+i n) refl S.⊢d-+i
-complete (T.⊢+f {m = m}) = ok (S.♭ S.Z) (S.+f m) refl S.⊢d-+f
-complete (T.⊢sub ⊢e x) = {!!}
-
--}
+preserve (S.⊢d-rcd x) = T.⊢rcd (preserve-r x)
+preserve (S.⊢d-prj ⊢e) = T.⊢prj (preserve ⊢e)

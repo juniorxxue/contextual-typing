@@ -9,25 +9,58 @@ infix  9  `_
 infix  5  _⦂_
 -- infix  5  _+_
 
-data Term : Set where
-  lit      : ℕ → Term
-  flt      : 𝔽 → Term
-  `_       : Id → Term
+data Constant : Set where
+  lit      : ℕ → Constant
+  flt      : 𝔽 → Constant
+  +s       : Constant
+  +i       : ℕ → Constant
+  +f       : 𝔽 → Constant
+
+c-τ : Constant → Type
+c-τ (lit n) = Int
+c-τ (flt n) = Float
+c-τ +s = (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
+c-τ (+i n) = Int ⇒ Int
+c-τ (+f n) = Float ⇒ Float
+
+infix  2 𝕣_
+infixr 5 r⟦_↦_⟧_
+
+data Term : Set
+data Record : Set
+
+data Term where
+  𝕔_       : Constant → Term
+  `_       : String → Term
   ƛ_⇒_     : Id → Term → Term
   _·_      : Term → Term → Term
   _⦂_      : Term → Type → Term
-  +        : Term
-  +i       : ℕ → Term
-  +f       : 𝔽 → Term
+  𝕣_       : Record → Term
+  _𝕡_      : Term → Label → Term
+
+data Record where
+  rnil : Record
+  r⟦_↦_⟧_ : Label → Term → Record → Record
+
+
 
 data CCounter : Set where
    Z : CCounter
    ∞ : CCounter
    S⇐ : CCounter → CCounter
+   Sl : CCounter → CCounter -- remember to argue that this is not interleaved with S⇒
+
    
 data Counter : Set where
-   ♭ : CCounter → Counter
+   ♭ : (j : CCounter) → Counter
    S⇒ : Counter → Counter
+
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                           Subtyping                            +--
+--+                                                                +--
+----------------------------------------------------------------------
 
 infix 5 _≤d_#_
 data _≤d_#_ : Type → Counter → Type → Set where
@@ -43,10 +76,20 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → C ≤d ♭ ∞ # A
     → B ≤d ♭ ∞ # D
     → A ⇒ B ≤d ♭ ∞ # C ⇒ D
-  ≤d-arr-S⇐ : ∀ {A B C D j}
-    → C ≤d ♭ ∞ # A
+  ≤d-rcd∞ : ∀ {A B l}
+    → A ≤d ♭ ∞ # B
+    → τ⟦ l ↦ A ⟧ ≤d ♭ ∞ # τ⟦ l ↦ B ⟧
+  ≤d-arr-S⇐ : ∀ {A B D j}
+    → A ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
-    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D  
+    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D -- this is wrong
+  ≤d-arr-S⇒ : ∀ {A B D i}
+    → A ≤d ♭ ∞ # A
+    → B ≤d i # D
+    → A ⇒ B ≤d S⇒ i # A ⇒ D    
+  ≤d-rcd-Sl : ∀ {A B l j}
+    → A ≤d ♭ j # B
+    → τ⟦ l ↦ A ⟧ ≤d ♭ (Sl j) # (τ⟦ l ↦ B ⟧)
   ≤d-and₁ : ∀ {A B C j}
     → A ≤d j # C
     → j ≢ ♭ Z
@@ -60,14 +103,34 @@ data _≤d_#_ : Type → Counter → Type → Set where
     → A ≤d ♭ ∞ # C
     → A ≤d ♭ ∞ # B & C
 
+≤-refl0 : ∀ {A} → A ≤d ♭ Z # A
+≤-refl0 = ≤d-Z
+
+≤d-refl∞ : ∀ {A} → A ≤d ♭ ∞ # A
+≤d-refl∞ {A = Int} = ≤d-int∞
+≤d-refl∞ {A = Float} = ≤d-float∞
+≤d-refl∞ {A = Top} = ≤d-top
+≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
+≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
+≤d-refl∞ {τ⟦ l ↦ A ⟧} = ≤d-rcd∞ ≤d-refl∞
+
+----------------------------------------------------------------------
+--+                                                                +--
+--+                             Typing                             +--
+--+                                                                +--
+----------------------------------------------------------------------
+
+
 infix 4 _⊢d_#_⦂_
+infix 4 _⊢r_#_⦂_
 
-data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
-  ⊢d-int : ∀ {Γ n}
-    → Γ ⊢d ♭ Z # (lit n) ⦂ Int
+data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set
+data _⊢r_#_⦂_ : Context → Counter → Record → Type → Set
 
-  ⊢d-flt : ∀ {Γ n}
-    → Γ ⊢d ♭ Z # (flt n) ⦂ Float
+data _⊢d_#_⦂_ where
+
+  ⊢d-c : ∀ {Γ c}
+    → Γ ⊢d ♭ Z # 𝕔 c ⦂ c-τ c
 
   ⊢d-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
@@ -77,7 +140,7 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → Γ ⊢d ♭ ∞ # e ⦂ A
     → Γ ⊢d ♭ Z # (e ⦂ A) ⦂ A
 
-  ⊢d-lam₁ : ∀ {Γ e x A B}
+  ⊢d-lam₁ : ∀ {Γ x e A B}
     → Γ , x ⦂ A ⊢d ♭ ∞ # e ⦂ B
     → Γ ⊢d ♭ ∞ # (ƛ x ⇒ e) ⦂ A ⇒ B
 
@@ -101,34 +164,25 @@ data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
     → i ≢ ♭ Z
     → Γ ⊢d i # e ⦂ A
 
-  ⊢d-& : ∀ {Γ e A B}
-    → Γ ⊢d ♭ ∞ # e ⦂ A
-    → Γ ⊢d ♭ ∞ # e ⦂ B
-    → Γ ⊢d ♭ ∞ # e ⦂ A & B
+  ⊢d-rcd : ∀ {Γ rs As}
+    → Γ ⊢r ♭ Z # rs ⦂ As
+    → Γ ⊢d ♭ Z # (𝕣 rs) ⦂ As
 
-  ⊢d-+ : ∀ {Γ}
-    → Γ ⊢d ♭ Z # + ⦂ (Int ⇒ Int ⇒ Int) & (Float ⇒ Float ⇒ Float)
+  ⊢d-prj : ∀ {Γ e l j A}
+    → Γ ⊢d ♭ (Sl j) # e ⦂ τ⟦ l ↦ A ⟧
+    → Γ ⊢d ♭ j # e 𝕡 l ⦂ A
 
-  ⊢d-+i : ∀ {Γ n}
-    → Γ ⊢d ♭ Z # (+i n) ⦂ Int ⇒ Int
+data _⊢r_#_⦂_ where
 
-  ⊢d-+f : ∀ {Γ m}
-    → Γ ⊢d ♭ Z # (+f m) ⦂ Float ⇒ Float
+  ⊢r-nil : ∀ {Γ}
+    → Γ ⊢r ♭ Z # rnil ⦂ Top
 
+  ⊢r-one : ∀ {Γ e A l}
+    → Γ ⊢d ♭ Z # e ⦂ A
+    → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rnil ⦂ τ⟦ l ↦ A ⟧
 
-≤d-refl∞ : ∀ {A} → A ≤d ♭ ∞ # A
-≤d-refl∞ {A = Int} = ≤d-int∞
-≤d-refl∞ {Float}  = ≤d-float∞
-≤d-refl∞ {A = Top} = ≤d-top
-≤d-refl∞ {A = A ⇒ A₁} = ≤d-arr-∞ ≤d-refl∞ ≤d-refl∞
-≤d-refl∞ {A = A & A₁} = ≤d-and (≤d-and₁ ≤d-refl∞ λ ()) (≤d-and₂ ≤d-refl∞ λ ())
-
-
-----------------------------------------------------------------------
---+                                                                +--
---+                            Examples                            +--
---+                                                                +--
-----------------------------------------------------------------------
-
-_ : ∅ ⊢d ♭ Z # + · (lit 1) ⦂ Int ⇒ Int
-_ = ⊢d-app⇐ (⊢d-sub ⊢d-+ (≤d-and₁ (≤d-arr-S⇐ ≤d-int∞ ≤d-Z) λ ()) λ ()) (⊢d-sub ⊢d-int ≤d-int∞ (λ ()))
+  ⊢r-cons : ∀ {Γ l e rs A As}
+    → Γ ⊢d ♭ Z # e ⦂ A
+    → Γ ⊢r ♭ Z # rs ⦂ As
+    → rs ≢ rnil
+    → Γ ⊢r ♭ Z # r⟦ l ↦ e ⟧ rs ⦂ (τ⟦ l ↦ A ⟧ & As)
