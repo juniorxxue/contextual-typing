@@ -108,3 +108,15 @@ complete-≤ (≤d-rcd-Sl B≤A) (~j (~Sl x)) = ≤a-hint-l (complete-≤ B≤A 
 complete-≤ (≤d-and₁ B≤A x) newH = ≤a-and-l (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
 complete-≤ (≤d-and₂ B≤A x) newH = ≤a-and-r (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
 complete-≤ (≤d-and B≤A B≤A₁) (~j ~∞) = ≤a-and (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
+
+
+complete-inf : ∀ {Γ e A}
+  → Γ ⊢d ♭ Z # e ⦂ A
+  → Γ ⊢a □ ⇛ e ⇛ A
+complete-inf ⊢e = complete ⊢e (~j ~Z)
+
+
+complete-chk : ∀ {Γ e A}
+  → Γ ⊢d ♭ ∞ # e ⦂ A
+  → Γ ⊢a τ A ⇛ e ⇛ A
+complete-chk ⊢e = complete ⊢e (~j ~∞)
