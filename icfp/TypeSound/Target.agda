@@ -200,15 +200,6 @@ _[_:=_]r : Record → Id → Term → Record
 rnil [ y := V ]r = rnil
 (r⟦ l ↦ e ⟧ rs) [ y := V ]r = r⟦ l ↦ (e [ y := V ]) ⟧ (rs [ y := V ]r)
 
-{-
-rs≢rnil-subst : ∀ {rs V y}
-  → rs ≢ rnil
-  → (rs [ y := V ]r) ≢ rnil
-rs≢rnil-subst {rs = rnil} neq = neq
-rs≢rnil-subst {rs = r⟦ x ↦ x₁ ⟧ rs} neq = {!!}
--}
-
-
 select : Record → Label → Maybe Term
 select rnil l = nothing
 select (r⟦ l₁ ↦ e ⟧ rs) l₂ with l₁ ≟n l₂
@@ -471,14 +462,6 @@ elim-rcd-arr (⊢& ⊢r ⊢r₁) (s-and-r sub) = elim-rcd-arr ⊢r₁ sub
 elim-rcd-arr (⊢rcd x) sub = elim-rcd-arr-r x sub
 elim-rcd-arr (⊢sub ⊢r x) sub = elim-rcd-arr ⊢r (≤-trans x sub)
 
-{-
-select-prv : ∀ {rs l A e}
-  → ValueR rs
-  → ∅ ⊢ 𝕣 rs ⦂ τ⟦ l ↦ A ⟧
-  → select rs l ≡ just e
-  → ∅ ⊢ e ⦂ A
-select-prv vr ⊢r eq = {!!}
--}
 
 infix 3 _∉_
 

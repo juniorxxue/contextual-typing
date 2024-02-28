@@ -13,7 +13,7 @@ data CCounter : Set where
    Z : CCounter
    ∞ : CCounter
    S⇐ : CCounter → CCounter
-   Sl : CCounter → CCounter -- remember to argue that this is not interleaved with S⇒
+   Sl : CCounter → CCounter
 
    
 data Counter : Set where
@@ -47,7 +47,7 @@ data _≤d_#_ : Type → Counter → Type → Set where
   ≤d-arr-S⇐ : ∀ {A B D j}
     → A ≤d ♭ ∞ # A
     → B ≤d ♭ j # D
-    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D -- this is wrong
+    → A ⇒ B ≤d ♭ (S⇐ j) # A ⇒ D
   ≤d-arr-S⇒ : ∀ {A B D i}
     → A ≤d ♭ ∞ # A
     → B ≤d i # D
