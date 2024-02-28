@@ -11,10 +11,7 @@ need (T.𝕔 x) = S.♭ S.Z
 need (T.` x) = S.♭ S.Z
 need (T.ƛ e) = S.S⇒ (need e)
 need (e₁ T.· e₂) with need e₁
-... | S.♭ S.Z = S.♭ S.Z
-... | S.♭ S.∞ = S.♭ S.Z
-... | S.♭ (S.S⇐ j) = S.♭ j
-... | S.♭ (S.Sl j) = S.♭ S.Z
+... | S.♭ j = S.♭ S.Z
 ... | S.S⇒ r = r
 need (T.𝕣 rs) = S.♭ S.Z
 need (e T.𝕡 l) = S.♭ S.Z
