@@ -101,6 +101,11 @@ x∈Γ-dec (Γ , A) (suc n) with x∈Γ-dec Γ n
   → size-e e + size-H H < k
   → Dec (∃[ A ](Γ ⊢a H ⇛ e ⇛ A))
 
+⊢a-dec-0 : ∀ {Γ H e}
+  → WFG Γ → WFH H → WFE e
+  → Dec (∃[ A ](Γ ⊢a H ⇛ e ⇛ A))
+⊢a-dec-0 {Γ} {H} {e} wfg wfh wfe = ⊢a-dec (suc (size-e e + size-H H)) Γ H e wfg wfh wfe (s≤s m≤m)
+
 ⊢r-dec : ∀ k Γ rs
   → WFG Γ → WFR rs
   → size-r rs < k
