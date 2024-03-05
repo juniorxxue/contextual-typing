@@ -1,6 +1,6 @@
 # Developments of Contextual Typing
 
-* `talks/`:  seminer talks 
+* `talks/`:  seminar talks 
 * `icfp/`: supplementary materials of ICFP submission
 * `drafts/`: typesetting files and some rough ideas
 * `agda/`: main proof
