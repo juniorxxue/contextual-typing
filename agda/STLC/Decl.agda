@@ -9,49 +9,42 @@ open import STLC.Common
 --+                                                                +--
 ----------------------------------------------------------------------
 
-data Counter : Set where
-  ∞ : Counter
-  Z : Counter
-  S : Counter → Counter
-
-data ¬Z : Counter → Set where
-  ¬Z-∞ : ¬Z ∞
-  ¬Z-S : ∀ {j} → ¬Z (S j)
+Counter : Set
+Counter = ℕ
 
 infix 4 _⊢d_#_⦂_
 
 data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
 
   ⊢d-int : ∀ {Γ i}
-    → Γ ⊢d Z # (lit i) ⦂ Int
+    → Γ ⊢d 0 # (lit i) ⦂ Int
 
   ⊢d-var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
-    → Γ ⊢d Z # ` x ⦂ A
+    → Γ ⊢d 0 # ` x ⦂ A
 
-  ⊢d-ann : ∀ {Γ e A}
-    → Γ ⊢d ∞ # e ⦂ A
-    → Γ ⊢d Z # (e ⦂ A) ⦂ A
-
-  ⊢d-lam-∞ : ∀ {Γ e A B}
-    → Γ , A ⊢d ∞ # e ⦂ B
-    → Γ ⊢d ∞ # (ƛ e) ⦂ A ⇒ B
-
-  ⊢d-lam-n : ∀ {Γ e A B j}
+  ⊢d-ann : ∀ {Γ e A j}
+    → Γ ⊢d j # e ⦂ A
+    → Γ ⊢d 0 # (e ⦂ A) ⦂ A
+    
+  ⊢d-lam : ∀ {Γ e A B j}
     → Γ , A ⊢d j # e ⦂ B
-    → Γ ⊢d S j # (ƛ e) ⦂ A ⇒ B
+    → Γ ⊢d suc j # (ƛ e) ⦂ A ⇒ B
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d Z # e₁ ⦂ A ⇒ B
-    → Γ ⊢d ∞ # e₂ ⦂ A
-    → Γ ⊢d Z # e₁ · e₂ ⦂ B
+  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢d 0 # e₁ ⦂ A ⇒ B
+    → Γ ⊢d j # e₂ ⦂ A
+    → Γ ⊢d 0 # e₁ · e₂ ⦂ B
 
   ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
-    → Γ ⊢d (S j) # e₁ ⦂ A ⇒ B
-    → Γ ⊢d Z # e₂ ⦂ A
+    → Γ ⊢d (suc j) # e₁ ⦂ A ⇒ B
+    → Γ ⊢d 0 # e₂ ⦂ A
     → Γ ⊢d j # e₁ · e₂ ⦂ B
 
   ⊢d-sub : ∀ {Γ e A j}
-    → Γ ⊢d Z # e ⦂ A
-    → ¬Z j
-    → Γ ⊢d j # e ⦂ A
+    → Γ ⊢d 0 # e ⦂ A
+    → Γ ⊢d (suc j) # e ⦂ A
+
+
+ex1 : ∅ ⊢d 0 # ((lit 2) ⦂ Int) ⦂ Int
+ex1 = ⊢d-ann ⊢d-int

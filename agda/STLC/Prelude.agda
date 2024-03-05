@@ -6,12 +6,12 @@ open import Data.String using (String) public
 open import Relation.Nullary using (yes; no; Dec; ¬_) public
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness) public
 open import Function.Base using (case_of_; case_return_of_) public
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; cong₂; sym; ≢-sym) public
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong; sym; ≢-sym) public
 open import Data.Empty public
 open import Data.Product using (_×_; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFrom; _∷ʳ_) renaming (length to len) public
 open import Data.List.Properties using (map-++) public
-open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
+open import Data.Maybe using (Maybe; just; nothing) public
 
 open import Relation.Binary.Core using (Rel)
 open import Level using (0ℓ)
