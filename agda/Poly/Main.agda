@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
 module Poly.Main where
 
 open import Poly.Prelude
@@ -294,38 +293,6 @@ data ⟦_,_⟧→⟦_,_,_,_⟧ : Hint → Type → List Term → Hint → List T
     → ⟦ H , B ⟧→⟦ es , A' , Bs , B' ⟧
     → ⟦ ⟦ e ⟧⇒ H , A `→ B ⟧→⟦ (e ∷ es) , A' , (A ∷ Bs) , B' ⟧
 
-sound-inf : ∀ {Γ e H A es As A'}
-  → Γ ⊢ H ⇒ e ⇒ A
-  → ⟦ H , A ⟧→⟦ es , □ , As , A' ⟧
-  → Γ ⊢ Z # e ▻ es ⦂ A'
 
-sound-chk : ∀ {Γ e H A es T As A'}
-  → Γ ⊢ H ⇒ e ⇒ A
-  → ⟦ H , A ⟧→⟦ es , τ T , As , A' ⟧
-  → Γ ⊢ ∞ # e ▻ es ⦂ T
-
-sound-inf-0 : ∀ {Γ e A}
-  → Γ ⊢ □ ⇒ e ⇒ A
-  → Γ ⊢ Z # e ⦂ A
-sound-inf-0 ⊢e = sound-inf ⊢e none□
-
-sound-chk-0 : ∀ {Γ e A}
-  → Γ ⊢ τ A ⇒ e ⇒ A
-  → Γ ⊢ ∞ # e ⦂ A
-sound-chk-0 ⊢e = sound-chk ⊢e noneτ
-
-sound-inf ⊢lit none□ = ⊢lit
-sound-inf (⊢var x∈Γ) spl = {!!}
-sound-inf (⊢ann ⊢e) spl = {!!}
-sound-inf (⊢tabs ⊢e) spl = {!!}
-sound-inf (⊢app ⊢e) spl = {!!}
-sound-inf (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-inf (⊢sub ⊢e A≤H H≢□) spl = {!sound-inf-0 ⊢e!}
-sound-inf (⊢tapp ⊢e) spl = sound-inf {!!} {!x!}
-
-sound-chk (⊢app ⊢e) spl = sound-chk ⊢e (have spl)
-sound-chk (⊢lam₁ ⊢e) spl = {!!}
-sound-chk (⊢lam₂ ⊢e ⊢e₁) spl = {!!}
-sound-chk (⊢sub ⊢e x x') spl = {!!}
 
 
