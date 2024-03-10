@@ -220,7 +220,7 @@ data _~↑r~_ where
 ...                        | yes n≤x | yes m≤x with m ≤? pred x | suc n ≤? suc x
 ...                                            | yes m≤x-1 | yes n+1≤x+1 = n-1+1≡n+1-1 (m<n⇒0<n (≤∧≢⇒< n≤x n≢x))
 ...                                            | yes m≤x-1 | no  n+1≰x+1 = ⊥-elim (n+1≰x+1 (s≤s n≤x))
-...                                            | no  m≰x-1 | yes n+1≤x+1 = ⊥-elim (m≰x-1 (<⇒≤pred m<x)) where m<x = <-transʳ m≤n (≤∧≢⇒< n≤x n≢x)
+...                                            | no  m≰x-1 | yes n+1≤x+1 = ⊥-elim (m≰x-1 (<⇒≤pred m<x)) where m<x = ≤-<-trans m≤n (≤∧≢⇒< n≤x n≢x)
 ...                                            | no  m≰x-1 | no  n+1≰x+1 = ⊥-elim (n+1≰x+1 (s≤s n≤x))
 ↓-↑-comm-var m n x m≤n n≢x | yes n≤x | no  m≰x with m ≤? pred x | suc n ≤? x
 ...                                            | yes m≤x-1 | yes n+1≤x = ⊥-elim (m≰x (≤-trans m≤n n≤x))
@@ -270,7 +270,7 @@ data _~↑r~_ where
 ↑-shifted-n {𝕔 x} m≤n+1 sd = sd-c
 ↑-shifted-n {` x} {m} m≤n+1 (sd-var x₁) with m ≤? x
 ... | yes p = sd-var λ n+1≡x+1 → x₁ (cong pred n+1≡x+1)
-... | no ¬p = sd-var (≢-sym (<⇒≢ (<-transˡ (m≰n⇒n<m ¬p) m≤n+1)))
+... | no ¬p = sd-var (≢-sym (<⇒≢ (<-≤-trans (m≰n⇒n<m ¬p) m≤n+1)))
 ↑-shifted-n {ƛ e} m≤n+1 (sd-lam sd) = sd-lam (↑-shifted-n (s≤s m≤n+1) sd)
 ↑-shifted-n {e · e₁} m≤n+1 (sd-app sd sd₁) = sd-app (↑-shifted-n m≤n+1 sd) (↑-shifted-n m≤n+1 sd₁)
 ↑-shifted-n {e ⦂ x} m≤n+1 (sd-ann sd) = sd-ann (↑-shifted-n m≤n+1 sd)
