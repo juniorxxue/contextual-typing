@@ -229,7 +229,7 @@ data Value where
     → Value (ƛ x ⇒ e)
 
   V-+ :
-      Value (+)
+       Value (+)
 
   V-+i : ∀ {n}
     → Value (+i n)

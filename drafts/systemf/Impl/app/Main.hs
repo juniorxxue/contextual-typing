@@ -67,9 +67,11 @@ instance Show Hint where
 type Worklist = ([Work], [Type])
 
 data Work where
+  -- normal context
   WTVar :: String -> Work -- T, a
-  WEVar :: String -> Work
   WBind :: String -> Type -> Work
+  -- subtyping context, aka. work
+  WEVar :: String -> Work
   WSub :: Type -> Hint -> Work
 
 instance {-# OVERLAPPING #-} Show [Work] where

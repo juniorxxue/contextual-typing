@@ -205,23 +205,34 @@ Note: Is the output type free of existential variables?
 
 Worklist Algorithm, for subtyping:
 
+
+T ~> T'
+
+T ~>* T'
+
 ============
-T1 |- A <: H | S
+w | S ---> w' | S'
 ============
 
-T |- Int <: Int | S                           ---> T | S, Int
-T |- ^a <: A  | S                             ---> [^a = A] T | S, A        when FV_ex(A) = .
-T |- A <: ^a  | S                             ---> [^a = A] T | S, A        when FV_ex(A) = .
+w, Int <: Int | S                           ---> w | S, Int
+w, ^a <: A  | S                             ---> [^a = A] w | S, A        when FV_ex(A) = .
+w, A <: ^a  | S                             ---> [^a = A] w | S, A        when FV_ex(A) = .
 
-T |- A <: Top | S                           ---> T | S, A                      when FV_ex(A) = .
+-- T |- A <: Top | S                           ---> T | S, Top            when FV_ex(A) = .
+T |- A <: [] | S   ---> T | S, A            when FV_ex(A) = .
 
-T |- A -> B <: C -> D | S              ---> T |> B <: D |- C <: A | S
-T |> | S, A', B'                                ---> T | S, A' -> B' 
-T |- A -> B <: [e] -> H | S             ---> T |- B <: H | S, A                  when T |- A => e => C /\ FV_ex(A) = . 
-T |- A -> B <: [e] -> H | S             ---> T |> B <: D |- C <: A | S      when T |- Top => e => C /\ FV_ex != .
-T |- forall a . A <: forall a. B | S    ---> T, a |- A <: B  | S
-T, a | S, A                                      ---> T | S, forall a. A
-T |- forall a. A <: [e] -> H | S       ---> T, ^a |- [^a/a] A <: [e] -> H | S
+w, A -> B <: C -> D | S              ---> w, B <: D, C <: A | S
+
+w | S, A', B'                       ---> w | S, A' -> B' (maybe happens right after functions)
+
+w, A -> B <: [e] -> H | S             ---> w, B <: H | S, A           when T |- A => e => C /\ FV_ex(A) = . 
+w, A -> B <: [e] -> H | S             ---> w, B <: D, C <: A | S      when T |- [] => e => C /\ FV_ex != .
+
+w, forall a . A <: forall a. B | S    ---> w, a, A <: B  | S
+
+w, a | S, A                     ---> w | S, forall a. A (maybe happens right after functions)
+
+w, forall a. A <: [e] -> H | S       ---> w, ^a, [^a/a] A <: [e] -> H | S
 
 Worklist Algorithm for Typing:
 
@@ -252,7 +263,6 @@ forall b. ^a -> b -> b <: [1] -> Top
 
 ---------------------------------
 forall b. ^a -> b -> b <: [1] -> [2] -> Top
-
 
 
 forall a. forall b. a -> b -> b <:1 [1] -> Top ~~> forall b. Int -> b -> b
