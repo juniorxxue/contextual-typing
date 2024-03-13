@@ -17,7 +17,7 @@ data Type : Set where
   Int  : Type
   ‶_   : (X : ℕ) → Type -- tvar
   _`→_ : (A : Type) → (B : Type) → Type
-  `∀_   : (A : Type) → Type
+  `∀_  : (A : Type) → Type
 
 data Term : Set where
   lit      : (n : ℕ) → Term
@@ -26,7 +26,7 @@ data Term : Set where
   _·_      : (e₁ : Term) → (e₂ : Term) → Term
   _⦂_      : (e : Term) → (A : Type) → Term
   Λ_       : (e : Term) → Term -- tabs
-  _⟦_⟧ₐ     : (e : Term) → (A : Type) → Term -- tapp
+  _⟦_⟧ₐ    : (e : Term) → (A : Type) → Term -- tapp
 
 tshift : ℕ → Type → Type
 tshift x Int = Int
