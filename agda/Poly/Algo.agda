@@ -47,33 +47,27 @@ data Term : ℕ → ℕ → Set where
 
 -- Env for typing
 data Env : ℕ → ℕ → Set where
-  ∅     : Env 0 m
+  ∅     : Env 0 0
   _,_   : Env n m → (A : Type m) → Env (1 + n) m
-  _,∙   : Env n m → Env n m
-  _,=_  : Env n m → (A : Type m) → Env n m
+  _,∙   : Env n m → Env n (1 + m)
+  _,=_  : Env n m → (A : Type m) → Env n (1 + m)
 
 -- Env for subtyping
 data SEnv : ℕ → ℕ → Set where
   𝕓     : Env n m → SEnv n m
-  _,∙   : SEnv n m → SEnv n m -- universal variable
-  _,^   : SEnv n m → SEnv n m -- existential variable
-  _,=_  : SEnv n m → (A : Type m) → SEnv (1 + n) m
+  _,∙   : SEnv n m → SEnv n (1 + m) -- universal variable
+  _,^   : SEnv n m → SEnv n (1 + m) -- existential variable
+  _,=_  : SEnv n m → (A : Type m) → SEnv n (1 + m) -- equation warning! not fully understand the +1
 
-↑Γ : (k : Fin (1 + m)) → Env n m → Env n (1 + m)
-↑Γ k ∅        = ∅
-↑Γ k (Γ , A)  = ↑Γ k Γ , ↑ty k A
-↑Γ k (Γ ,∙)   = ↑Γ k Γ ,∙
-↑Γ k (Γ ,= A) = ↑Γ k Γ ,= ↑ty k A
-
-↑Γ0 : Env n m → Env n (1 + m)
-↑Γ0 = ↑Γ #0
+-- ., ^a
+-- ., ^a = Int
 
 -- the n ensures we can find the type
 lookup : Env n m → Fin n → Type m
 lookup (Γ , A) #0     = A
 lookup (Γ , A) (#S k) = lookup Γ k
-lookup (Γ ,∙) k       = lookup Γ k
-lookup (Γ ,= A) k     = lookup Γ k
+lookup (Γ ,∙) k       = ↑ty0 (lookup Γ k)
+lookup (Γ ,= A) k     = ↑ty0 (lookup Γ k)
 
 ----------------------------------------------------------------------
 --+                           Type Subst                           +--
@@ -141,7 +135,6 @@ data Context : ℕ → ℕ → Set where
   [_]↝_ : (e : Term n m) → Context n m → Context n m
   ⟦_⟧↝_ : (A : Type m) → Context n m → Context n m
 
-
 ↑Σ : Fin (1 + n) → Context n m → Context (1 + n) m
 ↑Σ k □ = □
 ↑Σ k (τ A) = τ A
@@ -160,32 +153,58 @@ data Context : ℕ → ℕ → Set where
 ↑tyΣ0 : Context n m → Context n (1 + m)
 ↑tyΣ0 = ↑tyΣ #0
 
+{-
 -- environment substition
 [_/ᵉ_] : SEnv n m → Type m → Type m
 [ Ψ /ᵉ Int ] = Int
-[ Ψ /ᵉ ‶ X ] = {!!}
+[ Ψ /ᵉ ‶ #0 ] = {!!}
+[ Ψ /ᵉ ‶ #S X ] = {!!}
 [ Ψ /ᵉ A `→ B ] = ([ Ψ /ᵉ A ]) `→ ([ Ψ /ᵉ B ])
 [ Ψ /ᵉ `∀ A ] = {!!}
+-}
+
+-- the erasure, could have an alternative approach,
+-- share the same context but by adding a well-formedness checking onto the typing
+Ψ→Γ : SEnv n m → Env n m
+Ψ→Γ (𝕓 Γ)    = Γ
+Ψ→Γ (Ψ ,∙)   = (Ψ→Γ Ψ) ,∙
+Ψ→Γ (Ψ ,^)   = {!!}
+Ψ→Γ (Ψ ,= A) = (Ψ→Γ Ψ) ,= A
 
 private
   variable
     Γ : Env n m
-    Ψ Ψ₁ Ψ₂ : SEnv n m
+    Ψ Ψ₁ Ψ₂ Ψ₃ : SEnv n m
     Σ : Context n m
-
 
 -- syntatically defined free variables
 
 -- function first
-fvars : SEnv n m → Type m → Bool
-fvars Ψ Int = false
-fvars (𝕓 Γ) (‶ X) = false
-fvars (Ψ ,∙) (‶ X) = {!!}
-fvars (Ψ ,^) (‶ #0) = true
-fvars (Ψ ,^) (‶ #S X) = {!!}
-fvars (Ψ ,= A) (‶ X) = {!!}
-fvars Ψ (A `→ A₁) = {!!}
-fvars Ψ (`∀ A) = {!!}
+fvars? : SEnv n m → Type m → Bool
+fvars? Ψ Int = false
+fvars? (𝕓 Γ) (‶ X) = false
+fvars? (Ψ ,∙) (‶ #0) = false
+fvars? (Ψ ,∙) (‶ #S X) = fvars? Ψ (‶ X)
+fvars? (Ψ ,^) (‶ #0) = true
+fvars? (Ψ ,^) (‶ #S X) = fvars? Ψ (‶ X)
+fvars? (Ψ ,= A) (‶ #0) = false
+fvars? (Ψ ,= A) (‶ #S X) = fvars? Ψ (‶ X)
+fvars? Ψ (A `→ B) = (fvars? Ψ A) ∧ (fvars? Ψ B)
+fvars? Ψ (`∀ A) = fvars? (Ψ ,∙) A -- not sure
+
+-- f : Check A -> Type (1 + n) -> Type n
+
+-- this intended to be partial, but let's write the function first
+[_/_]ᵉ_ : Type m → Fin m → SEnv n m → SEnv n m
+[ A / k ]ᵉ 𝕓 Γ = 𝕓 Γ
+[ A / k ]ᵉ (Ψ ,∙) = Ψ ,∙ -- undefined! but for draft version, put right here, should not be accpeted
+[ A / #0 ]ᵉ (Ψ ,^) = Ψ ,= {!!}
+[ A / #S k ]ᵉ (Ψ ,^) = {!!}
+[ A / #0 ]ᵉ (Ψ ,= B) = {!!} -- only defined when A ≡ B
+[ A / #S k ]ᵉ (Ψ ,= B) = ([ subst B A / k ]ᵉ Ψ) ,= B
+  where
+    subst : Type m → Type (1 + m) → Type m -- position should be #0
+    subst B A = {!!}
 
 infix 3 _⊢_⇒_⇒_
 infix 3 _⊢_≤_⊣_↪_
@@ -229,18 +248,21 @@ data _⊢_⇒_⇒_ where
   -- (1) we maybe need a checking for tabs
   -- (2) we need a context (must have, if we intend to be consistent)
   ⊢tabs₁ : ∀ {e A}
-    → ↑Γ0 (Γ ,∙) ⊢ □ ⇒ e ⇒ A
+    → Γ ,∙ ⊢ □ ⇒ e ⇒ A
     → Γ ⊢ □ ⇒ Λ e ⇒ `∀ A
 
+{-
   -- alternative approach is to follow the design of let-argument-go-first
   -- modeling a type synonym
   ⊢tabs₂' : ∀ {e A B}
     → Γ ⊢ Σ ⇒ [ A ]ᵗ e ⇒ B
     → Γ ⊢ ⟦ A ⟧↝ Σ ⇒ Λ e ⇒ B
+-}    
 
   -- classic approach, accpet less examples
   ⊢tabs₂ : ∀ {e A B}
-    → ↑Γ0 (Γ ,∙) ⊢ ↑tyΣ0 Σ ⇒ e ⇒ B
+    → Γ ,∙ ⊢ ↑tyΣ0 Σ ⇒ e ⇒ B
+--    → Γ ⊢ Σ ⇒ Λ e ⇒ `∀ B -- funny premise
     → Γ ⊢ ⟦ A ⟧↝ Σ ⇒ Λ e ⇒ [ A ]ˢ B    
 
   ⊢tapp : ∀ {e A B}
@@ -255,6 +277,25 @@ data _⊢_≤_⊣_↪_ where
     → Ψ ⊢ A ≤ □ ⊣ Ψ ↪ A
 
   s-ex-l : ∀ {A X}
-    → Ψ ⊢ ‶ X ≤ τ A ⊣ Ψ ↪ A
-  
+    → fvars? Ψ A ≡ false
+    → Ψ ⊢ ‶ X ≤ τ A ⊣ [ A / X ]ᵉ Ψ ↪ A
 
+  s-ex-r : ∀ {A X}
+    → fvars? Ψ A ≡ false
+    → Ψ ⊢ A ≤ τ (‶ X) ⊣ [ A / X ]ᵉ Ψ ↪ A
+
+  s-arr : ∀ {A B C D A' D'}
+    → Ψ₁ ⊢ C ≤ τ A ⊣ Ψ₂ ↪ A'
+    → Ψ₂ ⊢ B ≤ τ D ⊣ Ψ₃ ↪ D'
+    → Ψ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Ψ₃ ↪ (C `→ D) -- or C → D ?
+
+  s-term-no : ∀ {A B D e}
+    → fvars? Ψ A ≡ false
+    → Ψ ⊢ B ≤ Σ ⊣ Ψ₁ ↪ D
+    → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ₁ ↪ A `→ D
+    
+
+  
+----------------------------------------------------------------------
+--+                            Examples                            +--
+----------------------------------------------------------------------

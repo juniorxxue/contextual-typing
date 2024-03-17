@@ -101,7 +101,7 @@ typeof ctx h e | pv e = case typeof ctx No e of
     Just tyA -> case refine ctx tyA h of
         Just (ctx', tyB) -> Just tyB
         Nothing -> Nothing
-typeof _ _ _ = Nothing        
+typeof _ _ _ = Nothing
 
 pv :: Term -> Bool
 pv (Lit _) = True
@@ -258,6 +258,9 @@ fxx = App (Var "f") (Lam "x" (Var "x"))
 checkTypeof :: Context -> Hint -> Term -> Maybe Type
 checkTypeof ctx h e = trace ("[Check]: " ++ show ctx ++ " ⊢ " ++ show h ++ " => " ++ show e ++ " => ") $ typeof ctx h e
 
+forallex :: Type
+forallex = TAll "a" (TArr (TVar "a") (TArr (TArr (TVar "a") (TVar "a")) (TVar "a")))
+
 main :: IO ()
 main = do
     print $ checkTypeof idCtx No id1
@@ -266,3 +269,4 @@ main = do
     print $ checkTypeof gCtx No g1
     print $ checkTypeof gCtx No g12
     print $ refine Empty (TAll "a" (TArr (TVar "a") (TVar "a"))) (Hole (Lit 1) No)
+    print $ refine Empty forallex (Hole (Lit 1) (Hole (Lam "x" (Var "x")) (T TInt)))

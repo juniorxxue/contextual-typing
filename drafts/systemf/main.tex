@@ -5,10 +5,10 @@
 \usepackage{mathpartir}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{mathtools}
-\usepackage{xfrac,unicode-math}
+%\usepackage{mathtools}
+%\usepackage{xfrac,unicode-math}
 % \usepackage{amsthm}
-\usepackage{amsthm}
+%\usepackage{amsthm}
 \newtheorem{lemma}{Lemma}
 
 \title{Contextual Type Inference (System F)}
@@ -158,51 +158,55 @@
 {\Gamma \vdash H \Rightarrow p \Rightarrow B}
 
 \inferrule*[lab=T-TApp]
-{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
-{\Gamma \vdash H \Rightarrow e[A] \Rightarrow [A/X]B}
+%{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
+{\Gamma \vdash \boxed{A} \leadsto H \Rightarrow e \Rightarrow B}
+{\Gamma \vdash  H \Rightarrow e[A] \Rightarrow B}
 
 \end{mathpar}
 
-\subsection{Subtyping: $\boxed{\Gamma \vdash A <: H \dashv \Delta \rightsquigarrow A}$}
+\subsection{Subtyping: $\boxed{\Psi \vdash A <: \Sigma \dashv \Psi' \rightsquigarrow A}$}
 
 \begin{mathpar}
 \inferrule*[lab=S-Int]
 { }
-{\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Gamma \rightsquigarrow \mathtt{Int}}
+{\Psi \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Psi \rightsquigarrow \mathtt{Int}}
+
+\inferrule*[lab=S-Empty]
+{FV_{ex}(\Psi, A) = . }
+{\Psi \vdash A <: \square \dashv \Psi \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-L]
-{FV_{ex}(A) = . \\ \Gamma \vdash A}
-{\Gamma \vdash \hat{a} <: A \dashv [A/\hat{a}]\Gamma \rightsquigarrow A}
+{FV_{ex}(\Psi, A) = . \\ \Psi \vdash A}
+{\Psi \vdash \hat{a} <: A \dashv [A/\hat{a}]\Psi \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-R]
-{FV_{ex}(A) = . \\ \Gamma \vdash A}
-{\Gamma \vdash A <: \hat{a} \dashv [A/\hat{a}]\Gamma \rightsquigarrow A}
+{FV_{ex}(\Psi, A) = . \\ \Psi \vdash A}
+{\Psi \vdash A <: \hat{a} \dashv [A/\hat{a}]\Psi \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
+{\Psi \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
  \Delta_1 \vdash B <: D \dashv \Delta_2 \rightsquigarrow D'}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D \dashv \Delta_2 \rightsquigarrow A' \rightarrow D'}
+{\Psi \vdash A \rightarrow B <: C \rightarrow D \dashv \Delta_2 \rightsquigarrow A' \rightarrow D'}
 
 \inferrule*[lab=S-Hole-No-Ex]
-{ FV_{ex}(A) = \emptyset \\
+{ FV_{ex}(\Psi, A) = \emptyset \\
 \Gamma \vdash A \Rightarrow e \Rightarrow C\\
- \Gamma \vdash B <: H \dashv \Delta \rightsquigarrow D}
-{\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow A \rightarrow D}
+ \Psi \vdash B <: H \dashv \Delta \rightsquigarrow D}
+{\Psi \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow A \rightarrow D}
 
 \inferrule*[lab=S-Hole-Ex]
 { FV_{ex}(A) != \emptyset \\
-\Gamma \vdash \square \Rightarrow e \Rightarrow C\\
-\Gamma \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
+\Psi \vdash \square \Rightarrow e \Rightarrow C\\
+\Psi \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
 \Delta_1 \vdash B <: H \dashv \Delta_2 \rightsquigarrow D}
-{\Gamma \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta_2 \rightsquigarrow A' \rightarrow D}
+{\Psi \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta_2 \rightsquigarrow A' \rightarrow D}
 
 \inferrule*[lab=S-All]
-{\Gamma, a \vdash A <: B \dashv \Delta_1, a, \Delta_2 \rightsquigarrow C}
-{\Gamma \vdash \forall a. A <: \forall a. B \dashv \Delta_1 \rightsquigarrow \forall a. C}
+{\Psi, a \vdash A <: B \dashv \Delta_1, a\rightsquigarrow C}
+{\Psi \vdash \forall a. A <: \forall a. B \dashv \Delta_1 \rightsquigarrow \forall a. C}
 
 \inferrule*[lab=S-All-L]
-{\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Delta_1, \hat{a}, \Delta_2 \rightsquigarrow B}
-{\Gamma \vdash \forall a. A <: \boxed{e} \rightarrow H \dashv \Delta_1 \rightsquigarrow B}
-
+{\Psi, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Delta_1, \hat{a} \rightsquigarrow B}
+{\Psi \vdash \forall a. A <: \boxed{e} \rightarrow H \dashv \Delta_1 \rightsquigarrow B}
 \end{mathpar}
 \end{document}
