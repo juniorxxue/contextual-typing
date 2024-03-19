@@ -54,6 +54,9 @@ m≤m {zero} = z≤n
 m≤m {suc m} = s≤s m≤m
 
 pattern ⟦_⟧ z = z ∷ []
+pattern ⟦_,_⟧ a b = a ∷ b ∷ []
+pattern ⟦_,_,_⟧ a b c = a ∷ b ∷ c ∷ []
+pattern ⟦_,_,_,_⟧ a b c d = a ∷ b ∷ c ∷ d ∷ []
 
 data Singleton {a} {A : Set a} (x : A) : Set a where
   _with≡_ : (y : A) → x ≡ y → Singleton x
