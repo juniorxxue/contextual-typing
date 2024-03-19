@@ -12,7 +12,7 @@
 
 \usepackage{mathpartir}
 \usepackage{amsmath}
-\usepackage{amssymb}
+%\usepackage{amssymb}
 %\usepackage{mathtools}
 %\usepackage{xfrac,unicode-math}
 % \usepackage{amsthm}
@@ -43,7 +43,7 @@
 \begin{align*}
     &\text{Contexts} \quad\quad &\Sigma ::=&~ A \mid \square \mid \boxed{e} \leadsto \Sigma \mid \boxed{A} \leadsto \Sigma\\
     &\text{Generic Consumers} \quad \quad &g::=&~ i \mid x \mid e : A\\
-    &\text{Environments} \quad\quad &\Gamma,\Delta::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}:=A\\
+    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}:=A\\
 %    &\text{Mapping}\quad\quad &\phi ::=&~. \mid \phi, \hat{a}:=A \mid \phi, a
 \end{align*}
 
@@ -162,9 +162,13 @@
  \Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow B}
 {\Gamma \vdash \Sigma \Rightarrow g \Rightarrow B}
 
-\inferrule*[lab=T-TAbs]
+\inferrule*[lab=T-TAbs1]
 {\Gamma, a \vdash \square \Rightarrow e \Rightarrow A}
 {\Gamma \vdash \square \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A}
+
+\inferrule*[lab=T-TAbs2]
+{\Gamma, a \vdash \Sigma  \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{A} \leadsto \Sigma \Rightarrow \Lambda a. ~e \Rightarrow [A/a]B}
 
 \inferrule*[lab=T-TApp]
 %{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
@@ -262,7 +266,7 @@
 {\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma_2 \rightsquigarrow A' \rightarrow D}
 
 \inferrule*[lab=S-All]
-{\Gamma, o \vdash A <: B \dashv \Gamma', a\rightsquigarrow C}
+{\Gamma, o \vdash A <: B \dashv \Gamma', o\rightsquigarrow C}
 {\Gamma \vdash \forall A <: \forall B \dashv \Gamma' \rightsquigarrow \forall C}
 
 \inferrule*[lab=S-All-L]
