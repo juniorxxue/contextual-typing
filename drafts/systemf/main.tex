@@ -5,6 +5,8 @@
 \RequirePackage[varqu]{zi4} 
 \RequirePackage[libertine]{newtxmath}
 
+\usepackage{comment}
+
 \usepackage{fullpage}
 \usepackage{graphicx} % Required for inserting images
 
@@ -171,6 +173,7 @@
 
 \end{mathpar}
 
+\begin{comment}
 \subsection{Subtyping: $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A}$}
 
 \begin{mathpar}
@@ -183,7 +186,7 @@
 {\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-L]
-{FV_{ex}(\Psi, A) = . \\ \Psi \vdash A}
+{FV_{ex}(\Gamma, A) = . \\ \Gamma \vdash A}
 {\Gamma \vdash \hat{a} <: A \dashv [A/\hat{a}]~\Gamma \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-R]
@@ -215,5 +218,59 @@
 \inferrule*[lab=S-All-L]
 {\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \hat{a} \rightsquigarrow B}
 {\Gamma \vdash \forall a. A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
+\end{mathpar}
+\end{comment}
+
+\subsection{Subtyping (Well-Scoped De Bruijn): $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A}$}
+
+\begin{align*}
+    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, A \mid \Gamma, o \mid \Gamma, \hat{o} \mid \Gamma, \widehat{A}\\
+\end{align*}
+\begin{mathpar}
+\inferrule*[lab=S-Int]
+{ }
+{\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Gamma \rightsquigarrow \mathtt{Int}}
+
+\inferrule*[lab=S-Empty]
+{FV_{ex}(\Gamma, A) = .}
+{\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow A}
+
+\inferrule*[lab=S-Ex-L]
+{FV_{ex}(\Gamma, A) = .}
+{\Gamma \vdash a <: A \dashv [A/a]~\Gamma \rightsquigarrow A}
+
+\inferrule*[lab=S-Ex-R]
+{FV_{ex}(\Gamma, A) = . \\ \Gamma \vdash A}
+{\Gamma \vdash A <: a \dashv [A/a]~\Gamma \rightsquigarrow A}
+
+\inferrule*[lab=S-Arr]
+{\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
+ \Gamma_1 \vdash B <: D \dashv \Gamma_2 \rightsquigarrow D'}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \dashv \Gamma_2 \rightsquigarrow C \rightarrow D}
+
+\inferrule*[lab=S-Hole-No-Ex]
+{ FV_{ex}(\Gamma, A) = . \\
+\Gamma \vdash A \Rightarrow e \Rightarrow C\\
+ \Gamma \vdash B <: \Sigma \dashv \Gamma' \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow A \rightarrow D}
+
+\inferrule*[lab=S-Hole-Ex]
+{ FV_{ex}(A) \neq . \\
+\Gamma \vdash \square \Rightarrow e \Rightarrow C\\
+\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
+\Gamma_1 \vdash B <: \Sigma \dashv \Gamma_2 \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma_2 \rightsquigarrow A' \rightarrow D}
+
+\inferrule*[lab=S-All]
+{\Gamma, o \vdash A <: B \dashv \Gamma', a\rightsquigarrow C}
+{\Gamma \vdash \forall A <: \forall B \dashv \Gamma' \rightsquigarrow \forall C}
+
+\inferrule*[lab=S-All-L]
+{\Gamma, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \hat{o} \rightsquigarrow B}
+{\Gamma \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
+
+\inferrule*[lab=S-All-L-Eq]
+{\Gamma, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \widehat{A} \rightsquigarrow B}
+{\Gamma \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
 \end{mathpar}
 \end{document}
