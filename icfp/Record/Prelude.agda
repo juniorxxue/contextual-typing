@@ -13,6 +13,7 @@ open import Data.List using (List; []; _∷_; _++_; reverse; map; foldr; downFro
 open import Data.List.Properties using (map-++) public
 open import Agda.Builtin.Float renaming (Float to 𝔽; primFloatPlus to _++f_) public
 open import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎) public
+open import Data.Nat.Tactic.RingSolver public
 
 m+1≤n→m≤n : ∀ {m n}
   → suc m ≤ n
