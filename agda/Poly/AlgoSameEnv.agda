@@ -166,6 +166,57 @@ fvars? (Γ ,= A) (‶ #S X) = fvars? Γ (‶ X)
 fvars? Γ (A `→ B) = (fvars? Γ A) ∧ (fvars? Γ B)
 fvars? Γ (`∀ A) = fvars? (Γ ,∙) A -- not sure
 
+infix 3 _⊢c_
+infix 3 _⊢o_
+
+-- closed: no free existential variables
+data _⊢c_ : Env n m → Type m → Set where
+  ⊢c-int : Γ ⊢c Int
+  ⊢c-term-var : ∀ {A X}
+    → Γ ⊢c ‶ X
+    → Γ , A ⊢c ‶ X
+  ⊢c-var∙0 : Γ ,∙ ⊢c ‶ #0
+  ⊢c-var∙S : ∀ {X}
+    → Γ ⊢c ‶ X
+    → Γ ,∙ ⊢c ‶ #S X
+  ⊢c-var^S : ∀ {X}
+    → Γ ⊢c ‶ X
+    → Γ ,^ ⊢c ‶ #S X
+  ⊢c-var=0 : ∀ {A} → Γ ,= A ⊢c ‶ #0
+  ⊢c-var=S : ∀ {A X}
+    → Γ ⊢c ‶ X
+    → Γ ,= A ⊢c ‶ #S X
+  ⊢c-arr : ∀ {A B}
+    → Γ ⊢c A
+    → Γ ⊢c B
+    → Γ ⊢c (A `→ B)
+  ⊢c-∀ : ∀ {A}
+    → Γ ,∙ ⊢c A
+    → Γ ⊢c `∀ A
+
+-- open: have free existential variables
+data _⊢o_ : Env n m → Type m → Set where
+  ⊢o-term-var : ∀ {A X}
+    → Γ ⊢o ‶ X
+    → Γ , A ⊢o ‶ X
+  ⊢o-var∙S : ∀ {X}
+    → Γ ⊢o ‶ X
+    → Γ ,∙ ⊢o ‶ #S X
+  ⊢o-var^0 : Γ ,^ ⊢o ‶ #0
+  ⊢o-var^S : ∀ {X}
+    → Γ ⊢o ‶ X
+    → Γ ,^ ⊢o ‶ #S X
+  ⊢o-var=S : ∀ {A X}
+    → Γ ⊢o ‶ X
+    → Γ ,= A ⊢o ‶ #S X
+  ⊢o-arr : ∀ {A B}
+    → Γ ⊢o A
+    → Γ ⊢o B
+    → Γ ⊢o (A `→ B)
+  ⊢o-∀ : ∀ {A}
+    → Γ ,∙ ⊢o A
+    → Γ ⊢o `∀ A
+    
 -- unshifting
 -- ↓ty : ∀ (Γ : Env n (1 + m)) → (A : Type (1 + m)) → (fvars? Γ A ≡ false) → Type m
 -- ↓ty Γ Int p = {!!}
@@ -256,15 +307,15 @@ data _⊢_≤_⊣_↪_ where
       Γ ⊢ Int ≤ τ Int ⊣ Γ ↪ Int
 
   s-empty : ∀ {A}
-    → fvars? Γ A ≡ false
+    → Γ ⊢c A
     → Γ ⊢ A ≤ □ ⊣ Γ ↪ A
 
   s-ex-l : ∀ {A X}
-    → fvars? Γ A ≡ false
+    → Γ ⊢c A
     → Γ ⊢ ‶ X ≤ τ A ⊣ [ A / X ]ᵉ Γ ↪ A
 
   s-ex-r : ∀ {A X}
-    → fvars? Γ A ≡ false
+    → Γ ⊢c A
     → Γ ⊢ A ≤ τ (‶ X) ⊣ [ A / X ]ᵉ Γ ↪ A
 
   s-arr : ∀ {A B C D A' D'}
@@ -273,13 +324,13 @@ data _⊢_≤_⊣_↪_ where
     → Γ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Γ₃ ↪ (C `→ D)
 
   s-term-no : ∀ {A B C D e}
-    → fvars? Γ A ≡ false
+    → Γ ⊢c A
     → Γ ⊢ τ A ⇒ e ⇒ C
     → Γ ⊢ B ≤ Σ ⊣ Γ' ↪ D
     → Γ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Γ' ↪ A `→ D
 
   s-term : ∀ {A A' B C D e}
-    → fvars? Γ A ≡ true
+    → Γ ⊢o A
     → Γ ⊢ □ ⇒ e ⇒ C
     → Γ ⊢ C ≤ τ A ⊣ Γ₁ ↪ A'
     → Γ₁ ⊢ B ≤ Σ ⊣ Γ₂ ↪ D
@@ -305,5 +356,5 @@ idEnv : Env 1 0
 idEnv = ∅ , (`∀ ‶ #0 `→ ‶ #0)
 
 id1 : idEnv ⊢ □ ⇒  ` #0 · (lit 1) ⇒ Int
-id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term refl ⊢lit (s-ex-r refl) {!!})))
+id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term ⊢o-var^0 ⊢lit (s-ex-r ⊢c-int) {!!})))
 -- ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term refl ⊢lit (s-ex-r refl) {!!})))
