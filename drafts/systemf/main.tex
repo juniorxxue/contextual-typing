@@ -1,5 +1,11 @@
 \documentclass{article}
-\usepackage{fullwidth}
+
+\RequirePackage[T1]{fontenc} 
+%\usepackage[tt=false, type1=true]{libertine} 
+\RequirePackage[varqu]{zi4} 
+\RequirePackage[libertine]{newtxmath}
+
+\usepackage{fullpage}
 \usepackage{graphicx} % Required for inserting images
 
 \usepackage{mathpartir}
@@ -11,7 +17,8 @@
 %\usepackage{amsthm}
 \newtheorem{lemma}{Lemma}
 
-\title{Contextual Type Inference (System F)}
+
+\title{Contextual Typing (System F)}
 \author{Xu Xue}
 
 \begin{document}
@@ -23,29 +30,29 @@
 \subsection{Decl.}
 
 \begin{align*}
-&\text{Types} \quad\quad &A, B, C, D, T ::=&~ a \mid \mathtt{Int} \mid A \rightarrow B \mid \forall a.~A\\
-&\text{Expressions} \quad \quad &e::=&~ x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A \mid \Lambda a.~e \mid e[A]\\
-&\text{Contexts} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A \mid \Gamma, a\\
-&\text{Counters} \quad\quad &j ::=&~ n \mid \infty\\
+&\text{Types} \quad\quad &A, B, C, D ::=&~ a \mid \mathtt{Int} \mid A \rightarrow B \mid \forall a.~A\\
+&\text{Expressions} \quad \quad &e::=&~ i \mid x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A \mid \Lambda a.~e \mid e[A]\\
+&\text{Environments} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A \mid \Gamma, a\\
+&\text{Counters} \quad\quad &n ::=&~ 0 \mid \infty \mid S~n \mid S_{\tau}~n\\
 \end{align*}
 
 \subsection{Algo.}
 
 \begin{align*}
-    &\text{Hints} \quad\quad &H ::=&~ A \mid \square \mid \boxed{e} \rightarrow H\\
-    &\text{Partial Values} \quad \quad &p::=&~ i \mid x \mid e : A\\
-    &\text{Contexts} \quad\quad &\Gamma,\Delta::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}:=A\\
-    &\text{Mapping}\quad\quad &\phi ::=&~. \mid \phi, \hat{a}:=A \mid \phi, a
+    &\text{Contexts} \quad\quad &\Sigma ::=&~ A \mid \square \mid \boxed{e} \leadsto \Sigma \mid \boxed{A} \leadsto \Sigma\\
+    &\text{Generic Consumers} \quad \quad &g::=&~ i \mid x \mid e : A\\
+    &\text{Environments} \quad\quad &\Gamma,\Delta::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}:=A\\
+%    &\text{Mapping}\quad\quad &\phi ::=&~. \mid \phi, \hat{a}:=A \mid \phi, a
 \end{align*}
 
-\subsection{Operations on Counters}
-
-\begin{align*}
-    (S~n)- &= n \\
-    \infty - &= \infty \\
-    n+ &= S~n \\
-    \infty + &= \infty
-\end{align*}
+%\subsection{Operations on Counters}
+%
+%\begin{align*}
+%    (S~n)- &= n \\
+%    \infty - &= \infty \\
+%    n+ &= S~n \\
+%    \infty + &= \infty
+%\end{align*}
 
 \section{Decl.}
 
@@ -65,8 +72,8 @@
     {\Gamma \vdash_0 (e : A) : A}
 
     \inferrule*[lab=Lam]
-    {\Gamma, x : A \vdash_{j-} e : B}
-    {\Gamma \vdash_{j} \lambda x.~ e : A \rightarrow B}
+    {\Gamma, x : A \vdash_{n-} e : B}
+    {\Gamma \vdash_{n} \lambda x.~ e : A \rightarrow B}
 
     \inferrule*[lab=App1]
     {\Gamma \vdash_0 e_1 : A \rightarrow B \\
@@ -74,22 +81,22 @@
     {\Gamma \vdash_n e_1~e_2 : B}
 
     \inferrule*[lab=App2]
-    {\Gamma \vdash_{j+} e_1 : A \rightarrow B \\
+    {\Gamma \vdash_{S ~n} e_1 : A \rightarrow B \\
     \Gamma \vdash_0 e_2 : A}
-    {\Gamma \vdash_j e_1~e_2 : B}
+    {\Gamma \vdash_n e_1~e_2 : B}
 
     \inferrule*[lab=Sub]
     {\Gamma \vdash_0 e : B \\
-    \Gamma \vdash B <:_j A}
-    {\Gamma \vdash_j e : A}
+    \Gamma \vdash B <:_n A}
+    {\Gamma \vdash_n e : A}
 
     \inferrule*[lab=TAbs]
-    {\Gamma, X \vdash_j e : A}
-    {\Gamma \vdash_j \Lambda X.~e : \forall X.~A}
+    {\Gamma, X \vdash_n e : A}
+    {\Gamma \vdash_n \Lambda X.~e : \forall X.~A}
 
     \inferrule*[lab=TApp]
-    {\Gamma \vdash_j e : \forall X.~B}
-    {\Gamma \vdash_j e[A] : [A/X]B}
+    {\Gamma \vdash_{S_{\tau}~n} e : B}
+    {\Gamma \vdash_n e~[A] : B}
 \end{mathpar}
 
 \subsection{Subtyping}
@@ -105,8 +112,8 @@
 
     \inferrule*[lab=S-Arr]
     {\Gamma \vdash_{\infty} C <: A \\
-     \Gamma \vdash_{j-} B <: D}
-    {\Gamma \vdash_j A \rightarrow B <:C \rightarrow D}
+     \Gamma \vdash_{n-} B <: D}
+    {\Gamma \vdash_n A \rightarrow B <:C \rightarrow D}
 
     \inferrule*[lab=S-$\forall$]
     {\Gamma , a \vdash_{\infty} A <: B}
@@ -115,12 +122,12 @@
     \inferrule*[lab=S-$\forall$L]
     {\Gamma \vdash B \\
      \Gamma \vdash_{S~n} [B/a] A <: C}
-    {\Gamma \vdash_{S~ n} \forall a. ~A <: C}
+    {\Gamma \vdash_{S~n} \forall a. ~A <: C}
 \end{mathpar}
 
 \section{Algo.}
 
-\subsection{Typing: $\boxed{\Gamma \vdash H \Rightarrow e \Rightarrow A}$}
+\subsection{Typing: $\boxed{\Gamma \vdash \Sigma \Rightarrow e \Rightarrow A}$}
 
 \begin{mathpar}
 \inferrule*[lab=T-Lit]
@@ -135,13 +142,9 @@
 {\Gamma \vdash A \Rightarrow e \Rightarrow B}
 {\Gamma \vdash \square \Rightarrow e : A \Rightarrow A}
 
-\inferrule*[lab=T-TAbs]
-{\Gamma, a \vdash \square \Rightarrow e \Rightarrow A}
-{\Gamma \vdash \square \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A}
-
 \inferrule*[lab=T-App]
-{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow e_1 \Rightarrow A \rightarrow B}
-{\Gamma \vdash H \Rightarrow e_1~e_2 \Rightarrow B}
+{\Gamma \vdash \boxed{e_2} \leadsto \Sigma \Rightarrow e_1 \Rightarrow A \rightarrow B}
+{\Gamma \vdash \Sigma \Rightarrow e_1~e_2 \Rightarrow B}
 
 \inferrule*[lab=T-Lam1]
 {\Gamma, x : A \vdash B \Rightarrow e \Rightarrow C}
@@ -149,64 +152,68 @@
 
 \inferrule*[lab=T-Lam2]
 {\Gamma \vdash \square \Rightarrow e_2 \Rightarrow A\\
- \Gamma , x : A \vdash H \Rightarrow e \Rightarrow B}
-{\Gamma \vdash \boxed{e_2} \rightarrow H \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
+ \Gamma , x : A \vdash \Sigma \Rightarrow e \Rightarrow B}
+{\Gamma \vdash \boxed{e_2} \leadsto \Sigma \Rightarrow \lambda x.~e \Rightarrow A \rightarrow B}
 
 \inferrule*[lab=T-Sub]
-{\Gamma \vdash \square \Rightarrow p \Rightarrow A \\
- \Gamma \vdash A <: H \dashv \Gamma \rightsquigarrow B}
-{\Gamma \vdash H \Rightarrow p \Rightarrow B}
+{\Gamma \vdash \square \Rightarrow g \Rightarrow A \\
+ \Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow B}
+{\Gamma \vdash \Sigma \Rightarrow g \Rightarrow B}
+
+\inferrule*[lab=T-TAbs]
+{\Gamma, a \vdash \square \Rightarrow e \Rightarrow A}
+{\Gamma \vdash \square \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A}
 
 \inferrule*[lab=T-TApp]
 %{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
-{\Gamma \vdash \boxed{A} \leadsto H \Rightarrow e \Rightarrow B}
-{\Gamma \vdash  H \Rightarrow e[A] \Rightarrow B}
+{\Gamma \vdash \boxed{A} \leadsto \Sigma \Rightarrow e \Rightarrow B}
+{\Gamma \vdash  \Sigma \Rightarrow e[A] \Rightarrow B}
 
 \end{mathpar}
 
-\subsection{Subtyping: $\boxed{\Psi \vdash A <: \Sigma \dashv \Psi' \rightsquigarrow A}$}
+\subsection{Subtyping: $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A}$}
 
 \begin{mathpar}
 \inferrule*[lab=S-Int]
 { }
-{\Psi \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Psi \rightsquigarrow \mathtt{Int}}
+{\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Gamma \rightsquigarrow \mathtt{Int}}
 
 \inferrule*[lab=S-Empty]
-{FV_{ex}(\Psi, A) = . }
-{\Psi \vdash A <: \square \dashv \Psi \rightsquigarrow A}
+{FV_{ex}(\Gamma, A) = . \\ \Gamma \vdash A}
+{\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-L]
 {FV_{ex}(\Psi, A) = . \\ \Psi \vdash A}
-{\Psi \vdash \hat{a} <: A \dashv [A/\hat{a}]\Psi \rightsquigarrow A}
+{\Gamma \vdash \hat{a} <: A \dashv [A/\hat{a}]~\Gamma \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-R]
-{FV_{ex}(\Psi, A) = . \\ \Psi \vdash A}
-{\Psi \vdash A <: \hat{a} \dashv [A/\hat{a}]\Psi \rightsquigarrow A}
+{FV_{ex}(\Gamma, A) = . \\ \Gamma \vdash A}
+{\Gamma \vdash A <: \hat{a} \dashv [A/\hat{a}]~\Gamma \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Psi \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
- \Delta_1 \vdash B <: D \dashv \Delta_2 \rightsquigarrow D'}
-{\Psi \vdash A \rightarrow B <: C \rightarrow D \dashv \Delta_2 \rightsquigarrow A' \rightarrow D'}
+{\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
+ \Gamma_1 \vdash B <: D \dashv \Gamma_2 \rightsquigarrow D'}
+{\Gamma \vdash A \rightarrow B <: C \rightarrow D \dashv \Gamma_2 \rightsquigarrow C \rightarrow D}
 
 \inferrule*[lab=S-Hole-No-Ex]
-{ FV_{ex}(\Psi, A) = \emptyset \\
+{ FV_{ex}(\Gamma, A) = . \\
 \Gamma \vdash A \Rightarrow e \Rightarrow C\\
- \Psi \vdash B <: H \dashv \Delta \rightsquigarrow D}
-{\Psi \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta \rightsquigarrow A \rightarrow D}
+ \Gamma \vdash B <: \Sigma \dashv \Gamma' \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow A \rightarrow D}
 
 \inferrule*[lab=S-Hole-Ex]
-{ FV_{ex}(A) != \emptyset \\
-\Psi \vdash \square \Rightarrow e \Rightarrow C\\
-\Psi \vdash C <: A \dashv \Delta_1 \rightsquigarrow A' \\
-\Delta_1 \vdash B <: H \dashv \Delta_2 \rightsquigarrow D}
-{\Psi \vdash A \rightarrow B <: \boxed{e} \rightarrow H \dashv \Delta_2 \rightsquigarrow A' \rightarrow D}
+{ FV_{ex}(A) \neq . \\
+\Gamma \vdash \square \Rightarrow e \Rightarrow C\\
+\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
+\Gamma_1 \vdash B <: \Sigma \dashv \Gamma_2 \rightsquigarrow D}
+{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma_2 \rightsquigarrow A' \rightarrow D}
 
 \inferrule*[lab=S-All]
-{\Psi, a \vdash A <: B \dashv \Delta_1, a\rightsquigarrow C}
-{\Psi \vdash \forall a. A <: \forall a. B \dashv \Delta_1 \rightsquigarrow \forall a. C}
+{\Gamma, a \vdash A <: B \dashv \Gamma', a\rightsquigarrow C}
+{\Gamma \vdash \forall a. A <: \forall a. B \dashv \Gamma' \rightsquigarrow \forall a. C}
 
 \inferrule*[lab=S-All-L]
-{\Psi, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \rightarrow H \dashv \Delta_1, \hat{a} \rightsquigarrow B}
-{\Psi \vdash \forall a. A <: \boxed{e} \rightarrow H \dashv \Delta_1 \rightsquigarrow B}
+{\Gamma, \hat{a} \vdash [\hat{a}/a]A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \hat{a} \rightsquigarrow B}
+{\Gamma \vdash \forall a. A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
 \end{mathpar}
 \end{document}
