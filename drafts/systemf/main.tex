@@ -34,7 +34,7 @@
 \begin{align*}
 &\text{Types} \quad\quad &A, B, C, D ::=&~ a \mid \mathtt{Int} \mid A \rightarrow B \mid \forall a.~A\\
 &\text{Expressions} \quad \quad &e::=&~ i \mid x \mid \lambda x . ~e \mid e_1~e_2 \mid e : A \mid \Lambda a.~e \mid e[A]\\
-&\text{Environments} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A \mid \Gamma, a\\
+&\text{Environments} \quad\quad &\Gamma::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} = A\\
 &\text{Counters} \quad\quad &n ::=&~ 0 \mid \infty \mid S~n \mid S_{\tau}~n\\
 \end{align*}
 
@@ -43,18 +43,9 @@
 \begin{align*}
     &\text{Contexts} \quad\quad &\Sigma ::=&~ A \mid \square \mid \boxed{e} \leadsto \Sigma \mid \boxed{A} \leadsto \Sigma\\
     &\text{Generic Consumers} \quad \quad &g::=&~ i \mid x \mid e : A\\
-    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}:=A\\
-%    &\text{Mapping}\quad\quad &\phi ::=&~. \mid \phi, \hat{a}:=A \mid \phi, a
+    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}= A\\
 \end{align*}
 
-%\subsection{Operations on Counters}
-%
-%\begin{align*}
-%    (S~n)- &= n \\
-%    \infty - &= \infty \\
-%    n+ &= S~n \\
-%    \infty + &= \infty
-%\end{align*}
 
 \section{Decl.}
 
@@ -125,6 +116,14 @@
     {\Gamma \vdash B \\
      \Gamma \vdash_{S~n} [B/a] A <: C}
     {\Gamma \vdash_{S~n} \forall a. ~A <: C}
+    
+    \inferrule*[lab=S-var-l]
+    {\hat{a} = B \in \Gamma \\ \Gamma \vdash B <: A}
+    {\Gamma \vdash_n \hat{a} <: A}
+    
+        \inferrule*[lab=S-var-r]
+    {\hat{a} = B \in \Gamma \\ \Gamma \vdash A <: B}
+    {\Gamma \vdash_n A <: \hat{a}}
 \end{mathpar}
 
 \section{Algo.}
@@ -237,7 +236,7 @@
 
 \inferrule*[lab=S-Empty]
 {FV_{ex}(\Gamma, A) = .}
-{\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow A}
+{\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow \Gamma(A)}
 
 \inferrule*[lab=S-Ex-L]
 {FV_{ex}(\Gamma, A) = .}

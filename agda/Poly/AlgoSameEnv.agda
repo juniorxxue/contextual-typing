@@ -17,6 +17,12 @@ private
   variable
     m n : ℕ
 
+#1 : Fin (2 + n)
+#1 = #S #0
+
+#2 : Fin (3 + n)
+#2 = #S (#S #0)
+
 data Type : ℕ → Set where
   Int    : Type m
   ‶_     : (X : Fin m) → Type m
@@ -44,6 +50,8 @@ data Term : ℕ → ℕ → Set where
 
 ↑ty0 : Type m → Type (1 + m)
 ↑ty0 {m} = ↑ty {m} #0
+
+infixl 5 _,_
 
 -- Env for typing
 data Env : ℕ → ℕ → Set where
@@ -209,10 +217,14 @@ data _⊢o_ : Env n m → Type m → Set where
   ⊢o-var=S : ∀ {A X}
     → Γ ⊢o ‶ X
     → Γ ,= A ⊢o ‶ #S X
-  ⊢o-arr : ∀ {A B}
+  ⊢o-arr-l : ∀ {A B}
     → Γ ⊢o A
-    → Γ ⊢o B
+--    → Γ ⊢o B
     → Γ ⊢o (A `→ B)
+  ⊢o-arr-r : ∀ {A B}
+--    → Γ ⊢o A
+    → Γ ⊢o B
+    → Γ ⊢o (A `→ B)    
   ⊢o-∀ : ∀ {A}
     → Γ ,∙ ⊢o A
     → Γ ⊢o `∀ A
@@ -240,6 +252,7 @@ looks like we don't need it
 ↓ty0 A = ↓ty A #0
 -}
 
+{-
 -- Note: this is intended to be partial, but let's write the function first
 [_/_]ᵉ_ : Type m → Fin m → Env n m → Env n m
 [ A / k ]ᵉ (Γ , B) = ([ A / k ]ᵉ Γ) , B
@@ -248,6 +261,28 @@ looks like we don't need it
 [ A / #S k ]ᵉ (Γ ,^) = ([ [ Int ]ˢ A / k ]ᵉ Γ) ,^
 [ A / #0 ]ᵉ (Γ ,= B) = Γ ,= B -- only defined when A = B
 [ A / #S k ]ᵉ (Γ ,= B) =  ([ ([ B ]ˢ A) / k ]ᵉ Γ) ,= B
+-}
+
+infix 4 [_/_]_⟹_
+
+data [_/_]_⟹_ : Type m → Fin m → Env n m → Env n m → Set where
+  ⟹, : ∀ {Γ Γ' : Env n m} {k A B}
+    → [ A / k ] Γ ⟹ Γ'
+    → [ A / k ] (Γ , B) ⟹ Γ' , B
+    
+  ⟹^0 : ∀ {Γ : Env n m} {A}
+    → [ A / #0 ] (Γ ,^) ⟹ Γ ,= ([ Int ]ˢ A)
+
+  ⟹^S : ∀ {Γ Γ' : Env n m} {A k}
+    → [ [ Int ]ˢ A / k ] Γ ⟹ Γ'
+    → [ A / #S k ] (Γ ,^) ⟹ Γ' ,^
+
+  ⟹=0 : ∀ {Γ : Env n m} {A B}
+    → [ A / #0 ] (Γ ,= B) ⟹ Γ ,= B -- this is wrong
+
+  ⟹=S : ∀ {Γ Γ' : Env n m} {A B k}
+    → [ [ B ]ˢ A / k ] Γ ⟹ Γ'
+    → [ A / #S k ] (Γ ,= B) ⟹ Γ' ,= B
 
 infix 3 _⊢_⇒_⇒_
 infix 3 _⊢_≤_⊣_↪_
@@ -312,11 +347,13 @@ data _⊢_≤_⊣_↪_ where
 
   s-ex-l : ∀ {A X}
     → Γ ⊢c A
-    → Γ ⊢ ‶ X ≤ τ A ⊣ [ A / X ]ᵉ Γ ↪ A
+    → [ A / X ] Γ ⟹ Γ'
+    → Γ ⊢ ‶ X ≤ τ A ⊣ Γ' ↪ A
 
   s-ex-r : ∀ {A X}
     → Γ ⊢c A
-    → Γ ⊢ A ≤ τ (‶ X) ⊣ [ A / X ]ᵉ Γ ↪ A
+    → [ A / X ] Γ ⟹ Γ'
+    → Γ ⊢ A ≤ τ (‶ X) ⊣ Γ' ↪ A
 
   s-arr : ∀ {A B C D A' D'}
     → Γ₁ ⊢ C ≤ τ A ⊣ Γ₂ ↪ A'
@@ -355,6 +392,40 @@ data _⊢_≤_⊣_↪_ where
 idEnv : Env 1 0
 idEnv = ∅ , (`∀ ‶ #0 `→ ‶ #0)
 
-id1 : idEnv ⊢ □ ⇒  ` #0 · (lit 1) ⇒ Int
-id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term ⊢o-var^0 ⊢lit (s-ex-r ⊢c-int) {!!})))
+ex1-id1 : idEnv ⊢ □ ⇒  ` #0 · (lit 1) ⇒ Int
+ex1-id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term ⊢o-var^0 ⊢lit (s-ex-r ⊢c-int ⟹^0) {!!})))
 -- ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term refl ⊢lit (s-ex-r refl) {!!})))
+
+succfEnv : Env 2 0
+succfEnv = ∅ , (Int `→ Int) , `∀ (‶ #0 `→ ‶ #0) `→ (‶ #0 `→ ‶ #0)
+
+fsucc : Term 2 0
+fsucc = (` #0) · (` #1)
+
+ex2-fsucc : succfEnv ⊢ □ ⇒ fsucc ⇒ Int `→ Int
+ex2-fsucc = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term (⊢o-arr-l ⊢o-var^0) (⊢var refl) {!s-arr ? ?!} {!!})))
+
+
+{-
+Γ ⊢ ∀ (0 -> 0) -> (0 -> 0) <: [succ] -> [] ⊣ Γ' ~> (Int -> Int) -> Int -> Int
+----------------------------------------------------------------------------- Sub
+Γ ⊢ [succ] -> [] => f => (Int -> Int) -> Int -> Int
+--------------------------------------------------- App
+Γ ⊢ [] => f succ => Int -> Int
+-}
+
+
+{-
+-----------------------------------
+Γ,^ ⊢ Int -> Int <: 0 -> 0 ⊣ Γ₁ ~> Int -> Int      Γ₁ ⊢ 0 -> 0 <: [] ⊣ Γ₂ ~>
+------------------------------------------------------------------------------- S-Term
+Γ,^ ⊢ (0 -> 0) -> (0 -> 0) <: [succ] -> [] ⊣ Γ' ,? ~> (Int -> Int) -> Int -> Int
+------------------------------------------------------------------------------- ∀L
+Γ ⊢ ∀ (0 -> 0) -> (0 -> 0) <: [succ] -> [] ⊣ Γ' ~> (Int -> Int) -> Int -> Int
+-}
+
+
+{-
+----------------------------------------------
+Γ,^ ⊢ Int -> Int <: 0 -> 0 ⊣ Γ₁ ~> Int -> Int 
+-}
