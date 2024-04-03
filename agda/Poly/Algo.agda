@@ -104,8 +104,6 @@ data Context : ℕ → ℕ → Set where
 [ Ψ /ᵉ `∀ A ] = {!!}
 -}
 
--- the erasure, could have an alternative approach,
--- share the same context but by adding a well-formedness checking onto the typing
 Ψ→Γ : SEnv n m → Env n m
 Ψ→Γ (𝕓 Γ)    = Γ
 Ψ→Γ (Ψ ,∙)   = (Ψ→Γ Ψ) ,∙

@@ -227,53 +227,55 @@
 \subsection{Subtyping (Well-Scoped De Bruijn): $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A'}$}
 
 \begin{align*}
-    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, A \mid \Gamma, o \mid \Gamma, \hat{o} \mid \Gamma, \widehat{A}\\
+    &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, A \mid \Gamma, o \mid \Gamma, \widehat{A} \\
+    &\text{Subtyping Environments} \quad\quad &\Psi :=&~ \Gamma \mid \Psi, o \mid \Psi, \hat{o} \mid \Psi , \widehat{A}\\
 \end{align*}
 \begin{mathpar}
 \inferrule*[lab=S-Int]
 { }
-{\Gamma \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Gamma \rightsquigarrow \mathtt{Int}}
+{\Psi \vdash \mathtt{Int} <: \mathtt{Int} \dashv \Psi \rightsquigarrow \mathtt{Int}}
 
 \inferrule*[lab=S-Empty]
-{FV_{ex}(\Gamma, A) = .}
-{\Gamma \vdash A <: \square \dashv \Gamma \rightsquigarrow \Gamma(A)}
+{\Psi \vdash_{close} A}
+{\Psi \vdash A <: \square \dashv \Psi \rightsquigarrow \Psi(A)}
 
 \inferrule*[lab=S-Ex-L]
-{FV_{ex}(\Gamma, A) = .}
-{\Gamma \vdash a <: A \dashv [A/a]~\Gamma \rightsquigarrow A}
+{\Psi \vdash_{close} A}
+{\Psi \vdash a <: A \dashv [A/a]~\Psi \rightsquigarrow A}
 
 \inferrule*[lab=S-Ex-R]
-{FV_{ex}(\Gamma, A) = . \\ \Gamma \vdash A}
-{\Gamma \vdash A <: a \dashv [A/a]~\Gamma \rightsquigarrow A}
+{\Psi \vdash_{close} A\\ 
+ \Psi \vdash A}
+{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
 
 \inferrule*[lab=S-Arr]
-{\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
- \Gamma_1 \vdash B <: D \dashv \Gamma_2 \rightsquigarrow D'}
-{\Gamma \vdash A \rightarrow B <: C \rightarrow D \dashv \Gamma_2 \rightsquigarrow C \rightarrow D}
+{\Psi \vdash C <: A \dashv \Psi_1 \rightsquigarrow A' \\
+ \Psi_1 \vdash B <: D \dashv \Psi_2 \rightsquigarrow D'}
+{\Psi \vdash A \rightarrow B <: C \rightarrow D \dashv \Psi_2 \rightsquigarrow C \rightarrow D}
 
 \inferrule*[lab=S-Hole-No-Ex]
-{ FV_{ex}(\Gamma, A) = . \\
-\Gamma \vdash A \Rightarrow e \Rightarrow C\\
- \Gamma \vdash B <: \Sigma \dashv \Gamma' \rightsquigarrow D}
-{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow A \rightarrow D}
+{ \Psi \vdash_{close} A \\
+\| \Psi \| \vdash A \Rightarrow e \Rightarrow C\\
+ \Psi \vdash B <: \Sigma \dashv \Psi' \rightsquigarrow D}
+{\Psi \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow A \rightarrow D}
 
 \inferrule*[lab=S-Hole-Ex]
-{ FV_{ex}(A) \neq . \\
-\Gamma \vdash \square \Rightarrow e \Rightarrow C\\
-\Gamma \vdash C <: A \dashv \Gamma_1 \rightsquigarrow A' \\
-\Gamma_1 \vdash B <: \Sigma \dashv \Gamma_2 \rightsquigarrow D}
-{\Gamma \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Gamma_2 \rightsquigarrow A' \rightarrow D}
+{ \Psi \vdash_{open} A \\
+\| \Psi \| \vdash \square \Rightarrow e \Rightarrow C\\
+\Psi \vdash C <: A \dashv \Psi_1 \rightsquigarrow A' \\
+\Psi_1 \vdash B <: \Sigma \dashv \Psi_2 \rightsquigarrow D}
+{\Psi \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Psi_2 \rightsquigarrow A' \rightarrow D}
 
 \inferrule*[lab=S-All]
-{\Gamma, o \vdash A <: B \dashv \Gamma', o\rightsquigarrow C}
-{\Gamma \vdash \forall A <: \forall B \dashv \Gamma' \rightsquigarrow \forall C}
+{\Psi, o \vdash A <: B \dashv \Psi', o\rightsquigarrow C}
+{\Psi \vdash \forall A <: \forall B \dashv \Psi' \rightsquigarrow \forall C}
 
 \inferrule*[lab=S-All-L]
-{\Gamma, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \hat{o} \rightsquigarrow B}
-{\Gamma \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
+{\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \hat{o} \rightsquigarrow B}
+{\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 
 \inferrule*[lab=S-All-L-Eq]
-{\Gamma, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Gamma', \widehat{A} \rightsquigarrow B}
-{\Gamma \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Gamma' \rightsquigarrow B}
+{\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \widehat{A} \rightsquigarrow B}
+{\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 \end{mathpar}
 \end{document}
