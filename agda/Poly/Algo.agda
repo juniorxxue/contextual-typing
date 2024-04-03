@@ -1,73 +1,14 @@
 module Poly.Algo where
 
-open import Poly.Prelude
+open import Poly.Common
 
-infixr 5  ƛ_
-infixl 7  _·_
-infix  9  `_
-infixr 5  Λ_
-infix  5  _[_]
-infix  5  _⦂_
-
-infix  9  ‶_
-infixr 8  _`→_
-infixr 8  `∀_
-
-private
-  variable
-    m n : ℕ
-
-data Type : ℕ → Set where
-  Int    : Type m
-  ‶_     : (X : Fin m) → Type m
-  _`→_   : (A : Type m) → (B : Type m) → Type m
-  `∀_    : (A : Type (1 + m)) → Type m
-
-data Term : ℕ → ℕ → Set where
-  lit      : (i : ℕ) → Term n m
-  `_       : (x : Fin n) → Term n m
-  ƛ_       : (e : Term (1 + n) m) → Term n m
-  _·_      : (e₁ : Term n m) → (e₂ : Term n m) → Term n m
-  _⦂_      : (e : Term n m) → (A : Type m) → Term n m
-  Λ_       : (e : Term n (1 + m)) → Term n m
-  _[_]     : (e : Term n m) → (A : Type m) → Term n m
-
-----------------------------------------------------------------------
---+                             Shift                              +--
-----------------------------------------------------------------------
-
-↑ty : Fin (1 + m) → Type m → Type (1 + m)
-↑ty k Int      = Int
-↑ty k (‶ X)    = ‶ punchIn k X
-↑ty k (A `→ B) = ↑ty k A `→ ↑ty k B
-↑ty k (`∀ A)   = `∀ (↑ty (#S k) A)
-
-↑ty0 : Type m → Type (1 + m)
-↑ty0 {m} = ↑ty {m} #0
-
--- Env for typing
-data Env : ℕ → ℕ → Set where
-  ∅     : Env 0 0
-  _,_   : Env n m → (A : Type m) → Env (1 + n) m
-  _,∙   : Env n m → Env n (1 + m)
-  _,=_  : Env n m → (A : Type m) → Env n (1 + m)
-
--- Env for subtyping
+-- Env for algorithmic subtyping
 data SEnv : ℕ → ℕ → Set where
   𝕓     : Env n m → SEnv n m
   _,∙   : SEnv n m → SEnv n (1 + m) -- universal variable
   _,^   : SEnv n m → SEnv n (1 + m) -- existential variable
-  _,=_  : SEnv n m → (A : Type m) → SEnv n (1 + m) -- equation warning! not fully understand the +1
+  _,=_  : SEnv n m → (A : Type m) → SEnv n (1 + m) -- solved equation
 
--- ., ^a
--- ., ^a = Int
-
--- the n ensures we can find the type
-lookup : Env n m → Fin n → Type m
-lookup (Γ , A) #0     = A
-lookup (Γ , A) (#S k) = lookup Γ k
-lookup (Γ ,∙) k       = ↑ty0 (lookup Γ k)
-lookup (Γ ,= A) k     = ↑ty0 (lookup Γ k)
 
 ----------------------------------------------------------------------
 --+                           Type Subst                           +--
@@ -195,7 +136,7 @@ fvars? Ψ (`∀ A) = fvars? (Ψ ,∙) A -- not sure
 -- f : Check A -> Type (1 + n) -> Type n
 
 -- this intended to be partial, but let's write the function first
-[_/_]ᵉ_ : Type m → Fin m → SEnv n m → SEnv n m
+[_/_]ᵉ_ : (A : Type m) → Fin m → SEnv n m → SEnv n m
 [ A / k ]ᵉ 𝕓 Γ = 𝕓 Γ
 [ A / k ]ᵉ (Ψ ,∙) = Ψ ,∙ -- undefined! but for draft version, put right here, should not be accpeted
 [ A / #0 ]ᵉ (Ψ ,^) = Ψ ,= {!!}
@@ -205,6 +146,8 @@ fvars? Ψ (`∀ A) = fvars? (Ψ ,∙) A -- not sure
   where
     subst : Type m → Type (1 + m) → Type m -- position should be #0
     subst B A = {!!}
+
+
 
 infix 3 _⊢_⇒_⇒_
 infix 3 _⊢_≤_⊣_↪_
