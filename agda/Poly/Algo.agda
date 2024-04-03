@@ -115,38 +115,95 @@ data Context : ℕ → ℕ → Set where
 private
   variable
     Γ : Env n m
-    Ψ Ψ₁ Ψ₂ Ψ₃ : SEnv n m
+    Ψ Ψ' Ψ₁ Ψ₂ Ψ₃ : SEnv n m
     Σ : Context n m
 
--- syntatically defined free variables
+infix 3 _⊢c_
+infix 3 _⊢o_
 
--- function first
-fvars? : SEnv n m → Type m → Bool
-fvars? Ψ Int = false
-fvars? (𝕓 Γ) (‶ X) = false
-fvars? (Ψ ,∙) (‶ #0) = false
-fvars? (Ψ ,∙) (‶ #S X) = fvars? Ψ (‶ X)
-fvars? (Ψ ,^) (‶ #0) = true
-fvars? (Ψ ,^) (‶ #S X) = fvars? Ψ (‶ X)
-fvars? (Ψ ,= A) (‶ #0) = false
-fvars? (Ψ ,= A) (‶ #S X) = fvars? Ψ (‶ X)
-fvars? Ψ (A `→ B) = (fvars? Ψ A) ∧ (fvars? Ψ B)
-fvars? Ψ (`∀ A) = fvars? (Ψ ,∙) A -- not sure
+-- closed: no free existential variables
+data _⊢c_ : SEnv n m → Type m → Set where
+  ⊢c-int : Ψ ⊢c Int
+  ⊢c-base : ∀ {X}
+    → 𝕓 Γ ⊢c ‶ X
+  ⊢c-var∙0 : Ψ ,∙ ⊢c ‶ #0
+  ⊢c-var∙S : ∀ {X}
+    → Ψ ⊢c ‶ X
+    → Ψ ,∙ ⊢c ‶ #S X
+  ⊢c-var^S : ∀ {X}
+    → Ψ ⊢c ‶ X
+    → Ψ ,^ ⊢c ‶ #S X
+  ⊢c-var=0 : ∀ {A} → Ψ ,= A ⊢c ‶ #0
+  ⊢c-var=S : ∀ {A X}
+    → Ψ ⊢c ‶ X
+    → Ψ ,= A ⊢c ‶ #S X
+  ⊢c-arr : ∀ {A B}
+    → Ψ ⊢c A
+    → Ψ ⊢c B
+    → Ψ ⊢c (A `→ B)
+  ⊢c-∀ : ∀ {A}
+    → Ψ ,∙ ⊢c A
+    → Ψ ⊢c `∀ A
 
--- f : Check A -> Type (1 + n) -> Type n
+-- open: have free existential variables
+data _⊢o_ : SEnv n m → Type m → Set where
+  ⊢o-var∙S : ∀ {X}
+    → Ψ ⊢o ‶ X
+    → Ψ ,∙ ⊢o ‶ #S X
+  ⊢o-var^0 : Ψ ,^ ⊢o ‶ #0
+  ⊢o-var^S : ∀ {X}
+    → Ψ ⊢o ‶ X
+    → Ψ ,^ ⊢o ‶ #S X
+  ⊢o-var=S : ∀ {A X}
+    → Ψ ⊢o ‶ X
+    → Ψ ,= A ⊢o ‶ #S X
+  ⊢o-arr-l : ∀ {A B}
+    → Ψ ⊢o A
+    → Ψ ⊢o (A `→ B)
+  ⊢o-arr-r : ∀ {A B}
+    → Ψ ⊢o B
+    → Ψ ⊢o (A `→ B)    
+  ⊢o-∀ : ∀ {A}
+    → Ψ ,∙ ⊢o A
+    → Ψ ⊢o `∀ A
 
--- this intended to be partial, but let's write the function first
-[_/_]ᵉ_ : (A : Type m) → Fin m → SEnv n m → SEnv n m
-[ A / k ]ᵉ 𝕓 Γ = 𝕓 Γ
-[ A / k ]ᵉ (Ψ ,∙) = Ψ ,∙ -- undefined! but for draft version, put right here, should not be accpeted
-[ A / #0 ]ᵉ (Ψ ,^) = Ψ ,= {!!}
-[ A / #S k ]ᵉ (Ψ ,^) = {!!}
-[ A / #0 ]ᵉ (Ψ ,= B) = {!!} -- only defined when A ≡ B
-[ A / #S k ]ᵉ (Ψ ,= B) = ([ subst B A / k ]ᵉ Ψ) ,= B
+-- apply solutions in Env to a type
+_⟦_⟧_ : (Ψ : SEnv n m) → (A : Type m) → (Ψ ⊢c A) → Type m
+Ψ ⟦ Int ⟧ p = Int
+Ψ ⟦ ‶ X ⟧ p = applying Ψ X p
   where
-    subst : Type m → Type (1 + m) → Type m -- position should be #0
-    subst B A = {!!}
+    applying : (Ψ : SEnv n m) → (X : Fin m) → (Ψ ⊢c ‶ X) → Type m
+    applying (𝕓 x) X p = ‶ X
+    applying (Ψ ,∙) #0 p = ‶ #0
+    applying (Ψ ,∙) (#S X) (⊢c-var∙S p) = ↑ty0 (applying Ψ X p)
+    applying (Ψ ,^) (#S X) (⊢c-var^S p) = ↑ty0 (applying Ψ X p)
+    applying (Ψ ,= A) X p = ↑ty0 A
+Ψ ⟦ A `→ B ⟧ ⊢c-arr p p₁ = (Ψ ⟦ A ⟧ p) `→ (Ψ ⟦ B ⟧ p₁)
+Ψ ⟦ `∀ A ⟧ ⊢c-∀ p = `∀ ((Ψ ,∙) ⟦ A ⟧ p)
 
+infix 4 [_/_]_⟹_
+
+data [_/_]_⟹_ : Type m → Fin m → SEnv n m → SEnv n m → Set where
+
+{-
+  ⟹, : ∀ {Ψ Ψ' : Env n m} {k A B}
+    → [ A / k ] Ψ ⟹ Ψ'
+    → [ A / k ] (Ψ , B) ⟹ Ψ' , B
+-}
+    
+  ⟹^0 : ∀ {Ψ : SEnv n m} {A}
+    → [ A / #0 ] (Ψ ,^) ⟹ Ψ ,= ([ Int ]ˢ A)
+
+  ⟹^S : ∀ {Ψ Ψ' : SEnv n m} {A k}
+    → [ [ Int ]ˢ A / k ] Ψ ⟹ Ψ'
+    → [ A / #S k ] (Ψ ,^) ⟹ Ψ' ,^
+
+  ⟹=0 : ∀ {Ψ : SEnv n m} {A B}
+    → [ A / #0 ] (Ψ ,= B) ⟹ Ψ ,= B -- this is wrong
+
+  ⟹=S : ∀ {Ψ Ψ' : SEnv n m} {A B k}
+    → [ [ B ]ˢ A / k ] Ψ ⟹ Ψ'
+    → [ A / #S k ] (Ψ ,= B) ⟹ Ψ' ,= B
 
 
 infix 3 _⊢_⇒_⇒_
@@ -217,26 +274,48 @@ data _⊢_≤_⊣_↪_ where
       Ψ ⊢ Int ≤ τ Int ⊣ Ψ ↪ Int
 
   s-empty : ∀ {A}
+    → Ψ ⊢c A
     → Ψ ⊢ A ≤ □ ⊣ Ψ ↪ A
 
   s-ex-l : ∀ {A X}
-    → fvars? Ψ A ≡ false
-    → Ψ ⊢ ‶ X ≤ τ A ⊣ [ A / X ]ᵉ Ψ ↪ A
+    → Ψ ⊢c A
+    → [ A / X ] Ψ ⟹ Ψ'
+    → Ψ ⊢ ‶ X ≤ τ A ⊣ Ψ' ↪ A
 
   s-ex-r : ∀ {A X}
-    → fvars? Ψ A ≡ false
-    → Ψ ⊢ A ≤ τ (‶ X) ⊣ [ A / X ]ᵉ Ψ ↪ A
+    → Ψ ⊢c A
+    → [ A / X ] Ψ ⟹ Ψ'
+    → Ψ ⊢ A ≤ τ (‶ X) ⊣ Ψ' ↪ A
 
   s-arr : ∀ {A B C D A' D'}
     → Ψ₁ ⊢ C ≤ τ A ⊣ Ψ₂ ↪ A'
     → Ψ₂ ⊢ B ≤ τ D ⊣ Ψ₃ ↪ D'
-    → Ψ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Ψ₃ ↪ (C `→ D) -- or C → D ?
+    → Ψ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Ψ₃ ↪ (C `→ D)
 
-  s-term-no : ∀ {A B D e}
-    → fvars? Ψ A ≡ false
-    → Ψ ⊢ B ≤ Σ ⊣ Ψ₁ ↪ D
-    → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ₁ ↪ A `→ D
-    
+  s-term-no : ∀ {A B C D e}
+    → Ψ ⊢c A
+    → (Ψ→Γ Ψ) ⊢ τ A ⇒ e ⇒ C
+    → Ψ ⊢ B ≤ Σ ⊣ Ψ' ↪ D
+    → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ A `→ D
+
+  s-term : ∀ {A A' B C D e}
+    → Ψ ⊢o A
+    → (Ψ→Γ Ψ) ⊢ □ ⇒ e ⇒ C
+    → Ψ ⊢ C ≤ τ A ⊣ Ψ₁ ↪ A'
+    → Ψ₁ ⊢ B ≤ Σ ⊣ Ψ₂ ↪ D
+    → Ψ ⊢ A `→ B ≤ ([ e ]↝ Σ) ⊣ Ψ₂ ↪ A' `→ D
+
+  s-∀ : ∀ {A B C}
+    → Ψ ,∙ ⊢ A ≤ τ B ⊣ Ψ' ,∙ ↪ C
+    → Ψ ⊢ `∀ A ≤ τ (`∀ B) ⊣ Ψ' ↪ `∀ C
+
+  s-∀l-^ : ∀ {A B e}
+    → Ψ ,^ ⊢ A ≤ ↑tyΣ0 ([ e ]↝ Σ) ⊣ Ψ' ,^ ↪ ↑ty0 B
+    → Ψ ⊢ `∀ A ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ B
+
+  s-∀l-eq : ∀ {A B C e}
+    → Ψ ,^ ⊢ A ≤ ↑tyΣ0 ([ e ]↝ Σ) ⊣ Ψ' ,= C ↪ ↑ty0 B
+    → Ψ ⊢ `∀ A ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ B
 
   
 ----------------------------------------------------------------------
