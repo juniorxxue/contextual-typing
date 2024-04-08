@@ -240,8 +240,28 @@
 {\Psi \vdash A <: \square \dashv \Psi \rightsquigarrow \Psi(A)}
 
 \inferrule*[lab=S-Ex-L]
-{\Psi \vdash_{close} A}
+{\hat{a} \in \Psi \\
+\Psi \vdash_{close} A}
 {\Psi \vdash a <: A \dashv [A/a]~\Psi \rightsquigarrow A}
+
+\inferrule*[lab=S-Ex-L-eq]
+{\hat{a} = B \in \Psi \\
+\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
+\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
+\Psi \vdash_{close} A}
+{\Psi \vdash a <: A \dashv \Psi_2 \rightsquigarrow A''}
+
+\inferrule*[lab=S-Ex-R]
+{\hat{a} \in \Psi \\
+\Psi \vdash_{close} A}
+{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
+
+\inferrule*[lab=S-Ex-R-eq]
+{\hat{a} = B \in \Psi \\
+\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
+\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
+\Psi \vdash_{close} A}
+{\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
 
 \inferrule*[lab=S-Ex-R]
 {\Psi \vdash_{close} A\\ 
@@ -278,4 +298,15 @@
 {\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \widehat{A} \rightsquigarrow B}
 {\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 \end{mathpar}
+
+\subsection{Environment Replacement}
+
+\begin{align*}
+[A/\hat{a}] ~(\Psi , \hat{a}) &= \Psi, \hat{a}:=A\\
+[A/\hat{a}]~(\Psi, \hat{b}) &= [A/\hat{a}]~\Psi , \hat{b}\\
+%[A/\hat{a}]~(\Psi, \hat{a}:=B) &= \Psi, \hat{a}:=A \quad when~ B \approx A\\
+%[A/\hat{a}]~(\Psi, \hat{b}:= B) &= [[\hat{b} := B] A/\hat{a}]~\Psi , \hat{b}:= B
+\end{align*}
+
+
 \end{document}

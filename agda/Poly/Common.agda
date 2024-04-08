@@ -19,7 +19,7 @@ infixr 8  _`→_
 infixr 8  `∀_
 
 variable
-  m n : ℕ
+  m n m' : ℕ
 
 
 data Type : ℕ → Set where

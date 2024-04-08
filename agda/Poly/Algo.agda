@@ -94,6 +94,9 @@ data Context : ℕ → ℕ → Set where
 ↑tyΣ0 : Context n m → Context n (1 + m)
 ↑tyΣ0 = ↑tyΣ #0
 
+↓ty0 : Type (1 + m) → Type m
+↓ty0 A = [ Int ]ˢ A
+
 {-
 -- environment substition
 [_/ᵉ_] : SEnv n m → Type m → Type m
@@ -190,19 +193,48 @@ data [_/_]_⟹_ : Type m → Fin m → SEnv n m → SEnv n m → Set where
 -}
     
   ⟹^0 : ∀ {Ψ : SEnv n m} {A}
-    → [ A / #0 ] (Ψ ,^) ⟹ Ψ ,= ([ Int ]ˢ A)
+    → [ A / #0 ] (Ψ ,^) ⟹ Ψ ,= (↓ty0 A)
 
   ⟹^S : ∀ {Ψ Ψ' : SEnv n m} {A k}
-    → [ [ Int ]ˢ A / k ] Ψ ⟹ Ψ'
+    → [ ↓ty0 A / k ] Ψ ⟹ Ψ'
     → [ A / #S k ] (Ψ ,^) ⟹ Ψ' ,^
 
+{-
   ⟹=0 : ∀ {Ψ : SEnv n m} {A B}
-    → [ A / #0 ] (Ψ ,= B) ⟹ Ψ ,= B -- this is wrong
+    → [ A / #0 ] (Ψ ,= B) ⟹ Ψ ,= B -- this is wrong, should be some equivlent reasoning
 
   ⟹=S : ∀ {Ψ Ψ' : SEnv n m} {A B k}
     → [ [ B ]ˢ A / k ] Ψ ⟹ Ψ'
     → [ A / #S k ] (Ψ ,= B) ⟹ Ψ' ,= B
+-}
 
+infix 3 _^∈_
+data _^∈_ : Fin m → SEnv n m → Set where
+
+  Z : #0 ^∈ Ψ ,^
+  S^ : ∀ {k}
+    → k ^∈ Ψ
+    → #S k ^∈ Ψ ,^
+  S∙ : ∀ {k}
+    → k ^∈ Ψ
+    → #S k ^∈ Ψ ,∙
+  S= : ∀ {k A}
+    → k ^∈ Ψ
+    → #S k ^∈ Ψ ,= A    
+
+infix 3 _:=_∈_
+data _:=_∈_ : Fin m → Type m → SEnv n m → Set where
+
+  Z : ∀ {A} → #0 := A ∈ Ψ ,= ↓ty0 A
+  S^ : ∀ {k} {A : Type (1 + m')}
+    → k := ↓ty0 A ∈ Ψ
+    → #S k := A ∈ Ψ ,^
+  S∙ : ∀ {k} {A : Type (1 + m')}
+    → k := ↓ty0 A ∈ Ψ
+    → #S k := A ∈ Ψ ,∙
+  S= : ∀ {k B} {A : Type (1 + m')}
+    → k := ↓ty0 A ∈ Ψ
+    → #S k := A ∈ Ψ ,= B
 
 infix 3 _⊢_⇒_⇒_
 infix 3 _⊢_≤_⊣_↪_
@@ -217,7 +249,7 @@ data _⊢_⇒_⇒_ where
     → Γ ⊢ □ ⇒ lit i ⇒ Int
 
   ⊢var : ∀ {x A}
-    → lookup Γ x ≡ A -- could be replaced by datatype, but later
+    → lookup Γ x ≡ A
     → Γ ⊢ □ ⇒ ` x ⇒ A
 
   ⊢ann : ∀ {e A B}
@@ -275,15 +307,31 @@ data _⊢_≤_⊣_↪_ where
     → Ψ ⊢c A
     → Ψ ⊢ A ≤ □ ⊣ Ψ ↪ A
 
-  s-ex-l : ∀ {A X}
+  s-ex-l^ : ∀ {A X}
     → Ψ ⊢c A
+    → X ^∈ Ψ
     → [ A / X ] Ψ ⟹ Ψ'
     → Ψ ⊢ ‶ X ≤ τ A ⊣ Ψ' ↪ A
 
-  s-ex-r : ∀ {A X}
+  s-ex-l= : ∀ {A A₁ A₂ B X}
     → Ψ ⊢c A
+    → X := B ∈ Ψ
+    → Ψ ⊢ B ≤ τ A ⊣ Ψ₁ ↪ A₁
+    → Ψ₁ ⊢ A ≤ τ B ⊣ Ψ₂ ↪ A₂
+    → Ψ ⊢ ‶ X ≤ τ A ⊣ Ψ₂ ↪ A₂
+
+  s-ex-r^ : ∀ {A X}
+    → Ψ ⊢c A
+    → X ^∈ Ψ
     → [ A / X ] Ψ ⟹ Ψ'
     → Ψ ⊢ A ≤ τ (‶ X) ⊣ Ψ' ↪ A
+
+  s-ex-r= : ∀ {A A₁ A₂ B X}
+    → Ψ ⊢c A
+    → X := B ∈ Ψ
+    → Ψ ⊢ B ≤ τ A ⊣ Ψ₁ ↪ A₁
+    → Ψ₁ ⊢ A ≤ τ B ⊣ Ψ₂ ↪ A₂
+    → Ψ ⊢ A ≤ τ (‶ X) ⊣ Ψ₂ ↪ A₂
 
   s-arr : ∀ {A B C D A' D'}
     → Ψ₁ ⊢ C ≤ τ A ⊣ Ψ₂ ↪ A'
@@ -319,3 +367,5 @@ data _⊢_≤_⊣_↪_ where
 ----------------------------------------------------------------------
 --+                            Examples                            +--
 ----------------------------------------------------------------------
+
+
