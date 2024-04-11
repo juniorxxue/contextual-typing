@@ -11,7 +11,7 @@ infixr 5  ƛ_
 infixl 7  _·_
 infix  9  `_
 infixr 5  Λ_
-infix  5  _[_]
+infixl 5  _[_]
 infix  5  _⦂_
 
 infix  9  ‶_
@@ -54,6 +54,10 @@ data Term : ℕ → ℕ → Set where
 --+                          Environments                          +--
 ----------------------------------------------------------------------
 
+infixl 4 _,_
+infixl 4 _,∙
+infixl 4 _,=_
+
 data Env : ℕ → ℕ → Set where
   ∅     : Env 0 0
   _,_   : Env n m → (A : Type m) → Env (1 + n) m
@@ -66,7 +70,6 @@ lookup (Γ , A) #0     = A
 lookup (Γ , A) (#S k) = lookup Γ k
 lookup (Γ ,∙) k       = ↑ty0 (lookup Γ k)
 lookup (Γ ,= A) k     = ↑ty0 (lookup Γ k)
-
 
 ----------------------------------------------------------------------
 --+                           Type Subst                           +--
