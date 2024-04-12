@@ -79,9 +79,21 @@ f : forall a. a -> (a -> a) -> a
 id idv
 ```
 
-```
+### Missing cases
 
 ```
+(Int -> Int) -> Int <: (forall a. a -> a) -> Int
+```
 
+### Some Justificaitions
 
+we forbid the cases
+
+```
+(/\a. (\x. x)) [Int] 1
+```
+
+since `/\a. (\x. x)` cannot infer.  
+
+This is because it's hard to accept `(/\a. (\x. x)) [Int] 1` and reject `(/\a. (\x. x + 1)) [Int] 1`
 

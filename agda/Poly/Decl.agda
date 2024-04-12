@@ -31,7 +31,7 @@ infix 3 _⊢_#_≤_
 
 data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
   s-refl : ∀ {A}
-    → Γ ⊢ Z # A ≤ A
+    → Γ ⊢ Z # A ≤ A -- applying solutions here
   s-int :
       Γ ⊢ ∞ # Int ≤ Int
   s-var : ∀ {X} 
@@ -48,10 +48,10 @@ data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
     → Γ ,∙ ⊢ ∞ # A ≤ B
     → Γ ⊢ ∞ # `∀ A ≤ `∀ B
   s-∀l : ∀ {j A B C}
-    → Γ ⊢ j # [ B ]ˢ A ≤ C 
-    → Γ ⊢ S j # `∀ A ≤ C -- this seems wrong, since the instantiation is constrained
+    → Γ ,= B ⊢ j # A ≤ ↑ty0 C 
+    → Γ ⊢ S j # `∀ A ≤ C
   s-∀lτ : ∀ {j A B C}
-    → Γ ⊢ j # [ B ]ˢ A ≤ C 
+    → Γ ,= B ⊢ j # A ≤ ↑ty0 C 
     → Γ ⊢ Sτ j # `∀ A ≤ C     
 
 data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
@@ -83,9 +83,6 @@ data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
   ⊢tabs₁ : ∀ {e A}
     → Γ ,∙ ⊢ Z # e ⦂ A
     → Γ ⊢ Z # Λ e ⦂ `∀ A    
-  ⊢tabs₂ : ∀ {e j A B}
-    → Γ ,∙ ⊢ j # e ⦂ B
-    → Γ ⊢ Sτ j # Λ e ⦂ [ A ]ˢ B
   ⊢tapp : ∀ {e j A B}
     → Γ ⊢ Sτ j # e ⦂ B
     → Γ ⊢ j # e [ A ] ⦂ B
@@ -94,24 +91,23 @@ idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
 id[Int]1 : idEnv ⊢ Z # ((` #0) [ Int ]) · (lit 1) ⦂ Int
-id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ s-refl)))
+id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ {!!})))
                  (⊢sub ⊢lit s-int)
 
 idExp : Term 0 0
 idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 
 idExp[Int]1 : ∅ ⊢ Z # (idExp [ Int ]) · (lit 1) ⦂ Int
-idExp[Int]1 = ⊢app₁ (⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁
-                                         (⊢sub (⊢var refl) s-var)))))
+idExp[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
+                                 (s-∀lτ {!!})))
                     (⊢sub ⊢lit s-int)
 
 idExp[Int] : ∅ ⊢ Z # idExp [ Int ] ⦂ Int `→ Int
-idExp[Int] = ⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
+idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
+                         (s-∀lτ {!!}))
 
 -- implicit inst
-
--- seems app₂ and tapp should not be interleaved (?)
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
-                  (s-∀l s-refl))
-            ⊢lit          
+                  (s-∀l {!!}))
+            ⊢lit

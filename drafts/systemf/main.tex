@@ -87,9 +87,9 @@
     {\Gamma, a \vdash_0 e : A}
     {\Gamma \vdash_0 \Lambda a.~e : \forall a.~A}
     
-    \inferrule*[lab=TAbs2]
-    {\Gamma, a \vdash_n e : B}
-    {\Gamma \vdash_{S_\tau ~n} \Lambda a.~e :  [A/a] B}
+%    \inferrule*[lab=TAbs2]
+%    {\Gamma, a \vdash_n e : B}
+%    {\Gamma \vdash_{S_\tau ~n} \Lambda a.~e :  [A/a] B}
 
 
     \inferrule*[lab=TApp]
@@ -102,11 +102,15 @@
 \begin{mathpar}
     \inferrule*[lab=S-Refl]
     { }
-    {\Gamma \vdash_0 A <: A}
+    {\Gamma \vdash_0 A <: \Gamma(A)}
 
     \inferrule*[lab=S-Int]
     { }
     {\Gamma \vdash_{\infty} \mathtt{Int} <: \mathtt{Int}}
+    
+    \inferrule*[lab=S-Var]
+    { }
+    {\Gamma \vdash_\infty a <: a}
 
     \inferrule*[lab=S-Arr]
     {\Gamma \vdash_{\infty} C <: A \\
@@ -119,8 +123,13 @@
 
     \inferrule*[lab=S-$\forall$L]
     {\Gamma \vdash B \\
-     \Gamma \vdash_{S~n} [B/a] A <: C}
+     \Gamma, \hat{a} = B \vdash_{n}  A <: C}
     {\Gamma \vdash_{S~n} \forall a. ~A <: C}
+    
+    \inferrule*[lab=S-$\forall$L-t]
+    {\Gamma \vdash B \\
+     \Gamma, \hat{a} = B \vdash_{n}  A <: C}
+    {\Gamma \vdash_{S_\tau~n} \forall a. ~A <: C}    
     
     \inferrule*[lab=S-var-l]
     {\hat{a} = B \in \Gamma \\ \Gamma \vdash B <: A}
@@ -170,9 +179,9 @@
 {\Gamma, a \vdash \square \Rightarrow e \Rightarrow A}
 {\Gamma \vdash \square \Rightarrow \Lambda a.~e \Rightarrow \forall a.~A}
 
-\inferrule*[lab=T-TAbs2]
-{\Gamma, a \vdash \Sigma  \Rightarrow e \Rightarrow B}
-{\Gamma \vdash \boxed{A} \leadsto \Sigma \Rightarrow \Lambda a. ~e \Rightarrow [A/a]B}
+%\inferrule*[lab=T-TAbs2]
+%{\Gamma, a \vdash \Sigma  \Rightarrow e \Rightarrow B}
+%{\Gamma \vdash \boxed{A} \leadsto \Sigma \Rightarrow \Lambda a. ~e \Rightarrow [A/a]B}
 
 \inferrule*[lab=T-TApp]
 %{\Gamma \vdash H \Rightarrow e \Rightarrow \forall X.~B}
@@ -244,6 +253,11 @@
 {\Psi \vdash_{close} A}
 {\Psi \vdash A <: \square \dashv \Psi \rightsquigarrow \Psi(A)}
 
+\inferrule*[lab=S-Var]
+{ }
+{\Psi \vdash a <: a \dashv \Psi \rightsquigarrow a}
+
+
 \inferrule*[lab=S-Ex-L]
 {\hat{a} \in \Psi \\
 \Psi \vdash_{close} A}
@@ -303,6 +317,10 @@
 {\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \widehat{A} \rightsquigarrow B}
 {\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 \end{mathpar}
+
+\inferrule*[lab=S-L]
+{\Psi ,}
+{\Psi \vdash \forall A <: \boxed{B} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B }
 
 \subsection{Environment Replacement}
 

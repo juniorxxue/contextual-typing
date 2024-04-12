@@ -4,7 +4,7 @@ open import Poly.Common
 
 -- Env for algorithmic subtyping
 data SEnv : ℕ → ℕ → Set where
-  𝕓     : Env n m → SEnv n m
+  𝕓     : (Γ : Env n m) → SEnv n m
   _,∙   : SEnv n m → SEnv n (1 + m) -- universal variable
   _,^   : SEnv n m → SEnv n (1 + m) -- existential variable
   _,=_  : SEnv n m → (A : Type m) → SEnv n (1 + m) -- solved equation
@@ -53,7 +53,7 @@ data Context : ℕ → ℕ → Set where
 Ψ→Γ : SEnv n m → Env n m
 Ψ→Γ (𝕓 Γ)    = Γ
 Ψ→Γ (Ψ ,∙)   = (Ψ→Γ Ψ) ,∙
--- this is dangerous, I give a solution which could never reach (`e` is shifted)
+-- this seems to be dangerous, I give a solution which could never reach (`e` is shifted)
 -- so that I no need to touch the indices in expression `e`
 Ψ→Γ (Ψ ,^)   = (Ψ→Γ Ψ) ,= Int
 Ψ→Γ (Ψ ,= A) = (Ψ→Γ Ψ) ,= A
@@ -122,7 +122,7 @@ _⟦_⟧_ : (Ψ : SEnv n m) → (A : Type m) → (Ψ ⊢c A) → Type m
 Ψ ⟦ ‶ X ⟧ p = applying Ψ X p
   where
     applying : (Ψ : SEnv n m) → (X : Fin m) → (Ψ ⊢c ‶ X) → Type m
-    applying (𝕓 x) X p = ‶ X
+    applying (𝕓 Γ) X p = ‶ X
     applying (Ψ ,∙) #0 p = ‶ #0
     applying (Ψ ,∙) (#S X) (⊢c-var∙S p) = ↑ty0 (applying Ψ X p)
     applying (Ψ ,^) (#S X) (⊢c-var^S p) = ↑ty0 (applying Ψ X p)
@@ -229,20 +229,6 @@ data _⊢_⇒_⇒_ where
     → Γ ,∙ ⊢ □ ⇒ e ⇒ A
     → Γ ⊢ □ ⇒ Λ e ⇒ `∀ A
 
-{-
-  -- alternative approach is to follow the design of let-argument-go-first
-  -- modeling a type synonym
-  ⊢tabs₂' : ∀ {e A B}
-    → Γ ⊢ Σ ⇒ [ A ]ᵗ e ⇒ B
-    → Γ ⊢ ⟦ A ⟧↝ Σ ⇒ Λ e ⇒ B
--}    
-
-  -- classic approach, accpet less examples
-  ⊢tabs₂ : ∀ {e A B}
-    → Γ ,∙ ⊢ ↑tyΣ0 Σ ⇒ e ⇒ B
---    → Γ ⊢ Σ ⇒ Λ e ⇒ `∀ B -- funny premise
-    → Γ ⊢ ⟦ A ⟧↝ Σ ⇒ Λ e ⇒ [ A ]ˢ B    
-
   ⊢tapp : ∀ {e A B}
     → Γ ⊢ ⟦ A ⟧↝ Σ ⇒ e ⇒ B
     → Γ ⊢ Σ ⇒ e [ A ] ⇒ B
@@ -335,16 +321,12 @@ idExp : Term 0 0
 idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 
 idExp[Int]1 : ∅ ⊢ □ ⇒ (idExp [ Int ]) · (lit 1) ⇒ Int
-idExp[Int]1 = ⊢app (⊢tapp (⊢tabs₂ (⊢sub (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))
-                                        {!!})))
+idExp[Int]1 = ⊢app (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) (s-∀-t (s-term-c ⊢c-int (⊢sub ⊢lit s-int) (s-empty ⊢c-int)))))
 
-
--- don't push into the context
 idExp[Int] : ∅ ⊢ □ ⇒ idExp [ Int ] ⇒ Int `→ Int
-idExp[Int] = ⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
+idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) (s-∀-t (s-empty (⊢c-arr ⊢c-int ⊢c-int))))
 
 -- implicit inst
-
--- seems app₂ and tapp should not be interleaved (?)
 id1 : idEnv ⊢ □ ⇒ (` #0) · (lit 1) ⇒ Int
-id1 = {!!}
+id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term-o ⊢o-var^0 ⊢lit (s-ex-r^ ⊢c-int Z ⟹^0)
+                                                              (s-empty ⊢c-var=0))))
