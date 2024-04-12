@@ -83,9 +83,14 @@
     \Gamma \vdash B <:_n A}
     {\Gamma \vdash_n e : A}
 
-    \inferrule*[lab=TAbs]
-    {\Gamma, X \vdash_n e : A}
-    {\Gamma \vdash_n \Lambda X.~e : \forall X.~A}
+    \inferrule*[lab=TAbs1]
+    {\Gamma, a \vdash_0 e : A}
+    {\Gamma \vdash_0 \Lambda a.~e : \forall a.~A}
+    
+    \inferrule*[lab=TAbs2]
+    {\Gamma, a \vdash_n e : B}
+    {\Gamma \vdash_{S_\tau ~n} \Lambda a.~e :  [A/a] B}
+
 
     \inferrule*[lab=TApp]
     {\Gamma \vdash_{S_{\tau}~n} e : B}

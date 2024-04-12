@@ -340,7 +340,8 @@ idExp[Int]1 = ⊢app (⊢tapp (⊢tabs₂ (⊢sub (⊢ann (⊢lam₁ (⊢sub (�
 
 
 -- don't push into the context
-idExp[Int] = {!!}
+idExp[Int] : ∅ ⊢ □ ⇒ idExp [ Int ] ⇒ Int `→ Int
+idExp[Int] = ⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
 
 -- implicit inst
 

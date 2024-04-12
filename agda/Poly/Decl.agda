@@ -105,10 +105,13 @@ idExp[Int]1 = ⊢app₁ (⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁
                                          (⊢sub (⊢var refl) s-var)))))
                     (⊢sub ⊢lit s-int)
 
+idExp[Int] : ∅ ⊢ Z # idExp [ Int ] ⦂ Int `→ Int
+idExp[Int] = ⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
+
 -- implicit inst
 
 -- seems app₂ and tapp should not be interleaved (?)
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
                   (s-∀l s-refl))
-            ⊢lit
+            ⊢lit          
