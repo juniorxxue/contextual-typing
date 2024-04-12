@@ -55,7 +55,7 @@ data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
     → Γ ⊢ Sτ j # `∀ A ≤ C     
 
 data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
-  ⊢int : ∀ {i} → Γ ⊢ Z # (lit i) ⦂ Int
+  ⊢lit : ∀ {i} → Γ ⊢ Z # (lit i) ⦂ Int
   ⊢var : ∀ {x A}
     → lookup Γ x ≡ A
     → Γ ⊢ Z # ` x ⦂ A
@@ -90,13 +90,12 @@ data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
     → Γ ⊢ Sτ j # e ⦂ B
     → Γ ⊢ j # e [ A ] ⦂ B
 
-
 idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
 id[Int]1 : idEnv ⊢ Z # ((` #0) [ Int ]) · (lit 1) ⦂ Int
 id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ s-refl)))
-                 (⊢sub ⊢int s-int)
+                 (⊢sub ⊢lit s-int)
 
 idExp : Term 0 0
 idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
@@ -104,7 +103,7 @@ idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 idExp[Int]1 : ∅ ⊢ Z # (idExp [ Int ]) · (lit 1) ⦂ Int
 idExp[Int]1 = ⊢app₁ (⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁
                                          (⊢sub (⊢var refl) s-var)))))
-                    (⊢sub ⊢int s-int)
+                    (⊢sub ⊢lit s-int)
 
 -- implicit inst
 
@@ -112,4 +111,4 @@ idExp[Int]1 = ⊢app₁ (⊢tapp (⊢tabs₂ (⊢ann (⊢lam₁
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
                   (s-∀l s-refl))
-            ⊢int
+            ⊢lit

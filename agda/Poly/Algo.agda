@@ -252,8 +252,11 @@ data _⊢_≤_⊣_↪_ where
       Ψ ⊢ Int ≤ τ Int ⊣ Ψ ↪ Int
 
   s-empty : ∀ {A}
-    → Ψ ⊢c A
-    → Ψ ⊢ A ≤ □ ⊣ Ψ ↪ A
+    → (p : Ψ ⊢c A)
+    → Ψ ⊢ A ≤ □ ⊣ Ψ ↪ Ψ ⟦ A ⟧ p
+
+  s-var : ∀ {X}
+    → Ψ ⊢ ‶ X ≤ τ (‶ X) ⊣ Ψ ↪ ‶ X
 
   s-ex-l^ : ∀ {A X}
     → Ψ ⊢c A
@@ -286,13 +289,13 @@ data _⊢_≤_⊣_↪_ where
     → Ψ₂ ⊢ B ≤ τ D ⊣ Ψ₃ ↪ D'
     → Ψ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Ψ₃ ↪ (C `→ D)
 
-  s-term-no : ∀ {A B C D e}
+  s-term-c : ∀ {A B C D e}
     → Ψ ⊢c A
     → (Ψ→Γ Ψ) ⊢ τ A ⇒ e ⇒ C
     → Ψ ⊢ B ≤ Σ ⊣ Ψ' ↪ D
     → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ A `→ D
 
-  s-term : ∀ {A A' B C D e}
+  s-term-o : ∀ {A A' B C D e}
     → Ψ ⊢o A
     → (Ψ→Γ Ψ) ⊢ □ ⇒ e ⇒ C
     → Ψ ⊢ C ≤ τ A ⊣ Ψ₁ ↪ A'
@@ -311,6 +314,36 @@ data _⊢_≤_⊣_↪_ where
     → Ψ ,^ ⊢ A ≤ ↑tyΣ0 ([ e ]↝ Σ) ⊣ Ψ' ,= C ↪ ↑ty0 B
     → Ψ ⊢ `∀ A ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ B
 
+  -- explicit type applicatoin
+  -- which eliminates a ∀ quantifier
+  s-∀-t : ∀ {A B C}
+    → Ψ ⊢ [ B ]ˢ A ≤ Σ ⊣ Ψ' ↪ C
+    → Ψ ⊢ `∀ A ≤ (⟦ B ⟧↝ Σ) ⊣ Ψ' ↪ C
+
 ----------------------------------------------------------------------
 --+                            Examples                            +--
 ----------------------------------------------------------------------
+
+idEnv : Env 1 0
+idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
+
+id[Int]1 : idEnv ⊢ □ ⇒ ((` #0) [ Int ]) · (lit 1) ⇒ Int
+id[Int]1 = ⊢app (⊢tapp (⊢sub (⊢var refl)
+                             (s-∀-t (s-term-c ⊢c-int (⊢sub ⊢lit s-int) (s-empty ⊢c-int)))))
+
+idExp : Term 0 0
+idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
+
+idExp[Int]1 : ∅ ⊢ □ ⇒ (idExp [ Int ]) · (lit 1) ⇒ Int
+idExp[Int]1 = ⊢app (⊢tapp (⊢tabs₂ (⊢sub (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))
+                                        {!!})))
+
+
+-- don't push into the context
+idExp[Int] = {!!}
+
+-- implicit inst
+
+-- seems app₂ and tapp should not be interleaved (?)
+id1 : idEnv ⊢ □ ⇒ (` #0) · (lit 1) ⇒ Int
+id1 = {!!}
