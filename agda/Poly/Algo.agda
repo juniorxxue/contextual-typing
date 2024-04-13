@@ -117,16 +117,18 @@ data _⊢o_ : SEnv n m → Type m → Set where
     → Ψ ⊢o `∀ A
 
 -- apply solutions in Env to a type
+infix 5 _⟦_⟧_
 _⟦_⟧_ : (Ψ : SEnv n m) → (A : Type m) → (Ψ ⊢c A) → Type m
 Ψ ⟦ Int ⟧ p = Int
 Ψ ⟦ ‶ X ⟧ p = applying Ψ X p
   where
     applying : (Ψ : SEnv n m) → (X : Fin m) → (Ψ ⊢c ‶ X) → Type m
-    applying (𝕓 Γ) X p = ‶ X
-    applying (Ψ ,∙) #0 p = ‶ #0
-    applying (Ψ ,∙) (#S X) (⊢c-var∙S p) = ↑ty0 (applying Ψ X p)
-    applying (Ψ ,^) (#S X) (⊢c-var^S p) = ↑ty0 (applying Ψ X p)
-    applying (Ψ ,= A) X p = ↑ty0 A
+    applying (𝕓 Γ) X p                    = ‶ X
+    applying (Ψ ,∙) #0 p                  = ‶ #0
+    applying (Ψ ,∙) (#S X) (⊢c-var∙S p)   = ↑ty0 (applying Ψ X p)
+    applying (Ψ ,^) (#S X) (⊢c-var^S p)   = ↑ty0 (applying Ψ X p)
+    applying (Ψ ,= A) #0 p                = ↑ty0 A
+    applying (Ψ ,= A) (#S X) (⊢c-var=S p) = ↑ty0 (applying Ψ X p)
 Ψ ⟦ A `→ B ⟧ ⊢c-arr p p₁ = (Ψ ⟦ A ⟧ p) `→ (Ψ ⟦ B ⟧ p₁)
 Ψ ⟦ `∀ A ⟧ ⊢c-∀ p = `∀ ((Ψ ,∙) ⟦ A ⟧ p)
 
@@ -170,6 +172,7 @@ data _^∈_ : Fin m → SEnv n m → Set where
     → k ^∈ Ψ
     → #S k ^∈ Ψ ,= A    
 
+-- ⚠️ might be wrong, since we don't consider the Γ inside
 infix 3 _:=_∈_
 data _:=_∈_ : Fin m → Type m → SEnv n m → Set where
 
@@ -301,7 +304,7 @@ data _⊢_≤_⊣_↪_ where
     → Ψ ⊢ `∀ A ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ B
 
   -- explicit type applicatoin
-  -- which eliminates a ∀ quantifier
+  -- ⚠️ put solution into the env
   s-∀-t : ∀ {A B C}
     → Ψ ⊢ [ B ]ˢ A ≤ Σ ⊣ Ψ' ↪ C
     → Ψ ⊢ `∀ A ≤ (⟦ B ⟧↝ Σ) ⊣ Ψ' ↪ C
