@@ -132,11 +132,11 @@
     {\Gamma \vdash_{S_\tau~n} \forall a. ~A <: C}    
     
     \inferrule*[lab=S-var-l]
-    {\hat{a} = B \in \Gamma \\ \Gamma \vdash B <: A}
+    {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n B <: A}
     {\Gamma \vdash_n \hat{a} <: A}
     
         \inferrule*[lab=S-var-r]
-    {\hat{a} = B \in \Gamma \\ \Gamma \vdash A <: B}
+    {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n A <: B}
     {\Gamma \vdash_n A <: \hat{a}}
 \end{mathpar}
 
@@ -316,11 +316,11 @@
 \inferrule*[lab=S-All-L-Eq]
 {\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \widehat{A} \rightsquigarrow B}
 {\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
-\end{mathpar}
 
-\inferrule*[lab=S-L]
-{\Psi ,}
+\inferrule*[lab=S-$\forall$-t]
+{\Psi \vdash [ B ] A <: \Sigma \dashv \Psi' \rightsquigarrow B}
 {\Psi \vdash \forall A <: \boxed{B} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B }
+\end{mathpar}
 
 \subsection{Environment Replacement}
 
