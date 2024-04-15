@@ -27,6 +27,9 @@ data _:=_∈_ : Fin m → Type m → Env n m → Set where
     → #S k := A ∈ Γ ,= B
 
 -- apply solutions in Env to a type
+
+-- the function version is hard to destruct in the conclusion
+-- thus model it as datatype in the next
 infix 5 _⟦_⟧
 _⟦_⟧ : (Γ : Env n m) → (A : Type m) → Type m
 Γ ⟦ Int ⟧    = Int
@@ -40,12 +43,48 @@ _⟦_⟧ : (Γ : Env n m) → (A : Type m) → Type m
 Γ ⟦ A `→ B ⟧ = (Γ ⟦ A ⟧) `→ (Γ ⟦ B ⟧)
 Γ ⟦ `∀ A ⟧   = `∀ ((Γ ,∙) ⟦ A ⟧)
 
+infix 4 _⟦_⟧⟹'_
+data _⟦_⟧⟹'_ : Env n m → Fin m → Type m → Set where
+  slv'-, : ∀ {A B X}
+    → Γ ⟦ X ⟧⟹' B
+    → (Γ , A) ⟦ X ⟧⟹' B
+  slv'-∙-Z : 
+      (Γ ,∙) ⟦ #0 ⟧⟹' ‶ #0
+  slv'-∙-S : ∀ {X A A'}
+    → Γ ⟦ X ⟧⟹' A
+    → A' ≡ ↑ty0 A
+    → (Γ ,∙) ⟦ #S X ⟧⟹' A'
+--    → (Γ ,∙) ⟦ #S X ⟧⟹' ↑ty0 A
+  slv'-=-Z : ∀ {A A'}
+    → A' ≡ ↑ty0 A
+    → (Γ ,= A) ⟦ #0 ⟧⟹' A'
+  slv'-=-S : ∀ {A X B B'}
+    → Γ ⟦ X ⟧⟹' B
+    → B' ≡ ↑ty0 B
+    → (Γ ,= A) ⟦ #S X ⟧⟹' B'
+
+infix 4 _⟦_⟧⟹_
+data _⟦_⟧⟹_ : Env n m → Type m → Type m → Set where
+  slv-int : Γ ⟦ Int ⟧⟹ Int
+  slv-var : ∀ {X A}
+    → Γ ⟦ X ⟧⟹' A
+    → Γ ⟦ ‶ X ⟧⟹ A
+  slv-arr : ∀ {A B A' B'}
+    → Γ ⟦ A ⟧⟹ A'
+    → Γ ⟦ B ⟧⟹ B'
+    → Γ ⟦ A `→ B ⟧⟹ A' `→ B'
+  slv-∀ : ∀ {A A'}
+    → (Γ ,∙) ⟦ A ⟧⟹ A'
+    → Γ ⟦ `∀ A ⟧⟹ `∀ A'    
+
 infix 3 _⊢_#_⦂_
 infix 3 _⊢_#_≤_
 
 data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
-  s-refl : ∀ {A}
-    → Γ ⊢ Z # A ≤ Γ ⟦ A ⟧
+  s-refl : ∀ {A A'}
+    → (ap : Γ ⟦ A ⟧⟹ A')
+    → Γ ⊢ Z # A ≤ A'
+-- → Γ ⊢ Z # A ≤ Γ ⟦ A ⟧
   s-int :
       Γ ⊢ ∞ # Int ≤ Int
   s-var : ∀ {X} 
@@ -114,7 +153,7 @@ idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
 id[Int]1 : idEnv ⊢ Z # ((` #0) [ Int ]) · (lit 1) ⦂ Int
-id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ s-refl)))
+id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl)))))))
                  (⊢sub ⊢lit s-int)
 
 idExp : Term 0 0
@@ -122,15 +161,15 @@ idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 
 idExp[Int]1 : ∅ ⊢ Z # (idExp [ Int ]) · (lit 1) ⦂ Int
 idExp[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
-                                 (s-∀lτ s-refl)))
+                                 (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl)))))))
                     (⊢sub ⊢lit s-int)
 
 idExp[Int] : ∅ ⊢ Z # idExp [ Int ] ⦂ Int `→ Int
 idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
-                         (s-∀lτ s-refl))
+                         (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))))
 
 -- implicit inst
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
-                  (s-∀l s-refl))
+                  (s-∀l (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))))
             ⊢lit

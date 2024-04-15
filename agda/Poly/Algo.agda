@@ -200,7 +200,7 @@ data _⊢_⇒_⇒_ where
     → Γ ⊢ □ ⇒ lit i ⇒ Int
 
   ⊢var : ∀ {x A}
-    → lookup Γ x ≡ A
+    → (x∈Γ : lookup Γ x ≡ A)
     → Γ ⊢ □ ⇒ ` x ⇒ A
 
   ⊢ann : ∀ {e A B}

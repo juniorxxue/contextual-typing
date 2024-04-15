@@ -97,3 +97,13 @@ since `/\a. (\x. x)` cannot infer.
 
 This is because it's hard to accept `(/\a. (\x. x)) [Int] 1` and reject `(/\a. (\x. x + 1)) [Int] 1`
 
+### Norm form
+
+```
+[ A ] ~> H => e => forall a. -
+```
+
+
+
+
+
