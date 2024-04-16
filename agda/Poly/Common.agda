@@ -85,6 +85,9 @@ lookup (Γ ,= A) k     = ↑ty0 (lookup Γ k)
 ↑tm k (Λ e)      = Λ (↑tm k e)
 ↑tm k (e [ A ])  = ↑tm k e [ A ]
 
+↑tm0 : Term n m → Term (1 + n) m
+↑tm0 = ↑tm #0
+
 -- shift type in term
 ↑ty-in-tm : Fin (1 + m) → Term n m → Term n (1 + m)
 ↑ty-in-tm k (lit i)    = lit i

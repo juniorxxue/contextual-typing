@@ -2,36 +2,18 @@ module Poly.Soundness where
 
 open import Poly.Common
 open import Poly.Decl
+open import Poly.Decl.Subst
 open import Poly.Algo
-
-----------------------------------------------------------------------
---+                              Roll                              +--
-----------------------------------------------------------------------
-
-data Apps : ℕ → ℕ → Set where
-  [] : Apps n m
-  _∷a_ : Term n m → Apps n m → Apps n m
-  _∷t_ : Type m → Apps n m → Apps n m
-
-data AppsType : ℕ → Set where
-  [] : AppsType m
-  _∷a_ : Type m → AppsType m → AppsType m
-  _∷t_ : Type m → AppsType m → AppsType m
-
-_▻_ : Term n m → Apps n m → Term n m
-e ▻ [] = e
-e ▻ (e' ∷a es) = (e · e') ▻ es
-e ▻ (A  ∷t es) = (e [ A ]) ▻ es
 
 infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
 
 data ⟦_,_⟧→⟦_,_,_,_⟧ : Context n m → Type m → Apps n m → Context n m → AppsType m → Type m → Set where
 
   none-□ : ∀ {A}
-    → ⟦ (Context n m ∋⦂ □) , A ⟧→⟦ [] , □ , [] , A ⟧
+    → ⟦ (Context n m ∋⦂ □) , A ⟧→⟦ nil , □ , nil , A ⟧
 
   none-τ : ∀ {A B}
-    → ⟦ (Context n m ∋⦂ τ A) , B ⟧→⟦ [] , τ A , [] , B ⟧
+    → ⟦ (Context n m ∋⦂ τ A) , B ⟧→⟦ nil , τ A , nil , B ⟧
 
   have-a : ∀ {Σ : Context n m} {e A B es A' B' Bs}
     → ⟦ Σ , B ⟧→⟦ es , A' , Bs , B' ⟧
@@ -41,24 +23,11 @@ data ⟦_,_⟧→⟦_,_,_,_⟧ : Context n m → Type m → Apps n m → Context
     → ⟦ Σ , B ⟧→⟦ es , A' , Bs , B' ⟧
     → ⟦ ⟦ A ⟧↝ Σ , B ⟧→⟦ A ∷t es , A' , Bs , B' ⟧
 
-----------------------------------------------------------------------
---+                             Subst                              +--
-----------------------------------------------------------------------
-
-size-apps : Apps n m → ℕ
-size-apps [] = 0
-size-apps (_ ∷a as) = 1 + size-apps as
-size-apps (_ ∷t as) = 1 + size-apps as
-
-size-counter : Counter → ℕ
-size-counter Z = 0
-size-counter ∞ = 1
-size-counter (S j) = 1 + size-counter j
-size-counter (Sτ j) = 1 + size-counter j
-
-
-
-
+spl-weaken : ∀ {Σ Σ' : Context n m} {A e̅ A̅ A' k}
+  → ⟦ Σ , A ⟧→⟦ e̅ , Σ' , A̅ , A' ⟧
+  → ⟦ ↑Σ k Σ , A ⟧→⟦ up k e̅ , ↑Σ k Σ' , A̅ , A' ⟧
+spl-weaken = {!!}  
+  
 ----------------------------------------------------------------------
 --+                             Typing                             +--
 ----------------------------------------------------------------------
@@ -87,13 +56,13 @@ sound-i ⊢lit none-□ = ⊢lit
 sound-i (⊢var x∈Γ) none-□ = ⊢var x∈Γ
 sound-i (⊢ann ⊢e) none-□ = ⊢ann (sound-c-0 ⊢e)
 sound-i (⊢app ⊢e) spl = sound-i ⊢e (have-a spl)
-sound-i (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = {!!}
+sound-i {e̅ = e ∷a e̅} (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = subst e̅ (sound-i ⊢e₁ (spl-weaken spl)) (sound-i-0 ⊢e)
 sound-i (⊢sub ⊢e x) spl = {!!}
 sound-i (⊢tabs₁ ⊢e) none-□ = ⊢tabs₁ (sound-i-0 ⊢e)
 sound-i (⊢tapp ⊢e) spl = sound-i ⊢e (have-t spl)
 
 sound-c (⊢app ⊢e) spl = sound-c ⊢e (have-a spl)
 sound-c (⊢lam₁ ⊢e) none-τ = ⊢lam₁ (sound-c-0 ⊢e)
-sound-c (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = {!!}
+sound-c {e̅ = e ∷a e̅} (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = subst e̅ (sound-c ⊢e₁ (spl-weaken spl)) (sound-i-0 ⊢e)
 sound-c (⊢sub ⊢e x) spl = {!!}
 sound-c (⊢tapp ⊢e) spl = sound-c ⊢e (have-t spl)
