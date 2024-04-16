@@ -3,6 +3,15 @@ module Poly.Decl.Properties where
 open import Poly.Common
 open import Poly.Decl
 
+
+
+_↑ᵗ_ : ∀ (Γ : Env n m) -> (k : Fin (1 + m)) → Env n (1 + m)
+Γ ↑ᵗ #0 = Γ ,∙
+Γ ↑ᵗ #S k = {!   !}
+
+_↑ᵉ[_]_ : ∀ (Γ : Env n m) → Type m -> (k : Fin (1 + n)) → Env (1 + n) m
+Γ ↑ᵉ[ e ] k = {!   !}
+
 ----------------------------------------------------------------------
 --+                           Subtyping                            +--
 ----------------------------------------------------------------------
