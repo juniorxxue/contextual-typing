@@ -5,6 +5,10 @@ open import Poly.Decl
 open import Poly.Decl.Subst
 open import Poly.Algo
 
+----------------------------------------------------------------------
+--+                             Split                              +--
+----------------------------------------------------------------------
+
 infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
 
 data ⟦_,_⟧→⟦_,_,_,_⟧ : Context n m → Type m → Apps n m → Context n m → AppsType m → Type m → Set where

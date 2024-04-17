@@ -136,19 +136,19 @@ rw-apps-t es e x = rw-apps-gen es {e = e} {es' = ⟦ x ⟧t}
 
 
 -- main proof
-¬<0→nil : ∀ {es : Apps n m}
-  → ¬ 1 ≤ size-apps es
-  → es ≡ nil
-¬<0→nil {es = nil} sz = refl
-¬<0→nil {es = x ∷a es} sz = ⊥-elim (sz (s≤s z≤n))
-¬<0→nil {es = x ∷t es} sz = ⊥-elim (sz (s≤s z≤n))
+¬<0→nil : ∀ {e̅ : Apps n m}
+  → ¬ 1 ≤ size-apps e̅
+  → e̅ ≡ nil
+¬<0→nil {e̅ = nil} sz = refl
+¬<0→nil {e̅ = x ∷a e̅} sz = ⊥-elim (sz (s≤s z≤n))
+¬<0→nil {e̅ = x ∷t e̅} sz = ⊥-elim (sz (s≤s z≤n))
 
-subst-case-0 : ∀ {Γ : Env n m} {A B es j e e₁}
-  → ¬ 1 ≤ size-apps es
-  → Γ , A ⊢ j # e ▻ up0 es ⦂ B
+subst-case-0 : ∀ {Γ : Env n m} {A B e̅ j e e₁}
+  → ¬ 1 ≤ size-apps e̅
+  → Γ , A ⊢ j # e ▻ up0 e̅ ⦂ B
   → Γ ⊢ Z # e₁ ⦂ A
-  → Γ ⊢ j # ((ƛ e) · e₁) ▻ es ⦂ B
-subst-case-0 {es = es} sz ⊢1 ⊢2 rewrite ¬<0→nil {es = es} sz = ⊢app₂ (⊢lam₂ ⊢1) ⊢2
+  → Γ ⊢ j # ((ƛ e) · e₁) ▻ e̅ ⦂ B
+subst-case-0 {e̅ = e̅} sz ⊢1 ⊢2 rewrite ¬<0→nil {e̅ = e̅} sz = ⊢app₂ (⊢lam₂ ⊢1) ⊢2
 
 subst-3 : ∀ k₁ k₂ k₃ e̅ {Γ : Env n m} {A B e e₁ j}
   → size-apps e̅ < k₁
@@ -174,40 +174,38 @@ subst-3-tapp : ∀ k₁ k₂ k₃ x̅ C {Γ : Env n m} {A B e e₁ j}
   → Γ ⊢ Z # e₁ ⦂ A
   → Γ ⊢ j #  (((ƛ e) · e₁) ▻ x̅) [ C ] ⦂ B
 
-
-
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢app₁ {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
-  let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A) + (size-type B))) xs (≤-pred sz₁) (s≤s z≤n) (s≤s m≤m) ⊢1 ⊢2
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x sz₁ sz₂ sz₃ (⊢app₁ {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
+  let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A) + (size-type B))) x̅ (≤-pred sz₁) (s≤s z≤n) (s≤s m≤m) ⊢1 ⊢2
   in (⊢app₁ ind-e₁ (strengthen-0 ⊢3))
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢app₂ {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
-  let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A) + (size-type B))) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x sz₁ sz₂ sz₃ (⊢app₂ {A = A} {B = B} ⊢1 ⊢3) ⊢2 =
+  let ind-e₁ = subst-3 k₁ (suc (suc k₂)) (suc (suc (size-type A) + (size-type B))) x̅ (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
   in ⊢app₂ ind-e₁ (strengthen-0 ⊢3)  
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {j = Z} sz₁ sz₂ sz₃ (⊢sub ⊢1 s j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {j = ∞} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) xs x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {j = S j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) xs x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x {j = Z} sz₁ sz₂ sz₃ (⊢sub ⊢1 s j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x {j = ∞} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x {j = S j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
     where sz-proof = (≤-<-trans (size-counter≥0 j) (<-pred sz₂))
-subst-3-app (suc k₁) (suc k₂) (suc k₃) xs x {j = Sτ j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) xs x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-app (suc k₁) (suc k₂) (suc k₃) x̅ x {j = Sτ j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-app (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
     where sz-proof = (≤-<-trans (size-counter≥0 j) (<-pred sz₂))
 
-subst-3-tapp (suc k₁) (suc k₂) (suc k₃) xs x {j = Z} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
-subst-3-tapp (suc k₁) (suc k₂) (suc k₃) xs x {j = ∞} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) xs x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
-subst-3-tapp (suc k₁) (suc k₂) (suc k₃) xs x {j = S j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) xs x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ x {j = Z} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 = ⊥-elim (j≢Z refl)
+subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ x {j = ∞} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ (<-pred sz₂) (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ x {j = S j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
     where sz-proof = (≤-<-trans (size-counter≥0 j) (<-pred sz₂))
-subst-3-tapp (suc k₁) (suc k₂) (suc k₃) xs x {j = Sτ j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
-  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) xs x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
+subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ x {j = Sτ j} sz₁ sz₂ sz₃ (⊢sub {B = B} ⊢1 s j≢Z) ⊢2 =
+  ⊢sub' (subst-3-tapp (suc k₁) k₂ (suc (size-type B)) x̅ x sz₁ sz-proof (s≤s m≤m) ⊢1 ⊢2) (s-weaken-tm-0 s)
     where sz-proof = ≤-<-trans (size-counter≥0 j) (<-pred sz₂)
 
-subst-3-tapp (suc k₁) (suc k₂) (suc k₃) xs x sz₁ sz₂ sz₃ (⊢tapp {B = B} ⊢1) ⊢2 =
-  let ind-e = subst-3 k₁ (suc (suc k₂)) (1 + (size-type B)) xs (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
+subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ x sz₁ sz₂ sz₃ (⊢tapp {B = B} ⊢1) ⊢2 =
+  let ind-e = subst-3 k₁ (suc (suc k₂)) (1 + (size-type B)) x̅ (≤-pred sz₁) (s≤s sz₂) (s≤s m≤m) ⊢1 ⊢2
   in ⊢tapp ind-e
 
-subst-3 (suc k₁) (suc k₂) (suc k₃) es sz₁ sz₂ sz₃ ⊢1 ⊢2 with size-apps es >? 0
-subst-3 (suc k₁) (suc k₂) (suc k₃) es {e = e} {e₁ = e₁} sz₁ sz₂ sz₃ ⊢1 ⊢2 | yes p with apps-destruct es p
+subst-3 (suc k₁) (suc k₂) (suc k₃) e̅ sz₁ sz₂ sz₃ ⊢1 ⊢2 with size-apps e̅ >? 0
+subst-3 (suc k₁) (suc k₂) (suc k₃) e̅ {e = e} {e₁ = e₁} sz₁ sz₂ sz₃ ⊢1 ⊢2 | yes p with apps-destruct e̅ p
 ... | des-app x x̅ eq rewrite eq
                             | rw-apps-a x̅ ((ƛ e) · e₁) x
                             | up-+++-distri-a x̅ x
@@ -218,12 +216,12 @@ subst-3 (suc k₁) (suc k₂) (suc k₃) es {e = e} {e₁ = e₁} sz₁ sz₂ sz
                             | up-+++-distri-l x̅ l
                             | rw-apps-t (up0 x̅) e l
   = subst-3-tapp (suc k₁) (suc k₂) (suc k₃) x̅ l (size-apps-+++l l x̅ k₁ sz₁) sz₂ sz₃ ⊢1 ⊢2
-subst-3 (suc k₁) (suc k₂) (suc k₃) es sz₁ sz₂ sz₃ ⊢1 ⊢2 | no ¬p = subst-case-0 {es = es} ¬p ⊢1 ⊢2
+subst-3 (suc k₁) (suc k₂) (suc k₃) e̅ sz₁ sz₂ sz₃ ⊢1 ⊢2 | no ¬p = subst-case-0 {e̅ = e̅} ¬p ⊢1 ⊢2
 
 
 subst :  ∀ {Γ A B e e₁ j} (e̅ : Apps n m)
   → Γ , A ⊢ j # e ▻ (up0 e̅) ⦂ B
   → Γ ⊢ Z # e₁ ⦂ A
   → Γ ⊢ j # ((ƛ e) · e₁) ▻ e̅ ⦂ B
-subst {B = B} {j = j} es ⊢1 ⊢2 =
-  subst-3 (suc (size-apps es)) (suc (size-counter j)) (suc (size-type B)) es (s≤s m≤m) (s≤s m≤m) (s≤s m≤m) ⊢1 ⊢2
+subst {B = B} {j = j} e̅ ⊢1 ⊢2 =
+  subst-3 (suc (size-apps e̅)) (suc (size-counter j)) (suc (size-type B)) e̅ (s≤s m≤m) (s≤s m≤m) (s≤s m≤m) ⊢1 ⊢2
