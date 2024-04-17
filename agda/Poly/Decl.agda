@@ -140,7 +140,8 @@ data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
     → Γ ⊢ j # e₁ · e₂ ⦂ B
   ⊢sub : ∀ {e j A B}
     → Γ ⊢ Z # e ⦂ B
-    → Γ ⊢ j # B ≤ A
+    → (B≤A : Γ ⊢ j # B ≤ A)
+    → (j≢Z : j ≢ Z)
     → Γ ⊢ j # e ⦂ A
   ⊢tabs₁ : ∀ {e A}
     → Γ ,∙ ⊢ Z # e ⦂ A
@@ -153,23 +154,30 @@ idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
 id[Int]1 : idEnv ⊢ Z # ((` #0) [ Int ]) · (lit 1) ⦂ Int
-id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl)))))))
-                 (⊢sub ⊢lit s-int)
+id[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢var refl) (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))) λ ()))
+                 (⊢sub ⊢lit s-int λ ())
 
 idExp : Term 0 0
 idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 
 idExp[Int]1 : ∅ ⊢ Z # (idExp [ Int ]) · (lit 1) ⦂ Int
-idExp[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
-                                 (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl)))))))
-                    (⊢sub ⊢lit s-int)
+idExp[Int]1 = ⊢app₁ (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var λ ()))))
+                                 (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))) λ ()))
+                    (⊢sub ⊢lit s-int λ ())
 
 idExp[Int] : ∅ ⊢ Z # idExp [ Int ] ⦂ Int `→ Int
-idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var))))
-                         (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))))
+idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var λ ()))))
+                         (s-∀lτ (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))) λ ())
 
 -- implicit inst
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
-                  (s-∀l (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))))
+                  (s-∀l (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))) λ ())
             ⊢lit
+
+
+#1 : Fin (2 + m)
+#1 = #S #0
+
+_ : Env 3 3
+_ = ∅ ,∙ , ‶ #0  ,∙ , ‶ #1 ,∙ , ‶ #0
