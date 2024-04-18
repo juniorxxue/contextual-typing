@@ -53,11 +53,37 @@ _/ˣ_ {suc n} (Γ , A) (#S k) = (Γ /ˣ k) , A
 (Γ ,∙) /ˣ k = {!!}
 (Γ ,= A) /ˣ k = {!!}
 -}
+lookup-weaken : ∀ {Γ : Env (1 + n) m} {k x}
+  → lookup (Γ /ˣ k) x ≡ lookup Γ (punchIn k x)
+lookup-weaken = {!   !}
+
+s-weaken : ∀ {Γ : Env (1 + n) m} {k j A B }
+  → Γ /ˣ k ⊢ j # A ≤ B
+  → Γ ⊢ j # A ≤ B
+s-weaken (s-refl ap) = s-refl {!   !}
+s-weaken s-int = s-int
+s-weaken s-var = s-var
+s-weaken (s-arr₁ B≤D C≤A) = {!   !}
+s-weaken (s-arr₂ A≤B A≤B₁) = {!   !}
+s-weaken (s-∀ A≤B) = {!   !}
+s-weaken (s-∀l A≤B) = {!   !}
+s-weaken (s-∀lτ A≤B) = {!   !}
+s-weaken (s-var-l x A≤B) = {!   !}
+s-weaken (s-var-r x A≤B) = {!   !}
 
 weaken : ∀ {Γ : Env (1 + n) m} {k j e A}
   → Γ /ˣ k ⊢ j # e ⦂ A
   → Γ ⊢ j # ↑tm k e ⦂ A
-weaken = {!   !}
+weaken ⊢lit = ⊢lit
+weaken {k = k} (⊢var {x = x} refl) = {!   !}
+weaken (⊢ann e⇔A) = ⊢ann (weaken e⇔A)
+weaken (⊢lam₁ e⇔A) = ⊢lam₁ (weaken e⇔A)
+weaken (⊢lam₂ e⇔A) = ⊢lam₂ (weaken e⇔A)
+weaken (⊢app₁ e₁⇔A e₂⇔A) = ⊢app₁ (weaken e₁⇔A) (weaken e₂⇔A)
+weaken (⊢app₂ e₁⇔A e₂⇔A) = ⊢app₂ (weaken e₁⇔A) (weaken e₂⇔A)
+weaken (⊢sub e⇔A B≤A j≢Z) = ⊢sub (weaken e⇔A) (s-weaken B≤A)  j≢Z
+weaken (⊢tabs₁ e⇔A) = ⊢tabs₁ (weaken {!   !})
+weaken (⊢tapp e⇔A) = ⊢tapp (weaken e⇔A)
 
 weaken-0 : ∀ {Γ : Env (1 + n) m} {j e A}
   → Γ ⊢ j # e ⦂ A
