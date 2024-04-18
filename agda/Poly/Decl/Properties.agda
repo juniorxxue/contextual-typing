@@ -34,7 +34,15 @@ postulate
 --+                           Weakening                            +--
 ----------------------------------------------------------------------
 
+
 _/ˣ_ : Env (1 + n) m → Fin (1 + n) → Env n m
+(Γ , A) /ˣ #0 = Γ
+(Γ ,∙) /ˣ #0 = (Γ /ˣ #0) ,∙
+(Γ ,= A) /ˣ #0 = (Γ /ˣ #0) ,∙
+_/ˣ_ {suc n} (Γ , A) (#S k) = (Γ /ˣ k) , A
+(Γ ,∙) /ˣ #S k = (Γ /ˣ #S k) ,∙
+(Γ ,= A) /ˣ #S k = (Γ /ˣ #S k) ,= A
+
 {-
 -- seems tricky to define, in a safe way
 (∅ , A) /ˣ k = {!!}
@@ -49,6 +57,7 @@ _/ˣ_ : Env (1 + n) m → Fin (1 + n) → Env n m
 weaken : ∀ {Γ : Env (1 + n) m} {k j e A}
   → Γ /ˣ k ⊢ j # e ⦂ A
   → Γ ⊢ j # ↑tm k e ⦂ A
+weaken = {!   !}
 
 weaken-0 : ∀ {Γ : Env (1 + n) m} {j e A}
   → Γ ⊢ j # e ⦂ A
