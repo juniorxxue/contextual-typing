@@ -61,12 +61,12 @@ sound-i (⊢var x∈Γ) none-□ = ⊢var x∈Γ
 sound-i (⊢ann ⊢e) none-□ = ⊢ann (sound-c-0 ⊢e)
 sound-i (⊢app ⊢e) spl = sound-i ⊢e (have-a spl)
 sound-i {e̅ = e ∷a e̅} (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = subst e̅ (sound-i ⊢e₁ (spl-weaken spl)) (sound-i-0 ⊢e)
-sound-i (⊢sub ⊢e x) spl = {!!}
+sound-i (⊢sub ⊢e s) spl = {!!}
 sound-i (⊢tabs₁ ⊢e) none-□ = ⊢tabs₁ (sound-i-0 ⊢e)
 sound-i (⊢tapp ⊢e) spl = sound-i ⊢e (have-t spl)
 
 sound-c (⊢app ⊢e) spl = sound-c ⊢e (have-a spl)
 sound-c (⊢lam₁ ⊢e) none-τ = ⊢lam₁ (sound-c-0 ⊢e)
 sound-c {e̅ = e ∷a e̅} (⊢lam₂ ⊢e ⊢e₁) (have-a spl) = subst e̅ (sound-c ⊢e₁ (spl-weaken spl)) (sound-i-0 ⊢e)
-sound-c (⊢sub ⊢e x) spl = {!!}
+sound-c (⊢sub ⊢e s) spl = {!!}
 sound-c (⊢tapp ⊢e) spl = sound-c ⊢e (have-t spl)

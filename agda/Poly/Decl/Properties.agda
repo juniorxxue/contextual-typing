@@ -34,14 +34,26 @@ postulate
 --+                           Weakening                            +--
 ----------------------------------------------------------------------
 
+_/ˣ_ : Env (1 + n) m → Fin (1 + n) → Env n m
 {-
-_/x_ : Env (1 + n) m → Fin (1 + n) → Env n m
-Γ /x k = {!Γ!}
+-- seems tricky to define, in a safe way
+(∅ , A) /ˣ k = {!!}
+(Γ , A , B) /ˣ k = {!!}
+(Γ ,∙ , A) /ˣ k = {!!}
+(Γ ,= A , B) /ˣ k = {!!}
+
+(Γ ,∙) /ˣ k = {!!}
+(Γ ,= A) /ˣ k = {!!}
+-}
 
 weaken : ∀ {Γ : Env (1 + n) m} {k j e A}
-  → Γ /x k ⊢ j # e ⦂ A
+  → Γ /ˣ k ⊢ j # e ⦂ A
   → Γ ⊢ j # ↑tm k e ⦂ A
--}
+
+weaken-0 : ∀ {Γ : Env (1 + n) m} {j e A}
+  → Γ ⊢ j # e ⦂ A
+  → Γ , A ⊢ j # ↑tm0 e ⦂ A
+weaken-0 {Γ = Γ} {A = A} ⊢e = weaken {Γ = Γ , A} {k = #0} {!⊢e!}
 
 ----------------------------------------------------------------------
 --+                           Subtyping                            +--
