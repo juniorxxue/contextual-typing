@@ -37,25 +37,33 @@ postulate
 
 _/ˣ_ : Env (1 + n) m → Fin (1 + n) → Env n m
 (Γ , A) /ˣ #0 = Γ
-(Γ ,∙) /ˣ #0 = (Γ /ˣ #0) ,∙
-(Γ ,= A) /ˣ #0 = (Γ /ˣ #0) ,∙
 _/ˣ_ {suc n} (Γ , A) (#S k) = (Γ /ˣ k) , A
-(Γ ,∙) /ˣ #S k = (Γ /ˣ #S k) ,∙
-(Γ ,= A) /ˣ #S k = (Γ /ˣ #S k) ,= A
+(Γ ,∙) /ˣ k = (Γ /ˣ k) ,∙
+(Γ ,= A) /ˣ k = (Γ /ˣ k) ,= A
 
-{-
--- seems tricky to define, in a safe way
-(∅ , A) /ˣ k = {!!}
-(Γ , A , B) /ˣ k = {!!}
-(Γ ,∙ , A) /ˣ k = {!!}
-(Γ ,= A , B) /ˣ k = {!!}
+∈-weaken : ∀ {Γ : Env (1 + n) m} {k X B}
+  → X := B ∈ (Γ /ˣ k)
+  → X := B ∈ Γ
+∈-weaken {m = suc m} {Γ = Γ , A} {k} ∈Γ = {! k !}
+∈-weaken {Γ = _,∙ {m = zero} Γ} (S∙ {k = ()} ∈Γ)
+∈-weaken {Γ = _,∙ {m = suc m} Γ} (S∙ ∈Γ) = S∙ (∈-weaken ∈Γ)
+∈-weaken {Γ = Γ ,= .(↓ty0 B)} {B = B} Z = Z
+∈-weaken {Γ = Γ ,= A} {B = B} (S= ∈Γ) = S= (∈-weaken ∈Γ)
 
-(Γ ,∙) /ˣ k = {!!}
-(Γ ,= A) /ˣ k = {!!}
--}
 lookup-weaken : ∀ {Γ : Env (1 + n) m} {k x}
   → lookup (Γ /ˣ k) x ≡ lookup Γ (punchIn k x)
-lookup-weaken = {!   !}
+lookup-weaken {Γ = Γ , A} {k = #0} {x = #0} = refl
+lookup-weaken {Γ = Γ ,∙} {k = #0} {x = #0} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ ,= A} {k = #0} {x = #0} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ , A} {k = #S k} {x = #0} = refl
+lookup-weaken {Γ = Γ ,∙} {k = #S k} {x = #0} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ ,= A} {k = #S k} {x = #0} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ , A} {k = #0} {x = #S x} = refl
+lookup-weaken {Γ = Γ ,∙} {k = #0} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ ,= A} {k = #0} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ , A} {k = #S k} {x = #S x} = lookup-weaken {Γ = Γ} {k = k} {x = x}
+lookup-weaken {Γ = Γ ,∙} {k = #S k} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
+lookup-weaken {Γ = Γ ,= A} {k = #S k} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
 
 s-weaken : ∀ {Γ : Env (1 + n) m} {k j A B }
   → Γ /ˣ k ⊢ j # A ≤ B
@@ -63,32 +71,32 @@ s-weaken : ∀ {Γ : Env (1 + n) m} {k j A B }
 s-weaken (s-refl ap) = s-refl {!   !}
 s-weaken s-int = s-int
 s-weaken s-var = s-var
-s-weaken (s-arr₁ B≤D C≤A) = {!   !}
-s-weaken (s-arr₂ A≤B A≤B₁) = {!   !}
-s-weaken (s-∀ A≤B) = {!   !}
-s-weaken (s-∀l A≤B) = {!   !}
-s-weaken (s-∀lτ A≤B) = {!   !}
+s-weaken (s-arr₁ C≤A B≤D) = s-arr₁ (s-weaken C≤A) (s-weaken B≤D)
+s-weaken (s-arr₂ C≤A B≤D) = s-arr₂ (s-weaken C≤A) (s-weaken B≤D)
+s-weaken (s-∀ A≤B) = s-∀ (s-weaken A≤B)
+s-weaken (s-∀l A≤B) = s-∀l (s-weaken A≤B)
+s-weaken (s-∀lτ A≤B) = s-∀lτ (s-weaken A≤B)
 s-weaken (s-var-l x A≤B) = {!   !}
-s-weaken (s-var-r x A≤B) = {!   !}
+s-weaken (s-var-r x A≤B) = s-var-r {!   !} (s-weaken A≤B)
 
 weaken : ∀ {Γ : Env (1 + n) m} {k j e A}
   → Γ /ˣ k ⊢ j # e ⦂ A
   → Γ ⊢ j # ↑tm k e ⦂ A
 weaken ⊢lit = ⊢lit
-weaken {k = k} (⊢var {x = x} refl) = {!   !}
+weaken {Γ = Γ} {k = k} (⊢var {x = x} refl) = ⊢var (sym (lookup-weaken {Γ = Γ}))
 weaken (⊢ann e⇔A) = ⊢ann (weaken e⇔A)
 weaken (⊢lam₁ e⇔A) = ⊢lam₁ (weaken e⇔A)
 weaken (⊢lam₂ e⇔A) = ⊢lam₂ (weaken e⇔A)
 weaken (⊢app₁ e₁⇔A e₂⇔A) = ⊢app₁ (weaken e₁⇔A) (weaken e₂⇔A)
 weaken (⊢app₂ e₁⇔A e₂⇔A) = ⊢app₂ (weaken e₁⇔A) (weaken e₂⇔A)
 weaken (⊢sub e⇔A B≤A j≢Z) = ⊢sub (weaken e⇔A) (s-weaken B≤A)  j≢Z
-weaken (⊢tabs₁ e⇔A) = ⊢tabs₁ (weaken {!   !})
+weaken (⊢tabs₁ e⇔A) = ⊢tabs₁ (weaken e⇔A)
 weaken (⊢tapp e⇔A) = ⊢tapp (weaken e⇔A)
 
 weaken-0 : ∀ {Γ : Env (1 + n) m} {j e A}
   → Γ ⊢ j # e ⦂ A
   → Γ , A ⊢ j # ↑tm0 e ⦂ A
-weaken-0 {Γ = Γ} {A = A} ⊢e = weaken {Γ = Γ , A} {k = #0} {!⊢e!}
+weaken-0 {Γ = Γ} {A = A} ⊢e = weaken {Γ = Γ , A} {k = #0} ⊢e
 
 ----------------------------------------------------------------------
 --+                           Subtyping                            +--
@@ -108,3 +116,4 @@ s-trans {B = ‶ X} s1 s2 = {!!}
 s-trans {B = B `→ B₁} s1 s2 = {!!}
 s-trans {B = `∀ B} s1 s2 = {!!}
 -}
+ 
