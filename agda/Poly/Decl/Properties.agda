@@ -44,11 +44,12 @@ _/ˣ_ {suc n} (Γ , A) (#S k) = (Γ /ˣ k) , A
 ∈-weaken : ∀ {Γ : Env (1 + n) m} {k X B}
   → X := B ∈ (Γ /ˣ k)
   → X := B ∈ Γ
-∈-weaken {m = suc m} {Γ = Γ , A} {k} ∈Γ = {! k !}
+∈-weaken {m = suc m} {Γ = Γ , A} {#0} ∈Γ = S, ∈Γ
+∈-weaken {suc n} {m = suc m} {Γ = Γ , A} {#S k} (S, ∈Γ) = S, (∈-weaken ∈Γ)
 ∈-weaken {Γ = _,∙ {m = zero} Γ} (S∙ {k = ()} ∈Γ)
 ∈-weaken {Γ = _,∙ {m = suc m} Γ} (S∙ ∈Γ) = S∙ (∈-weaken ∈Γ)
-∈-weaken {Γ = Γ ,= .(↓ty0 B)} {B = B} Z = Z
 ∈-weaken {Γ = Γ ,= A} {B = B} (S= ∈Γ) = S= (∈-weaken ∈Γ)
+∈-weaken {m = suc m} {Γ ,= A} {X = #0} Z = Z
 
 lookup-weaken : ∀ {Γ : Env (1 + n) m} {k x}
   → lookup (Γ /ˣ k) x ≡ lookup Γ (punchIn k x)
