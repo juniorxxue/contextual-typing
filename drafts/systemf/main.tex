@@ -282,11 +282,6 @@
 \Psi \vdash_{close} A}
 {\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
 
-\inferrule*[lab=S-Ex-R]
-{\Psi \vdash_{close} A\\ 
- \Psi \vdash A}
-{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
-
 \inferrule*[lab=S-Arr]
 {\Psi \vdash C <: A \dashv \Psi_1 \rightsquigarrow A' \\
  \Psi_1 \vdash B <: D \dashv \Psi_2 \rightsquigarrow D'}
@@ -294,6 +289,7 @@
 
 \inferrule*[lab=S-Hole-No-Ex]
 { \Psi \vdash_{close} A \\
+ \Psi \vdash_{close} A \\
 \| \Psi \| \vdash A \Rightarrow e \Rightarrow C\\
  \Psi \vdash B <: \Sigma \dashv \Psi' \rightsquigarrow D}
 {\Psi \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow A \rightarrow D}
