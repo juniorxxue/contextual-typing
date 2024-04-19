@@ -66,10 +66,28 @@ lookup-weaken {Γ = Γ , A} {k = #S k} {x = #S x} = lookup-weaken {Γ = Γ} {k =
 lookup-weaken {Γ = Γ ,∙} {k = #S k} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
 lookup-weaken {Γ = Γ ,= A} {k = #S k} {x = #S x} = cong ↑ty0 (lookup-weaken {Γ = Γ})
 
+slv'-weaken : ∀ {Γ : Env (1 + n) m} {k X B}
+  → (Γ /ˣ k) ⟦ X ⟧⟹' B
+  → Γ ⟦ X ⟧⟹' B
+slv'-weaken {n} {m = m} {Γ = Γ , A} {#0} ⟦X⟧⟹'B = slv'-, ⟦X⟧⟹'B 
+slv'-weaken {suc n} {m = suc m} {Γ = Γ , A} {#S k} (slv'-, ⟦X⟧⟹'B) = slv'-, (slv'-weaken ⟦X⟧⟹'B)
+slv'-weaken {Γ = Γ ,∙} slv'-∙-Z = slv'-∙-Z 
+slv'-weaken {Γ = Γ ,∙} (slv'-∙-S ⟦X⟧⟹'B refl) = slv'-∙-S (slv'-weaken ⟦X⟧⟹'B) refl
+slv'-weaken {Γ = Γ ,= A} (slv'-=-Z refl) = slv'-=-Z refl
+slv'-weaken {Γ = Γ ,= A} (slv'-=-S ⟦X⟧⟹'B refl) = slv'-=-S (slv'-weaken ⟦X⟧⟹'B) refl
+
+slv-weaken : ∀ {Γ : Env (1 + n) m} {k A B}
+  → (Γ /ˣ k) ⟦ A ⟧⟹ B
+  → Γ ⟦ A ⟧⟹ B
+slv-weaken {A = Int} {Int} ⟦A⟧⟹B = slv-int
+slv-weaken {A = ‶ X} {B} (slv-var x) = slv-var (slv'-weaken x)
+slv-weaken {A = A `→ A₁} {B `→ B₁} (slv-arr ⟦A⟧⟹B ⟦A⟧⟹B₁) = slv-arr (slv-weaken ⟦A⟧⟹B) (slv-weaken ⟦A⟧⟹B₁)
+slv-weaken {A = `∀ A} {`∀ B} (slv-∀ ⟦A⟧⟹B) = slv-∀ (slv-weaken ⟦A⟧⟹B)
+
 s-weaken : ∀ {Γ : Env (1 + n) m} {k j A B }
   → Γ /ˣ k ⊢ j # A ≤ B
   → Γ ⊢ j # A ≤ B
-s-weaken (s-refl ap) = s-refl {!   !}
+s-weaken (s-refl ap) = s-refl (slv-weaken ap)
 s-weaken s-int = s-int
 s-weaken s-var = s-var
 s-weaken (s-arr₁ C≤A B≤D) = s-arr₁ (s-weaken C≤A) (s-weaken B≤D)
@@ -77,8 +95,8 @@ s-weaken (s-arr₂ C≤A B≤D) = s-arr₂ (s-weaken C≤A) (s-weaken B≤D)
 s-weaken (s-∀ A≤B) = s-∀ (s-weaken A≤B)
 s-weaken (s-∀l A≤B) = s-∀l (s-weaken A≤B)
 s-weaken (s-∀lτ A≤B) = s-∀lτ (s-weaken A≤B)
-s-weaken (s-var-l x A≤B) = {!   !}
-s-weaken (s-var-r x A≤B) = s-var-r {!   !} (s-weaken A≤B)
+s-weaken (s-var-l x A≤B) = s-var-l (∈-weaken x) (s-weaken A≤B)
+s-weaken (s-var-r x A≤B) = s-var-r (∈-weaken x) (s-weaken A≤B)
 
 weaken : ∀ {Γ : Env (1 + n) m} {k j e A}
   → Γ /ˣ k ⊢ j # e ⦂ A
@@ -117,4 +135,5 @@ s-trans {B = ‶ X} s1 s2 = {!!}
 s-trans {B = B `→ B₁} s1 s2 = {!!}
 s-trans {B = `∀ B} s1 s2 = {!!}
 -}
- 
+  
+   
