@@ -34,9 +34,15 @@ live.*
 *.bbl
 *.blg
 
+
 .lia.cache
 
 .vscode/
+
+*.vo
+*.vos
+*.vok
+*.glob
 
 Proof/
 html/
