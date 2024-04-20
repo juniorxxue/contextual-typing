@@ -6,7 +6,7 @@ Require Import List.
 Definition typvar : Set := var.
 
 Inductive typ : Set := 
- | typ_unit : typ
+ | typ_int : typ
  | typ_var_b (_:nat)
  | typ_var_f (X:typvar)
  | typ_arrow (A1:typ) (A2:typ)
@@ -32,7 +32,7 @@ Inductive counter : Set :=
 (** opening up abstractions *)
 Fixpoint open_typ_wrt_typ_rec (k:nat) (A_5:typ) (A__6:typ) {struct A__6}: typ :=
   match A__6 with
-  | typ_unit => typ_unit 
+  | typ_int => typ_int 
   | (typ_var_b nat) => 
       match lt_eq_lt_dec nat k with
         | inleft (left _) => typ_var_b nat
@@ -57,7 +57,7 @@ Definition open_typ_wrt_typ A_5 A__6 := open_typ_wrt_typ_rec 0 A__6 A_5.
 (** closing up abstractions *)
 Fixpoint close_typ_wrt_typ_rec (k:nat) (A_5:var) (A__6:typ) {struct A__6}: typ :=
   match A__6 with
-  | typ_unit => typ_unit 
+  | typ_int => typ_int 
   | (typ_var_b nat) => 
        if (lt_dec nat k) 
          then typ_var_b nat
@@ -82,8 +82,8 @@ Definition close_typ_wrt_typ A__6 A_5 := close_typ_wrt_typ_rec 0 A__6 A_5.
 
 (* defns LC_typ *)
 Inductive lc_typ : typ -> Prop :=    (* defn lc_typ *)
- | lc_typ_unit : 
-     (lc_typ typ_unit)
+ | lc_typ_int : 
+     (lc_typ typ_int)
  | lc_typ_var_f : forall (X:typvar),
      (lc_typ (typ_var_f X))
  | lc_typ_arrow : forall (A1 A2:typ),
@@ -104,7 +104,7 @@ Inductive lc_bind : bind -> Prop :=    (* defn lc_bind *)
 (** free variables *)
 Fixpoint ftvar_in_typ (A_5:typ) : vars :=
   match A_5 with
-  | typ_unit => {}
+  | typ_int => {}
   | (typ_var_b nat) => {}
   | (typ_var_f X) => {{X}}
   | (typ_arrow A1 A2) => (ftvar_in_typ A1) \u (ftvar_in_typ A2)
@@ -120,7 +120,7 @@ end.
 (** substitutions *)
 Fixpoint subst_tvar_in_typ (A_5:typ) (X5:typvar) (A__6:typ) {struct A__6} : typ :=
   match A__6 with
-  | typ_unit => typ_unit 
+  | typ_int => typ_int 
   | (typ_var_b nat) => typ_var_b nat
   | (typ_var_f X) => (if eq_var X X5 then A_5 else (typ_var_f X))
   | (typ_arrow A1 A2) => typ_arrow (subst_tvar_in_typ A_5 X5 A1) (subst_tvar_in_typ A_5 X5 A2)
@@ -139,7 +139,7 @@ end.
 (* defns J_wf_typ *)
 Inductive d_wf_typ : env -> typ -> Prop :=    (* defn d_wf_typ *)
  | wf_typ__int : forall (E:env),
-     d_wf_typ E typ_unit
+     d_wf_typ E typ_int
  | wf_typ__tvar : forall (E:env) (X:typvar),
       binds ( X )  ( bind_empty ) ( E )  ->
      d_wf_typ E (typ_var_f X)
@@ -168,15 +168,30 @@ Inductive wf_env : env -> Prop :=    (* defn wf_env *)
       ( X   `notin` dom ( E ))  ->
      wf_env  ( X ~ (bind_typ A)  ++  E ) .
 
+(* defns J_d_inst *)
+Inductive d_inst : env -> typ -> typ -> Prop :=    (* defn d_inst *)
+ | d_inst__var : forall (E:env) (X:typvar) (B:typ),
+      binds ( X )  ( (bind_typ B) ) ( E )  ->
+     d_inst E (typ_var_f X) B
+ | d_inst__int : forall (E:env),
+     d_inst E typ_int typ_int
+ | d_inst__arr : forall (E:env) (A1 A2 B1 B2:typ),
+     d_inst E A1 B1 ->
+     d_inst E A2 B2 ->
+     d_inst E (typ_arrow A1 A2) (typ_arrow B1 B2)
+ | d_inst__all : forall (L:vars) (E:env) (A B:typ),
+      ( forall X , X \notin  L  -> d_inst E  ( open_typ_wrt_typ A (typ_var_f X) )   ( open_typ_wrt_typ B (typ_var_f X) )  )  ->
+     d_inst E (typ_all A) (typ_all B).
+
 (* defns J_d_sub *)
 Inductive d_sub : env -> counter -> typ -> typ -> Prop :=    (* defn d_sub *)
- | d_sub__refl : forall (E:env) (A:typ),
-     lc_typ A ->
+ | d_sub__refl : forall (E:env) (A B:typ),
      wf_env E ->
-     d_sub E counter_z A A
+     d_inst E A B ->
+     d_sub E counter_z A B
  | d_sub__int : forall (E:env),
      wf_env E ->
-     d_sub E counter_inf typ_unit typ_unit
+     d_sub E counter_inf typ_int typ_int
  | d_sub__tvar : forall (E:env) (X:typvar),
      wf_env E ->
      d_sub E counter_inf (typ_var_f X) (typ_var_f X)
@@ -192,9 +207,11 @@ Inductive d_sub : env -> counter -> typ -> typ -> Prop :=    (* defn d_sub *)
       ( forall X , X \notin  L  -> d_sub  ( X ~ bind_empty  ++  E )  counter_inf  ( open_typ_wrt_typ A1 (typ_var_f X) )   ( open_typ_wrt_typ A2 (typ_var_f X) )  )  ->
      d_sub E counter_inf (typ_all A1) (typ_all A2)
  | d_sub__alll1 : forall (L:vars) (E:env) (c:counter) (A B C:typ),
+     d_wf_typ E C ->
       ( forall X , X \notin  L  -> d_sub  ( X ~ (bind_typ C)  ++  E )  c  ( open_typ_wrt_typ A (typ_var_f X) )  B )  ->
      d_sub E (counter_suc c) (typ_all A) B
  | d_sub__alll2 : forall (L:vars) (E:env) (c:counter) (A B C:typ),
+     d_wf_typ E C ->
       ( forall X , X \notin  L  -> d_sub  ( X ~ (bind_typ C)  ++  E )  c  ( open_typ_wrt_typ A (typ_var_f X) )  B )  ->
      d_sub E (counter_tsuc c) (typ_all A) B
  | d_sub__varl : forall (E:env) (c:counter) (X:typvar) (A B:typ),
@@ -208,6 +225,6 @@ Inductive d_sub : env -> counter -> typ -> typ -> Prop :=    (* defn d_sub *)
 
 
 (** infrastructure *)
-#[export] Hint Constructors d_wf_typ wf_env d_sub lc_typ lc_bind : core.
+#[export] Hint Constructors d_wf_typ wf_env d_inst d_sub lc_typ lc_bind : core.
 
 

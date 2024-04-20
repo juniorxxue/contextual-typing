@@ -3,7 +3,7 @@ metavar typvar, X, Y, Z     ::= {{ repr-locally-nameless }}
 grammar
 
 typ, A, B, C, T    :: typ_ ::=
-  | INT           ::   :: unit
+  | INT            ::   :: int
   | X              ::   :: var
   | A1 -> A2       ::   :: arrow
   | ∀ X . A        ::   :: all  (+ bind X in A +)
@@ -89,6 +89,28 @@ X `notin` dom E
 |- E , X : A
 
 
+defns 
+J_d_inst :: '' ::=
+
+defn 
+E [ A ] ~~> B ::  :: d_inst :: 'd_inst__' by 
+
+(X : B) in E
+-------------- :: var
+E [ X ] ~~> B
+
+-------------- :: int
+E [ INT ] ~~> INT
+
+E [ A1 ] ~~> B1
+E [ A2 ] ~~> B2
+---------------- :: arr
+E [ A1 -> A2 ] ~~> B1 -> B2
+
+E [ A ] ~~> B
+---------------- :: all
+E [ ∀ X . A ] ~~> ∀ X . B
+
 defns
 J_d_sub :: '' ::=
 
@@ -96,8 +118,9 @@ defn
 E |- c # A <: B :: :: d_sub :: 'd_sub__' by
 
 |- E 
+E [ A ] ~~> B
 -------------- :: refl
-E |- z # A <: A
+E |- z # A <: B
 
 |- E 
 ------------------- :: int
@@ -119,15 +142,16 @@ E |- c # B1 <: B2
 ------------------- :: arr2
 E |- S c # A1 -> B1 <: A2 -> B2
 
-
 E , X : ■ |- ∞ # A1 <: A2
 ------------------- :: all
 E |- ∞ # ∀ X . A1 <: ∀ X . A2
 
+E |- C
 E , X : C |- c # A <: B
 ------------------------ :: alll1
 E |- S c # ∀ X . A <: B
 
+E |- C
 E , X : C |- c # A <: B
 ------------------------ :: alll2
 E |- St c # ∀ X . A <: B

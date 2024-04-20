@@ -47,7 +47,7 @@ Combined Scheme counter_mutrec from counter_rec'.
 
 Fixpoint size_typ (A1 : typ) {struct A1} : nat :=
   match A1 with
-    | typ_unit => 1
+    | typ_int => 1
     | typ_var_f X1 => 1
     | typ_var_b n1 => 1
     | typ_arrow A2 A3 => 1 + (size_typ A2) + (size_typ A3)
@@ -75,8 +75,8 @@ Fixpoint size_counter (c1 : counter) {struct c1} : nat :=
 (** These define only an upper bound, not a strict upper bound. *)
 
 Inductive degree_typ_wrt_typ : nat -> typ -> Prop :=
-  | degree_wrt_typ_typ_unit : forall n1,
-    degree_typ_wrt_typ n1 (typ_unit)
+  | degree_wrt_typ_typ_int : forall n1,
+    degree_typ_wrt_typ n1 (typ_int)
   | degree_wrt_typ_typ_var_f : forall n1 X1,
     degree_typ_wrt_typ n1 (typ_var_f X1)
   | degree_wrt_typ_typ_var_b : forall n1 n2,
@@ -114,8 +114,8 @@ Combined Scheme degree_bind_wrt_typ_mutind from degree_bind_wrt_typ_ind'.
 (** * Local closure (version in [Set], induction principles) *)
 
 Inductive lc_set_typ : typ -> Set :=
-  | lc_set_typ_unit :
-    lc_set_typ (typ_unit)
+  | lc_set_typ_int :
+    lc_set_typ (typ_int)
   | lc_set_typ_var_f : forall X1,
     lc_set_typ (typ_var_f X1)
   | lc_set_typ_arrow : forall A1 A2,
