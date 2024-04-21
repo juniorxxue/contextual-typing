@@ -132,7 +132,11 @@ Proof with eauto.
         eapply IHn_sub_size with (B:=typ_all A2)... lia.
     + dependent destruction H2. 
       * admit. (* ***, IH cannot be applied due to counter mismatch *)
-      * admit. (* ****, dont know what to do *)
+      * eapply d_sub__alll1 with (C:=C0) (L:=L)...
+        intros. inst_cofinites_with X.
+        eapply IHn_sub_size with (B:=typ_all A0) (n2:=S n0)... lia.
+        (* eapply d_sub__alll1 with (C:=C) (L:=L)... *)
+        admit. (* ***, counter mismatch *)
       * eapply d_sub__alll1 with (C:=C0) (L:=L)...
         intros. inst_cofinites_with X.
         admit. (* ***, IH cannot be applied due to counter mismatch *)
@@ -140,7 +144,7 @@ Proof with eauto.
         eapply IHn_sub_size with (B:=A0)... lia. 
     + dependent destruction H2.
       (* ∀ X. A < ∀ X. B < C *)
-      * econstructor. admit. admit. (* ****, dont know what to do *)
+      * econstructor. admit. admit. (* ****,  ∀ X. A < ∀ X. B can also use forall rule and pick a different C*)
       * eapply d_sub__alll2 with (C:=C0) (L:=L)... 
         intros. inst_cofinites_with X0. 
         assert ((X0 ~ bind_typ C0 ++ E) |- c # typ_var_f X <: A0 | (S n0)) by admit. (* d_sub_size weaken *)
