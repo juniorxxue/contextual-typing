@@ -81,23 +81,23 @@ Inductive d_sub_size : env -> counter -> typ -> typ -> nat -> Prop :=
      d_sub_size E c A B n ->
      d_sub_size E c A (typ_var_f X) (S n).
 
-Notation "Γ |- j # A <: B" := (d_sub Γ j A B) (at level 50, j at next level, A at next level).
-Notation "Γ |- j # A <: B | n" := (d_sub_size Γ j A B n) (at level 50, j at next level, A at next level, B at next level).
+Notation "Γ ⊢ j # A <: B" := (d_sub Γ j A B) (at level 50, j at next level, A at next level).
+Notation "Γ ⊢ j # A <: B | n" := (d_sub_size Γ j A B n) (at level 50, j at next level, A at next level, B at next level).
 
 #[local] Hint Constructors d_sub d_sub_size : core.
 
 
 Lemma d_sub_size_sound : forall Γ j A B n,
-  Γ |- j # A <: B | n -> Γ |- j # A <: B.
+  Γ ⊢ j # A <: B | n -> Γ ⊢ j # A <: B.
 Proof.
   intros. induction H; eauto.
 Qed.
 
 Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
   n1 + n2 < n_sub_size ->
-  Γ |- j # A <: B | n1 -> 
-  Γ |- j # B <: C | n2 -> 
-  Γ |- j # A <: C.
+  Γ ⊢ j # A <: B | n1 -> 
+  Γ ⊢ j # B <: C | n2 -> 
+  Γ ⊢ j # A <: C.
 Proof with eauto.
   intro. induction n_sub_size; intros.
   - inversion H.
@@ -147,7 +147,7 @@ Proof with eauto.
       * econstructor. admit. admit. (* ****,  ∀ X. A < ∀ X. B can also use forall rule and pick a different C*)
       * eapply d_sub__alll2 with (C:=C0) (L:=L)... 
         intros. inst_cofinites_with X0. 
-        assert ((X0 ~ bind_typ C0 ++ E) |- c # typ_var_f X <: A0 | (S n0)) by admit. (* d_sub_size weaken *)
+        assert ((X0 ~ bind_typ C0 ++ E) ⊢ c # typ_var_f X <: A0 | (S n0)) by admit. (* **, d_sub_size weaken, should coutner be changed? *)
         eapply IHn_sub_size with (B:=typ_var_f X)... lia.
       * eapply d_sub__varr...
         eapply IHn_sub_size with (B:= A0)... lia.
