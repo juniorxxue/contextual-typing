@@ -2,6 +2,8 @@ Require Import Coq.Program.Equality.
 Require Import Bool.
 Require Import Metalib.Metatheory.
 Require Import List.
+Require Import Lia.
+
 Require Import subtyping.decl.
 Require Import subtyping.prop_ln.
 
@@ -50,13 +52,44 @@ Inductive d_sub_size : env -> counter -> typ -> typ -> nat -> Prop :=
 
 Notation "Γ |- j # A <: B | n" := (d_sub_size Γ j A B n) (at level 50, j at level 0, A at next level, B at next level).
 
+#[local] Hint Constructors d_sub d_sub_size : core.
 
-Lemma s_trans : forall Γ j A B C n1 n2 n_sub_size,
-    n1 + n2 < n_sub_size ->
-    Γ |- j # A <: B | n1 -> 
-    Γ |- j # B <: C | n2 -> 
-    Γ |- j # A <: C.
+Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
+  n1 + n2 < n_sub_size ->
+  Γ |- j # A <: B | n1 -> 
+  Γ |- j # B <: C | n2 -> 
+  Γ |- j # A <: C.
 Proof with eauto.
+  intro. induction n_sub_size; intros.
+  - inversion H.
+  - dependent destruction H0.
+    + dependent destruction H2.
+      * admit.
+      * admit.
+      * eapply d_sub__varr; eauto.
+        refine (IHn_sub_size _ _ _ _ _ n _ _ _ H3). lia. 
+        apply d_subs__refl...
+    + dependent destruction H1.
+      * auto.
+      * eapply d_sub__varr; eauto.
+        refine (IHn_sub_size _ _ _ _ _ n _ _ _ H2)... lia.
+    + admit.
+    + dependent destruction H1.
+      * constructor. admit. admit.
+      * admit.
+    + dependent destruction H1.
+      * constructor.
+        refine (IHn_sub_size _ _ _ _ _ _ _ _ H1_ H0_ )... lia.  
+        refine (IHn_sub_size _ _ _ _ _ _ _ _ H0_0 H1_0 )... lia.
+      * eapply d_sub__varr; eauto.
+        refine (IHn_sub_size _ _ _ _ _ (S (n1 + n0)) _ _ _ H1)... lia.
+    + dependent destruction H1.
+      * admit.
+      * admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
 Admitted.
   
             
