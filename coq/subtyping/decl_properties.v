@@ -1,4 +1,6 @@
 Require Import Coq.Program.Equality.
+Require Import Coq.Program.Tactics.
+Require Import Coq.Strings.String.
 Require Import Bool.
 Require Import Metalib.Metatheory.
 Require Import List.
@@ -7,7 +9,7 @@ Require Import Lia.
 Require Import subtyping.decl.
 Require Import subtyping.prop_ln.
 
-
+Ltac dd H := dependent destruction H.
 
 Ltac inst_cofinite_impl H x :=
   match type of H with
@@ -83,6 +85,9 @@ Inductive d_sub_size : env -> counter -> typ -> typ -> nat -> Prop :=
 
 Notation "Γ ⊢ j # A <: B" := (d_sub Γ j A B) (at level 50, j at next level, A at next level).
 Notation "Γ ⊢ j # A <: B | n" := (d_sub_size Γ j A B n) (at level 50, j at next level, A at next level, B at next level).
+Notation "Gamma [ A ] ~> A'"  := (d_inst Gamma A A') (at level 50).
+Notation "∞" := counter_inf (at level 30).
+Notation "⦲" := counter_z (at level 30).
 
 #[local] Hint Constructors d_sub d_sub_size : core.
 
@@ -93,6 +98,78 @@ Proof.
   intros. induction H; eauto.
 Qed.
 
+Lemma d_sub_size_complete : forall Γ j A B,
+    Γ ⊢ j # A <: B -> (exists n, Γ ⊢ j # A <: B | n).
+Proof.
+  intros.
+  induction H; try solve [eauto | destruct_conjs; eexists; eauto].
+  - intros.
+    inst_cofinites_by L.
+    destruct H0. exists (S x0).
+    eapply d_subs__all with (L := L). intros.
+    admit. (* play with ln *)
+  - eexists. eapply d_subs__alll1; eauto.
+    admit. (* play with ln *)
+  - eexists. eapply d_subs__alll2; eauto.
+    admit. (* play with ln *)
+Admitted.
+
+Fixpoint counter_plus (j1 j2 : counter) : counter :=
+  match j1 with
+  | counter_z => j2
+  | counter_inf => j2
+  | counter_suc j1' => counter_suc (counter_plus j1' j2)
+  | counter_tsuc j1' => counter_tsuc (counter_plus j1' j2)
+  end.
+
+Notation "j1 +j j2" := (counter_plus j1 j2) (at level 50).
+
+Lemma dsub_reflexivity : forall A Gamma,
+    wf_env Gamma ->
+    Gamma ⊢ counter_inf # A <: A.
+Proof.
+  induction A; intros; eauto.
+  - admit.
+  - admit.
+Admitted.
+
+(* general form *)
+Lemma inst_inf : forall A B Gamma A' B',
+    wf_env Gamma ->
+    Gamma ⊢ counter_inf # A <: B ->
+    d_inst Gamma A A' ->
+    d_inst Gamma B B' ->
+    Gamma ⊢ counter_inf # A' <: B'.
+Proof with eauto.
+  intros * WF Sub. generalize dependent A'. generalize dependent B'.
+  dependent induction Sub; intros.
+  - dependent destruction H0. dependent destruction H1. econstructor...
+  - dd H0. dd H1. admit. (* binds are unique *)
+  - dd H. dd H1. eapply d_sub__arr1...
+  - dd H1. dd H2.
+    eapply d_sub__all with (L := L).
+    intros. eapply H0; eauto. admit. admit. admit. (* rename *)
+  - dd H0.
+  - (* dual to last *)
+ Admitted.
+
+
+Lemma s_trans' : forall n_sub_size Γ j1 j2 A B C n1 n2,
+  n1 + n2 < n_sub_size ->
+  Γ ⊢ j1 # A <: B | n1 -> 
+  Γ ⊢ j2 # B <: C | n2 ->
+  Γ ⊢ (j1 +j j2) # A <: C.
+Proof with eauto.
+  intro. induction n_sub_size; intros.
+  - inversion H.
+  - dependent induction H0.
+    + Case "refl". simpl.
+      dependent destruction H2.
+      * admit.
+      * 
+Admitted.
+  
+(* a wrong statement *)
 Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
   n1 + n2 < n_sub_size ->
   Γ ⊢ j # A <: B | n1 -> 
@@ -102,13 +179,15 @@ Proof with eauto.
   intro. induction n_sub_size; intros.
   - inversion H.
   - dependent destruction H0.
-    + dependent destruction H2.
+    + Case "refl".
+      dependent destruction H2.
       * admit. (* **, should be OK, some prop about inst *)
       * admit. (* **, should be OK, some prop about inst *)
       * eapply d_sub__varr; eauto.
         refine (IHn_sub_size _ _ _ _ _ n _ _ _ H3). lia. 
         apply d_subs__refl...
-    + dependent destruction H1.
+    + Case "int".
+      dependent destruction H1.
       * auto.
       * eapply d_sub__varr; eauto.
         refine (IHn_sub_size _ _ _ _ _ n _ _ _ H2)... lia.
@@ -130,7 +209,8 @@ Proof with eauto.
         eapply IHn_sub_size with (B:=open_typ_wrt_typ A2 (typ_var_f X))... lia.
       * eapply d_sub__varr; eauto.
         eapply IHn_sub_size with (B:=typ_all A2)... lia.
-    + dependent destruction H2. 
+    + Case "s-forall-l".
+      dependent destruction H2. 
       * admit. (* ***, IH cannot be applied due to counter mismatch *)
       * eapply d_sub__alll1 with (C:=C0) (L:=L)...
         intros. inst_cofinites_with X.
@@ -162,6 +242,15 @@ Proof with eauto.
       * econstructor; eauto.
         eapply IHd_sub_size... lia.
 Admitted.
-  
-            
-    
+   
+Lemma s_trans_real : forall Γ j A B C,
+  Γ ⊢ j # A <: B -> 
+  Γ ⊢ j # B <: C -> 
+  Γ ⊢ j # A <: C.
+Proof.
+  intros.
+  eapply d_sub_size_complete in H.
+  eapply d_sub_size_complete in H0.
+  destruct_conjs.
+  eapply s_trans; eauto.
+Qed. 
