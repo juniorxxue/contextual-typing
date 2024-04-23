@@ -149,8 +149,8 @@ Proof with eauto.
   - dd H1. dd H2.
     eapply d_sub__all with (L := L).
     intros. eapply H0; eauto. admit. admit. admit. (* rename *)
-  - dd H0.
-  - (* dual to last *)
+  - dd H0. assert (B = B0) by admit. subst. eapply IHSub... admit.
+  - dd H1. assert (B = B0) by admit. subst. eapply IHSub...   (* dual to last *)
  Admitted.
 
 
@@ -181,8 +181,11 @@ Proof with eauto.
   - dependent destruction H0.
     + Case "refl".
       dependent destruction H2.
-      * admit. (* **, should be OK, some prop about inst *)
-      * admit. (* **, should be OK, some prop about inst *)
+      * assert (A0 = B) by admit. subst.
+        apply d_sub__refl...
+      * dependent destruction H1.
+        eapply d_sub__varl...
+        eapply IHn_sub_size with (B:=B) (n1:=n)... lia. 
       * eapply d_sub__varr; eauto.
         refine (IHn_sub_size _ _ _ _ _ n _ _ _ H3). lia. 
         apply d_subs__refl...
