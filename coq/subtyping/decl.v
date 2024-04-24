@@ -16,13 +16,13 @@ Inductive bind : Set :=
  | bind_empty : bind
  | bind_typ (A:typ).
 
-Definition env : Set := list (atom*bind).
-
 Inductive counter : Set := 
  | counter_z : counter
  | counter_inf : counter
  | counter_suc (c:counter)
  | counter_tsuc (c:counter).
+
+Definition env : Set := list (atom*bind).
 
 (* EXPERIMENTAL *)
 (** auxiliary functions on the new list types *)
@@ -154,6 +154,22 @@ Inductive d_wf_typ : env -> typ -> Prop :=    (* defn d_wf_typ *)
       ( forall X , X \notin  L  -> d_wf_typ  ( X ~ bind_empty  ++  E )   ( open_typ_wrt_typ A (typ_var_f X) )  )  ->
      d_wf_typ E (typ_all A).
 
+(* defns J_find *)
+Inductive find : typvar -> counter -> typ -> Prop :=    (* defn find *)
+ | find__zero : forall (X:typvar) (A:typ),
+      X  `in` ftvar_in_typ  A  ->
+     find X counter_z A
+ | find__suc1 : forall (X:typvar) (c:counter) (A:typ),
+      X  `in` ftvar_in_typ  A  ->
+     find X (counter_suc c) A
+ | find__suc2 : forall (X:typvar) (c:counter) (A B:typ),
+     lc_typ A ->
+     find X c B ->
+     find X (counter_suc c) (typ_arrow A B)
+ | find__tsuc1 : forall (L:vars) (X:typvar) (c:counter) (A:typ),
+      ( forall Y , Y \notin  L  -> find X c  ( open_typ_wrt_typ A (typ_var_f Y) )  )  ->
+     find X (counter_tsuc c) (typ_all A).
+
 (* defns J_wf_env *)
 Inductive wf_env : env -> Prop :=    (* defn wf_env *)
  | wf_env__empty : 
@@ -208,7 +224,8 @@ Inductive d_sub : env -> counter -> typ -> typ -> Prop :=    (* defn d_sub *)
      d_sub E counter_inf (typ_all A1) (typ_all A2)
  | d_sub__alll1 : forall (L:vars) (E:env) (c:counter) (A B C:typ),
      d_wf_typ E C ->
-      ( forall X , X \notin  L  -> d_sub  ( X ~ (bind_typ C)  ++  E )  c  ( open_typ_wrt_typ A (typ_var_f X) )  B )  ->
+      ( forall X , X \notin  L  -> find X (counter_suc c)  ( open_typ_wrt_typ A (typ_var_f X) )  )  ->
+      ( forall X , X \notin  L  -> d_sub  ( X ~ (bind_typ C)  ++  E )  (counter_suc c)  ( open_typ_wrt_typ A (typ_var_f X) )  B )  ->
      d_sub E (counter_suc c) (typ_all A) B
  | d_sub__alll2 : forall (L:vars) (E:env) (c:counter) (A B C:typ),
      d_wf_typ E C ->
@@ -225,6 +242,6 @@ Inductive d_sub : env -> counter -> typ -> typ -> Prop :=    (* defn d_sub *)
 
 
 (** infrastructure *)
-#[export] Hint Constructors d_wf_typ wf_env d_inst d_sub lc_typ lc_bind : core.
+#[export] Hint Constructors d_wf_typ find wf_env d_inst d_sub lc_typ lc_bind : core.
 
 

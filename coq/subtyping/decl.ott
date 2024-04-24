@@ -34,9 +34,10 @@ env, E :: '' ::= {{ coq list (atom*bind) }}
   | E , X b          ::   :: dcons2 {{ coq ([[X]]~[[b]] ++ [[E]])  }}
 
 formula :: formula_ ::=
-  | judgement             ::   :: judgement
+  | judgement            ::   :: judgement
   | ( X b )  in E        ::   :: binds {{ coq binds ([[X]])  ([[b]]) ([[E]]) }}
-  | X `notin` dom E  ::   :: fresh1 {{ coq ([[X]]  `notin` dom ([[E]])) }}
+  | X `notin` dom E      ::   :: fresh1 {{ coq ([[X]]  `notin` dom ([[E]])) }}
+  | X ∈ fv A             ::   :: infv {{ coq [[X]] `in` ftvar_in_typ [[A]] }}
 
 
 % formula :: formula_ ::=
@@ -66,6 +67,33 @@ E |- A1 -> A2
 E, X : ■ |- A
 -------------------- :: all
 E |- ∀ X . A
+
+
+defns 
+J_find :: '' ::=
+
+defn 
+X ∈ [ c ] A :: :: find :: 'find__' by  
+
+
+X ∈ fv A  
+---------------- :: zero
+X ∈ [ z ] A
+
+
+X ∈ fv A  
+---------------- :: suc1
+X ∈ [ S c ] A
+
+
+X ∈ [ c ] B
+---------------- :: suc2
+X ∈ [ S c ] A -> B
+
+
+X ∈ [ c ] A
+---------------------- :: tsuc1
+X ∈ [ St c ]  ∀ Y. A
 
 
 defns
@@ -147,7 +175,8 @@ E , X : ■ |- ∞ # A1 <: A2
 E |- ∞ # ∀ X . A1 <: ∀ X . A2
 
 E |- C
-E , X : C |- c # A <: B
+X ∈ [ S c ] A
+E , X : C |- S c # A <: B
 ------------------------ :: alll1
 E |- S c # ∀ X . A <: B
 
