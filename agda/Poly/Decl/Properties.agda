@@ -14,17 +14,24 @@ _↑ᵉ[_]_ : ∀ (Γ : Env n m) → Type m -> (k : Fin (1 + n)) → Env (1 + n)
 
 -}
 
+
+⊢sub' : ∀ {Γ : Env n m} {e A B j}
+  → Γ ⊢ Z # e ⦂ B
+  → Γ ⊢ j # B ≤ A
+  → Γ ⊢ j # e ⦂ A
+⊢sub' {j = Z} ⊢e (s-refl ap) = {!!}
+⊢sub' {j = Z} ⊢e (s-var-l x s) = {!!}
+⊢sub' {j = Z} ⊢e (s-var-r x s) = {!!}
+⊢sub' {j = ∞} ⊢e s = ⊢sub ⊢e s (λ ())
+⊢sub' {j = S j} ⊢e s = ⊢sub ⊢e s (λ ())
+⊢sub' {j = Sτ j} ⊢e s = ⊢sub ⊢e s (λ ())
+
 -- the needed lemmas
 -- will do later
 postulate
   strengthen-0 : ∀ {Γ : Env n m} {j A B e}
     → Γ , A ⊢ j # ↑tm0 e ⦂ B
     → Γ ⊢ j # e ⦂ B
-
-  ⊢sub' : ∀ {Γ : Env n m} {e A B j}
-    → Γ ⊢ Z # e ⦂ B
-    → Γ ⊢ j # B ≤ A
-    → Γ ⊢ j # e ⦂ A
 
   s-weaken-tm-0 : ∀ {Γ : Env n m} {A B C j}
     → Γ , A ⊢ j # B ≤ C
@@ -93,7 +100,7 @@ s-weaken s-var = s-var
 s-weaken (s-arr₁ C≤A B≤D) = s-arr₁ (s-weaken C≤A) (s-weaken B≤D)
 s-weaken (s-arr₂ C≤A B≤D) = s-arr₂ (s-weaken C≤A) (s-weaken B≤D)
 s-weaken (s-∀ A≤B) = s-∀ (s-weaken A≤B)
-s-weaken (s-∀l A≤B) = s-∀l (s-weaken A≤B)
+s-weaken (s-∀l A≤B s) = s-∀l (s-weaken A≤B) s
 s-weaken (s-∀lτ A≤B) = s-∀lτ (s-weaken A≤B)
 s-weaken (s-var-l x A≤B) = s-var-l (∈-weaken x) (s-weaken A≤B)
 s-weaken (s-var-r x A≤B) = s-var-r (∈-weaken x) (s-weaken A≤B)

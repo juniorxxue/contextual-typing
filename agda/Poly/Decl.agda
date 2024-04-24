@@ -75,11 +75,42 @@ data _⟦_⟧⟹_ : Env n m → Type m → Type m → Set where
     → Γ ⟦ A `→ B ⟧⟹ A' `→ B'
   slv-∀ : ∀ {A A'}
     → (Γ ,∙) ⟦ A ⟧⟹ A'
-    → Γ ⟦ `∀ A ⟧⟹ `∀ A'    
+    → Γ ⟦ `∀ A ⟧⟹ `∀ A'
 
-infix 3 _⊢_#_⦂_
+{-
+data bound : Type m → Set where
+
+data find : Type m → Counter → Set where
+  ∞ : ∀ {A : Type m} → find A ∞
+  Z : ∀ {A : Type m} → bound A → find A Z
+  S₁ : ∀ {A : Type m} {B j}
+    → bound A
+    → find (A `→ B) (S j)
+  S₂ : ∀ {A : Type m} {B j}
+    → find B j
+    → find (A `→ B) (S j)
+-}
+
+data bound : Type (1 + m) → Fin (1 + m) → Set where
+  b-var : bound (Type (1 + m) ∋⦂ ‶ #0) #0
+  b-arr₁ : ∀ {A : Type (1 + m)} {B k} → bound A k → bound (A `→ B) k
+  b-arr₂ : ∀ {A : Type (1 + m)} {B k} → bound B k → bound (A `→ B) k
+  b-∀ : ∀ {A : Type (2 + m)} {k} → bound A (#S k) → bound (`∀ A) k
+
+data find : Type (1 + m) → Fin (1 + m) → Counter → Set where
+  f-∞ : ∀ {A : Type (1 + m)} {k} → find A k ∞ -- not sure
+  f-Z : ∀ {A : Type (1 + m)} {k} → bound A k → find A k Z
+  f-S₁ : ∀ {A : Type (1 + m)} {B k j}
+    → bound A k
+    → find (A `→ B) k (S j)
+  f-S₂ : ∀ {A : Type (1 + m)} {B k j}
+    → find B k j
+    → find (A `→ B) k (S j)
+  f-Sτ : ∀ {A : Type (2 + m)} {k j}
+    → find A (#S k) j
+    → find (`∀ A) k (Sτ j)
+  
 infix 3 _⊢_#_≤_
-
 data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
   s-refl : ∀ {A A'}
     → (ap : Γ ⟦ A ⟧⟹ A')
@@ -101,7 +132,8 @@ data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
     → Γ ,∙ ⊢ ∞ # A ≤ B
     → Γ ⊢ ∞ # `∀ A ≤ `∀ B
   s-∀l : ∀ {j A B C}
-    → Γ ,= B ⊢ j # A ≤ ↑ty0 C 
+    → Γ ,= B ⊢ S j # A ≤ ↑ty0 C
+    → find A #0 (S j)
     → Γ ⊢ S j # `∀ A ≤ C
   s-∀lτ : ∀ {j A B C}
     → Γ ,= B ⊢ j # A ≤ ↑ty0 C 
@@ -116,6 +148,7 @@ data _⊢_#_≤_ : Env n m → Counter → Type m → Type m → Set where
     → Γ ⊢ j # A ≤ B
     → Γ ⊢ j # A ≤ ‶ X
 
+infix 3 _⊢_#_⦂_
 data _⊢_#_⦂_ : Env n m → Counter → Term n m → Type m → Set where
   ⊢lit : ∀ {i} → Γ ⊢ Z # (lit i) ⦂ Int
   ⊢var : ∀ {x A}
@@ -172,9 +205,8 @@ idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl
 -- implicit inst
 id1 : idEnv ⊢ Z # (` #0) · (lit 1) ⦂ Int
 id1 = ⊢app₂ (⊢sub (⊢var refl)
-                  (s-∀l (s-refl (slv-arr (slv-var (slv'-=-Z refl)) (slv-var (slv'-=-Z refl))))) λ ())
+                  (s-∀l (s-arr₂ (s-var-r Z s-int) (s-refl (slv-var (slv'-=-Z refl)))) (f-S₁ b-var)) λ ())
             ⊢lit
-
 
 #1 : Fin (2 + m)
 #1 = #S #0
