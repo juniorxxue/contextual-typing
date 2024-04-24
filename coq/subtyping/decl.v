@@ -166,6 +166,9 @@ Inductive find : typvar -> counter -> typ -> Prop :=    (* defn find *)
      lc_typ A ->
      find X c B ->
      find X (counter_suc c) (typ_arrow A B)
+ | find__suc3 : forall (L:vars) (X:typvar) (c:counter) (A:typ),
+      ( forall Y , Y \notin  L  -> find X (counter_suc c)  ( open_typ_wrt_typ A (typ_var_f Y) )  )  ->
+     find X (counter_suc c) (typ_all A)
  | find__tsuc1 : forall (L:vars) (X:typvar) (c:counter) (A:typ),
       ( forall Y , Y \notin  L  -> find X c  ( open_typ_wrt_typ A (typ_var_f Y) )  )  ->
      find X (counter_tsuc c) (typ_all A).
