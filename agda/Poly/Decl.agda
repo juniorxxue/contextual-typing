@@ -106,6 +106,9 @@ data find : Type (1 + m) → Fin (1 + m) → Counter → Set where
   f-S₂ : ∀ {A : Type (1 + m)} {B k j}
     → find B k j
     → find (A `→ B) k (S j)
+  f-S₃ :  ∀ {A : Type (2 + m)} {k j}
+    → find A (#S k) (S j)
+    → find (`∀ A) k (S j)
   f-Sτ : ∀ {A : Type (2 + m)} {k j}
     → find A (#S k) j
     → find (`∀ A) k (Sτ j)
