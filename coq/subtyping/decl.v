@@ -156,12 +156,16 @@ Inductive d_wf_typ : env -> typ -> Prop :=    (* defn d_wf_typ *)
 
 (* defns J_find *)
 Inductive find : typvar -> counter -> typ -> Prop :=    (* defn find *)
+ | find__infty : forall (X:typvar) (A:typ),
+     lc_typ A ->
+     find X counter_inf A
  | find__zero : forall (X:typvar) (A:typ),
       X  `in` ftvar_in_typ  A  ->
      find X counter_z A
- | find__suc1 : forall (X:typvar) (c:counter) (A:typ),
+ | find__suc1 : forall (X:typvar) (c:counter) (A B:typ),
+     lc_typ B ->
       X  `in` ftvar_in_typ  A  ->
-     find X (counter_suc c) A
+     find X (counter_suc c) (typ_arrow A B)
  | find__suc2 : forall (X:typvar) (c:counter) (A B:typ),
      lc_typ A ->
      find X c B ->

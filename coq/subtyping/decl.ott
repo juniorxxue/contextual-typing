@@ -76,6 +76,9 @@ defn
 X ∈ [ c ] A :: :: find :: 'find__' by  
 
 
+---------------- :: infty
+X ∈ [ ∞ ] A
+
 X ∈ fv A  
 ---------------- :: zero
 X ∈ [ z ] A
@@ -83,7 +86,7 @@ X ∈ [ z ] A
 
 X ∈ fv A  
 ---------------- :: suc1
-X ∈ [ S c ] A
+X ∈ [ S c ] A -> B
 
 
 X ∈ [ c ] B
