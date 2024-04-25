@@ -131,8 +131,9 @@ defn
 E [ A ] ~~> B ::  :: d_inst :: 'd_inst__' by 
 
 (X : B) in E
+E [ B ] ~~> B'
 -------------- :: var
-E [ X ] ~~> B
+E [ X ] ~~> B'
 
 -------------- :: int
 E [ INT ] ~~> INT
