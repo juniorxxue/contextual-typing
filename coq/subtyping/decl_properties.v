@@ -146,12 +146,12 @@ Proof with eauto.
   intros * WF Sub. generalize dependent A'. generalize dependent B'.
   dependent induction Sub; intros.
   - dependent destruction H0. dependent destruction H1. econstructor...
-  - dd H0. dd H1. admit. (* binds are unique *)
+  - dd H0. dd H2. admit. (* binds are unique *)
   - dd H. dd H1. eapply d_sub__arr1...
   - dd H1. dd H2.
     eapply d_sub__all with (L := L).
     intros. eapply H0; eauto. admit. admit. admit. (* rename *)
-  - dd H0. assert (B = B0) by admit. subst. eapply IHSub... admit.
+  - dd H0. assert (B' = B'0) by admit. subst. eapply IHSub... admit.
   - dd H1. assert (B = B0) by admit. subst. eapply IHSub...   (* dual to last *)
  Admitted.
 
@@ -179,37 +179,61 @@ Ltac fold_open_typ_wrc_typ_rec :=
     | |- context [open_typ_wrt_typ_rec 0 ?A ?B ] => replace (open_typ_wrt_typ_rec 0 A B) with (open_typ_wrt_typ B A) by auto
     end.
 
-
 (* two inversion lemmas *)
-Lemma sovle_with_bind : forall Γ A B X,
+Lemma solve_with_bind : forall Γ A B X,
     wf_env Γ ->
     X ⦂ A ∈ Γ ->
     d_inst Γ (typ_var_f X) B ->
     d_inst Γ A B.
 Proof.
   intros * WF Bind Inst.
-  dd Inst. assert (A = B). admit.
-  subst. 
-Admitted.  
+  dd Inst. assert (A = B). admit. (* obvious *)
+  subst. assumption.
+Admitted.
+
+Lemma solution_cannot_be_variable : forall Γ A X,
+    wf_env Γ ->
+    d_inst Γ A (typ_var_f X) ->
+    False.
+Proof with eauto.
+  intros.
+  dependent induction H0...
+Qed.
     
-Lemma sub_var_l : forall Γ j A B X n,
+Lemma sub_var_l : forall Γ j A B X,
+    wf_env Γ ->
     binds X (bind_typ A) Γ ->
-    Γ ⊢ j # typ_var_f X <: B | n ->
-    Γ ⊢ j # A <: B | n.
-Proof.
-  intros * Bd Sub.
-  dd Sub.
+    Γ ⊢ j # typ_var_f X <: B ->
+    Γ ⊢ j # A <: B.
+Proof with eauto.
+  intros * WF Bd Sub.
+  dependent induction Sub; intros.
   - Case "refl".
-    eapply d_subs__refl... assumption.
+    eapply d_sub__refl... 
+    eapply solve_with_bind...
+  - Case "var-refl".
+    eapply d_sub__varr...
+    eapply dsub_reflexivity...
+  - Case "var-l".
+    assert (bind_typ A = bind_typ B).
+    eapply binds_unique...
+    admit. subst. (* trivial *)
+    dependent destruction H0.
+    assumption.
+  - Case "var-r".
+    eapply d_sub__varr...
 Admitted.
 
-Lemma sub_var_r : forall Γ j A B X n,
+Lemma sub_var_r : forall Γ j A B X ,
     binds X (bind_typ B) Γ ->
-    Γ ⊢ j # A <: typ_var_f X | n ->
-    Γ ⊢ j # A <: B | n.
-Proof.  
+    Γ ⊢ j # A <: typ_var_f X->
+    Γ ⊢ j # A <: B.
+Proof with eauto.
+  intros * Bd Sub.
+  dependent induction Sub; intros.
+  - Case "refl".
+    exfalso. eapply solution_cannot_be_variable...
 Admitted.
-
 
 Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
   n1 + n2 < n_sub_size ->
@@ -226,7 +250,8 @@ Proof with eauto.
         apply d_sub__refl...
       * dependent destruction H1.
         eapply d_sub__varl...
-        eapply IHn_sub_size with (B:=B) (n1:=n)... lia. 
+        eapply IHn_sub_size with (B:=B0) (n1:=n)... lia.
+        econstructor... admit.
       * eapply d_sub__varr; eauto.
         refine (IHn_sub_size _ _ _ _ _ n _ _ _ H3). lia. 
         apply d_subs__refl...
@@ -286,9 +311,9 @@ Proof with eauto.
         intros. inst_cofinites_with X.
         eapply IHn_sub_size with (B:=typ_all A0) (n2:=S n0)... lia.
         dependent destruction H1.
+        eapply d_subs__alll1... admit.
+        eapply d_subs__alll1... admit. (* deal with envs *)
         admit.
-        admit.
-        admit. (* ***, counter mismatch *)
       * eapply d_sub__alll1 with (C:=C0) (L:=L)...
         intros. inst_cofinites_with X0.
         dependent destruction H1.
@@ -311,7 +336,8 @@ Proof with eauto.
       eapply d_sub__varl...    
       eapply IHn_sub_size with (B:=A)... lia.
     + Case "forall-var2".
-      assert (E ⊢ c # B <: C | n2). eapply sub_var_l...
+      assert (E ⊢ c # B <: C | (n2 - 1)).
+      (* eapply sub_var_l... *) admit.
       eapply IHn_sub_size... lia.
       (*
       dependent induction H2.

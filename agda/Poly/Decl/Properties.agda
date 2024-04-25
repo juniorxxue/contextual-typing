@@ -18,7 +18,7 @@ _↑ᵉ[_]_ : ∀ (Γ : Env n m) → Type m -> (k : Fin (1 + n)) → Env (1 + n)
 ⊢sub' : ∀ {Γ : Env n m} {e A B j}
   → Γ ⊢ Z # e ⦂ B
   → Γ ⊢ j # B ≤ A
-  → Γ ⊢ j # e ⦂ A
+  → Γ ⊢ j # e ⦂ A -- which no longer holds for zed case
 ⊢sub' {j = Z} ⊢e (s-refl ap) = {!!}
 ⊢sub' {j = Z} ⊢e (s-var-l x s) = {!!}
 ⊢sub' {j = Z} ⊢e (s-var-r x s) = {!!}

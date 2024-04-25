@@ -77,20 +77,6 @@ data _⟦_⟧⟹_ : Env n m → Type m → Type m → Set where
     → (Γ ,∙) ⟦ A ⟧⟹ A'
     → Γ ⟦ `∀ A ⟧⟹ `∀ A'
 
-{-
-data bound : Type m → Set where
-
-data find : Type m → Counter → Set where
-  ∞ : ∀ {A : Type m} → find A ∞
-  Z : ∀ {A : Type m} → bound A → find A Z
-  S₁ : ∀ {A : Type m} {B j}
-    → bound A
-    → find (A `→ B) (S j)
-  S₂ : ∀ {A : Type m} {B j}
-    → find B j
-    → find (A `→ B) (S j)
--}
-
 data bound : Type (1 + m) → Fin (1 + m) → Set where
   b-var : bound (Type (1 + m) ∋⦂ ‶ #0) #0
   b-arr₁ : ∀ {A : Type (1 + m)} {B k} → bound A k → bound (A `→ B) k

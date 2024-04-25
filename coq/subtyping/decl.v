@@ -193,9 +193,10 @@ Inductive wf_env : env -> Prop :=    (* defn wf_env *)
 
 (* defns J_d_inst *)
 Inductive d_inst : env -> typ -> typ -> Prop :=    (* defn d_inst *)
- | d_inst__var : forall (E:env) (X:typvar) (B:typ),
-      binds ( X )  ( (bind_typ B) ) ( E )  ->
-     d_inst E (typ_var_f X) B
+ | d_inst__var : forall (E:env) (X:typvar) (B B':typ),
+     binds ( X )  ( (bind_typ B) ) ( E )  ->
+     d_inst E B B' ->
+     d_inst E (typ_var_f X) B'
  | d_inst__int : forall (E:env),
      d_inst E typ_int typ_int
  | d_inst__arr : forall (E:env) (A1 A2 B1 B2:typ),
