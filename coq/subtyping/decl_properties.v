@@ -9,6 +9,15 @@ Require Import Lia.
 Require Import subtyping.decl.
 Require Import subtyping.prop_ln.
 
+Lemma wf_to_uniq : forall Γ,
+    wf_env Γ -> uniq Γ.
+Proof.
+  intros. dependent induction H; eauto.
+Qed.
+
+Hint Resolve wf_to_uniq : core.
+  
+
 Ltac dd H := dependent destruction H.
 
 Ltac inst_cofinite_impl H x :=
@@ -132,7 +141,8 @@ Lemma dsub_reflexivity : forall A Gamma,
 Proof.
   induction A; intros; eauto.
   - admit.
-  - admit.
+  - eapply d_sub__all. intros.
+    admit.
 Admitted.
 
 (* general form *)
@@ -155,7 +165,8 @@ Proof with eauto.
   - dd H1. assert (B = B0) by admit. subst. eapply IHSub...   (* dual to last *)
  Admitted.
 
-
+(*
+this seems wrong now
 Lemma s_trans' : forall n_sub_size Γ j1 j2 A B C n1 n2,
   n1 + n2 < n_sub_size ->
   Γ ⊢ j1 # A <: B | n1 -> 
@@ -170,8 +181,8 @@ Proof with eauto.
       * admit.
       * 
 Admitted.
+*)
   
-
 Ltac fold_open_typ_wrc_typ_rec :=
   repeat 
     match goal with 
@@ -185,11 +196,12 @@ Lemma solve_with_bind : forall Γ A B X,
     X ⦂ A ∈ Γ ->
     d_inst Γ (typ_var_f X) B ->
     d_inst Γ A B.
-Proof.
+Proof with eauto.
   intros * WF Bind Inst.
-  dd Inst. assert (A = B). admit. (* obvious *)
+  dd Inst. assert (bind_typ A = bind_typ B). eapply binds_unique...
+  dependent destruction H0.
   subst. assumption.
-Admitted.
+Qed.
 
 Lemma solution_cannot_be_variable : forall Γ A X,
     wf_env Γ ->
@@ -217,24 +229,53 @@ Proof with eauto.
   - Case "var-l".
     assert (bind_typ A = bind_typ B).
     eapply binds_unique...
-    admit. subst. (* trivial *)
-    dependent destruction H0.
+    dependent destruction H0. 
     assumption.
   - Case "var-r".
     eapply d_sub__varr...
-Admitted.
+Qed.
 
 Lemma sub_var_r : forall Γ j A B X ,
+    wf_env Γ ->
     binds X (bind_typ B) Γ ->
     Γ ⊢ j # A <: typ_var_f X->
     Γ ⊢ j # A <: B.
 Proof with eauto.
-  intros * Bd Sub.
+  intros * WF Bd Sub.
   dependent induction Sub; intros.
   - Case "refl".
     exfalso. eapply solution_cannot_be_variable...
-Admitted.
+  - Case "var-refl".
+    eapply d_sub__varl... eapply dsub_reflexivity...
+  - Case "forall-l".
+    eapply d_sub__alll1... admit.
+  - Case "forall-l-t".
+    eapply d_sub__alll2. eapply H. intros. eapply H1...
+    econstructor... admit.
+  - Case "var-l".
+    eapply d_sub__varl...
+  - Case "var-r".
+    assert (bind_typ B0 = bind_typ B).
+    eapply binds_unique...
+    dependent destruction H0.
+    assumption.
+Admitted. (* only binding problem *)
 
+Lemma inst_to_final : forall Γ A B C,
+    d_inst Γ A B ->
+    d_inst Γ B C ->
+    B = C.
+Proof with eauto.
+  intros * In1 In2. generalize dependent C.
+  dependent induction In1; intros; eauto.
+  - dependent destruction In2...
+  - dependent destruction In2...
+    pose proof (IHIn1_1 B0 In2_1).
+    pose proof (IHIn1_2 B3 In2_2).
+    subst. reflexivity.
+  - dependent destruction In2.
+Admitted.
+    
 Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
   n1 + n2 < n_sub_size ->
   Γ ⊢ j # A <: B | n1 -> 
@@ -246,12 +287,9 @@ Proof with eauto.
   - dependent destruction H0.
     + Case "refl".
       dependent destruction H2.
-      * assert (A0 = B) by admit. subst.
+      * assert (A0 = B). eapply inst_to_final... subst.
         apply d_sub__refl...
-      * dependent destruction H1.
-        eapply d_sub__varl...
-        eapply IHn_sub_size with (B:=B0) (n1:=n)... lia.
-        econstructor... admit.
+      * exfalso. eapply solution_cannot_be_variable...
       * eapply d_sub__varr; eauto.
         refine (IHn_sub_size _ _ _ _ _ n _ _ _ H3). lia. 
         apply d_subs__refl...
@@ -336,7 +374,7 @@ Proof with eauto.
       eapply d_sub__varl...    
       eapply IHn_sub_size with (B:=A)... lia.
     + Case "forall-var2".
-      assert (E ⊢ c # B <: C | (n2 - 1)).
+      assert (E ⊢ c # B <: C | n2).
       (* eapply sub_var_l... *) admit.
       eapply IHn_sub_size... lia.
       (*
