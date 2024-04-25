@@ -69,7 +69,7 @@ Inductive d_sub_size : env -> counter -> typ -> typ -> nat -> Prop :=
  | d_subs__alll1 : forall (L:vars) (E:env) (c:counter) (A B C:typ) (n: nat),
      d_wf_typ E C ->
      ( forall X , X \notin  L  -> find X (counter_suc c)  ( open_typ_wrt_typ A (typ_var_f X) )  )  ->
-      ( forall X , X \notin  L  -> d_sub_size  ( X ~ (bind_typ C)  ++  E )  c  ( open_typ_wrt_typ A (typ_var_f X) )  B n)  ->
+      ( forall X , X \notin  L  -> d_sub_size  ( X ~ (bind_typ C)  ++  E )  (counter_suc c) ( open_typ_wrt_typ A (typ_var_f X) )  B n)  ->
      d_sub_size E (counter_suc c) (typ_all A) B (S n)
  | d_subs__alll2 : forall (L:vars) (E:env) (c:counter) (A B C:typ) (n : nat),
      d_wf_typ E C ->
@@ -228,22 +228,42 @@ Proof with eauto.
         inst_cofinites_with X.
         dependent destruction H1.
         -- destruct A; simpl in x; try solve [inversion x].
-          ++ destruct n0; unfold open_typ_wrt_typ in x. simpl in x. inversion x.
+           ++ destruct n0; unfold open_typ_wrt_typ in x. simpl in x. inversion x.
+              unfold open_typ_wrt_typ in x. simpl in x. inversion x.
+           ++ unfold open_typ_wrt_typ in *. simpl in *. dependent destruction x.
+              eapply IHn_sub_size with (B:=typ_arrow A1 B1) (n1:=n) (n2:=S(n1 + n2)); eauto. lia.
+              constructor; eauto.
+              admit.
+              admit.
+        -- destruct A; simpl in x; try solve [inversion x].
+           ++ destruct n0; unfold open_typ_wrt_typ in x. simpl in x. inversion x.
+              unfold open_typ_wrt_typ in x. simpl in x. inversion x.
+           ++ unfold open_typ_wrt_typ in *. simpl in *. dependent destruction x.
+              eapply IHn_sub_size with (B:=typ_arrow A1 B1) (n1:=n) (n2:=S(n1 + n2)); eauto. lia.
+              constructor; eauto.
+              admit.
+              admit.
+        -- destruct A; simpl in x; try solve [inversion x].
+           ++ destruct n0; unfold open_typ_wrt_typ in x. simpl in x. inversion x.
              unfold open_typ_wrt_typ in x. simpl in x. inversion x.
-          ++ unfold open_typ_wrt_typ in *. simpl in *. dependent destruction x.
-             eapply IHn_sub_size with (B:=typ_arrow A1 B1) (n1:=n) (n2:=S(n1 + n2)); eauto. lia.
-             admit.
-             admit.
-        -- admit.
-        -- admit.
+           ++ unfold open_typ_wrt_typ in *. simpl in *. dependent destruction x.
+              eapply IHn_sub_size with (B:=typ_arrow A1 B1) (n1:=n) (n2:=S(n1 + n2)); eauto. lia.
+              constructor; auto.
+              admit.
+              admit.
       * eapply d_sub__alll1 with (C:=C0) (L:=L)...
         intros. inst_cofinites_with X.
         eapply IHn_sub_size with (B:=typ_all A0) (n2:=S n0)... lia.
-        (* eapply d_sub__alll1 with (C:=C) (L:=L)... *)
+        dependent destruction H1.
+        admit.
+        admit.
         admit. (* ***, counter mismatch *)
       * eapply d_sub__alll1 with (C:=C0) (L:=L)...
-        intros. inst_cofinites_with X.
-        admit. (* ***, IH cannot be applied due to counter mismatch *)
+        intros. inst_cofinites_with X0.
+        dependent destruction H1.
+        -- admit.
+        -- admit.
+        -- admit.
       * eapply d_sub__varr; eauto.
         eapply IHn_sub_size with (B:=A0)... lia. 
     + dependent destruction H2.
