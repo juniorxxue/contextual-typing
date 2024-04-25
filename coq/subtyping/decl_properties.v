@@ -89,6 +89,7 @@ Notation "Γ ⊢ j # A <: B | n" := (d_sub_size Γ j A B n) (at level 50, j at n
 Notation "Gamma [ A ] ~> A'"  := (d_inst Gamma A A') (at level 50).
 Notation "∞" := counter_inf (at level 30).
 Notation "⦲" := counter_z (at level 30).
+Notation "x ⦂ A ∈ E" := (binds x (bind_typ A) E) (at level 40).
 
 #[local] Hint Constructors d_sub d_sub_size : core.
 
@@ -179,7 +180,37 @@ Ltac fold_open_typ_wrc_typ_rec :=
     end.
 
 
-(* a wrong statement *)
+(* two inversion lemmas *)
+Lemma sovle_with_bind : forall Γ A B X,
+    wf_env Γ ->
+    X ⦂ A ∈ Γ ->
+    d_inst Γ (typ_var_f X) B ->
+    d_inst Γ A B.
+Proof.
+  intros * WF Bind Inst.
+  dd Inst. assert (A = B). admit.
+  subst. 
+Admitted.  
+    
+Lemma sub_var_l : forall Γ j A B X n,
+    binds X (bind_typ A) Γ ->
+    Γ ⊢ j # typ_var_f X <: B | n ->
+    Γ ⊢ j # A <: B | n.
+Proof.
+  intros * Bd Sub.
+  dd Sub.
+  - Case "refl".
+    eapply d_subs__refl... assumption.
+Admitted.
+
+Lemma sub_var_r : forall Γ j A B X n,
+    binds X (bind_typ B) Γ ->
+    Γ ⊢ j # A <: typ_var_f X | n ->
+    Γ ⊢ j # A <: B | n.
+Proof.  
+Admitted.
+
+
 Lemma s_trans : forall n_sub_size Γ j A B C n1 n2,
   n1 + n2 < n_sub_size ->
   Γ ⊢ j # A <: B | n1 -> 
@@ -266,7 +297,8 @@ Proof with eauto.
         -- admit.
       * eapply d_sub__varr; eauto.
         eapply IHn_sub_size with (B:=A0)... lia. 
-    + dependent destruction H2.
+    + Case "forall-l2".
+      dependent destruction H2.
       (* ∀ X. A < ∀ X. B < C *)
       * econstructor. admit. admit. (* ****,  ∀ X. A < ∀ X. B can also use forall rule and pick a different C*)
       * eapply d_sub__alll2 with (C:=C0) (L:=L)... 
@@ -275,9 +307,14 @@ Proof with eauto.
         eapply IHn_sub_size with (B:=typ_var_f X)... lia.
       * eapply d_sub__varr...
         eapply IHn_sub_size with (B:= A0)... lia.
-    + eapply d_sub__varl...    
+    + Case "forall-var1".
+      eapply d_sub__varl...    
       eapply IHn_sub_size with (B:=A)... lia.
-    + dependent induction H2.
+    + Case "forall-var2".
+      assert (E ⊢ c # B <: C | n2). eapply sub_var_l...
+      eapply IHn_sub_size... lia.
+      (*
+      dependent induction H2.
       * assert (B = B0) by admit. subst. eapply d_sub_size_sound... 
       * econstructor... eapply d_sub_size_sound... 
       * assert (B = B0) by admit. subst.
@@ -285,6 +322,7 @@ Proof with eauto.
       (* A < X := B1 < Y := B2 *)
       * econstructor; eauto.
         eapply IHd_sub_size... lia.
+       *)
 Admitted.
    
 Lemma s_trans_real : forall Γ j A B C,
