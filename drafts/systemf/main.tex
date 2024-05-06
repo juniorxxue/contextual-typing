@@ -42,7 +42,7 @@
 
 \begin{align*}
     &\text{Contexts} \quad\quad &\Sigma ::=&~ A \mid \square \mid \boxed{e} \leadsto \Sigma \mid \boxed{A} \leadsto \Sigma\\
-    &\text{Generic Consumers} \quad \quad &g::=&~ i \mid x \mid e : A\\
+    &\text{Generic Consumers} \quad \quad &g::=&~ i \mid x \mid e : A \mid \Lambda a.~e\\
     &\text{Environments} \quad\quad &\Gamma ::=&~ . \mid \Gamma, x : A \mid \Gamma, a \mid \Gamma, \hat{a} \mid \Gamma, \hat{a}= A\\
 \end{align*}
 
@@ -136,9 +136,9 @@
     {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n B <: A}
     {\Gamma \vdash_n \hat{a} <: A}
     
-        \inferrule*[lab=S-var-r]
-    {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n A <: B}
-    {\Gamma \vdash_n A <: \hat{a}}
+%     \inferrule*[lab=S-var-r]
+%    {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n A <: B}
+%    {\Gamma \vdash_n A <: \hat{a}}
 \end{mathpar}
 
 \paragraph{Properties}
@@ -154,6 +154,8 @@ $\Gamma \vdash_\infty A <: \Gamma(A)$.
 \begin{lemma}[Transitivity]
 If $\Gamma \vdash_{n_1} A <: B$	 and $\Gamma \vdash_{n_2} B <: C$, then $\Gamma \vdash_{n_1 + n_2} A <: C$.
 \end{lemma}
+
+A false lemma, but find the correct one later.
 
 \section{Algo.}
 
@@ -204,6 +206,8 @@ If $\Gamma \vdash_{n_1} A <: B$	 and $\Gamma \vdash_{n_2} B <: C$, then $\Gamma 
 {\Gamma \vdash  \Sigma \Rightarrow e[A] \Rightarrow B}
 
 \end{mathpar}
+
+People will expect the \texttt{TApp} and \texttt{App} has the same shape, while they are not. This is because the type abstraction can infer a type without any contextual information, what's why we treat it as a generic consumer and deals with the instantiation in the subtyping.
 
 \begin{comment}
 \subsection{Subtyping: $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A}$}
@@ -281,21 +285,21 @@ If $\Gamma \vdash_{n_1} A <: B$	 and $\Gamma \vdash_{n_2} B <: C$, then $\Gamma 
 \inferrule*[lab=S-Ex-L-eq]
 {\hat{a} = B \in \Psi \\
 \Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
-\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
+%\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
 \Psi \vdash_{close} A}
 {\Psi \vdash a <: A \dashv \Psi_2 \rightsquigarrow A''}
 
-\inferrule*[lab=S-Ex-R]
-{\hat{a} \in \Psi \\
-\Psi \vdash_{close} A}
-{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
-
-\inferrule*[lab=S-Ex-R-eq]
-{\hat{a} = B \in \Psi \\
-\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
-\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
-\Psi \vdash_{close} A}
-{\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
+%\inferrule*[lab=S-Ex-R]
+%{\hat{a} \in \Psi \\
+%\Psi \vdash_{close} A}
+%{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
+%
+%\inferrule*[lab=S-Ex-R-eq]
+%{\hat{a} = B \in \Psi \\
+%%\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
+%\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
+%\Psi \vdash_{close} A}
+%{\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
 
 \inferrule*[lab=S-Arr]
 {\Psi \vdash C <: A \dashv \Psi_1 \rightsquigarrow A' \\
