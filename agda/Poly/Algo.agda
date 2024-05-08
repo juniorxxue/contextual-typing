@@ -278,12 +278,12 @@ data _⊢_≤_⊣_↪_ where
     → Ψ₂ ⊢ B ≤ τ D ⊣ Ψ₃ ↪ D'
     → Ψ₁ ⊢ A `→ B ≤ τ (C `→ D) ⊣ Ψ₃ ↪ (C `→ D)
 
-  s-term-c : ∀ {A B C D e}
+  s-term-c : ∀ {A B A' D e}
     → Ψ ⊢c A
     → Ψ ⊢c B
-    → (Ψ→Γ Ψ) ⊢ τ A ⇒ e ⇒ C
+    → (Ψ→Γ Ψ) ⊢ τ A ⇒ e ⇒ A'
     → Ψ ⊢ B ≤ Σ ⊣ Ψ' ↪ D
-    → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ A `→ D
+    → Ψ ⊢ (A `→ B) ≤ ([ e ]↝ Σ) ⊣ Ψ' ↪ A' `→ D
 
   s-term-o : ∀ {A A' B C D e}
     → Ψ ⊢o A
@@ -321,18 +321,24 @@ data _⊢_≤_⊣_↪_ where
 idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
+sub-id[Int]1 : ∀ {Γ : Env n m} → 𝕓 Γ ⊢ `∀ ‶ #0 `→ ‶ #0 ≤ ⟦ Int ⟧↝ [ lit 1 ]↝ □ ⊣ 𝕓 Γ ↪ Int `→ Int
+sub-id[Int]1 = {!!}
+
+sub-id[Int] : ∀ {Γ : Env n m} → 𝕓 Γ ⊢ `∀ ‶ #0 `→ ‶ #0 ≤ ⟦ Int ⟧↝ □ ⊣ 𝕓 Γ ↪ Int `→ Int
+sub-id[Int] = {!!}
+
+
 id[Int]1 : idEnv ⊢ □ ⇒ ((` #0) [ Int ]) · (lit 1) ⇒ Int
 id[Int]1 = ⊢app (⊢tapp (⊢sub (⊢var refl)
-                             {!!}))
-
+                             sub-id[Int]1))
 idExp : Term 0 0
 idExp = Λ (((ƛ ` #0) ⦂ ‶ #0 `→ ‶ #0))
 
 idExp[Int]1 : ∅ ⊢ □ ⇒ (idExp [ Int ]) · (lit 1) ⇒ Int
-idExp[Int]1 = ⊢app (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) (s-∀-t {!s-term-c ? ? ? ?!})))
+idExp[Int]1 = ⊢app (⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) (sub-id[Int]1 {Γ = ∅})))
 
 idExp[Int] : ∅ ⊢ □ ⇒ idExp [ Int ] ⇒ Int `→ Int
-idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) (s-∀-t {!!}))
+idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl) s-var)))) sub-id[Int])
 
 -- implicit inst
 id1 : idEnv ⊢ □ ⇒ (` #0) · (lit 1) ⇒ Int

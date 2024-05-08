@@ -209,6 +209,12 @@ A false lemma, but find the correct one later.
 
 People will expect the \texttt{TApp} and \texttt{App} has the same shape, while they are not. This is because the type abstraction can infer a type without any contextual information, what's why we treat it as a generic consumer and deals with the instantiation in the subtyping.
 
+Some properties are waiting to be justified:
+
+\begin{itemize}
+	\item If the context is a full type, then the inferred type is \emph{almost} the same, but will be finer (some parts will be instantiated)
+\end{itemize}
+
 \begin{comment}
 \subsection{Subtyping: $\boxed{\Gamma \vdash A <: \Sigma \dashv \Gamma' \rightsquigarrow A}$}
 
@@ -309,9 +315,9 @@ People will expect the \texttt{TApp} and \texttt{App} has the same shape, while 
 \inferrule*[lab=S-Hole-No-Ex]
 { \Psi \vdash_{close} A \\
  \Psi \vdash_{close} B \\
-\| \Psi \| \vdash A \Rightarrow e \Rightarrow C\\
+\| \Psi \| \vdash A \Rightarrow e \Rightarrow A'\\
  \Psi \vdash B <: \Sigma \dashv \Psi' \rightsquigarrow D}
-{\Psi \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow A \rightarrow D}
+{\Psi \vdash A \rightarrow B <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow A' \rightarrow D}
 
 \inferrule*[lab=S-Hole-Ex]
 { \Psi \vdash_{open} A \\
@@ -342,6 +348,7 @@ Some properties are waiting to be justified:
 \begin{itemize}
 	\item The existential variables will never appear in the context (right side of the subtyping)
 	\item If the context is a full type, then result type is a full type.
+	\item The property between input env and output env, such as, if input env is a $\Gamma$, the output should be the same $\Gamma$.
 \end{itemize}
 
 Some worries:
