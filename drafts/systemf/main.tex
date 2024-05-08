@@ -124,13 +124,13 @@
     \inferrule*[lab=S-$\forall$L]
     {\Gamma \vdash B \\
      \hat{a} \in FV(S~n, A) \\
-     \Gamma, \hat{a} = B \vdash_{S~n}  A <: C}
-    {\Gamma \vdash_{S~n} \forall a. ~A <: C}
+     \Gamma, \hat{a} = B \vdash_{S~n}  A <: C \to D}
+    {\Gamma \vdash_{S~n} \forall a. ~A <: C \to D}
     
     \inferrule*[lab=S-$\forall$L-t]
     {\Gamma \vdash B \\
-     \Gamma, \hat{a} = B \vdash_{n}  A <: C}
-    {\Gamma \vdash_{S_\tau~n} \forall a. ~A <: C}    
+     \Gamma, \hat{a} = B \vdash_{n}  A <: C \to D}
+    {\Gamma \vdash_{S_\tau~n} \forall a. ~A <: C \to D}    
     
     \inferrule*[lab=S-var-l]
     {\hat{a} = B \in \Gamma \\ \Gamma \vdash_n B <: A}
@@ -284,10 +284,10 @@ People will expect the \texttt{TApp} and \texttt{App} has the same shape, while 
 
 \inferrule*[lab=S-Ex-L-eq]
 {\hat{a} = B \in \Psi \\
-\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
+\Psi \vdash B <: A \dashv \Psi' \rightsquigarrow A'\\
 %\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
 \Psi \vdash_{close} A}
-{\Psi \vdash a <: A \dashv \Psi_2 \rightsquigarrow A''}
+{\Psi \vdash a <: A \dashv \Psi' \rightsquigarrow A'}
 
 %\inferrule*[lab=S-Ex-R]
 %{\hat{a} \in \Psi \\
@@ -329,13 +329,26 @@ People will expect the \texttt{TApp} and \texttt{App} has the same shape, while 
 {\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 
 \inferrule*[lab=S-All-L-Eq]
-{\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', \widehat{A} \rightsquigarrow B}
+{\Psi, \hat{o} \vdash A <: \boxed{e} \leadsto \Sigma \dashv \Psi', =A \rightsquigarrow B}
 {\Psi \vdash \forall A <: \boxed{e} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B}
 
 \inferrule*[lab=S-$\forall$-t]
-{\Psi \vdash [ B ] A <: \Sigma \dashv \Psi' \rightsquigarrow B}
-{\Psi \vdash \forall A <: \boxed{B} \leadsto \Sigma \dashv \Psi' \rightsquigarrow B }
+{\Psi ,= B \vdash A <: \Sigma \dashv \Psi',= B \rightsquigarrow C}
+{\Psi \vdash \forall A <: \boxed{B} \leadsto \Sigma \dashv \Psi' \rightsquigarrow C }
 \end{mathpar}
+
+Some properties are waiting to be justified:
+
+\begin{itemize}
+	\item The existential variables will never appear in the context (right side of the subtyping)
+	\item If the context is a full type, then result type is a full type.
+\end{itemize}
+
+Some worries:
+
+\begin{itemize}
+	\item \texttt{S-Hole-Ex}, is one-open enough now, since two rules are now not complementary. 
+\end{itemize}
 
 \subsection{Environment Replacement}
 
