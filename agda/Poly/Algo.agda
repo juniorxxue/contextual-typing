@@ -172,18 +172,34 @@ data _^∈_ : Fin m → SEnv n m → Set where
     → k ^∈ Ψ
     → #S k ^∈ Ψ ,= A    
 
--- ⚠️ might be wrong, since we don't consider the Γ inside
+-- ⚠️ this impl is changed recently, not justiifed alot
+infix 3 _:=_∈'_
+data _:=_∈'_ : Fin m → Type m → Env n m → Set where
+  Z  : ∀ {A} → #0 := A ∈' Γ ,= ↓ty0 A
+  S∙ : ∀ {k} {A}
+    → k := ↓ty0 A ∈' Γ
+    → #S k := A ∈' Γ ,∙
+  S= : ∀ {k A B}
+    → k := ↓ty0 A ∈' Γ
+    → #S k := A ∈' Γ ,= B
+  k, : ∀ {k A B}
+    → k := A ∈' Γ
+    → k := A ∈' Γ , B 
+
 infix 3 _:=_∈_
 data _:=_∈_ : Fin m → Type m → SEnv n m → Set where
 
-  Z : ∀ {A} → #0 := A ∈ Ψ ,= ↓ty0 A
-  S^ : ∀ {k} {A : Type (1 + m')}
+--  Z : ∀ {A} → #0 := A ∈ Ψ ,= ↓ty0 A
+  kΓ : ∀ {k} {A}
+    → k := A ∈' Γ
+    → k := A ∈ (𝕓 Γ)
+  S^ : ∀ {k} {A : Type (1 + m)}
     → k := ↓ty0 A ∈ Ψ
     → #S k := A ∈ Ψ ,^
-  S∙ : ∀ {k} {A : Type (1 + m')}
+  S∙ : ∀ {k} {A : Type (1 + m)}
     → k := ↓ty0 A ∈ Ψ
     → #S k := A ∈ Ψ ,∙
-  S= : ∀ {k B} {A : Type (1 + m')}
+  S= : ∀ {k B} {A : Type (1 + m)}
     → k := ↓ty0 A ∈ Ψ
     → #S k := A ∈ Ψ ,= B
 
@@ -257,7 +273,7 @@ data _⊢_≤_⊣_↪_ where
     → Ψ ⊢c A
     → X := B ∈ Ψ
     → Ψ ⊢ B ≤ τ A ⊣ Ψ₁ ↪ A₁
-    → Ψ₁ ⊢ A ≤ τ B ⊣ Ψ₂ ↪ A₂
+--    → Ψ₁ ⊢ A ≤ τ B ⊣ Ψ₂ ↪ A₂
     → Ψ ⊢ ‶ X ≤ τ A ⊣ Ψ₂ ↪ A₂
 
   s-ex-r^ : ∀ {A X}
@@ -266,10 +282,10 @@ data _⊢_≤_⊣_↪_ where
     → [ A / X ] Ψ ⟹ Ψ'
     → Ψ ⊢ A ≤ τ (‶ X) ⊣ Ψ' ↪ A
 
-  s-ex-r= : ∀ {A A₁ A₂ B X}
+  s-ex-r= : ∀ {A A₂ B X}
     → Ψ ⊢c A
     → X := B ∈ Ψ
-    → Ψ ⊢ B ≤ τ A ⊣ Ψ₁ ↪ A₁
+--    → Ψ ⊢ B ≤ τ A ⊣ Ψ₁ ↪ A₁
     → Ψ₁ ⊢ A ≤ τ B ⊣ Ψ₂ ↪ A₂
     → Ψ ⊢ A ≤ τ (‶ X) ⊣ Ψ₂ ↪ A₂
 
@@ -322,11 +338,19 @@ idEnv : Env 1 0
 idEnv = ∅ , `∀ (‶ #0 `→ ‶ #0)
 
 sub-id[Int]1 : ∀ {Γ : Env n m} → 𝕓 Γ ⊢ `∀ ‶ #0 `→ ‶ #0 ≤ ⟦ Int ⟧↝ [ lit 1 ]↝ □ ⊣ 𝕓 Γ ↪ Int `→ Int
-sub-id[Int]1 = {!!}
+sub-id[Int]1 {Γ = Γ} = s-∀-t (s-term-c ⊢c-var=0
+                               ⊢c-var=0
+                               (⊢sub {Ψ = 𝕓 (Γ ,= Int)} ⊢lit (s-ex-r= ⊢c-int (kΓ Z) s-int))
+                               (s-empty ⊢c-var=0))
 
 sub-id[Int] : ∀ {Γ : Env n m} → 𝕓 Γ ⊢ `∀ ‶ #0 `→ ‶ #0 ≤ ⟦ Int ⟧↝ □ ⊣ 𝕓 Γ ↪ Int `→ Int
-sub-id[Int] = {!!}
+sub-id[Int] = s-∀-t (s-empty (⊢c-arr ⊢c-var=0 ⊢c-var=0))
 
+sub-id1 : ∀ {Γ : Env n m} → 𝕓 Γ ⊢ `∀ ‶ #0 `→ ‶ #0 ≤ [ lit 1 ]↝ □ ⊣ 𝕓 Γ ↪ Int `→ Int
+sub-id1 = s-∀l-eq (s-term-o ⊢o-var^0
+                           ⊢lit
+                           (s-ex-r^ ⊢c-int Z ⟹^0)
+                           (s-empty ⊢c-var=0))
 
 id[Int]1 : idEnv ⊢ □ ⇒ ((` #0) [ Int ]) · (lit 1) ⇒ Int
 id[Int]1 = ⊢app (⊢tapp (⊢sub (⊢var refl)
@@ -342,8 +366,8 @@ idExp[Int] = ⊢tapp (⊢sub (⊢tabs₁ (⊢ann (⊢lam₁ (⊢sub (⊢var refl
 
 -- implicit inst
 id1 : idEnv ⊢ □ ⇒ (` #0) · (lit 1) ⇒ Int
-id1 = ⊢app (⊢sub (⊢var refl) (s-∀l-eq (s-term-o ⊢o-var^0 ⊢lit (s-ex-r^ ⊢c-int Z ⟹^0)
-                                                              (s-empty ⊢c-var=0))))
+id1 = ⊢app (⊢sub (⊢var refl) sub-id1)
+
 
 -- [e1] -> [e2] -> [e3] -> []
 -- ------- Inf----- Chk -------

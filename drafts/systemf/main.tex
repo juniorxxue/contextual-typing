@@ -295,17 +295,17 @@ Some properties are waiting to be justified:
 \Psi \vdash_{close} A}
 {\Psi \vdash a <: A \dashv \Psi' \rightsquigarrow A'}
 
-%\inferrule*[lab=S-Ex-R]
-%{\hat{a} \in \Psi \\
-%\Psi \vdash_{close} A}
-%{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
+\inferrule*[lab=S-Ex-R]
+{\hat{a} \in \Psi \\
+\Psi \vdash_{close} A}
+{\Psi \vdash A <: a \dashv [A/a]~\Psi \rightsquigarrow A}
 %
-%\inferrule*[lab=S-Ex-R-eq]
-%{\hat{a} = B \in \Psi \\
-%%\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
-%\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
-%\Psi \vdash_{close} A}
-%{\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
+\inferrule*[lab=S-Ex-R-eq]
+{\hat{a} = B \in \Psi \\
+%\Psi \vdash B <: A \dashv \Psi_1 \rightsquigarrow A'\\
+\Psi_1 \vdash A <: B \dashv \Psi_2 \rightsquigarrow A''\\
+\Psi \vdash_{close} A}
+{\Psi \vdash A <: a \dashv \Psi_2 \rightsquigarrow A''}
 
 \inferrule*[lab=S-Arr]
 {\Psi \vdash C <: A \dashv \Psi_1 \rightsquigarrow A' \\
@@ -346,7 +346,8 @@ Some properties are waiting to be justified:
 Some properties are waiting to be justified:
 
 \begin{itemize}
-	\item The existential variables will never appear in the context (right side of the subtyping)
+	\item The existential variables will never appear in the context position (right side of the subtyping)
+  (edits: this is obviously wrong, many cases need existential at the right side, but I have't found cases need ex in the left?)
 	\item If the context is a full type, then result type is a full type.
 	\item The property between input env and output env, such as, if input env is a $\Gamma$, the output should be the same $\Gamma$.
 \end{itemize}
