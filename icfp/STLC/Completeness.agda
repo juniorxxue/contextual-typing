@@ -9,7 +9,7 @@ open import STLC.Properties
 
 infix 3 _⊢_~_
 
-data _⊢_~_ : Context → Counter × Type → Hint → Set
+data _⊢_~_ : Env → Counter × Type → Context → Set
 
 data _⊢_~_ where
 
@@ -20,48 +20,47 @@ data _⊢_~_ where
     → Γ ⊢ ⟨ ∞ , A ⟩ ~ τ A
 
   ~S⇒ : ∀ {Γ j A B H e}
-    → Γ ⊢a □ ⇛ e ⇛ A
+    → Γ ⊢ □ ⇒ e ⇒ A
     → Γ ⊢ ⟨ j , B ⟩ ~ H
-    → Γ ⊢ ⟨ S j , A ⇒ B ⟩ ~ (⟦ e ⟧⇒ H)
+    → Γ ⊢ ⟨ S j , A `→ B ⟩ ~ ([ e ]↝ H)
 
 ~weaken : ∀ {Γ A j B H n n≤l}
   → Γ ⊢ ⟨ j , B ⟩ ~ H
   → Γ ↑ n [ n≤l ] A ⊢ ⟨ j , B ⟩ ~ (H ⇧ n)
 ~weaken ~Z = ~Z
 ~weaken ~∞ = ~∞
-~weaken (~S⇒ ⊢e j~H) = ~S⇒ (⊢a-weaken ⊢e) (~weaken j~H)
+~weaken (~S⇒ ⊢e j~H) = ~S⇒ (⊢weaken ⊢e) (~weaken j~H)
 
 complete : ∀ {Γ H j e A}
-  → Γ ⊢d j # e ⦂ A
+  → Γ ⊢ j # e ⦂ A
   → Γ ⊢ ⟨ j , A ⟩ ~ H
-  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢ H ⇒ e ⇒ A
 
 complete-≈ : ∀ {Γ A j H}
   → Γ ⊢ ⟨ j , A ⟩ ~ H
-  → Γ ⊢a A ≈ H
+  → Γ ⊢ A ≈ H
 
 complete-≈ ~Z = ≈□
 complete-≈ ~∞ = ≈τ
-complete-≈ (~S⇒ ⊢e j~H) = ≈hole (subsumption-0 ⊢e ≈τ) (complete-≈ j~H)
+complete-≈ (~S⇒ ⊢e j~H) = ≈term (subsumption-0 ⊢e ≈τ) (complete-≈ j~H)
 
-complete ⊢d-int ~Z = ⊢a-lit
-complete (⊢d-var x) ~Z = ⊢a-var x
-complete (⊢d-ann ⊢e) ~Z = ⊢a-ann (complete ⊢e ~∞)
-complete (⊢d-lam-∞ x) ~∞ = ⊢a-lam₁ (complete x ~∞)
-complete (⊢d-lam-n x) (~S⇒ ⊢e A~j) = ⊢a-lam₂ ⊢e (complete x (~weaken {n≤l = z≤n} A~j))
-complete (⊢d-app₁ ⊢e ⊢e₁) A~j = ⊢a-app (subsumption-0 (complete ⊢e ~Z) (≈hole (complete ⊢e₁ ~∞) (complete-≈ A~j)))
-complete (⊢d-app₂ ⊢e ⊢e₁) A~j = ⊢a-app (complete ⊢e (~S⇒ (complete ⊢e₁ ~Z) A~j))
-complete (⊢d-sub ⊢e neq) A~j = subsumption-0 (complete ⊢e ~Z) (complete-≈ A~j)
+complete ⊢int ~Z = ⊢lit
+complete (⊢var x) ~Z = ⊢var x
+complete (⊢ann ⊢e) ~Z = ⊢ann (complete ⊢e ~∞)
+complete (⊢lam-∞ x) ~∞ = ⊢lam₁ (complete x ~∞)
+complete (⊢lam-n x) (~S⇒ ⊢e A~j) = ⊢lam₂ ⊢e (complete x (~weaken {n≤l = z≤n} A~j))
+complete (⊢app₁ ⊢e ⊢e₁) A~j = ⊢app (subsumption-0 (complete ⊢e ~Z) (≈term (complete ⊢e₁ ~∞) (complete-≈ A~j)))
+complete (⊢app₂ ⊢e ⊢e₁) A~j = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ ~Z) A~j))
+complete (⊢sub ⊢e neq) A~j = subsumption-0 (complete ⊢e ~Z) (complete-≈ A~j)
 
 -- corollaries
-
 complete-inf : ∀ {Γ e A}
-  → Γ ⊢d Z # e ⦂ A
-  → Γ ⊢a □ ⇛ e ⇛ A
+  → Γ ⊢ Z # e ⦂ A
+  → Γ ⊢ □ ⇒ e ⇒ A
 complete-inf ⊢e = complete ⊢e ~Z
 
 
 complete-chk : ∀ {Γ e A}
-  → Γ ⊢d ∞ # e ⦂ A
-  → Γ ⊢a τ A ⇛ e ⇛ A
+  → Γ ⊢ ∞ # e ⦂ A
+  → Γ ⊢ τ A ⇒ e ⇒ A
 complete-chk ⊢e = complete ⊢e ~∞

@@ -6,26 +6,24 @@ open import STLC.Properties
 open import STLC.Algo
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                             Shift                              +--
---+                                                                +--
 ----------------------------------------------------------------------
 
-⇧-⇧-comm : ∀ H m n
+⇧-⇧-comm : ∀ Σ m n
   → m ≤n n
-  → H ⇧ m ⇧ suc n ≡ H ⇧ n ⇧ m
+  → Σ ⇧ m ⇧ suc n ≡ Σ ⇧ n ⇧ m
 ⇧-⇧-comm □ m n m≤n = refl
 ⇧-⇧-comm (τ A) m n m≤n = refl
-⇧-⇧-comm (⟦ e ⟧⇒ H) m n m≤n rewrite ↑-↑-comm e m n m≤n | ⇧-⇧-comm H m n m≤n = refl
+⇧-⇧-comm ([ e ]↝ Σ) m n m≤n rewrite ↑-↑-comm e m n m≤n | ⇧-⇧-comm Σ m n m≤n = refl
 
-⇧-⇩-id : ∀ H n
-  → H ⇧ n ⇩ n ≡ H
+⇧-⇩-id : ∀ Σ n
+  → Σ ⇧ n ⇩ n ≡ Σ
 ⇧-⇩-id □ n = refl
 ⇧-⇩-id (τ A) n = refl
-⇧-⇩-id (⟦ e ⟧⇒ H) n rewrite ↑-↓-id e n | ⇧-⇩-id H n = refl
+⇧-⇩-id ([ e ]↝ Σ) n rewrite ↑-↓-id e n | ⇧-⇩-id Σ n = refl
 
 infix 4 _~⇧~_
-data _~⇧~_ : Hint → ℕ → Set where
+data _~⇧~_ : Context → ℕ → Set where
 
   sdh-□ : ∀ {n}
     → □ ~⇧~ n
@@ -33,226 +31,217 @@ data _~⇧~_ : Hint → ℕ → Set where
   sdh-τ : ∀ {n A}
     → (τ A) ~⇧~ n
 
-  sdh-h : ∀ {n e H}
+  sdh-h : ∀ {n e Σ}
     → e ~↑~ n
-    → H ~⇧~ n
-    → (⟦ e ⟧⇒ H) ~⇧~ n
+    → Σ ~⇧~ n
+    → ([ e ]↝ Σ) ~⇧~ n
 
-⇧-shiftedh : ∀ {H n}
-  → (H ⇧ n) ~⇧~ n
+⇧-shiftedh : ∀ {Σ n}
+  → (Σ ⇧ n) ~⇧~ n
 ⇧-shiftedh {□} = sdh-□
 ⇧-shiftedh {τ A} = sdh-τ
-⇧-shiftedh {⟦ e ⟧⇒ H} = sdh-h ↑-shifted ⇧-shiftedh
+⇧-shiftedh {[ e ]↝ Σ} = sdh-h ↑-shifted ⇧-shiftedh
 
-⇧-shiftedh-n : ∀ {H m n}
+⇧-shiftedh-n : ∀ {Σ m n}
   → m ≤n suc n
-  → H ~⇧~ n
-  → (H ⇧ m) ~⇧~ suc n
+  → Σ ~⇧~ n
+  → (Σ ⇧ m) ~⇧~ suc n
 ⇧-shiftedh-n {□} m≤n sdh = sdh-□
 ⇧-shiftedh-n {τ A} m≤n sdh = sdh-τ
-⇧-shiftedh-n {⟦ e ⟧⇒ H} m≤n (sdh-h sd sdh) = sdh-h (↑-shifted-n m≤n sd) (⇧-shiftedh-n m≤n sdh)
+⇧-shiftedh-n {[ e ]↝ Σ} m≤n (sdh-h sd sdh) = sdh-h (↑-shifted-n m≤n sd) (⇧-shiftedh-n m≤n sdh)
 
-⇩-⇧-comm : ∀ H m n
+⇩-⇧-comm : ∀ Σ m n
   → m ≤n n
-  → H ~⇧~ n
-  → H ⇩ n ⇧ m ≡ H ⇧ m ⇩ (suc n)
+  → Σ ~⇧~ n
+  → Σ ⇩ n ⇧ m ≡ Σ ⇧ m ⇩ (suc n)
 ⇩-⇧-comm (□) m n m≤n sdh = refl
 ⇩-⇧-comm (τ A) m n m≤n sdh = refl
-⇩-⇧-comm (⟦ e ⟧⇒ H) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm H m n m≤n sdh = refl
+⇩-⇧-comm ([ e ]↝ Σ) m n m≤n (sdh-h sd sdh) rewrite ↓-↑-comm e m n m≤n sd rewrite ⇩-⇧-comm Σ m n m≤n sdh = refl
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                           Weakening                            +--
---+                                                                +--
 ----------------------------------------------------------------------
 
-↑-pv : ∀ {e n}
-  → pv e
-  → pv (e ↑ n)
-↑-pv pv-lit = pv-lit
-↑-pv pv-var = pv-var
-↑-pv pv-ann = pv-ann
+↑-gc : ∀ {e n}
+  → GenericConsumer e
+  → GenericConsumer (e ↑ n)
+↑-gc gc-lit = gc-lit
+↑-gc gc-var = gc-var
+↑-gc gc-ann = gc-ann
 
-↓-pv : ∀ {e n}
-  → pv e
-  → pv (e ↓ n)
-↓-pv pv-lit = pv-lit
-↓-pv pv-var = pv-var
-↓-pv pv-ann = pv-ann
+↓-gc : ∀ {e n}
+  → GenericConsumer e
+  → GenericConsumer (e ↓ n)
+↓-gc gc-lit = gc-lit
+↓-gc gc-var = gc-var
+↓-gc gc-ann = gc-ann
 
-≈a-weaken : ∀ {Γ A B H n n≤l}
-  → Γ ⊢a B ≈ H
-  → Γ ↑ n [ n≤l ] A ⊢a B ≈ (H ⇧ n)
+≈weaken : ∀ {Γ A B Σ n n≤l}
+  → Γ ⊢ B ≈ Σ
+  → Γ ↑ n [ n≤l ] A ⊢ B ≈ (Σ ⇧ n)
 
-⊢a-weaken : ∀ {Γ e H A B n n≤l}
-  → Γ ⊢a H ⇛ e ⇛ B
-  → Γ ↑ n [ n≤l ] A ⊢a H ⇧ n ⇛ e ↑ n ⇛ B
+⊢weaken : ∀ {Γ e Σ A B n n≤l}
+  → Γ ⊢ Σ ⇒ e ⇒ B
+  → Γ ↑ n [ n≤l ] A ⊢ Σ ⇧ n ⇒ e ↑ n ⇒ B
 
-≈a-weaken ≈□ = ≈□
-≈a-weaken ≈τ = ≈τ
-≈a-weaken (≈hole ⊢e B≈H) = ≈hole (⊢a-weaken ⊢e) (≈a-weaken B≈H)
+≈weaken ≈□ = ≈□
+≈weaken ≈τ = ≈τ
+≈weaken (≈term ⊢e B≈Σ) = ≈term (⊢weaken ⊢e) (≈weaken B≈Σ)
 
-⇧-⇧-comm-0 : ∀ H n
-  → H ⇧ n ⇧ 0 ≡ H ⇧ 0 ⇧ (suc n)
-⇧-⇧-comm-0 H n rewrite ⇧-⇧-comm H 0 n z≤n = refl
+⇧-⇧-comm-0 : ∀ Σ n
+  → Σ ⇧ n ⇧ 0 ≡ Σ ⇧ 0 ⇧ (suc n)
+⇧-⇧-comm-0 Σ n rewrite ⇧-⇧-comm Σ 0 n z≤n = refl
 
-⊢a-weaken ⊢a-lit = ⊢a-lit
-⊢a-weaken {n≤l = n≤l} (⊢a-var x∈Γ) = ⊢a-var (∋-weaken x∈Γ n≤l)
-⊢a-weaken (⊢a-ann ⊢e) = ⊢a-ann (⊢a-weaken ⊢e)
-⊢a-weaken (⊢a-app ⊢e) = ⊢a-app (⊢a-weaken ⊢e)
-⊢a-weaken {n≤l = n≤l} (⊢a-lam₁ ⊢e) = ⊢a-lam₁ (⊢a-weaken {n≤l = s≤s n≤l} ⊢e)
-⊢a-weaken {H = ⟦ _ ⟧⇒ H} {A = A} {n = n} {n≤l = n≤l} (⊢a-lam₂ ⊢e ⊢f) with ⊢a-weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
-... | ind-f rewrite sym (⇧-⇧-comm-0 H n) = ⊢a-lam₂ (⊢a-weaken ⊢e) ind-f
-⊢a-weaken (⊢a-sub ⊢e B≈H p H≢□) = ⊢a-sub (⊢a-weaken ⊢e) (≈a-weaken B≈H) (↑-pv p) (ts H≢□)
-  where ts : ∀ {H n} → ¬□ H → ¬□ (H ⇧ n)
+⊢weaken ⊢lit = ⊢lit
+⊢weaken {n≤l = n≤l} (⊢var x∈Γ) = ⊢var (∋-weaken x∈Γ n≤l)
+⊢weaken (⊢ann ⊢e) = ⊢ann (⊢weaken ⊢e)
+⊢weaken (⊢app ⊢e) = ⊢app (⊢weaken ⊢e)
+⊢weaken {n≤l = n≤l} (⊢lam₁ ⊢e) = ⊢lam₁ (⊢weaken {n≤l = s≤s n≤l} ⊢e)
+⊢weaken {Σ = [ _ ]↝ Σ} {A = A} {n = n} {n≤l = n≤l} (⊢lam₂ ⊢e ⊢f) with ⊢weaken {A = A} {n = suc n} {n≤l = s≤s n≤l} ⊢f
+... | ind-f rewrite sym (⇧-⇧-comm-0 Σ n) = ⊢lam₂ (⊢weaken ⊢e) ind-f
+⊢weaken (⊢sub ⊢e B≈Σ p Σ≢□) = ⊢sub (⊢weaken ⊢e) (≈weaken B≈Σ) (↑-gc p) (ts Σ≢□)
+  where ts : ∀ {Σ n} → ¬□ Σ → ¬□ (Σ ⇧ n)
         ts {τ x} nh = nh
-        ts {⟦ x ⟧⇒ H} nh = ¬□-term
+        ts {[ x ]↝ Σ} nh = ¬□-term
 
-spl-weaken : ∀ {H A es T As A' n}
-  → ❪ H , A ❫↣❪ es , T , As , A' ❫
-  → ❪ H ⇧ n , A ❫↣❪ map (_↑ n) es , T , As , A' ❫
+spl-weaken : ∀ {Σ A es T As A' n}
+  → ⟦ Σ , A ⟧→⟦ es , T , As , A' ⟧
+  → ⟦ Σ ⇧ n , A ⟧→⟦ map (_↑ n) es , T , As , A' ⟧
 spl-weaken {T = .□} none-□ = none-□
 spl-weaken {T = .(τ _)} none-τ = none-τ
 spl-weaken (have spl) = have (spl-weaken spl)
 
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                         Strengthening                          +--
---+                                                                +--
 ----------------------------------------------------------------------
 
-≈a-strengthen : ∀ {Γ A H n}
-  → Γ ⊢a A ≈ H
-  → H ~⇧~ n
+≈strengthen : ∀ {Γ A Σ n}
+  → Γ ⊢ A ≈ Σ
+  → Σ ~⇧~ n
   → (n≤l : n ≤n length Γ)
-  → Γ ↓ n [ n≤l ] ⊢a A ≈ (H ⇩ n)
+  → Γ ↓ n [ n≤l ] ⊢ A ≈ (Σ ⇩ n)
   
-⊢a-strengthen : ∀ {Γ A H n e}
-  → Γ ⊢a H ⇛ e ⇛ A -- H, e is shifted
+⊢strengthen : ∀ {Γ A Σ n e}
+  → Γ ⊢ Σ ⇒ e ⇒ A -- Σ, e is shifted
   → e ~↑~ n
-  → H ~⇧~ n
+  → Σ ~⇧~ n
   → (n≤l : n ≤n length Γ)
-  → Γ ↓ n [ n≤l ] ⊢a (H ⇩ n) ⇛ e ↓ n ⇛ A
+  → Γ ↓ n [ n≤l ] ⊢ (Σ ⇩ n) ⇒ e ↓ n ⇒ A
 
-≈a-strengthen ≈□ Hn n≤l = ≈□
-≈a-strengthen ≈τ Hn n≤l = ≈τ
-≈a-strengthen (≈hole ⊢e A≈H) (sdh-h x Hn) n≤l = ≈hole (⊢a-strengthen ⊢e x sdh-τ n≤l) (≈a-strengthen A≈H Hn n≤l)
+≈strengthen ≈□ Σn n≤l = ≈□
+≈strengthen ≈τ Σn n≤l = ≈τ
+≈strengthen (≈term ⊢e A≈Σ) (sdh-h x Σn) n≤l = ≈term (⊢strengthen ⊢e x sdh-τ n≤l) (≈strengthen A≈Σ Σn n≤l)
 
-⊢a-strengthen ⊢a-lit en Hn n≤l = ⊢a-lit
-⊢a-strengthen (⊢a-var x∈Γ) en Hn n≤l = ⊢a-var (∋-strenghthen x∈Γ en n≤l)
-⊢a-strengthen (⊢a-ann ⊢e) (sd-ann en) Hn n≤l = ⊢a-ann (⊢a-strengthen ⊢e en sdh-τ n≤l)
-⊢a-strengthen (⊢a-app ⊢e) (sd-app en en₁) Hn n≤l = ⊢a-app (⊢a-strengthen ⊢e en (sdh-h en₁ Hn) n≤l)
-⊢a-strengthen (⊢a-lam₁ ⊢e) (sd-lam sd) sdh n≤l = ⊢a-lam₁ (⊢a-strengthen ⊢e sd sdh-τ (s≤s n≤l))
-⊢a-strengthen {H = ⟦ _ ⟧⇒ H} {n = n} (⊢a-lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢a-strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
-... | ind-f rewrite sym (⇩-⇧-comm H 0 n z≤n sdh) = ⊢a-lam₂ (⊢a-strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
-⊢a-strengthen (⊢a-sub ⊢e A≈H p H≢□) en Hn n≤l = ⊢a-sub (⊢a-strengthen ⊢e en sdh-□ n≤l) (≈a-strengthen A≈H Hn n≤l) (↓-pv p) (ts H≢□)
-  where ts : ∀ {H n} → ¬□ H → ¬□ (H ⇩ n)
+⊢strengthen ⊢lit en Σn n≤l = ⊢lit
+⊢strengthen (⊢var x∈Γ) en Σn n≤l = ⊢var (∋-strenghthen x∈Γ en n≤l)
+⊢strengthen (⊢ann ⊢e) (sd-ann en) Σn n≤l = ⊢ann (⊢strengthen ⊢e en sdh-τ n≤l)
+⊢strengthen (⊢app ⊢e) (sd-app en en₁) Σn n≤l = ⊢app (⊢strengthen ⊢e en (sdh-h en₁ Σn) n≤l)
+⊢strengthen (⊢lam₁ ⊢e) (sd-lam sd) sdh n≤l = ⊢lam₁ (⊢strengthen ⊢e sd sdh-τ (s≤s n≤l))
+⊢strengthen {Σ = [ _ ]↝ Σ} {n = n} (⊢lam₂ ⊢e ⊢f) (sd-lam sd₁) (sdh-h sd₂ sdh) n≤l with ⊢strengthen ⊢f sd₁ (⇧-shiftedh-n z≤n sdh) (s≤s n≤l)
+... | ind-f rewrite sym (⇩-⇧-comm Σ 0 n z≤n sdh) = ⊢lam₂ (⊢strengthen ⊢e sd₂ sdh-□ n≤l) ind-f
+⊢strengthen (⊢sub ⊢e A≈Σ p Σ≢□) en Σn n≤l = ⊢sub (⊢strengthen ⊢e en sdh-□ n≤l) (≈strengthen A≈Σ Σn n≤l) (↓-gc p) (ts Σ≢□)
+  where ts : ∀ {Σ n} → ¬□ Σ → ¬□ (Σ ⇩ n)
         ts {τ x} nh = nh
-        ts {⟦ x ⟧⇒ H} nh = ¬□-term
+        ts {[ x ]↝ Σ} nh = ¬□-term
 
-≈a-strengthen-0 : ∀ {Γ A B H}
-  → Γ , A ⊢a B ≈ H ⇧ 0
-  → Γ ⊢a B ≈ H
-≈a-strengthen-0 {H = H} B≤H with ≈a-strengthen {n = 0} B≤H ⇧-shiftedh z≤n
-... | ind-h rewrite ⇧-⇩-id H 0 = ind-h  
+≈a-strengthen-0 : ∀ {Γ A B Σ}
+  → Γ , A ⊢ B ≈ Σ ⇧ 0
+  → Γ ⊢ B ≈ Σ
+≈a-strengthen-0 {Σ = Σ} B≤Σ with ≈strengthen {n = 0} B≤Σ ⇧-shiftedh z≤n
+... | ind-h rewrite ⇧-⇩-id Σ 0 = ind-h  
 
-⊢a-strengthen-0 : ∀ {Γ H e A B}
-  → Γ , A ⊢a H ⇧ 0 ⇛ e ↑ 0 ⇛ B
-  → Γ ⊢a H ⇛ e ⇛ B
-⊢a-strengthen-0 {H = H} {e = e} ⊢e with ⊢a-strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
-... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id H 0  = ind-e
+⊢-strengthen-0 : ∀ {Γ Σ e A B}
+  → Γ , A ⊢ Σ ⇧ 0 ⇒ e ↑ 0 ⇒ B
+  → Γ ⊢ Σ ⇒ e ⇒ B
+⊢-strengthen-0 {Σ = Σ} {e = e} ⊢e with ⊢strengthen {n = 0} ⊢e ↑-shifted ⇧-shiftedh z≤n
+... | ind-e rewrite ↑-↓-id e 0 | ⇧-⇩-id Σ 0  = ind-e
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                      General Subsumption                       +--
---+                                                                +--
 ----------------------------------------------------------------------
 
+-- a aux judgment to prove the general subsumption
+-- chain e̅ Σ Σ' simply put the e̅ onto Σ and the result is Σ'
+-- thus the variant would be [ e̅ ]↝ Σ ≡ Σ'
+data chain : List Term → Context → Context → Set where
+  ch-none : ∀ {Σ}
+    → chain [] Σ Σ
 
-data chain : List Term → Hint → Hint → Set where
-  ch-none : ∀ {H}
-    → chain [] H H
+  ch-cons : ∀ {Σ e es Σ'}
+    → chain es Σ Σ'
+    → chain (e ∷ es) Σ ([ e ]↝ Σ')
 
-  ch-cons : ∀ {H e es H'}
-    → chain es H H'
-    → chain (e ∷ es) H (⟦ e ⟧⇒ H')
-
-ch-weaken : ∀ {es H' H n}
-  → chain es H' H
-  → chain (map (_↑ n) es) (H' ⇧ n) (H ⇧ n)
+ch-weaken : ∀ {es Σ' Σ n}
+  → chain es Σ' Σ
+  → chain (map (_↑ n) es) (Σ' ⇧ n) (Σ ⇧ n)
 ch-weaken ch-none = ch-none
 ch-weaken (ch-cons ch) = ch-cons (ch-weaken ch)
 
-⊢a-to-≈a : ∀ {Γ e H A}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a A ≈ H
 
-subsumption : ∀ {Γ H e A H' H'' es As A'}
-  → Γ ⊢a H ⇛ e ⇛ A
-  → ❪ H , A ❫↣❪ es , □ , As , A' ❫
-  → chain es H'' H'
-  → Γ ⊢a A ≈ H'
-  → Γ ⊢a H' ⇛ e ⇛ A
+-- the typing implies a mathcing
+-- we prove it simultaneously with general subsumption
+⊢to≈ : ∀ {Γ e Σ A}
+  → Γ ⊢ Σ ⇒ e ⇒ A
+  → Γ ⊢ A ≈ Σ
 
-subsumption {H' = □} ⊢e none-□ ch-none ≈□ = ⊢e
-subsumption {H' = τ _} ⊢a-lit spl ch A≤H' = ⊢a-sub ⊢a-lit A≤H' pv-lit ¬□-τ
-subsumption {H' = τ _} (⊢a-var x) spl ch A≤H' = ⊢a-sub (⊢a-var x) A≤H' pv-var ¬□-τ
-subsumption {H' = τ _} (⊢a-ann ⊢e) spl ch A≤H' = ⊢a-sub (⊢a-ann ⊢e) A≤H' pv-ann ¬□-τ
-subsumption {H' = τ _} (⊢a-app ⊢e) spl ch A≤H' with ⊢a-to-≈a ⊢e
-... | ≈hole x r = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≈hole x A≤H'))
-subsumption {H' = τ _} (⊢a-lam₂ ⊢e ⊢e₁) (have spl) () A≤H'
-subsumption {H' = τ _} (⊢a-sub ⊢e x x₁ x₂) spl ch A≤H' = ⊢a-sub ⊢e A≤H' x₁ ¬□-τ
-subsumption {H' = ⟦ e ⟧⇒ H'} (⊢a-var x) spl ch A≤H' = ⊢a-sub (⊢a-var x) A≤H' pv-var ¬□-term
-subsumption {H' = ⟦ e ⟧⇒ H'} (⊢a-ann ⊢e) spl ch A≤H' = ⊢a-sub (⊢a-ann ⊢e) A≤H' pv-ann ¬□-term
-subsumption {H' = ⟦ e ⟧⇒ H'} (⊢a-app ⊢e) spl ch A≤H' with ⊢a-to-≈a ⊢e
-... | ≈hole x r = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≈hole x A≤H'))
-subsumption {H' = ⟦ _ ⟧⇒ H'} (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≤H') =
-  ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈a-weaken {n≤l = z≤n} A≤H'))
-subsumption {H' = ⟦ e ⟧⇒ H'} (⊢a-sub ⊢e x x₁ x₂) spl ch A≤H' = ⊢a-sub ⊢e A≤H' x₁ ¬□-term
+-- the general subsumption
+-- the intuition is we extract all the terms out of the context: e̅
+-- then chain this argument to some arbitrary context Σ''
+-- if the new Σ' matches the type A, then the e can infers A under such context
+subsumption : ∀ {Γ Σ e A Σ' Σ'' es As A'}
+  → Γ ⊢ Σ ⇒ e ⇒ A
+  → ⟦ Σ , A ⟧→⟦ es , □ , As , A' ⟧
+  → chain es Σ'' Σ'
+  → Γ ⊢ A ≈ Σ'
+  → Γ ⊢ Σ' ⇒ e ⇒ A
+
+subsumption {Σ' = □} ⊢e none-□ ch-none ≈□ = ⊢e
+subsumption {Σ' = τ _} ⊢lit spl ch A≤Σ' = ⊢sub ⊢lit A≤Σ' gc-lit ¬□-τ
+subsumption {Σ' = τ _} (⊢var x) spl ch A≤Σ' = ⊢sub (⊢var x) A≤Σ' gc-var ¬□-τ
+subsumption {Σ' = τ _} (⊢ann ⊢e) spl ch A≤Σ' = ⊢sub (⊢ann ⊢e) A≤Σ' gc-ann ¬□-τ
+subsumption {Σ' = τ _} (⊢app ⊢e) spl ch A≤Σ' with ⊢to≈ ⊢e
+... | ≈term x r = ⊢app (subsumption ⊢e (have spl) (ch-cons ch) (≈term x A≤Σ'))
+subsumption {Σ' = τ _} (⊢lam₂ ⊢e ⊢e₁) (have spl) () A≤Σ'
+subsumption {Σ' = τ _} (⊢sub ⊢e x x₁ x₂) spl ch A≤Σ' = ⊢sub ⊢e A≤Σ' x₁ ¬□-τ
+subsumption {Σ' = [ e ]↝ Σ'} (⊢var x) spl ch A≤Σ' = ⊢sub (⊢var x) A≤Σ' gc-var ¬□-term
+subsumption {Σ' = [ e ]↝ Σ'} (⊢ann ⊢e) spl ch A≤Σ' = ⊢sub (⊢ann ⊢e) A≤Σ' gc-ann ¬□-term
+subsumption {Σ' = [ e ]↝ Σ'} (⊢app ⊢e) spl ch A≤Σ' with ⊢to≈ ⊢e
+... | ≈term x r = ⊢app (subsumption ⊢e (have spl) (ch-cons ch) (≈term x A≤Σ'))
+subsumption {Σ' = [ _ ]↝ Σ'} (⊢lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈term x A≤Σ') =
+  ⊢lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈weaken {n≤l = z≤n} A≤Σ'))
+subsumption {Σ' = [ e ]↝ Σ'} (⊢sub ⊢e x x₁ x₂) spl ch A≤Σ' = ⊢sub ⊢e A≤Σ' x₁ ¬□-term
   
-⊢a-to-≈a ⊢a-lit = ≈□
-⊢a-to-≈a (⊢a-var x) = ≈□
-⊢a-to-≈a (⊢a-ann ⊢e) = ≈□
-⊢a-to-≈a (⊢a-app ⊢e) with ⊢a-to-≈a ⊢e
-... | ≈hole ⊢e A≈H = A≈H
-⊢a-to-≈a (⊢a-lam₁ ⊢e) with ⊢a-to-≈a ⊢e
+⊢to≈ ⊢lit = ≈□
+⊢to≈ (⊢var x) = ≈□
+⊢to≈ (⊢ann ⊢e) = ≈□
+⊢to≈ (⊢app ⊢e) with ⊢to≈ ⊢e
+... | ≈term ⊢e A≈Σ = A≈Σ
+⊢to≈ (⊢lam₁ ⊢e) with ⊢to≈ ⊢e
 ... | ≈τ = ≈τ
-⊢a-to-≈a (⊢a-lam₂ ⊢e ⊢f) = ≈hole (rebase ⊢e ≈τ) (≈a-strengthen-0 (⊢a-to-≈a ⊢f))
+⊢to≈ (⊢lam₂ ⊢e ⊢f) = ≈term (rebase ⊢e ≈τ) (≈a-strengthen-0 (⊢to≈ ⊢f))
   where
     rebase : ∀ {Γ e A B}
-      → Γ ⊢a □  ⇛ e ⇛ B
-      → Γ ⊢a B ≈ τ A
-      → Γ ⊢a τ A ⇛ e ⇛ B
+      → Γ ⊢ □  ⇒ e ⇒ B
+      → Γ ⊢ B ≈ τ A
+      → Γ ⊢ τ A ⇒ e ⇒ B
     rebase ⊢f B≤A = subsumption ⊢f none-□ ch-none B≤A
-⊢a-to-≈a (⊢a-sub ⊢e x x₁ H≢□) = x
+⊢to≈ (⊢sub ⊢e x x₁ Σ≢□) = x
 
-{-
-subsumption ⊢a-lit spl ch A≈H' = ⊢a-sub ⊢a-lit A≈H' pv-lit
-subsumption (⊢a-var x) spl ch A≈H' = ⊢a-sub (⊢a-var x) A≈H' pv-var
-subsumption (⊢a-ann ⊢e) spl ch A≈H' = ⊢a-sub (⊢a-ann ⊢e) A≈H' pv-ann
-subsumption (⊢a-app ⊢e) spl ch A≈H with ⊢a-to-≈a ⊢e
-... | ≈hole ⊢e' A≈H' = ⊢a-app (subsumption ⊢e (have spl) (ch-cons ch) (≈hole ⊢e' A≈H))
-subsumption (⊢a-lam₂ ⊢e ⊢e₁) (have spl) (ch-cons ch) (≈hole x A≈H') =
-  ⊢a-lam₂ ⊢e (subsumption ⊢e₁ (spl-weaken spl) (ch-weaken ch) (≈a-weaken {n≤l = z≤n} A≈H'))
-subsumption (⊢a-sub ⊢e x x₁) spl ch A≈H' = ⊢a-sub ⊢e A≈H' x₁
--}
-
-
-subsumption-0 : ∀ {Γ H e A}
-  → Γ ⊢a □  ⇛ e ⇛ A
-  → Γ ⊢a A ≈ H
-  → Γ ⊢a H ⇛ e ⇛ A
-subsumption-0 ⊢e A≈H = subsumption ⊢e none-□ ch-none A≈H  
+-- the subsumption rule without side conditions can be derived
+subsumption-0 : ∀ {Γ Σ e A}
+  → Γ ⊢ □  ⇒ e ⇒ A
+  → Γ ⊢ A ≈ Σ
+  → Γ ⊢ Σ ⇒ e ⇒ A
+subsumption-0 ⊢e A≈Σ = subsumption ⊢e none-□ ch-none A≈Σ  
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                             Check                              +--
---+                                                                +--
 ----------------------------------------------------------------------
 
-⊢a-hint-self : ∀ {Γ e A B}
-  → Γ ⊢a τ A ⇛ e ⇛ B
+-- if the context is a full type, then the inferred type should be same with the context
+⊢context-full-type : ∀ {Γ e A B}
+  → Γ ⊢ τ A ⇒ e ⇒ B
   → A ≡ B
-⊢a-hint-self ⊢e with ⊢a-to-≈a ⊢e
+⊢context-full-type ⊢e with ⊢to≈ ⊢e
 ... | ≈τ = refl

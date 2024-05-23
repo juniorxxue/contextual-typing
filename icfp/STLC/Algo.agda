@@ -3,113 +3,114 @@ module STLC.Algo where
 open import STLC.Prelude
 open import STLC.Common
 
-infixr 8 ⟦_⟧⇒_
+infixr 8 [_]↝_
 
-data Hint : Set where
-  □ : Hint
-  τ : Type → Hint
-  ⟦_⟧⇒_ : Term → Hint → Hint
+data Context : Set where
+  □ : Context -- empty context
+  τ_ : Type → Context -- full type context
+  [_]↝_ : Term → Context → Context -- application term context
 
-data ¬□ : Hint → Set where
+-- a context is non-empty
+data ¬□ : Context → Set where
   ¬□-τ : ∀ {A} → ¬□ (τ A)
-  ¬□-term : ∀ {e H} → ¬□ (⟦ e ⟧⇒ H)
+  ¬□-term : ∀ {e Σ} → ¬□ ([ e ]↝ Σ)
 
+-- term shift onto context
 infixl 7 _⇧_
-_⇧_ : Hint → ℕ → Hint
+_⇧_ : Context → ℕ → Context
 τ A ⇧ n = τ A
 □ ⇧ n = □
-(⟦ e ⟧⇒ H) ⇧ n = ⟦ e ↑ n ⟧⇒ (H ⇧ n)
+([ e ]↝ Σ) ⇧ n = [ e ↑ n ]↝ (Σ ⇧ n)
 
+-- term unshift onto context
 infixl 7 _⇩_
-_⇩_ : Hint → ℕ → Hint
+_⇩_ : Context → ℕ → Context
 τ A ⇩ n = τ A
 □ ⇩ n = □
-(⟦ e ⟧⇒ H) ⇩ n = ⟦ e ↓ n ⟧⇒ (H ⇩ n)
+([ e ]↝ Σ) ⇩ n = [ e ↓ n ]↝ (Σ ⇩ n)
 
-data pv : Term → Set where
+-- generic application consumer
+data GenericConsumer : Term → Set where
+  gc-lit : ∀ {i} → GenericConsumer (lit i)
+  gc-var : ∀ {x} → GenericConsumer (` x)
+  gc-ann : ∀ {e A} → GenericConsumer (e ⦂ A)
 
-  pv-lit : ∀ {i}
-    → pv (lit i)
+-- matching
+infix 4 _⊢_≈_
+-- typing
+infix 4 _⊢_⇒_⇒_
+-- two judgments are mutually dependent
+data _⊢_≈_ : Env → Type → Context → Set
+data _⊢_⇒_⇒_ : Env → Context → Term → Type → Set
 
-  pv-var : ∀ {x}
-    → pv (` x)
-
-  pv-ann : ∀ {e A}
-    → pv (e ⦂ A)
-  
-  
-infix 4 _⊢a_≈_
-infix 4 _⊢a_⇛_⇛_ 
- 
-data _⊢a_≈_ : Context → Type → Hint → Set
-data _⊢a_⇛_⇛_ : Context → Hint → Term → Type → Set
-
-data _⊢a_≈_ where
+data _⊢_≈_ where
 
   ≈□ : ∀ {Γ A}
-    → Γ ⊢a A ≈ □
+    → Γ ⊢ A ≈ □
 
   ≈τ : ∀ {Γ A}
-    → Γ ⊢a A ≈ τ A
+    → Γ ⊢ A ≈ τ A
 
-  ≈hole : ∀ {Γ H e A B C}
-    → Γ ⊢a τ A ⇛ e ⇛ C
-    → Γ ⊢a B ≈ H
-    → Γ ⊢a (A ⇒ B) ≈ ⟦ e ⟧⇒ H
+  ≈term : ∀ {Γ Σ e A B C}
+    → Γ ⊢ τ A ⇒ e ⇒ C
+    → Γ ⊢ B ≈ Σ
+    → Γ ⊢ (A `→ B) ≈ [ e ]↝ Σ
 
-data _⊢a_⇛_⇛_ where
+data _⊢_⇒_⇒_ where
 
-  ⊢a-lit : ∀ {Γ n}
-    → Γ ⊢a □ ⇛ lit n ⇛ Int
+  ⊢lit : ∀ {Γ n}
+    → Γ ⊢ □ ⇒ lit n ⇒ Int
 
-  ⊢a-var : ∀ {Γ A x}
+  ⊢var : ∀ {Γ A x}
     → Γ ∋ x ⦂ A
-    → Γ ⊢a □ ⇛ ` x ⇛ A
+    → Γ ⊢ □ ⇒ ` x ⇒ A
 
-  ⊢a-ann : ∀ {Γ e A B}
-    → Γ ⊢a τ A ⇛ e ⇛ B
-    → Γ ⊢a □ ⇛ e ⦂ A ⇛ A
+  ⊢ann : ∀ {Γ e A B}
+    → Γ ⊢ τ A ⇒ e ⇒ B
+    → Γ ⊢ □ ⇒ e ⦂ A ⇒ A
     
-  ⊢a-app : ∀ {Γ e₁ e₂ H A B}
-    → Γ ⊢a ⟦ e₂ ⟧⇒ H ⇛ e₁ ⇛ A ⇒ B
-    → Γ ⊢a H ⇛ e₁ · e₂ ⇛ B
+  ⊢app : ∀ {Γ e₁ e₂ Σ A B}
+    → Γ ⊢ [ e₂ ]↝ Σ ⇒ e₁ ⇒ A `→ B
+    → Γ ⊢ Σ ⇒ e₁ · e₂ ⇒ B
 
-  ⊢a-lam₁ : ∀ {Γ e A B C}
-    → Γ , A ⊢a τ B ⇛ e ⇛ C
-    → Γ ⊢a τ (A ⇒ B) ⇛ ƛ e ⇛ A ⇒ C
+  ⊢lam₁ : ∀ {Γ e A B C}
+    → Γ , A ⊢ τ B ⇒ e ⇒ C
+    → Γ ⊢ τ (A `→ B) ⇒ ƛ e ⇒ A `→ C
 
-  ⊢a-lam₂ : ∀ {Γ e₁ e A B H}
-    → Γ ⊢a □ ⇛ e₁ ⇛ A
-    → Γ , A ⊢a (H ⇧ 0) ⇛ e ⇛ B
-    → Γ ⊢a ⟦ e₁ ⟧⇒ H ⇛ ƛ e ⇛ A ⇒ B
+  ⊢lam₂ : ∀ {Γ e₁ e A B Σ}
+    → Γ ⊢ □ ⇒ e₁ ⇒ A
+    → Γ , A ⊢ (Σ ⇧ 0) ⇒ e ⇒ B
+    → Γ ⊢ [ e₁ ]↝ Σ ⇒ ƛ e ⇒ A `→ B
 
-  ⊢a-sub : ∀ {Γ e A H}
-    → Γ ⊢a □ ⇛ e ⇛ A
-    → Γ ⊢a A ≈ H
-    → pv e
-    → ¬□ H
-    → Γ ⊢a H ⇛ e ⇛ A
+  ⊢sub : ∀ {Γ e A Σ}
+    → Γ ⊢ □ ⇒ e ⇒ A
+    → Γ ⊢ A ≈ Σ
+    → GenericConsumer e
+    → ¬□ Σ
+    → Γ ⊢ Σ ⇒ e ⇒ A
 
 ----------------------------------------------------------------------
---+                                                                +--
---+                           Transform                            +--
---+                                                                +--
+--+                           Splitting                            +--
 ----------------------------------------------------------------------
 
-_▻_ : Term → List Term → Term
-e ▻ [] = e
-e₁ ▻ (e₂ ∷ es) = (e₁ · e₂) ▻ es
+{-
+a splitting judgment for soundness, and some other properties
+⟦ Σ , A ⟧→⟦ e̅ , Σ' , A̅ , A' ⟧
+Σ and A are parallely splitted,
+Σ is splitted into (e̅ , Σ')
+A is splitted into (A̅ , A' ⟧
+thus there's an informal invariant, Σ ≡ e̅ ↝ Σ', A ≡ A̅ → A' where Σ' is empty or a full type
+-}
 
-infix 4 ❪_,_❫↣❪_,_,_,_❫
-
-data ❪_,_❫↣❪_,_,_,_❫ : Hint → Type → List Term → Hint → List Type → Type → Set where
+infix 4 ⟦_,_⟧→⟦_,_,_,_⟧
+data ⟦_,_⟧→⟦_,_,_,_⟧ : Context → Type → List Term → Context → List Type → Type → Set where
 
   none-□ : ∀ {A}
-    → ❪ □ , A ❫↣❪ [] , □ , [] , A ❫
+    → ⟦ □ , A ⟧→⟦ [] , □ , [] , A ⟧
 
   none-τ : ∀ {A B}
-    → ❪ τ A , B ❫↣❪ [] , τ A , [] , B ❫
+    → ⟦ τ A , B ⟧→⟦ [] , τ A , [] , B ⟧
 
-  have : ∀ {e H A B es A' B' Bs}
-    → ❪ H , B ❫↣❪ es , A' , Bs , B' ❫
-    → ❪ ⟦ e ⟧⇒ H , A ⇒ B ❫↣❪ e ∷ es , A' , A ∷ Bs , B' ❫
+  have : ∀ {e Σ A B e̅ Σ' A' A̅}
+    → ⟦ Σ , B ⟧→⟦ e̅ , Σ' , A̅ , A' ⟧
+    → ⟦ [ e ]↝ Σ , A `→ B ⟧→⟦ e ∷ e̅ , Σ' , A ∷ A̅ , A' ⟧

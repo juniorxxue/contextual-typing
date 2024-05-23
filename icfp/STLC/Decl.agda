@@ -9,49 +9,53 @@ open import STLC.Common
 --+                                                                +--
 ----------------------------------------------------------------------
 
+-- counter, different from n in paper, we use j to represent
 data Counter : Set where
   ∞ : Counter
   Z : Counter
   S : Counter → Counter
 
+-- nonZero counter, used in subsumption rule
 data ¬Z : Counter → Set where
   ¬Z-∞ : ¬Z ∞
   ¬Z-S : ∀ {j} → ¬Z (S j)
 
-infix 4 _⊢d_#_⦂_
+infix 4 _⊢_#_⦂_
 
-data _⊢d_#_⦂_ : Context → Counter → Term → Type → Set where
+data _⊢_#_⦂_ : Env → Counter → Term → Type → Set where
 
-  ⊢d-int : ∀ {Γ i}
-    → Γ ⊢d Z # (lit i) ⦂ Int
+  ⊢int : ∀ {Γ i}
+    → Γ ⊢ Z # (lit i) ⦂ Int
 
-  ⊢d-var : ∀ {Γ x A}
+  ⊢var : ∀ {Γ x A}
     → Γ ∋ x ⦂ A
-    → Γ ⊢d Z # ` x ⦂ A
+    → Γ ⊢ Z # ` x ⦂ A
 
-  ⊢d-ann : ∀ {Γ e A}
-    → Γ ⊢d ∞ # e ⦂ A
-    → Γ ⊢d Z # (e ⦂ A) ⦂ A
+  ⊢ann : ∀ {Γ e A}
+    → Γ ⊢ ∞ # e ⦂ A
+    → Γ ⊢ Z # (e ⦂ A) ⦂ A
 
-  ⊢d-lam-∞ : ∀ {Γ e A B}
-    → Γ , A ⊢d ∞ # e ⦂ B
-    → Γ ⊢d ∞ # (ƛ e) ⦂ A ⇒ B
+  -- instead of meta-operations on paper, we split it into two rules in Agda
+  -- to make it more structrual
+  ⊢lam-∞ : ∀ {Γ e A B}
+    → Γ , A ⊢ ∞ # e ⦂ B
+    → Γ ⊢ ∞ # (ƛ e) ⦂ A `→ B
 
-  ⊢d-lam-n : ∀ {Γ e A B j}
-    → Γ , A ⊢d j # e ⦂ B
-    → Γ ⊢d S j # (ƛ e) ⦂ A ⇒ B
+  ⊢lam-n : ∀ {Γ e A B j}
+    → Γ , A ⊢ j # e ⦂ B
+    → Γ ⊢ S j # (ƛ e) ⦂ A `→ B
 
-  ⊢d-app₁ : ∀ {Γ e₁ e₂ A B}
-    → Γ ⊢d Z # e₁ ⦂ A ⇒ B
-    → Γ ⊢d ∞ # e₂ ⦂ A
-    → Γ ⊢d Z # e₁ · e₂ ⦂ B
+  ⊢app₁ : ∀ {Γ e₁ e₂ A B}
+    → Γ ⊢ Z # e₁ ⦂ A `→ B
+    → Γ ⊢ ∞ # e₂ ⦂ A
+    → Γ ⊢ Z # e₁ · e₂ ⦂ B
 
-  ⊢d-app₂ : ∀ {Γ e₁ e₂ A B j}
-    → Γ ⊢d (S j) # e₁ ⦂ A ⇒ B
-    → Γ ⊢d Z # e₂ ⦂ A
-    → Γ ⊢d j # e₁ · e₂ ⦂ B
+  ⊢app₂ : ∀ {Γ e₁ e₂ A B j}
+    → Γ ⊢ (S j) # e₁ ⦂ A `→ B
+    → Γ ⊢ Z # e₂ ⦂ A
+    → Γ ⊢ j # e₁ · e₂ ⦂ B
 
-  ⊢d-sub : ∀ {Γ e A j}
-    → Γ ⊢d Z # e ⦂ A
+  ⊢sub : ∀ {Γ e A j}
+    → Γ ⊢ Z # e ⦂ A
     → ¬Z j
-    → Γ ⊢d j # e ⦂ A
+    → Γ ⊢ j # e ⦂ A

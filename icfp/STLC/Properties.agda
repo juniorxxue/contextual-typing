@@ -3,7 +3,8 @@ module STLC.Properties where
 open import STLC.Prelude hiding (_≤?_)
 open import STLC.Common
 
-length : Context → ℕ
+-- length of environments, as a predicate for weakening
+length : Env → ℕ
 length ∅        =  zero
 length (Γ , _)  =  suc (length Γ)
 
@@ -13,9 +14,9 @@ length (Γ , _)  =  suc (length Γ)
 --+                                                                +--
 ----------------------------------------------------------------------
 
+-- Γ ↑ k [ n≤l ] A: insert A into Γ, at k-th posititon, n≤l is a guarantee that indices is under bound
 infix 6 _↑_[_]_
-
-_↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Type → Context
+_↑_[_]_ : (Γ : Env) → (n : ℕ) → (n ≤ length Γ) → Type → Env
 Γ ↑ zero [ n≤l ] T = Γ , T
 ∅ ↑ (suc n) [ () ] T
 (Γ , A) ↑ (suc n) [ s≤s n≤l ] T = (Γ ↑ n [ n≤l ] T) , A
@@ -36,6 +37,7 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Type → Cont
 ↑Γ-var₂ {n = suc n} {x = zero} {s≤s n≤l} Z n>x = Z
 ↑Γ-var₂ {Γ , C} {n = suc n} {x = suc x} {s≤s n≤l} (S x∈Γ) n>x = S (↑Γ-var₂ x∈Γ λ n≤x → n>x (s≤s n≤x))
 
+-- weakening of environment lookup
 ∋-weaken : ∀ {Γ A n x B}
   → Γ ∋ x ⦂ B
   → (n≤l : n ≤ length Γ)
@@ -50,9 +52,9 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Type → Cont
 --+                                                                +--
 ----------------------------------------------------------------------
 
+-- Γ ↓ k [ n≤l ] A: remove A from Γ, at k-th position, n≤l is a guarantee likewise
 infix 6 _↓_[_]
-
-_↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Context
+_↓_[_] : (Γ : Env) → (n : ℕ) → (n ≤ length Γ) → Env
 ∅ ↓ .zero [ z≤n ] = ∅
 (Γ , A) ↓ zero [ n≤l ] = Γ
 (Γ , A) ↓ suc n [ s≤s n≤l ] = Γ ↓ n [ n≤l ] , A
@@ -81,6 +83,7 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Context
 ↓-var₂ {x = .zero} {n = suc n} Z x<n (s≤s n≤l) = Z
 ↓-var₂ {Γ , C} {x = .(suc _)} {n = .(suc _)} (S x∈Γ) (s≤s x<n) (s≤s n≤l) = S (↓-var₂ x∈Γ x<n n≤l)
 
+-- strenghthening lemma for environment lookup
 ∋-strenghthen : ∀ {Γ n x A}
   → Γ ∋ x ⦂ A
   → (` x) ~↑~ n

@@ -2,61 +2,61 @@ module STLC.Common where
 
 open import STLC.Prelude hiding (_≤?_)
 
-  
-Id : Set
-Id = String
+----------------------------------------------------------------------
+--+                             Syntax                             +--
+----------------------------------------------------------------------
 
 infixr 5  ƛ_
 infixl 7  _·_
 infix  9  `_
 infix  5  _⦂_
-infixr 8 _⇒_
+infixr 8  _`→_
 
+-- simple types only: integer types and function types
 data Type : Set where
   Int : Type
-  _⇒_ : Type → Type → Type
+  _`→_ : Type → Type → Type
 
+-- expressions
 data Term : Set where
-  lit      : ℕ → Term
-  `_       : ℕ → Term
-  ƛ_       : Term → Term
-  _·_      : Term → Term → Term
-  _⦂_      : Term → Type → Term
+  lit      : ℕ → Term           -- literals
+  `_       : ℕ → Term           -- variables
+  ƛ_       : Term → Term        -- unannotated lambdas, we use de bruijn indices to deal with binding
+  _·_      : Term → Term → Term -- applications
+  _⦂_      : Term → Type → Term -- annotated terms
 
+-- typing environment containing a sequence of types
 infixl 5  _,_
+data Env : Set where
+  ∅     : Env
+  _,_   : Env → Type → Env
 
-data Context : Set where
-  ∅     : Context
-  _,_   : Context → Type → Context
-
+-- environment lookup: fetch the type according to the indices
 infix  4  _∋_⦂_
-
-data _∋_⦂_ : Context → ℕ → Type → Set where
+data _∋_⦂_ : Env → ℕ → Type → Set where
 
   Z : ∀ {Γ A}
-      ------------------
     → Γ , A ∋ zero ⦂ A
 
   S : ∀ {Γ A B n}
     → Γ ∋ n ⦂ A
-      ------------------
     → Γ , B ∋ (suc n) ⦂ A
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                             Shift                              +--
---+                                                                +--
 ----------------------------------------------------------------------
 
 abstract
   _≤?_ : (x y : ℕ) → Dec (x ≤ y)
   _≤?_ = STLC.Prelude._≤?_
 
+-- shifti case for variables
 ↑-var : ℕ → ℕ → ℕ
 ↑-var n x with n ≤? x
 ... | yes n≤x = suc x
 ... | no  n>x = x
 
+-- e ↑ k : shift e at k-th position
 infixl 7 _↑_
 _↑_ : Term → ℕ → Term
 lit i ↑ n = lit i
@@ -65,11 +65,13 @@ lit i ↑ n = lit i
 e₁ · e₂ ↑ n = (e₁ ↑ n) · (e₂ ↑ n)
 (e ⦂ A) ↑ n = (e ↑ n) ⦂ A
 
+-- unshift case for variables
 ↓-var : ℕ → ℕ → ℕ
 ↓-var n x with n ≤? x
 ... | yes n≤x = pred x
 ... | no n>x   = x
 
+-- e ↓ k : unshift e at k-th posititon
 infixl 7 _↓_
 _↓_ : Term → ℕ → Term
 lit i ↓ n = lit i
@@ -78,6 +80,7 @@ lit i ↓ n = lit i
 e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 (e ⦂ A) ↓ n = (e ↓ n) ⦂ A
 
+-- var case: shift and unshift can commute
 ↑-↓-var : ∀ x n → ↓-var n (↑-var n x) ≡ x
 ↑-↓-var x n with n ≤? x
 ...         | yes n≤x with n ≤? suc x
@@ -87,7 +90,7 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ...                   | yes n≤x = ⊥-elim (n≰x n≤x)
 ...                   | no  n≰x = refl
 
-
+-- shift and unshift can commute
 ↑-↓-id : ∀ e n
   → e ↑ n ↓ n ≡ e
 ↑-↓-id (lit _) n = refl
@@ -129,6 +132,8 @@ e₁ · e₂ ↓ n = (e₁ ↓ n) · (e₂ ↓ n)
 ↑-↑-comm (e₁ · e₂) m n m≤n rewrite ↑-↑-comm e₁ m n m≤n | ↑-↑-comm e₂ m n m≤n = refl
 ↑-↑-comm (e ⦂ A) m n m≤n rewrite ↑-↑-comm e m n m≤n = refl
 
+
+-- shifted: a guarantee to state the typing strengthening lemma
 infix 4 _~↑~_
 
 data _~↑~_ : Term → ℕ → Set where
@@ -163,6 +168,7 @@ data _~↑~_ : Term → ℕ → Set where
 ↑-shifted {e₁ · e₂} {n} = sd-app ↑-shifted ↑-shifted
 ↑-shifted {e ⦂ A} {n} = sd-ann ↑-shifted
 
+-- var case: unshift commutes with shift
 ↓-↑-comm-var : ∀ m n x
   → m ≤ n
   → n ≢ x
