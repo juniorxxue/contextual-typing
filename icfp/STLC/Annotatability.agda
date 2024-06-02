@@ -96,53 +96,53 @@ data _⊢1_⦂_⟶_ : Env → TTerm → Type → Term → Set where
 --+                                                                +--
 ----------------------------------------------------------------------
 
-data plusS`→ : Counter → Set where
+data plusS⇒ : Counter → Set where
 
-  plusS`→-base :
-    plusS`→ Z
+  plusS⇒-base :
+    plusS⇒ Z
 
-  plusS-S`→ : ∀ {i}
-    → plusS`→ i
-    → plusS`→ (S i)
+  plusS-S⇒ : ∀ {i}
+    → plusS⇒ i
+    → plusS⇒ (S i)
 
-data plusS`→∞A : Counter → Type → Set where
+data plusS⇒∞A : Counter → Type → Set where
 
-  plusS`→-base∞A : ∀ {A}
-    → plusS`→∞A ∞ A
+  plusS⇒-base∞A : ∀ {A}
+    → plusS⇒∞A ∞ A
 
-  plusS-S`→∞A : ∀ {i A B}
-    → plusS`→∞A i B
-    → plusS`→∞A (S i) (A `→ B)
+  plusS-S⇒∞A : ∀ {i A B}
+    → plusS⇒∞A i B
+    → plusS⇒∞A (S i) (A `→ B)
 
-need-plusS`→ : ∀ e
-  → plusS`→ (need e)
-need-plusS`→ (tlit x) = plusS`→-base
-need-plusS`→ (tvar x) = plusS`→-base
-need-plusS`→ (tlam e) = plusS-S`→ (need-plusS`→ e)
-need-plusS`→ (tapp e e₁) with need e | need-plusS`→ e
-... | ∞ | IH = plusS`→-base
-... | Z | IH = plusS`→-base
-... | S r | plusS-S`→ IH = IH
+need-plusS⇒ : ∀ e
+  → plusS⇒ (need e)
+need-plusS⇒ (tlit x) = plusS⇒-base
+need-plusS⇒ (tvar x) = plusS⇒-base
+need-plusS⇒ (tlam e) = plusS-S⇒ (need-plusS⇒ e)
+need-plusS⇒ (tapp e e₁) with need e | need-plusS⇒ e
+... | ∞ | IH = plusS⇒-base
+... | Z | IH = plusS⇒-base
+... | S r | plusS-S⇒ IH = IH
 
 ⊢sub-∞' : ∀ {Γ i e A i'}
   → Γ ⊢ i # e ⦂ A
-  → plusS`→ i
-  → plusS`→∞A i' A
+  → plusS⇒ i
+  → plusS⇒∞A i' A
   → Γ ⊢ i' # e ⦂ A
-⊢sub-∞' ⊢e plusS`→-base plusS`→-base∞A = ⊢sub ⊢e ¬Z-∞
-⊢sub-∞' ⊢e plusS`→-base (plusS-S`→∞A ps') = ⊢sub ⊢e ¬Z-S
-⊢sub-∞' (⊢lam-n ⊢e) (plusS-S`→ ps) plusS`→-base∞A = ⊢lam-∞ (⊢sub-∞' ⊢e ps plusS`→-base∞A)
-⊢sub-∞' (⊢lam-n ⊢e) (plusS-S`→ ps) (plusS-S`→∞A ps') = ⊢lam-n (⊢sub-∞' ⊢e ps ps')
-⊢sub-∞' (⊢app₂ ⊢e ⊢e₁) (plusS-S`→ ps) plusS`→-base∞A = ⊢app₂ (⊢sub-∞' ⊢e (plusS-S`→ (plusS-S`→ ps)) (plusS-S`→∞A plusS`→-base∞A)) ⊢e₁
-⊢sub-∞' (⊢app₂ ⊢e ⊢e₁) (plusS-S`→ ps) (plusS-S`→∞A ps') = ⊢app₂ (⊢sub-∞' ⊢e (plusS-S`→ (plusS-S`→ ps)) (plusS-S`→∞A (plusS-S`→∞A ps'))) ⊢e₁
-⊢sub-∞' (⊢sub ⊢e x) (plusS-S`→ ps) plusS`→-base∞A = ⊢sub ⊢e ¬Z-∞
-⊢sub-∞' (⊢sub ⊢e x) (plusS-S`→ ps) (plusS-S`→∞A ps') = ⊢sub ⊢e ¬Z-S
+⊢sub-∞' ⊢e plusS⇒-base plusS⇒-base∞A = ⊢sub ⊢e ¬Z-∞
+⊢sub-∞' ⊢e plusS⇒-base (plusS-S⇒∞A ps') = ⊢sub ⊢e ¬Z-S
+⊢sub-∞' (⊢lam-n ⊢e) (plusS-S⇒ ps) plusS⇒-base∞A = ⊢lam-∞ (⊢sub-∞' ⊢e ps plusS⇒-base∞A)
+⊢sub-∞' (⊢lam-n ⊢e) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = ⊢lam-n (⊢sub-∞' ⊢e ps ps')
+⊢sub-∞' (⊢app₂ ⊢e ⊢e₁) (plusS-S⇒ ps) plusS⇒-base∞A = ⊢app₂ (⊢sub-∞' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A plusS⇒-base∞A)) ⊢e₁
+⊢sub-∞' (⊢app₂ ⊢e ⊢e₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = ⊢app₂ (⊢sub-∞' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A (plusS-S⇒∞A ps'))) ⊢e₁
+⊢sub-∞' (⊢sub ⊢e x) (plusS-S⇒ ps) plusS⇒-base∞A = ⊢sub ⊢e ¬Z-∞
+⊢sub-∞' (⊢sub ⊢e x) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = ⊢sub ⊢e ¬Z-S
 
 ⊢sub-∞ : ∀ {Γ j e A}
   → Γ ⊢ j # e ⦂ A
-  → plusS`→ j
+  → plusS⇒ j
   → Γ ⊢ ∞ # e ⦂ A
-⊢sub-∞ ⊢e ps = ⊢sub-∞' ⊢e ps plusS`→-base∞A
+⊢sub-∞ ⊢e ps = ⊢sub-∞' ⊢e ps plusS⇒-base∞A
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -157,21 +157,21 @@ annotatability e-int = ⊢int
 annotatability (e-var x) = ⊢var x
 annotatability (e-lam ⊢e) = ⊢lam-n (annotatability ⊢e)
 annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₁ x) ⊢e₁ ⊢e₂) with need e₁ | annotatability ⊢e₁ | annotatability ⊢e₂
-... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS`→ e₂))
-annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                              | need e₂ | need-plusS`→ e₂
+... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS⇒ e₂))
+annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                              | need e₂ | need-plusS⇒ e₂
                                                               | annotatability ⊢e₁ | annotatability ⊢e₂
 ... | Z | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub ⊢e₂' ¬Z-∞)
 ... | S r1 | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₂ ⊢e₁' ⊢e₂'
-annotatability (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                            | need e₂ | need-plusS`→ e₂
+annotatability (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                            | need e₂ | need-plusS⇒ e₂
                                                             | annotatability ⊢e₁ | annotatability ⊢e₂
 ... | S r1 | r1S | S r2 | r2S | ⊢e₁' | ⊢e₂' = ⊢app₂ ⊢e₁' (⊢ann (⊢sub-∞ ⊢e₂' r2S))
 
 annotatability' : ∀ {Γ e A e'}
   → Γ ⊢1 e ⦂ A ⟶ e'
   → Γ ⊢ Z # (e' ⦂ A) ⦂ A
-annotatability' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability ⊢e) (need-plusS`→ e))  
+annotatability' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability ⊢e) (need-plusS⇒ e))  
 
 ----------------------------------------------------------------------
 --+                                                                +--
@@ -243,21 +243,21 @@ annotatability2 e-int = ⊢int
 annotatability2 (e-var x) = ⊢var x
 annotatability2 (e-lam ⊢e) = ⊢lam-n (annotatability2 ⊢e)
 annotatability2 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₁ x) ⊢e₁ ⊢e₂) with need e₁ | annotatability2 ⊢e₁ | annotatability2 ⊢e₂
-... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS`→ e₂))
-annotatability2 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                              | need e₂ | need-plusS`→ e₂
+... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS⇒ e₂))
+annotatability2 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                              | need e₂ | need-plusS⇒ e₂
                                                               | annotatability2 ⊢e₁ | annotatability2 ⊢e₂
 ... | Z | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub ⊢e₂' ¬Z-∞)
 ... | S r1 | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₂ ⊢e₁' ⊢e₂'
-annotatability2 (e-app3 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                            | need e₂ | need-plusS`→ e₂
+annotatability2 (e-app3 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                            | need e₂ | need-plusS⇒ e₂
                                                             | annotatability2 ⊢e₁ | annotatability2 ⊢e₂
 ... | S r1 | r1S | S r2 | r2S | ⊢e₁' | ⊢e₂' = ⊢sub' (⊢app₁ (⊢ann (⊢sub-∞ ⊢e₁' r1S)) (⊢sub-∞ ⊢e₂' r2S))
 
 annotatability2' : ∀ {Γ e A e'}
   → Γ ⊢2 e ⦂ A ⟶ e'
   → Γ ⊢ Z # (e' ⦂ A) ⦂ A
-annotatability2' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability2 ⊢e) (need-plusS`→ e))
+annotatability2' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability2 ⊢e) (need-plusS⇒ e))
 
 
 ----------------------------------------------------------------------
@@ -307,23 +307,23 @@ annotatability3 e-int = ⊢int
 annotatability3 (e-var x) = ⊢var x
 annotatability3 (e-lam ⊢e) = ⊢lam-n (annotatability3 ⊢e)
 annotatability3 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₁ x) ⊢e₁ ⊢e₂) with need e₁ | annotatability3 ⊢e₁ | annotatability3 ⊢e₂
-... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS`→ e₂))
-annotatability3 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                              | need e₂ | need-plusS`→ e₂
+... | Z | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub-∞ ⊢e₂' (need-plusS⇒ e₂))
+annotatability3 (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                              | need e₂ | need-plusS⇒ e₂
                                                               | annotatability3 ⊢e₁ | annotatability3 ⊢e₂
 ... | Z | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₁ ⊢e₁' (⊢sub ⊢e₂' ¬Z-∞)
 ... | S r1 | r1S | Z | r2S | ⊢e₁' | ⊢e₂' = ⊢app₂ ⊢e₁' ⊢e₂'
-annotatability3 (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                            | need e₂ | need-plusS`→ e₂
+annotatability3 (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                            | need e₂ | need-plusS⇒ e₂
                                                             | annotatability3 ⊢e₁ | annotatability3 ⊢e₂
 ... | S r1 | r1S | S r2 | r2S | ⊢e₁' | ⊢e₂' = ⊢app₂ ⊢e₁' (⊢ann (⊢sub-∞ ⊢e₂' r2S))
-annotatability3 (e-app3 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS`→ e₁
-                                                            | need e₂ | need-plusS`→ e₂
+annotatability3 (e-app3 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁ | need-plusS⇒ e₁
+                                                            | need e₂ | need-plusS⇒ e₂
                                                             | annotatability3 ⊢e₁ | annotatability3 ⊢e₂
 ... | S r1 | r1S | S r2 | r2S | ⊢e₁' | ⊢e₂' = ⊢sub' (⊢app₁ (⊢ann (⊢sub-∞ ⊢e₁' r1S)) (⊢sub-∞ ⊢e₂' r2S))
 
 annotatability3' : ∀ {Γ e A e'}
   → Γ ⊢3 e ⦂ A ⟶ e'
   → Γ ⊢ Z # (e' ⦂ A) ⦂ A
-annotatability3' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability3 ⊢e) (need-plusS`→ e))  
+annotatability3' {e = e} ⊢e = ⊢ann (⊢sub-∞ (annotatability3 ⊢e) (need-plusS⇒ e))  
 

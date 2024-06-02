@@ -5,7 +5,6 @@ open import Record.Common
 import Record.Decl as S
 import Record.Annotatability.Target as T
 
-
 need : T.Term → S.Counter
 need (T.𝕔 x) = S.♭ S.Z
 need (T.` x) = S.♭ S.Z
@@ -295,6 +294,11 @@ ela-no-rnil neq (e-cons-need x x₁ er x₂) = λ ()
 annotatability : ∀ {Γ e A e'}
   → Γ ⊢ e ⦂ A ⟶ e'
   → Γ S.⊢ (need e) # e' ⦂ A
+
+annotatability' : ∀ {Γ e A e'}
+  → Γ ⊢ e ⦂ A ⟶ e'
+  → Γ S.⊢ S.♭ S.Z # (e' ⦂ A) ⦂ A
+annotatability' {e = e} ⊢e = S.⊢ann (⊢d-sub-∞ (annotatability ⊢e) (need-plusS⇒ e))
 
 annotatability-r : ∀ {Γ rs As rs'}
   → Γ ⊢r rs ⦂ As ⟶ rs'
