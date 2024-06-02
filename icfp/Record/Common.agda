@@ -18,9 +18,9 @@ data Term where
   `_       : ℕ → Term
   ƛ_       : Term → Term
   _·_      : Term → Term → Term
-  _⦂_      : Term → Type → Term
-  𝕣_       : Record → Term
-  _𝕡_      : Term → Label → Term
+  _⦂_      : Term → Type → Term  
+  𝕣_       : Record → Term -- records
+  _𝕡_      : Term → Label → Term -- projection
 
 data Record where
   rnil : Record

@@ -331,6 +331,7 @@ sound-es : ∀ {Γ A₁ Σ A As A' es Σ'}
   → ⟦ Σ , A ⟧→⟦ es , Σ' , As , A' ⟧
   → Γ ⊩ es ⇚ As
 
+-- two corollaries
 sound-inf-0 : ∀ {Γ e A}
   → Γ ⊢ □ ⇒ e ⇒ A
   → Γ ⊢ ♭ Z # e ⦂ A

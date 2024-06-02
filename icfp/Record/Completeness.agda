@@ -7,6 +7,7 @@ open import Record.Properties
 open import Record.Algo
 open import Record.Algo.Properties
 
+-- mapping <counter, type> to a context
 infix 3 _⊢_~_
 infix 3 _⊢_~j_
 
@@ -15,14 +16,14 @@ data _⊢_~j_ : Env → CCounter × Type → Context → Set
 
 data _⊢_~_ where
 
-  ~j : ∀ {Γ j A H}
-    → Γ ⊢ ⟨ j , A ⟩ ~j H
-    → Γ ⊢ ⟨ ♭ j , A ⟩ ~ H
+  ~j : ∀ {Γ j A Σ}
+    → Γ ⊢ ⟨ j , A ⟩ ~j Σ
+    → Γ ⊢ ⟨ ♭ j , A ⟩ ~ Σ
 
-  ~S⇒ : ∀ {Γ i A B H e}
+  ~S⇒ : ∀ {Γ i A B Σ e}
     → Γ ⊢ □ ⇒ e ⇒ A
-    → Γ ⊢ ⟨ i , B ⟩ ~ H
-    → Γ ⊢ ⟨ S⇒ i , A `→ B ⟩ ~ (⟦ e ⟧⇒ H)
+    → Γ ⊢ ⟨ i , B ⟩ ~ Σ
+    → Γ ⊢ ⟨ S⇒ i , A `→ B ⟩ ~ (⟦ e ⟧⇒ Σ)
     
 data _⊢_~j_ where
 
@@ -32,50 +33,51 @@ data _⊢_~j_ where
   ~∞ : ∀ {Γ A}
     → Γ ⊢ ⟨ ∞ , A ⟩ ~j (τ A)
 
-  ~S⇐ : ∀ {Γ j A B e H}
+  ~S⇐ : ∀ {Γ j A B e Σ}
     → Γ ⊢ τ A ⇒ e ⇒ A
-    → Γ ⊢ ⟨ j , B ⟩ ~j H
-    → Γ ⊢ ⟨ S⇐ j , A `→ B ⟩ ~j (⟦ e ⟧⇒ H)
+    → Γ ⊢ ⟨ j , B ⟩ ~j Σ
+    → Γ ⊢ ⟨ S⇐ j , A `→ B ⟩ ~j (⟦ e ⟧⇒ Σ)
 
-  ~Sl : ∀ {Γ j A l H}
-    → Γ ⊢ ⟨ j , A ⟩ ~j H
-    → Γ ⊢ ⟨ Sl j , τ⟦ l ↦ A ⟧ ⟩ ~j (⌊ l ⌋⇒ H)
+  ~Sl : ∀ {Γ j A l Σ}
+    → Γ ⊢ ⟨ j , A ⟩ ~j Σ
+    → Γ ⊢ ⟨ Sl j , τ⟦ l ↦ A ⟧ ⟩ ~j (⌊ l ⌋⇒ Σ)
 
-~weaken : ∀ {Γ A i B H n n≤l}
-  → Γ ⊢ ⟨ i , B ⟩ ~ H
-  → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ i , B ⟩ ~ (H ⇧ n)
+~weaken : ∀ {Γ A i B Σ n n≤l}
+  → Γ ⊢ ⟨ i , B ⟩ ~ Σ
+  → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ i , B ⟩ ~ (Σ ⇧ n)
   
-~jweaken : ∀ {Γ A j B H n n≤l}
-  → Γ ⊢ ⟨ j , B ⟩ ~j H
-  → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ j , B ⟩ ~j (H ⇧ n)
+~jweaken : ∀ {Γ A j B Σ n n≤l}
+  → Γ ⊢ ⟨ j , B ⟩ ~j Σ
+  → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ j , B ⟩ ~j (Σ ⇧ n)
 
 ~weaken (~j x) = ~j (~jweaken x)
-~weaken (~S⇒ x i~H) = ~S⇒ (⊢weaken x) (~weaken i~H)
+~weaken (~S⇒ x i~Σ) = ~S⇒ (⊢weaken x) (~weaken i~Σ)
 
 ~jweaken ~Z = ~Z
 ~jweaken ~∞ = ~∞
-~jweaken (~S⇐ x j~H) = ~S⇐ (⊢weaken x) (~jweaken j~H)
-~jweaken (~Sl j~H) = ~Sl (~jweaken j~H)
+~jweaken (~S⇐ x j~Σ) = ~S⇐ (⊢weaken x) (~jweaken j~Σ)
+~jweaken (~Sl j~Σ) = ~Sl (~jweaken j~Σ)
 
-H≢□→i≢Z : ∀ {Γ H i A}
+Σ≢□→i≢Z : ∀ {Γ Σ i A}
   → i ≢ ♭ Z
-  → Γ ⊢ ⟨ i , A ⟩ ~ H
-  → H ≢ □
-H≢□→i≢Z {i = ♭ Z} i≢Z i~H = ⊥-elim (i≢Z refl)
-H≢□→i≢Z {i = ♭ ∞} i≢Z (~j ~∞) = λ ()
-H≢□→i≢Z {i = ♭ (S⇐ x)} i≢Z (~j (~S⇐ x₁ x₂)) = λ ()
-H≢□→i≢Z {i = ♭ (Sl x)} i≢Z (~j (~Sl x₁)) = λ ()
-H≢□→i≢Z {i = S⇒ i} i≢Z (~S⇒ x i~H) = λ ()
+  → Γ ⊢ ⟨ i , A ⟩ ~ Σ
+  → Σ ≢ □
+Σ≢□→i≢Z {i = ♭ Z} i≢Z i~Σ = ⊥-elim (i≢Z refl)
+Σ≢□→i≢Z {i = ♭ ∞} i≢Z (~j ~∞) = λ ()
+Σ≢□→i≢Z {i = ♭ (S⇐ x)} i≢Z (~j (~S⇐ x₁ x₂)) = λ ()
+Σ≢□→i≢Z {i = ♭ (Sl x)} i≢Z (~j (~Sl x₁)) = λ ()
+Σ≢□→i≢Z {i = S⇒ i} i≢Z (~S⇒ x i~Σ) = λ ()
 
-complete : ∀ {Γ H i e A}
+-- the most general form of completeness theorem
+complete : ∀ {Γ Σ i e A}
   → Γ ⊢ i # e ⦂ A
-  → Γ ⊢ ⟨ i , A ⟩ ~ H
-  → Γ ⊢ H ⇒ e ⇒ A
+  → Γ ⊢ ⟨ i , A ⟩ ~ Σ
+  → Γ ⊢ Σ ⇒ e ⇒ A
 
-complete-≤ : ∀ {Γ H i A B}
+complete-≤ : ∀ {Γ Σ i A B}
   → B ≤ i # A
-  → Γ ⊢ ⟨ i , A ⟩ ~ H
-  → Γ ⊢ B ≤ H ⇝ A
+  → Γ ⊢ ⟨ i , A ⟩ ~ Σ
+  → Γ ⊢ B ≤ Σ ⇝ A
 
 complete-r : ∀ {Γ rs A}
   → Γ ⊢r ♭ Z # rs ⦂ A
@@ -88,11 +90,11 @@ complete ⊢c (~j ~Z) = ⊢c
 complete (⊢var x) (~j ~Z) = ⊢var x
 complete (⊢ann ⊢e) (~j ~Z) = ⊢ann (complete ⊢e (~j ~∞))
 complete (⊢lam₁ ⊢e) (~j ~∞) = ⊢lam₁ (complete ⊢e (~j ~∞))
-complete (⊢lam₂ ⊢e) (~S⇒ ⊢e' newH) = ⊢lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newH))
+complete (⊢lam₂ ⊢e) (~S⇒ ⊢e' newΣ) = ⊢lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newΣ))
 complete (⊢app⇐ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~j (~S⇐ (complete ⊢e₁ (~j ~∞)) x)))
 complete (⊢app⇒ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
-complete (⊢app⇒ ⊢e ⊢e₁) (~S⇒ x newH) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newH)))
-complete (⊢sub ⊢e x x₁) newH = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newH )
+complete (⊢app⇒ ⊢e ⊢e₁) (~S⇒ x newΣ) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newΣ)))
+complete (⊢sub ⊢e x x₁) newΣ = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newΣ )
 complete (⊢rcd x) (~j ~Z) = ⊢rcd (complete-r x)
 complete (⊢prj ⊢e) (~j x) = ⊢prj (complete ⊢e (~j (~Sl x)))
 
@@ -105,10 +107,11 @@ complete-≤ (≤rcd∞ B≤A) (~j ~∞) = ≤rcd (complete-≤ B≤A (~j ~∞))
 complete-≤ (≤arr-S⇐ B≤A B≤A₁) (~j (~S⇐ x x₁)) = ≤hint x (complete-≤ B≤A₁ (~j x₁))
 complete-≤ (≤arr-S⇒ x x₃) (~S⇒ x₁ x₂) = ≤hint (subsumption-0 x₁ ≤refl) (complete-≤ x₃ x₂)
 complete-≤ (≤rcd-Sl B≤A) (~j (~Sl x)) = ≤hint-l (complete-≤ B≤A (~j x))
-complete-≤ (≤and₁ B≤A x) newH = ≤and-l (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
-complete-≤ (≤and₂ B≤A x) newH = ≤and-r (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
+complete-≤ (≤and₁ B≤A x) newΣ = ≤and-l (complete-≤ B≤A newΣ) (Σ≢□→i≢Z x newΣ)
+complete-≤ (≤and₂ B≤A x) newΣ = ≤and-r (complete-≤ B≤A newΣ) (Σ≢□→i≢Z x newΣ)
 complete-≤ (≤and B≤A B≤A₁) (~j ~∞) = ≤and (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
 
+-- two corollaries
 complete-inf : ∀ {Γ e A}
   → Γ ⊢ ♭ Z # e ⦂ A
   → Γ ⊢ □ ⇒ e ⇒ A
