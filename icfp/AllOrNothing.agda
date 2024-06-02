@@ -168,3 +168,27 @@ sound (⊢d-app₁ ⊢e ⊢e₁) R-Z = ⊢b-app₁ (sound ⊢e R-Z) (sound ⊢e�
 sound (⊢d-lam-∞ ⊢e) R-∞ = ⊢b-lam-∞ (sound ⊢e R-∞)
 sound (⊢d-app₂ ⊢e ⊢e₁) R-∞ = ⊢b-app₂ (sound ⊢e R-∞) (sound ⊢e₁ R-Z)
 sound (⊢d-sub ⊢e x) R-∞ = ⊢b-sub (sound ⊢e R-Z) x
+
+-- corollaries
+
+sound-inf : ∀ {Γ e A}
+  → Γ ⊢d Z # e ⦂ A
+  → Γ ⊢b i # e ⦂ A
+sound-inf ⊢e = sound ⊢e R-Z
+
+sound-chk : ∀ {Γ e A}
+  → Γ ⊢d ∞ # e ⦂ A
+  → Γ ⊢b c # e ⦂ A
+sound-chk ⊢e = sound ⊢e R-∞
+
+complete-inf : ∀ {Γ e A}
+  → Γ ⊢b i # e ⦂ A
+  → Γ ⊢d Z # e ⦂ A
+complete-inf ⊢e = complete ⊢e R-Z
+
+complete-chk : ∀ {Γ e A}
+  → Γ ⊢b c # e ⦂ A
+  → Γ ⊢d ∞ # e ⦂ A
+complete-chk ⊢e = complete ⊢e R-∞
+
+
