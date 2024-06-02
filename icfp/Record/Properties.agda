@@ -3,19 +3,17 @@ module Record.Properties where
 open import Record.Prelude hiding (_≤?_)
 open import Record.Common
 
-length : Context → ℕ
+length : Env → ℕ
 length ∅        =  zero
 length (Γ , _)  =  suc (length Γ)
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                           Weakening                            +--
---+                                                                +--
 ----------------------------------------------------------------------
 
 infix 6 _↑_[_]_
 
-_↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Type → Context
+_↑_[_]_ : (Γ : Env) → (n : ℕ) → (n ≤ length Γ) → Type → Env
 Γ ↑ zero [ n≤l ] T = Γ , T
 ∅ ↑ (suc n) [ () ] T
 (Γ , A) ↑ (suc n) [ s≤s n≤l ] T = (Γ ↑ n [ n≤l ] T) , A
@@ -45,14 +43,12 @@ _↑_[_]_ : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Type → Cont
 ... | no ¬p = ↑Γ-var₂ x∈Γ ¬p
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                         Strengthening                          +--
---+                                                                +--
 ----------------------------------------------------------------------
 
 infix 6 _↓_[_]
 
-_↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Context
+_↓_[_] : (Γ : Env) → (n : ℕ) → (n ≤ length Γ) → Env
 ∅ ↓ .zero [ z≤n ] = ∅
 (Γ , A) ↓ zero [ n≤l ] = Γ
 (Γ , A) ↓ suc n [ s≤s n≤l ] = Γ ↓ n [ n≤l ] , A
@@ -91,11 +87,8 @@ _↓_[_] : (Γ : Context) → (n : ℕ) → (n ≤ length Γ) → Context
 ... | no  n≰x = ↓-var₂ x∈Γ (m≰n⇒n<m n≰x) n≤l
 
 ----------------------------------------------------------------------
---+                                                                +--
 --+                           Uniqueness                           +--
---+                                                                +--
 ----------------------------------------------------------------------
-
 
 x∈Γ-unique : ∀ {Γ x A B}
   → Γ ∋ x ⦂ A

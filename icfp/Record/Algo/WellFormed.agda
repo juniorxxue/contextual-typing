@@ -19,10 +19,10 @@ data _#_ : Type → Type → Set where
     → A # (B & C)
 
   #-base-1 : ∀ {A B}
-    → (Int ⇒ A) # (Float ⇒ B)
+    → (Int `→ A) # (Float `→ B)
 
   #-base-2 : ∀ {A B}
-    → (Float ⇒ A) # (Int ⇒ B)
+    → (Float `→ A) # (Int `→ B)
 
   #-rcd : ∀ {x y A B}
     → x ≢ y
@@ -44,11 +44,11 @@ data WF : Type → Set where
   wf-int : WF Int
   wf-float : WF Float
   wf-top : WF Top
-  wf-arr : ∀ {A B} → WF A → WF B → WF (A ⇒ B)
+  wf-arr : ∀ {A B} → WF A → WF B → WF (A `→ B)
   wf-and : ∀ {A B} → WF A → WF B → (A#B : A # B) → WF (A & B)
   wf-rcd : ∀ {l A} → WF A → WF (τ⟦ l ↦ A ⟧)
 
-data WFG : Context → Set where
+data WFG : Env → Set where
   wfg-∅ : WFG ∅
   wfg-, : ∀ {Γ A} → WFG Γ → WF A → WFG (Γ , A)
 
@@ -91,11 +91,11 @@ data WFR where
     → l ∉ rs
     → WFR (r⟦ l ↦ e ⟧ rs)
 
-data WFH : Hint → Set where
-  wfh-□ : WFH □
-  wfh-τ : ∀ {A} → WF A → WFH (τ A)
-  wfh-e : ∀ {e H} → WFH H → WFE e → Value e → WFH (⟦ e ⟧⇒ H)
-  wfh-l : ∀ {l H} → WFH H → WFH (⌊ l ⌋⇒ H)
+data WFΣ : Context → Set where
+  wfh-□ : WFΣ □
+  wfh-τ : ∀ {A} → WF A → WFΣ (τ A)
+  wfh-e : ∀ {e Σ} → WFΣ Σ → WFE e → Value e → WFΣ (⟦ e ⟧⇒ Σ)
+  wfh-l : ∀ {l Σ} → WFΣ Σ → WFΣ (⌊ l ⌋⇒ Σ)
 
 
 ∉-↑r : ∀ {rs l n}
@@ -129,9 +129,9 @@ wf-↑ (wfe-ann wfe x) = wfe-ann (wf-↑ wfe) x
 wf-↑ (wfe-rcd x) = wfe-rcd (wfr-↑r x)
 wf-↑ (wfe-prj wfe) = wfe-prj (wf-↑ wfe)
 
-wf-⇧ : ∀ {H n}
-  → WFH H
-  → WFH (H ⇧ n)
+wf-⇧ : ∀ {Σ n}
+  → WFΣ Σ
+  → WFΣ (Σ ⇧ n)
 wf-⇧ wfh-□ = wfh-□
 wf-⇧ (wfh-τ x) = wfh-τ x
 wf-⇧ (wfh-e wfh x ve) = wfh-e (wf-⇧ wfh) (wf-↑ x) (v-↑ ve)
@@ -145,68 +145,68 @@ x∈Γ-wf : ∀ {Γ x A}
 x∈Γ-wf (wfg-, wfg x) Z = x
 x∈Γ-wf (wfg-, wfg x) (S x∈Γ) = x∈Γ-wf wfg x∈Γ
 
-⊢a-wf : ∀ {Γ H e A}
+⊢wf : ∀ {Γ Σ e A}
   → WFG Γ
-  → WFH H
+  → WFΣ Σ
   → WFE e
-  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢ Σ ⇒ e ⇒ A
   → WF A
   
-≤a-wf : ∀ {Γ H A B}
+≤wf : ∀ {Γ Σ A B}
   → WFG Γ
-  → WFH H
+  → WFΣ Σ
   → WF A
-  → Γ ⊢a A ≤ H ⇝ B
+  → Γ ⊢ A ≤ Σ ⇝ B
   → WF B
 
-⊢r-wf : ∀ {Γ H rs A}
+⊢r-wf : ∀ {Γ Σ rs A}
   → WFG Γ
-  → WFH H
+  → WFΣ Σ
   → WFR rs
-  → Γ ⊢r H ⇛ rs ⇛ A
+  → Γ ⊢r Σ ⇒ rs ⇒ A
   → WF A
 
 ⊢r-# : ∀ {Γ A Bs rs l}
   → rs ≢ rnil
-  → Γ ⊢r □ ⇛ rs ⇛ Bs
+  → Γ ⊢r □ ⇒ rs ⇒ Bs
   → l ∉ rs
   → τ⟦ l ↦ A ⟧ # Bs
-⊢r-# ne ⊢a-nil notin = ⊥-elim (ne refl)
-⊢r-# ne (⊢a-one x) (notin-cons x₁ notin) = #-rcd x₁
-⊢r-# ne (⊢a-cons x ⊢rs x₁) (notin-cons x₂ notin) = #-and-r (#-rcd x₂) (⊢r-# x₁ ⊢rs notin)
+⊢r-# ne ⊢nil notin = ⊥-elim (ne refl)
+⊢r-# ne (⊢one x) (notin-cons x₁ notin) = #-rcd x₁
+⊢r-# ne (⊢cons x ⊢rs x₁) (notin-cons x₂ notin) = #-and-r (#-rcd x₂) (⊢r-# x₁ ⊢rs notin)
 
-⊢r-wf wfg wfh wfr ⊢a-nil = wf-top
-⊢r-wf wfg wfh (wfr-cons x₁ wfr wfl) (⊢a-one x) = wf-rcd (⊢a-wf wfg wfh x₁ x)
-⊢r-wf wfg wfh (wfr-cons x₂ wfr wfl) (⊢a-cons x ⊢r x₁) = wf-and (wf-rcd (⊢a-wf wfg wfh x₂ x)) (⊢r-wf wfg wfh wfr ⊢r) (⊢r-# x₁ ⊢r wfl)
+⊢r-wf wfg wfh wfr ⊢nil = wf-top
+⊢r-wf wfg wfh (wfr-cons x₁ wfr wfl) (⊢one x) = wf-rcd (⊢wf wfg wfh x₁ x)
+⊢r-wf wfg wfh (wfr-cons x₂ wfr wfl) (⊢cons x ⊢r x₁) = wf-and (wf-rcd (⊢wf wfg wfh x₂ x)) (⊢r-wf wfg wfh wfr ⊢r) (⊢r-# x₁ ⊢r wfl)
 
-≤a-wf wfg wfh wfA ≤a-int = wfA
-≤a-wf wfg wfh wfA ≤a-float = wfA
-≤a-wf wfg wfh wfA ≤a-top = wf-top
-≤a-wf wfg wfh wfA ≤a-□ = wfA
-≤a-wf wfg (wfh-τ (wf-arr x x₁)) (wf-arr wfA wfA₁) (≤a-arr s s₁) = wf-arr x x₁
-≤a-wf wfg (wfh-τ (wf-rcd x)) (wf-rcd wfA) (≤a-rcd s) = wf-rcd (≤a-wf wfg (wfh-τ x) wfA s)
-≤a-wf wfg (wfh-e wfh x₁ ve) (wf-arr wfA wfA₁) (≤a-hint x s) = wf-arr wfA (≤a-wf wfg wfh wfA₁ s)
-≤a-wf wfg (wfh-l wfh) (wf-rcd wfA) (≤a-hint-l s) = wf-rcd (≤a-wf wfg wfh wfA s)
-≤a-wf wfg wfh (wf-and wfA wfA₁ A#B) (≤a-and-l s x) = ≤a-wf wfg wfh wfA s
-≤a-wf wfg wfh (wf-and wfA wfA₁ A#B) (≤a-and-r s x) = ≤a-wf wfg wfh wfA₁ s
-≤a-wf wfg (wfh-τ (wf-and x x₁ A#B)) wfA (≤a-and s s₁) with ≤a-id-0 s | ≤a-id-0 s₁
+≤wf wfg wfh wfA ≤int = wfA
+≤wf wfg wfh wfA ≤float = wfA
+≤wf wfg wfh wfA ≤top = wf-top
+≤wf wfg wfh wfA ≤□ = wfA
+≤wf wfg (wfh-τ (wf-arr x x₁)) (wf-arr wfA wfA₁) (≤arr s s₁) = wf-arr x x₁
+≤wf wfg (wfh-τ (wf-rcd x)) (wf-rcd wfA) (≤rcd s) = wf-rcd (≤wf wfg (wfh-τ x) wfA s)
+≤wf wfg (wfh-e wfh x₁ ve) (wf-arr wfA wfA₁) (≤hint x s) = wf-arr wfA (≤wf wfg wfh wfA₁ s)
+≤wf wfg (wfh-l wfh) (wf-rcd wfA) (≤hint-l s) = wf-rcd (≤wf wfg wfh wfA s)
+≤wf wfg wfh (wf-and wfA wfA₁ A#B) (≤and-l s x) = ≤wf wfg wfh wfA s
+≤wf wfg wfh (wf-and wfA wfA₁ A#B) (≤and-r s x) = ≤wf wfg wfh wfA₁ s
+≤wf wfg (wfh-τ (wf-and x x₁ A#B)) wfA (≤and s s₁) with ≤id-0 s | ≤id-0 s₁
 ... | refl | refl = wf-and x x₁ A#B
 
-⊢a-wf wfg wfh wfe (⊢a-c {c = lit x}) = wf-int
-⊢a-wf wfg wfh wfe (⊢a-c {c = flt x}) = wf-float
-⊢a-wf wfg wfh wfe (⊢a-c {c = +s}) = wf-and (wf-arr wf-int (wf-arr wf-int wf-int)) (wf-arr wf-float (wf-arr wf-float wf-float)) #-base-1
-⊢a-wf wfg wfh wfe (⊢a-c {c = +i x}) = wf-arr wf-int wf-int
-⊢a-wf wfg wfh wfe (⊢a-c {c = +f x}) = wf-arr wf-float wf-float
-⊢a-wf wfg wfh wfe (⊢a-var x∈Γ) = x∈Γ-wf wfg x∈Γ
-⊢a-wf wfg wfh (wfe-ann wfe x) (⊢a-ann ⊢e) = x
-⊢a-wf wfg wfh (wfe-app wfe wfe₁ ve) (⊢a-app ⊢e) with ⊢a-wf wfg (wfh-e wfh wfe₁ ve) wfe ⊢e
+⊢wf wfg wfh wfe (⊢c {c = lit x}) = wf-int
+⊢wf wfg wfh wfe (⊢c {c = flt x}) = wf-float
+⊢wf wfg wfh wfe (⊢c {c = +s}) = wf-and (wf-arr wf-int (wf-arr wf-int wf-int)) (wf-arr wf-float (wf-arr wf-float wf-float)) #-base-1
+⊢wf wfg wfh wfe (⊢c {c = +i x}) = wf-arr wf-int wf-int
+⊢wf wfg wfh wfe (⊢c {c = +f x}) = wf-arr wf-float wf-float
+⊢wf wfg wfh wfe (⊢var x∈Γ) = x∈Γ-wf wfg x∈Γ
+⊢wf wfg wfh (wfe-ann wfe x) (⊢ann ⊢e) = x
+⊢wf wfg wfh (wfe-app wfe wfe₁ ve) (⊢app ⊢e) with ⊢wf wfg (wfh-e wfh wfe₁ ve) wfe ⊢e
 ... | wf-arr r r₁ = r₁
-⊢a-wf wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢e) = wf-arr x (⊢a-wf (wfg-, wfg x) (wfh-τ x₁) wfe ⊢e)
-⊢a-wf wfg (wfh-e wfh x ve) (wfe-lam wfe) (⊢a-lam₂ ⊢e ⊢e₁) =
-  wf-arr (⊢a-wf wfg wfh-□ x ⊢e) (⊢a-wf (wfg-, wfg (⊢a-wf wfg wfh-□ x ⊢e)) (wf-⇧ wfh) wfe ⊢e₁)
-⊢a-wf wfg wfh wfe (⊢a-sub p-e ⊢e A≤H H≢□) = ≤a-wf wfg wfh (⊢a-wf wfg wfh-□ wfe ⊢e) A≤H
-⊢a-wf wfg wfh (wfe-rcd x₁) (⊢a-rcd x) = ⊢r-wf wfg wfh x₁ x
-⊢a-wf wfg wfh (wfe-prj wfe) (⊢a-prj ⊢e) with ⊢a-wf wfg (wfh-l wfh) wfe ⊢e
+⊢wf wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢lam₁ ⊢e) = wf-arr x (⊢wf (wfg-, wfg x) (wfh-τ x₁) wfe ⊢e)
+⊢wf wfg (wfh-e wfh x ve) (wfe-lam wfe) (⊢lam₂ ⊢e ⊢e₁) =
+  wf-arr (⊢wf wfg wfh-□ x ⊢e) (⊢wf (wfg-, wfg (⊢wf wfg wfh-□ x ⊢e)) (wf-⇧ wfh) wfe ⊢e₁)
+⊢wf wfg wfh wfe (⊢sub p-e ⊢e A≤Σ Σ≢□) = ≤wf wfg wfh (⊢wf wfg wfh-□ wfe ⊢e) A≤Σ
+⊢wf wfg wfh (wfe-rcd x₁) (⊢rcd x) = ⊢r-wf wfg wfh x₁ x
+⊢wf wfg wfh (wfe-prj wfe) (⊢prj ⊢e) with ⊢wf wfg (wfh-l wfh) wfe ⊢e
 ... | wf-rcd r = r
 
 #-comm : ∀ {A B}
@@ -227,7 +227,3 @@ wf-c +s = wf-and (wf-arr wf-int (wf-arr wf-int wf-int))
            (wf-arr wf-float (wf-arr wf-float wf-float)) #-base-1
 wf-c (+i x) = wf-arr wf-int wf-int
 wf-c (+f x) = wf-arr wf-float wf-float
-  
-
-
-

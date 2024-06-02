@@ -41,7 +41,7 @@ data plusS⇒∞A : S.Counter → Type → Set where
 
   plusS-S⇒∞A : ∀ {i A B}
     → plusS⇒∞A i B
-    → plusS⇒∞A (S.S⇒ i) (A ⇒ B)
+    → plusS⇒∞A (S.S⇒ i) (A `→ B)
 
 
 need-plusS⇒ : ∀ e
@@ -57,9 +57,9 @@ need-plusS⇒ (e T.𝕡 x) = plusS⇒-base
 
 ≤d-refl∞' : ∀ {i A}
   → plusS⇒∞A i A
-  → A S.≤d i # A
-≤d-refl∞' plusS⇒-base∞A = S.≤d-refl∞
-≤d-refl∞' (plusS-S⇒∞A ps) = S.≤d-arr-S⇒ S.≤d-refl∞ (≤d-refl∞' ps)
+  → A S.≤ i # A
+≤d-refl∞' plusS⇒-base∞A = S.≤refl∞
+≤d-refl∞' (plusS-S⇒∞A ps) = S.≤arr-S⇒ S.≤refl∞ (≤d-refl∞' ps)
 
 plusS∞-¬Z : ∀ {i A}
   → plusS⇒∞A i A
@@ -68,41 +68,41 @@ plusS∞-¬Z plusS⇒-base∞A = λ ()
 plusS∞-¬Z (plusS-S⇒∞A ps) = λ ()
 
 ≤d-∞-z-plus : ∀ {i i' B A}
-  → B S.≤d i # A
+  → B S.≤ i # A
   → plusS⇒ i
   → plusS⇒∞A i' A
-  → B S.≤d i' # A
-≤d-∞-z-plus S.≤d-Z plusS⇒-base ps' = ≤d-refl∞' ps'
-≤d-∞-z-plus (S.≤d-arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.≤d-arr-∞ (≤d-∞-z-plus S.≤d-Z plusS⇒-base plusS⇒-base∞A)
+  → B S.≤ i' # A
+≤d-∞-z-plus S.≤Z plusS⇒-base ps' = ≤d-refl∞' ps'
+≤d-∞-z-plus (S.≤arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.≤arr-∞ (≤d-∞-z-plus S.≤Z plusS⇒-base plusS⇒-base∞A)
                                                                   (≤d-∞-z-plus B≤A₁ ps plusS⇒-base∞A)
-≤d-∞-z-plus (S.≤d-arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.≤d-arr-S⇒ B≤A (≤d-∞-z-plus B≤A₁ ps ps')
-≤d-∞-z-plus (S.≤d-and₁ B≤A x) ps ps' = S.≤d-and₁ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
-≤d-∞-z-plus (S.≤d-and₂ B≤A x) ps ps' = S.≤d-and₂ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
+≤d-∞-z-plus (S.≤arr-S⇒ B≤A B≤A₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.≤arr-S⇒ B≤A (≤d-∞-z-plus B≤A₁ ps ps')
+≤d-∞-z-plus (S.≤and₁ B≤A x) ps ps' = S.≤and₁ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
+≤d-∞-z-plus (S.≤and₂ B≤A x) ps ps' = S.≤and₂ (≤d-∞-z-plus B≤A ps ps') (plusS∞-¬Z ps')
 
 ⊢d-sub-∞'' : ∀ {Γ i e A i'}
-  → Γ S.⊢d i # e ⦂ A
+  → Γ S.⊢ i # e ⦂ A
   → plusS⇒ i
   → plusS⇒∞A i' A
-  → Γ S.⊢d i' # e ⦂ A
-⊢d-sub-∞'' ⊢e plusS⇒-base plusS⇒-base∞A = S.⊢d-sub ⊢e S.≤d-refl∞ (λ ())
-⊢d-sub-∞'' ⊢e plusS⇒-base (plusS-S⇒∞A ps') = S.⊢d-sub ⊢e (S.≤d-arr-S⇒ S.≤d-refl∞ (≤d-refl∞' ps')) λ ()
-⊢d-sub-∞'' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢d-lam₁ (⊢d-sub-∞'' ⊢e ps plusS⇒-base∞A)
-⊢d-sub-∞'' (S.⊢d-lam₂ ⊢e) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢d-lam₂ (⊢d-sub-∞'' ⊢e ps ps')
-⊢d-sub-∞'' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢d-app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A plusS⇒-base∞A)) ⊢e₁
-⊢d-sub-∞'' (S.⊢d-app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢d-app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A (plusS-S⇒∞A ps'))) ⊢e₁
-⊢d-sub-∞'' (S.⊢d-sub ⊢e x x₁) (plusS-S⇒ ps) ps' = S.⊢d-sub ⊢e (≤d-∞-z-plus x (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
+  → Γ S.⊢ i' # e ⦂ A
+⊢d-sub-∞'' ⊢e plusS⇒-base plusS⇒-base∞A = S.⊢sub ⊢e S.≤refl∞ (λ ())
+⊢d-sub-∞'' ⊢e plusS⇒-base (plusS-S⇒∞A ps') = S.⊢sub ⊢e (S.≤arr-S⇒ S.≤refl∞ (≤d-refl∞' ps')) λ ()
+⊢d-sub-∞'' (S.⊢lam₂ ⊢e) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢lam₁ (⊢d-sub-∞'' ⊢e ps plusS⇒-base∞A)
+⊢d-sub-∞'' (S.⊢lam₂ ⊢e) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢lam₂ (⊢d-sub-∞'' ⊢e ps ps')
+⊢d-sub-∞'' (S.⊢app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) plusS⇒-base∞A = S.⊢app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A plusS⇒-base∞A)) ⊢e₁
+⊢d-sub-∞'' (S.⊢app⇒ ⊢e ⊢e₁) (plusS-S⇒ ps) (plusS-S⇒∞A ps') = S.⊢app⇒ (⊢d-sub-∞'' ⊢e (plusS-S⇒ (plusS-S⇒ ps)) (plusS-S⇒∞A (plusS-S⇒∞A ps'))) ⊢e₁
+⊢d-sub-∞'' (S.⊢sub ⊢e x x₁) (plusS-S⇒ ps) ps' = S.⊢sub ⊢e (≤d-∞-z-plus x (plusS-S⇒ ps) ps') (plusS∞-¬Z ps')
 
 ⊢d-sub-∞ : ∀ {Γ i e A}
-  → Γ S.⊢d i # e ⦂ A
+  → Γ S.⊢ i # e ⦂ A
   → plusS⇒ i
-  → Γ S.⊢d S.♭ S.∞ # e ⦂ A
+  → Γ S.⊢ S.♭ S.∞ # e ⦂ A
 ⊢d-sub-∞ ⊢e ps = ⊢d-sub-∞'' ⊢e ps plusS⇒-base∞A
 
 infix 3 _⊢_⦂_⟶_
 infix 3 _⊢r_⦂_⟶_
 
-data _⊢_⦂_⟶_ : Context → T.Term → Type → Term → Set
-data _⊢r_⦂_⟶_ : Context → T.Record → Type → Record → Set
+data _⊢_⦂_⟶_ : Env → T.Term → Type → Term → Set
+data _⊢r_⦂_⟶_ : Env → T.Record → Type → Record → Set
 
 data _⊢_⦂_⟶_  where
 
@@ -115,18 +115,18 @@ data _⊢_⦂_⟶_  where
 
   e-lam : ∀ {Γ e A B e'}
     → Γ , A ⊢ e ⦂ B ⟶ e'
-    → Γ ⊢ T.ƛ e ⦂ A ⇒ B ⟶ (ƛ e')
+    → Γ ⊢ T.ƛ e ⦂ A `→ B ⟶ (ƛ e')
 
   e-app1 : ∀ {Γ e₁ e₂ A B e₁' e₂'}
     → need e₁ ≡ S.♭ S.Z ⊎ need e₂ ≡ S.♭ S.Z
-    → Γ ⊢ e₁ ⦂ A ⇒ B ⟶ e₁'
+    → Γ ⊢ e₁ ⦂ A `→ B ⟶ e₁'
     → Γ ⊢ e₂ ⦂ A ⟶ e₂'
     → Γ ⊢ e₁ T.· e₂ ⦂ B ⟶ e₁' · e₂'
 
   e-app2 : ∀ {Γ e₁ e₂ A B e₁' e₂' i₁ i₂}
     → need e₂ ≡ S.S⇒ i₁
     → need e₁ ≡ S.S⇒ i₂
-    → Γ ⊢ e₁ ⦂ A ⇒ B ⟶ e₁'
+    → Γ ⊢ e₁ ⦂ A `→ B ⟶ e₁'
     → Γ ⊢ e₂ ⦂ A ⟶ e₂'
     → Γ ⊢ e₁ T.· e₂ ⦂ B ⟶ e₁' · (e₂' ⦂ A)
 
@@ -203,80 +203,80 @@ data counterShape : S.Counter → Type → Set where
     → counterShape (S.♭ S.∞) (τ⟦ l ↦ A ⟧)
 
   cs-arr-Z : ∀ {A B}
-    → counterShape (S.♭ S.Z) (A ⇒ B)
+    → counterShape (S.♭ S.Z) (A `→ B)
 
   cs-arr-S⇒ : ∀ {A B i}
     → counterShape i B
-    → counterShape (S.S⇒ i) (A ⇒ B)
+    → counterShape (S.S⇒ i) (A `→ B)
 
   cs-arr-S⇐ : ∀ {A B j}
     → counterShape (S.♭ j) B
-    → counterShape (S.♭ (S.S⇐ j)) (A ⇒ B)
+    → counterShape (S.♭ (S.S⇐ j)) (A `→ B)
     
   cs-arr-∞ : ∀ {A B}
-    → counterShape (S.♭ S.∞) (A ⇒ B)
+    → counterShape (S.♭ S.∞) (A `→ B)
   
   cs-other : ∀ {A i}
     → notlabel A
     → counterShape i A
 
 cannonical-sub : ∀ {B A i}
-  → B S.≤d i # A
+  → B S.≤ i # A
   → counterShape i A
-cannonical-sub {Int} S.≤d-Z = cs-other nl-int
-cannonical-sub {Float} S.≤d-Z = cs-other nl-flt
-cannonical-sub {Top} S.≤d-Z = cs-other nl-top
-cannonical-sub {B ⇒ B₁} S.≤d-Z = cs-arr-Z
-cannonical-sub {B & B₁} S.≤d-Z = cs-other nl-and
-cannonical-sub {τ⟦ x ↦ B ⟧} S.≤d-Z = cs-rcd
-cannonical-sub S.≤d-int∞ = cs-other nl-int
-cannonical-sub S.≤d-float∞ = cs-other nl-flt
-cannonical-sub S.≤d-top = cs-other nl-top
-cannonical-sub (S.≤d-arr-∞ BA BA₁) = cs-arr-∞
-cannonical-sub (S.≤d-rcd∞ BA) = cs-rcd-∞
-cannonical-sub (S.≤d-arr-S⇐ BA BA₁) = cs-arr-S⇐ (cannonical-sub BA₁)
-cannonical-sub (S.≤d-arr-S⇒ BA BA₁) = cs-arr-S⇒ (cannonical-sub BA₁)
-cannonical-sub (S.≤d-rcd-Sl BA) = cs-rcd-S (cannonical-sub BA)
-cannonical-sub (S.≤d-and₁ BA x) = cannonical-sub BA
-cannonical-sub (S.≤d-and₂ BA x) = cannonical-sub BA
-cannonical-sub (S.≤d-and BA BA₁) = cs-other nl-and
+cannonical-sub {Int} S.≤Z = cs-other nl-int
+cannonical-sub {Float} S.≤Z = cs-other nl-flt
+cannonical-sub {Top} S.≤Z = cs-other nl-top
+cannonical-sub {B `→ B₁} S.≤Z = cs-arr-Z
+cannonical-sub {B & B₁} S.≤Z = cs-other nl-and
+cannonical-sub {τ⟦ x ↦ B ⟧} S.≤Z = cs-rcd
+cannonical-sub S.≤int∞ = cs-other nl-int
+cannonical-sub S.≤float∞ = cs-other nl-flt
+cannonical-sub S.≤top = cs-other nl-top
+cannonical-sub (S.≤arr-∞ BA BA₁) = cs-arr-∞
+cannonical-sub (S.≤rcd∞ BA) = cs-rcd-∞
+cannonical-sub (S.≤arr-S⇐ BA BA₁) = cs-arr-S⇐ (cannonical-sub BA₁)
+cannonical-sub (S.≤arr-S⇒ BA BA₁) = cs-arr-S⇒ (cannonical-sub BA₁)
+cannonical-sub (S.≤rcd-Sl BA) = cs-rcd-S (cannonical-sub BA)
+cannonical-sub (S.≤and₁ BA x) = cannonical-sub BA
+cannonical-sub (S.≤and₂ BA x) = cannonical-sub BA
+cannonical-sub (S.≤and BA BA₁) = cs-other nl-and
 
 
 cannonical : ∀ {Γ i e A}
-  → Γ S.⊢d i # e ⦂ A
+  → Γ S.⊢ i # e ⦂ A
   → counterShape i A
-cannonical (S.⊢d-c {c = lit x}) = cs-other nl-int
-cannonical (S.⊢d-c {c = flt x}) = cs-other nl-flt
-cannonical (S.⊢d-c {c = +s}) = cs-other nl-and
-cannonical (S.⊢d-c {c = +i x}) = cs-arr-Z
-cannonical (S.⊢d-c {c = +f x}) = cs-arr-Z
-cannonical {A = Int} (S.⊢d-var x) = cs-other nl-int
-cannonical {A = Float} (S.⊢d-var x) = cs-other nl-flt
-cannonical {A = Top} (S.⊢d-var x) = cs-other nl-top
-cannonical {A = A ⇒ A₁} (S.⊢d-var x) = cs-arr-Z
-cannonical {A = A & A₁} (S.⊢d-var x) = cs-other nl-and
-cannonical {A = τ⟦ x₁ ↦ A ⟧} (S.⊢d-var x) = cs-rcd
-cannonical {A = Int} (S.⊢d-ann ⊢e) = cs-other nl-int
-cannonical {A = Float} (S.⊢d-ann ⊢e) = cs-other nl-flt
-cannonical {A = Top} (S.⊢d-ann ⊢e) = cs-other nl-top
-cannonical {A = A ⇒ A₁} (S.⊢d-ann ⊢e) = cs-arr-Z
-cannonical {A = A & A₁} (S.⊢d-ann ⊢e) = cs-other nl-and
-cannonical {A = τ⟦ x ↦ A ⟧} (S.⊢d-ann ⊢e) = cs-rcd
-cannonical (S.⊢d-lam₁ ⊢e) = cs-arr-∞
-cannonical (S.⊢d-lam₂ ⊢e) = cs-arr-S⇒ (cannonical ⊢e)
-cannonical (S.⊢d-app⇐ ⊢e ⊢e₁) with cannonical ⊢e
+cannonical (S.⊢c {c = lit x}) = cs-other nl-int
+cannonical (S.⊢c {c = flt x}) = cs-other nl-flt
+cannonical (S.⊢c {c = +s}) = cs-other nl-and
+cannonical (S.⊢c {c = +i x}) = cs-arr-Z
+cannonical (S.⊢c {c = +f x}) = cs-arr-Z
+cannonical {A = Int} (S.⊢var x) = cs-other nl-int
+cannonical {A = Float} (S.⊢var x) = cs-other nl-flt
+cannonical {A = Top} (S.⊢var x) = cs-other nl-top
+cannonical {A = A `→ A₁} (S.⊢var x) = cs-arr-Z
+cannonical {A = A & A₁} (S.⊢var x) = cs-other nl-and
+cannonical {A = τ⟦ x₁ ↦ A ⟧} (S.⊢var x) = cs-rcd
+cannonical {A = Int} (S.⊢ann ⊢e) = cs-other nl-int
+cannonical {A = Float} (S.⊢ann ⊢e) = cs-other nl-flt
+cannonical {A = Top} (S.⊢ann ⊢e) = cs-other nl-top
+cannonical {A = A `→ A₁} (S.⊢ann ⊢e) = cs-arr-Z
+cannonical {A = A & A₁} (S.⊢ann ⊢e) = cs-other nl-and
+cannonical {A = τ⟦ x ↦ A ⟧} (S.⊢ann ⊢e) = cs-rcd
+cannonical (S.⊢lam₁ ⊢e) = cs-arr-∞
+cannonical (S.⊢lam₂ ⊢e) = cs-arr-S⇒ (cannonical ⊢e)
+cannonical (S.⊢app⇐ ⊢e ⊢e₁) with cannonical ⊢e
 ... | cs-arr-S⇐ cs = cs
-cannonical (S.⊢d-app⇒ ⊢e ⊢e₁) with cannonical ⊢e
+cannonical (S.⊢app⇒ ⊢e ⊢e₁) with cannonical ⊢e
 ... | cs-arr-S⇒ r = r
-cannonical (S.⊢d-sub ⊢e x x₁) = cannonical-sub x
-cannonical {A = Top} (S.⊢d-rcd x) = cs-other nl-top
-cannonical {A = A & A₁} (S.⊢d-rcd x) = cs-other nl-and
-cannonical {A = τ⟦ x₁ ↦ A ⟧} (S.⊢d-rcd x) = cs-rcd
-cannonical (S.⊢d-prj ⊢e) with cannonical ⊢e
+cannonical (S.⊢sub ⊢e x x₁) = cannonical-sub x
+cannonical {A = Top} (S.⊢rcd x) = cs-other nl-top
+cannonical {A = A & A₁} (S.⊢rcd x) = cs-other nl-and
+cannonical {A = τ⟦ x₁ ↦ A ⟧} (S.⊢rcd x) = cs-rcd
+cannonical (S.⊢prj ⊢e) with cannonical ⊢e
 ... | cs-rcd-S r = r
 
 inv-label : ∀ {Γ i e l A}
-  → Γ S.⊢d i # e ⦂ τ⟦ l ↦ A ⟧
+  → Γ S.⊢ i # e ⦂ τ⟦ l ↦ A ⟧
   → plusS⇒ i
   → i ≡ S.♭ S.Z
 inv-label ⊢e ps with cannonical ⊢e
@@ -294,7 +294,7 @@ ela-no-rnil neq (e-cons-need x x₁ er x₂) = λ ()
 
 annotatability : ∀ {Γ e A e'}
   → Γ ⊢ e ⦂ A ⟶ e'
-  → Γ S.⊢d (need e) # e' ⦂ A
+  → Γ S.⊢ (need e) # e' ⦂ A
 
 annotatability-r : ∀ {Γ rs As rs'}
   → Γ ⊢r rs ⦂ As ⟶ rs'
@@ -302,17 +302,17 @@ annotatability-r : ∀ {Γ rs As rs'}
 annotatability-r e-rnil = S.⊢r-nil
 annotatability-r (e-one-no-need {e = e} x x₁) with annotatability x₁
 ... | r rewrite x = S.⊢r-one r
-annotatability-r (e-one-need {e = e} x x₁) = S.⊢r-one (S.⊢d-ann (⊢d-sub-∞ (annotatability x₁) (need-plusS⇒ e)))
+annotatability-r (e-one-need {e = e} x x₁) = S.⊢r-one (S.⊢ann (⊢d-sub-∞ (annotatability x₁) (need-plusS⇒ e)))
 annotatability-r (e-cons-no-need x x₁ e-r neq) with annotatability x₁
 ... | r rewrite x = S.⊢r-cons r (annotatability-r e-r) (ela-no-rnil neq e-r)
-annotatability-r (e-cons-need {e = e} x x₁ e-r neq) = S.⊢r-cons (S.⊢d-ann (⊢d-sub-∞ (annotatability x₁) (need-plusS⇒ e)))
+annotatability-r (e-cons-need {e = e} x x₁ e-r neq) = S.⊢r-cons (S.⊢ann (⊢d-sub-∞ (annotatability x₁) (need-plusS⇒ e)))
   (annotatability-r e-r) (ela-no-rnil neq e-r)
 
-annotatability e-con = S.⊢d-c
-annotatability (e-var x) = S.⊢d-var x
-annotatability (e-lam ⊢e) = S.⊢d-lam₂ (annotatability ⊢e)
+annotatability e-con = S.⊢c
+annotatability (e-var x) = S.⊢var x
+annotatability (e-lam ⊢e) = S.⊢lam₂ (annotatability ⊢e)
 annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₁ x) ⊢e₁ ⊢e₂) with need e₁ |  annotatability ⊢e₁
-... | S.♭ S.Z | ⊢e₁' = S.⊢d-app⇐ (S.⊢d-sub ⊢e₁' (S.≤d-arr-S⇐ S.≤d-refl∞ S.≤d-Z) (λ ())) (⊢d-sub-∞ (annotatability ⊢e₂) (need-plusS⇒ e₂))
+... | S.♭ S.Z | ⊢e₁' = S.⊢app⇐ (S.⊢sub ⊢e₁' (S.≤arr-S⇐ S.≤refl∞ S.≤Z) (λ ())) (⊢d-sub-∞ (annotatability ⊢e₂) (need-plusS⇒ e₂))
 annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) with need e₁
                                                                 | need-plusS⇒ e₁
                                                                 | need e₂
@@ -320,16 +320,16 @@ annotatability (e-app1 {e₁ = e₁} {e₂ = e₂} (inj₂ y) ⊢e₁ ⊢e₂) w
                                                                 | annotatability ⊢e₁
                                                                 | annotatability ⊢e₂
 ... | S.♭ S.Z | r1S | S.♭ S.Z | plusS⇒-base | ⊢e₁' | ⊢e₂' =
-  S.⊢d-app⇐ (S.⊢d-sub ⊢e₁' (S.≤d-arr-S⇐ S.≤d-refl∞ S.≤d-Z) (λ ())) (S.⊢d-sub ⊢e₂' S.≤d-refl∞ (λ ()))
-... | S.S⇒ r1 | r1S | S.♭ S.Z | plusS⇒-base | ⊢e₁' | ⊢e₂' = S.⊢d-app⇒ ⊢e₁' ⊢e₂'
+  S.⊢app⇐ (S.⊢sub ⊢e₁' (S.≤arr-S⇐ S.≤refl∞ S.≤Z) (λ ())) (S.⊢sub ⊢e₂' S.≤refl∞ (λ ()))
+... | S.S⇒ r1 | r1S | S.♭ S.Z | plusS⇒-base | ⊢e₁' | ⊢e₂' = S.⊢app⇒ ⊢e₁' ⊢e₂'
 annotatability (e-app2 {e₁ = e₁} {e₂ = e₂} eq1 eq2 ⊢e₁ ⊢e₂) with need e₁
                                                                | need-plusS⇒ e₁
                                                                | need e₂
                                                                | need-plusS⇒ e₂
                                                                | annotatability ⊢e₁
                                                                | annotatability ⊢e₂
-... | S.S⇒ r1 | plusS-S⇒ r1S | S.S⇒ r2 | plusS-S⇒ r2S | ⊢e₁' | ⊢e₂' = S.⊢d-app⇒ ⊢e₁' (S.⊢d-ann (⊢d-sub-∞ ⊢e₂' (plusS-S⇒ r2S)))
-annotatability (e-rcd x) = S.⊢d-rcd (annotatability-r x)
+... | S.S⇒ r1 | plusS-S⇒ r1S | S.S⇒ r2 | plusS-S⇒ r2S | ⊢e₁' | ⊢e₂' = S.⊢app⇒ ⊢e₁' (S.⊢ann (⊢d-sub-∞ ⊢e₂' (plusS-S⇒ r2S)))
+annotatability (e-rcd x) = S.⊢rcd (annotatability-r x)
 annotatability (e-prj {e = e} ⊢e) with need e | need-plusS⇒ e | annotatability ⊢e
 annotatability (e-prj {e = e} ⊢e) | r | r⇒ | ⊢e' with inv-label ⊢e' r⇒
-... | refl = S.⊢d-prj (S.⊢d-sub ⊢e' (S.≤d-rcd-Sl S.≤d-Z) (λ ()))
+... | refl = S.⊢prj (S.⊢sub ⊢e' (S.≤rcd-Sl S.≤Z) (λ ()))

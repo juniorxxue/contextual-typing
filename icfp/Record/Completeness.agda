@@ -10,8 +10,8 @@ open import Record.Algo.Properties
 infix 3 _⊢_~_
 infix 3 _⊢_~j_
 
-data _⊢_~_ : Context → Counter × Type → Hint → Set
-data _⊢_~j_ : Context → CCounter × Type → Hint → Set
+data _⊢_~_ : Env → Counter × Type → Context → Set
+data _⊢_~j_ : Env → CCounter × Type → Context → Set
 
 data _⊢_~_ where
 
@@ -20,9 +20,9 @@ data _⊢_~_ where
     → Γ ⊢ ⟨ ♭ j , A ⟩ ~ H
 
   ~S⇒ : ∀ {Γ i A B H e}
-    → Γ ⊢a □ ⇛ e ⇛ A
+    → Γ ⊢ □ ⇒ e ⇒ A
     → Γ ⊢ ⟨ i , B ⟩ ~ H
-    → Γ ⊢ ⟨ S⇒ i , A ⇒ B ⟩ ~ (⟦ e ⟧⇒ H)
+    → Γ ⊢ ⟨ S⇒ i , A `→ B ⟩ ~ (⟦ e ⟧⇒ H)
     
 data _⊢_~j_ where
 
@@ -33,9 +33,9 @@ data _⊢_~j_ where
     → Γ ⊢ ⟨ ∞ , A ⟩ ~j (τ A)
 
   ~S⇐ : ∀ {Γ j A B e H}
-    → Γ ⊢a τ A ⇛ e ⇛ A
+    → Γ ⊢ τ A ⇒ e ⇒ A
     → Γ ⊢ ⟨ j , B ⟩ ~j H
-    → Γ ⊢ ⟨ S⇐ j , A ⇒ B ⟩ ~j (⟦ e ⟧⇒ H)
+    → Γ ⊢ ⟨ S⇐ j , A `→ B ⟩ ~j (⟦ e ⟧⇒ H)
 
   ~Sl : ∀ {Γ j A l H}
     → Γ ⊢ ⟨ j , A ⟩ ~j H
@@ -50,11 +50,11 @@ data _⊢_~j_ where
   → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ j , B ⟩ ~j (H ⇧ n)
 
 ~weaken (~j x) = ~j (~jweaken x)
-~weaken (~S⇒ x i~H) = ~S⇒ (⊢a-weaken x) (~weaken i~H)
+~weaken (~S⇒ x i~H) = ~S⇒ (⊢weaken x) (~weaken i~H)
 
 ~jweaken ~Z = ~Z
 ~jweaken ~∞ = ~∞
-~jweaken (~S⇐ x j~H) = ~S⇐ (⊢a-weaken x) (~jweaken j~H)
+~jweaken (~S⇐ x j~H) = ~S⇐ (⊢weaken x) (~jweaken j~H)
 ~jweaken (~Sl j~H) = ~Sl (~jweaken j~H)
 
 H≢□→i≢Z : ∀ {Γ H i A}
@@ -68,55 +68,53 @@ H≢□→i≢Z {i = ♭ (Sl x)} i≢Z (~j (~Sl x₁)) = λ ()
 H≢□→i≢Z {i = S⇒ i} i≢Z (~S⇒ x i~H) = λ ()
 
 complete : ∀ {Γ H i e A}
-  → Γ ⊢d i # e ⦂ A
+  → Γ ⊢ i # e ⦂ A
   → Γ ⊢ ⟨ i , A ⟩ ~ H
-  → Γ ⊢a H ⇛ e ⇛ A
+  → Γ ⊢ H ⇒ e ⇒ A
 
 complete-≤ : ∀ {Γ H i A B}
-  → B ≤d i # A
+  → B ≤ i # A
   → Γ ⊢ ⟨ i , A ⟩ ~ H
-  → Γ ⊢a B ≤ H ⇝ A
+  → Γ ⊢ B ≤ H ⇝ A
 
 complete-r : ∀ {Γ rs A}
   → Γ ⊢r ♭ Z # rs ⦂ A
-  → Γ ⊢r □ ⇛ rs ⇛ A
-complete-r ⊢r-nil = ⊢a-nil
-complete-r (⊢r-one x) = ⊢a-one (complete x (~j ~Z))
-complete-r (⊢r-cons x ⊢r neq) = ⊢a-cons (complete x (~j ~Z)) (complete-r ⊢r) neq
+  → Γ ⊢r □ ⇒ rs ⇒ A
+complete-r ⊢r-nil = ⊢nil
+complete-r (⊢r-one x) = ⊢one (complete x (~j ~Z))
+complete-r (⊢r-cons x ⊢r neq) = ⊢cons (complete x (~j ~Z)) (complete-r ⊢r) neq
   
-complete ⊢d-c (~j ~Z) = ⊢a-c
-complete (⊢d-var x) (~j ~Z) = ⊢a-var x
-complete (⊢d-ann ⊢e) (~j ~Z) = ⊢a-ann (complete ⊢e (~j ~∞))
-complete (⊢d-lam₁ ⊢e) (~j ~∞) = ⊢a-lam₁ (complete ⊢e (~j ~∞))
-complete (⊢d-lam₂ ⊢e) (~S⇒ ⊢e' newH) = ⊢a-lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newH))
-complete (⊢d-app⇐ ⊢e ⊢e₁) (~j x) = ⊢a-app (complete ⊢e (~j (~S⇐ (complete ⊢e₁ (~j ~∞)) x)))
-complete (⊢d-app⇒ ⊢e ⊢e₁) (~j x) = ⊢a-app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
-complete (⊢d-app⇒ ⊢e ⊢e₁) (~S⇒ x newH) = ⊢a-app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newH)))
-complete (⊢d-sub ⊢e x x₁) newH = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newH )
-complete (⊢d-rcd x) (~j ~Z) = ⊢a-rcd (complete-r x)
-complete (⊢d-prj ⊢e) (~j x) = ⊢a-prj (complete ⊢e (~j (~Sl x)))
+complete ⊢c (~j ~Z) = ⊢c
+complete (⊢var x) (~j ~Z) = ⊢var x
+complete (⊢ann ⊢e) (~j ~Z) = ⊢ann (complete ⊢e (~j ~∞))
+complete (⊢lam₁ ⊢e) (~j ~∞) = ⊢lam₁ (complete ⊢e (~j ~∞))
+complete (⊢lam₂ ⊢e) (~S⇒ ⊢e' newH) = ⊢lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newH))
+complete (⊢app⇐ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~j (~S⇐ (complete ⊢e₁ (~j ~∞)) x)))
+complete (⊢app⇒ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
+complete (⊢app⇒ ⊢e ⊢e₁) (~S⇒ x newH) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newH)))
+complete (⊢sub ⊢e x x₁) newH = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newH )
+complete (⊢rcd x) (~j ~Z) = ⊢rcd (complete-r x)
+complete (⊢prj ⊢e) (~j x) = ⊢prj (complete ⊢e (~j (~Sl x)))
 
-complete-≤ ≤d-Z (~j ~Z) = ≤a-□
-complete-≤ ≤d-int∞ (~j ~∞) = ≤a-int
-complete-≤ ≤d-float∞ (~j ~∞) = ≤a-float
-complete-≤ ≤d-top (~j ~∞) = ≤a-top
-complete-≤ (≤d-arr-∞ B≤A B≤A₁) (~j ~∞) = ≤a-arr (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
-complete-≤ (≤d-rcd∞ B≤A) (~j ~∞) = ≤a-rcd (complete-≤ B≤A (~j ~∞))
-complete-≤ (≤d-arr-S⇐ B≤A B≤A₁) (~j (~S⇐ x x₁)) = ≤a-hint x (complete-≤ B≤A₁ (~j x₁))
-complete-≤ (≤d-arr-S⇒ x x₃) (~S⇒ x₁ x₂) = ≤a-hint (subsumption-0 x₁ ≤a-refl) (complete-≤ x₃ x₂)
-complete-≤ (≤d-rcd-Sl B≤A) (~j (~Sl x)) = ≤a-hint-l (complete-≤ B≤A (~j x))
-complete-≤ (≤d-and₁ B≤A x) newH = ≤a-and-l (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
-complete-≤ (≤d-and₂ B≤A x) newH = ≤a-and-r (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
-complete-≤ (≤d-and B≤A B≤A₁) (~j ~∞) = ≤a-and (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
-
+complete-≤ ≤Z (~j ~Z) = ≤□
+complete-≤ ≤int∞ (~j ~∞) = ≤int
+complete-≤ ≤float∞ (~j ~∞) = ≤float
+complete-≤ ≤top (~j ~∞) = ≤top
+complete-≤ (≤arr-∞ B≤A B≤A₁) (~j ~∞) = ≤arr (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
+complete-≤ (≤rcd∞ B≤A) (~j ~∞) = ≤rcd (complete-≤ B≤A (~j ~∞))
+complete-≤ (≤arr-S⇐ B≤A B≤A₁) (~j (~S⇐ x x₁)) = ≤hint x (complete-≤ B≤A₁ (~j x₁))
+complete-≤ (≤arr-S⇒ x x₃) (~S⇒ x₁ x₂) = ≤hint (subsumption-0 x₁ ≤refl) (complete-≤ x₃ x₂)
+complete-≤ (≤rcd-Sl B≤A) (~j (~Sl x)) = ≤hint-l (complete-≤ B≤A (~j x))
+complete-≤ (≤and₁ B≤A x) newH = ≤and-l (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
+complete-≤ (≤and₂ B≤A x) newH = ≤and-r (complete-≤ B≤A newH) (H≢□→i≢Z x newH)
+complete-≤ (≤and B≤A B≤A₁) (~j ~∞) = ≤and (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
 
 complete-inf : ∀ {Γ e A}
-  → Γ ⊢d ♭ Z # e ⦂ A
-  → Γ ⊢a □ ⇛ e ⇛ A
+  → Γ ⊢ ♭ Z # e ⦂ A
+  → Γ ⊢ □ ⇒ e ⇒ A
 complete-inf ⊢e = complete ⊢e (~j ~Z)
 
-
 complete-chk : ∀ {Γ e A}
-  → Γ ⊢d ♭ ∞ # e ⦂ A
-  → Γ ⊢a τ A ⇛ e ⇛ A
+  → Γ ⊢ ♭ ∞ # e ⦂ A
+  → Γ ⊢ τ A ⇒ e ⇒ A
 complete-chk ⊢e = complete ⊢e (~j ~∞)

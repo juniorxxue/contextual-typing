@@ -16,8 +16,8 @@ open import Record.Completeness
 
 qtas-dec-0 : ∀ Γ e
   → WFG Γ → WFE e
-  → Dec (∃[ A ](Γ ⊢d ♭ Z # e ⦂ A))
-qtas-dec-0 Γ e wfg wfe with ⊢a-dec-0 wfg wfh-□ wfe
+  → Dec (∃[ A ](Γ ⊢ ♭ Z # e ⦂ A))
+qtas-dec-0 Γ e wfg wfe with ⊢dec-0 wfg wfh-□ wfe
 ... | yes ⟨ A' , ⊢e ⟩ = yes ⟨ A' , (sound-inf-0 ⊢e) ⟩
 ... | no ¬p = no λ where
   ⟨ A' , ⊢e' ⟩ → ¬p ⟨ A' , (complete ⊢e' (~j ~Z)) ⟩

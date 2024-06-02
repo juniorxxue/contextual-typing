@@ -8,159 +8,158 @@ open import Record.Algo.Properties
 open import Record.Algo.WellFormed
 
 
-⊢a-unique : ∀ {Γ H e A B}
-  → WFG Γ → WFH H → WFE e
-  → Γ ⊢a H ⇛ e ⇛ A
-  → Γ ⊢a H ⇛ e ⇛ B
+⊢unique : ∀ {Γ Σ e A B}
+  → WFG Γ → WFΣ Σ → WFE e
+  → Γ ⊢ Σ ⇒ e ⇒ A
+  → Γ ⊢ Σ ⇒ e ⇒ B
   → A ≡ B
 
 #-false' : ∀ {Γ e}
   → WFG Γ
   → WFE e
   → Value e
-  → Γ ⊢a τ Int ⇛ e ⇛ Int
-  → Γ ⊢a τ Float ⇛ e ⇛ Float
+  → Γ ⊢ τ Int ⇒ e ⇒ Int
+  → Γ ⊢ τ Float ⇒ e ⇒ Float
   → ⊥
-#-false' wfg wfe (V-n {+s}) (⊢a-sub p-e ⊢a-c (≤a-and-l () x) H≢□) (⊢a-sub p-e₁ ⊢a-c A≤H₁ H≢□₁)
-#-false' wfg wfe (V-n {+s}) (⊢a-sub p-e ⊢a-c (≤a-and-r () x) H≢□) (⊢a-sub p-e₁ ⊢a-c A≤H₁ H≢□₁)
-#-false' wfg wfe (V-n {c}) (⊢a-sub p-e ⊢a-c A≤H H≢□) (⊢a-sub p-e₁ (⊢a-sub p-e₂ ⊢2 A≤H₂ H≢□₂) A≤H₁ H≢□₁) = ⊥-elim (H≢□₂ refl)
-#-false' wfg wfe V-n (⊢a-sub p-e (⊢a-sub p-e₁ ⊢1 A≤H₁ H≢□₁) A≤H H≢□) ⊢2 = ⊥-elim (H≢□₁ refl)
-#-false' wfg wfe V-ƛ (⊢a-sub p-e (⊢a-sub p-e₁ ⊢1 A≤H₁ H≢□₁) A≤H H≢□) ⊢2 = ⊥-elim (H≢□₁ refl)
+#-false' wfg wfe (V-n {+s}) (⊢sub p-e ⊢c (≤and-l () x) Σ≢□) (⊢sub p-e₁ ⊢c A≤Σ₁ Σ≢□₁)
+#-false' wfg wfe (V-n {+s}) (⊢sub p-e ⊢c (≤and-r () x) Σ≢□) (⊢sub p-e₁ ⊢c A≤Σ₁ Σ≢□₁)
+#-false' wfg wfe (V-n {c}) (⊢sub p-e ⊢c A≤Σ Σ≢□) (⊢sub p-e₁ (⊢sub p-e₂ ⊢2 A≤Σ₂ Σ≢□₂) A≤Σ₁ Σ≢□₁) = ⊥-elim (Σ≢□₂ refl)
+#-false' wfg wfe V-n (⊢sub p-e (⊢sub p-e₁ ⊢1 A≤Σ₁ Σ≢□₁) A≤Σ Σ≢□) ⊢2 = ⊥-elim (Σ≢□₁ refl)
+#-false' wfg wfe V-ƛ (⊢sub p-e (⊢sub p-e₁ ⊢1 A≤Σ₁ Σ≢□₁) A≤Σ Σ≢□) ⊢2 = ⊥-elim (Σ≢□₁ refl)
 
-#-eq : ∀ {Γ A B C D H}
-  → H ≢ □
+#-eq : ∀ {Γ A B C D Σ}
+  → Σ ≢ □
   → WFG Γ
-  → WFH H
+  → WFΣ Σ
   → WF A
   → WF B
   → A # B
-  → Γ ⊢a A ≤ H ⇝ C
-  → Γ ⊢a B ≤ H ⇝ D
+  → Γ ⊢ A ≤ Σ ⇝ C
+  → Γ ⊢ B ≤ Σ ⇝ D
   → C ≡ D
-#-eq H≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) ≤a-top s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) ≤a-□ s2 = ⊥-elim (H≢□ refl)
-#-eq H≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-l s1 x) s2 = #-eq H≢□ wfg wfh wfA wfB A#B s1 s2
-#-eq H≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤a-and-r s1 x) s2 = #-eq H≢□ wfg wfh wfA₁ wfB A#B₁ s1 s2
-#-eq H≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) (≤a-and s1 s3) s2 with ≤a-id-0 s1 | ≤a-id-0 s3 | ≤a-id-0 s2
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) ≤top s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) ≤□ s2 = ⊥-elim (Σ≢□ refl)
+#-eq Σ≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤and-l s1 x) s2 = #-eq Σ≢□ wfg wfh wfA wfB A#B s1 s2
+#-eq Σ≢□ wfg wfh (wf-and wfA wfA₁ A#B₂) wfB (#-and-l A#B A#B₁) (≤and-r s1 x) s2 = #-eq Σ≢□ wfg wfh wfA₁ wfB A#B₁ s1 s2
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-l A#B A#B₁) (≤and s1 s3) s2 with ≤id-0 s1 | ≤id-0 s3 | ≤id-0 s2
 ... | refl | refl | refl = refl
-#-eq H≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 ≤a-top = ≤a-id-0 s1
-#-eq H≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 ≤a-□ = ⊥-elim (H≢□ refl)
-#-eq H≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤a-and-l s2 x) = #-eq H≢□ wfg wfh wfA wfB A#B s1 s2
-#-eq H≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤a-and-r s2 x) = #-eq H≢□ wfg wfh wfA wfB₁ A#B₁ s1 s2
-#-eq H≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 (≤a-and s2 s3) with ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 ≤top = ≤id-0 s1
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 ≤□ = ⊥-elim (Σ≢□ refl)
+#-eq Σ≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤and-l s2 x) = #-eq Σ≢□ wfg wfh wfA wfB A#B s1 s2
+#-eq Σ≢□ wfg wfh wfA (wf-and wfB wfB₁ A#B₂) (#-and-r A#B A#B₁) s1 (≤and-r s2 x) = #-eq Σ≢□ wfg wfh wfA wfB₁ A#B₁ s1 s2
+#-eq Σ≢□ wfg wfh wfA wfB (#-and-r A#B A#B₁) s1 (≤and s2 s3) with ≤id-0 s1 | ≤id-0 s2 | ≤id-0 s3
 ... | refl | refl | refl = refl
-#-eq H≢□ wfg wfh wfA wfB #-base-1 ≤a-top s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg wfh wfA wfB #-base-1 ≤a-□ s2 = ⊥-elim (H≢□ refl)
-#-eq H≢□ wfg wfh wfA wfB #-base-1 (≤a-arr s1 s3) s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg (wfh-e wfh wfe ve) wfA wfB #-base-1 (≤a-hint x s1) (≤a-hint x₁ s2) with ⊢a-id-0 x₁ | ⊢a-id-0 x 
+#-eq Σ≢□ wfg wfh wfA wfB #-base-1 ≤top s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg wfh wfA wfB #-base-1 ≤□ s2 = ⊥-elim (Σ≢□ refl)
+#-eq Σ≢□ wfg wfh wfA wfB #-base-1 (≤arr s1 s3) s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg (wfh-e wfh wfe ve) wfA wfB #-base-1 (≤hint x s1) (≤hint x₁ s2) with ⊢id-0 x₁ | ⊢id-0 x 
 ... | refl | refl = ⊥-elim (#-false' wfg wfe ve x x₁)
-#-eq H≢□ wfg wfh wfA wfB #-base-1 (≤a-and s1 s3) s2 with ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3
+#-eq Σ≢□ wfg wfh wfA wfB #-base-1 (≤and s1 s3) s2 with ≤id-0 s1 | ≤id-0 s2 | ≤id-0 s3
 ... | refl | refl | refl = refl
-#-eq H≢□ wfg wfh wfA wfB #-base-2 ≤a-top s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg wfh wfA wfB #-base-2 ≤a-□ s2 = ⊥-elim (H≢□ refl)
-#-eq H≢□ wfg wfh wfA wfB #-base-2 (≤a-arr s1 s3) s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg (wfh-e wfh wfe ve) wfA wfB #-base-2 (≤a-hint x s1) (≤a-hint x₁ s2) with ⊢a-id-0 x₁ | ⊢a-id-0 x 
+#-eq Σ≢□ wfg wfh wfA wfB #-base-2 ≤top s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg wfh wfA wfB #-base-2 ≤□ s2 = ⊥-elim (Σ≢□ refl)
+#-eq Σ≢□ wfg wfh wfA wfB #-base-2 (≤arr s1 s3) s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg (wfh-e wfh wfe ve) wfA wfB #-base-2 (≤hint x s1) (≤hint x₁ s2) with ⊢id-0 x₁ | ⊢id-0 x 
 ... | refl | refl = ⊥-elim (#-false' wfg wfe ve x₁ x)
-#-eq H≢□ wfg wfh wfA wfB #-base-2 (≤a-and s1 s3) s2 with ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3
+#-eq Σ≢□ wfg wfh wfA wfB #-base-2 (≤and s1 s3) s2 with ≤id-0 s1 | ≤id-0 s2 | ≤id-0 s3
 ... | refl | refl | refl = refl
-#-eq H≢□ wfg wfh wfA wfB (#-rcd x) ≤a-top s2 = sym (≤a-id-0 s2)
-#-eq H≢□ wfg wfh wfA wfB (#-rcd x) ≤a-□ s2 = ⊥-elim (H≢□ refl)
-#-eq H≢□ wfg wfh wfA wfB (#-rcd x) (≤a-rcd s1) s2 with ≤a-id-0 s1 | ≤a-id-0 s2
+#-eq Σ≢□ wfg wfh wfA wfB (#-rcd x) ≤top s2 = sym (≤id-0 s2)
+#-eq Σ≢□ wfg wfh wfA wfB (#-rcd x) ≤□ s2 = ⊥-elim (Σ≢□ refl)
+#-eq Σ≢□ wfg wfh wfA wfB (#-rcd x) (≤rcd s1) s2 with ≤id-0 s1 | ≤id-0 s2
 ... | refl | refl = refl
-#-eq H≢□ wfg (wfh-l wfh) wfA wfB (#-rcd x) (≤a-hint-l s1) (≤a-hint-l s2) = ⊥-elim (x refl)
-#-eq H≢□ wfg wfh wfA wfB (#-rcd x) (≤a-and s1 s3) s2 with ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3
+#-eq Σ≢□ wfg (wfh-l wfh) wfA wfB (#-rcd x) (≤hint-l s1) (≤hint-l s2) = ⊥-elim (x refl)
+#-eq Σ≢□ wfg wfh wfA wfB (#-rcd x) (≤and s1 s3) s2 with ≤id-0 s1 | ≤id-0 s2 | ≤id-0 s3
 ... | refl | refl | refl = refl
 
 
-≤a-unique : ∀ {Γ A H B C}
-  → WFG Γ → WF A → WFH H
-  → Γ ⊢a A ≤ H ⇝ B
-  → Γ ⊢a A ≤ H ⇝ C
+≤unique : ∀ {Γ A Σ B C}
+  → WFG Γ → WF A → WFΣ Σ
+  → Γ ⊢ A ≤ Σ ⇝ B
+  → Γ ⊢ A ≤ Σ ⇝ C
   → B ≡ C
 
-⊢r-unique : ∀ {Γ H rs A B}
-  → WFG Γ → WFH H → WFR rs
-  → Γ ⊢r H ⇛ rs ⇛ A
-  → Γ ⊢r H ⇛ rs ⇛ B
+⊢r-unique : ∀ {Γ Σ rs A B}
+  → WFG Γ → WFΣ Σ → WFR rs
+  → Γ ⊢r Σ ⇒ rs ⇒ A
+  → Γ ⊢r Σ ⇒ rs ⇒ B
   → A ≡ B
 
-⊢r-unique wfg wfh wfr ⊢a-nil ⊢a-nil = refl
-⊢r-unique wfg wfh-□ (wfr-cons x₂ wfr wfl) (⊢a-one x) (⊢a-one x₁) with ⊢a-unique wfg wfh-□ x₂ x x₁
+⊢r-unique wfg wfh wfr ⊢nil ⊢nil = refl
+⊢r-unique wfg wfh-□ (wfr-cons x₂ wfr wfl) (⊢one x) (⊢one x₁) with ⊢unique wfg wfh-□ x₂ x x₁
 ... | refl = refl
-⊢r-unique wfg wfh wfr (⊢a-one x) (⊢a-cons x₁ ⊢2 x₂) = ⊥-elim (x₂ refl)
-⊢r-unique wfg wfh wfr (⊢a-cons x ⊢1 x₁) (⊢a-one x₂) = ⊥-elim (x₁ refl)
-⊢r-unique wfg wfh-□ (wfr-cons x₄ wfr wfl) (⊢a-cons x ⊢1 x₁) (⊢a-cons x₂ ⊢2 x₃) with ⊢a-unique wfg wfh-□ x₄ x x₂ | ⊢r-unique wfg wfh-□ wfr ⊢1 ⊢2
+⊢r-unique wfg wfh wfr (⊢one x) (⊢cons x₁ ⊢2 x₂) = ⊥-elim (x₂ refl)
+⊢r-unique wfg wfh wfr (⊢cons x ⊢1 x₁) (⊢one x₂) = ⊥-elim (x₁ refl)
+⊢r-unique wfg wfh-□ (wfr-cons x₄ wfr wfl) (⊢cons x ⊢1 x₁) (⊢cons x₂ ⊢2 x₃) with ⊢unique wfg wfh-□ x₄ x x₂ | ⊢r-unique wfg wfh-□ wfr ⊢1 ⊢2
 ... | refl | refl = refl
 
-⊢a-unique wfg wfh wfe ⊢a-c ⊢a-c = refl
-⊢a-unique wfg wfh wfe ⊢a-c (⊢a-sub p-e ⊢2 A≤H H≢□) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-var x∈Γ) (⊢a-var x∈Γ₁) = x∈Γ-unique x∈Γ x∈Γ₁
-⊢a-unique wfg wfh wfe (⊢a-var x∈Γ) (⊢a-sub p-e ⊢2 A≤H H≢□) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-ann ⊢1) (⊢a-ann ⊢2) = refl
-⊢a-unique wfg wfh wfe (⊢a-ann ⊢1) (⊢a-sub p-e ⊢2 A≤H H≢□) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh (wfe-app wfe wfe₁ ve) (⊢a-app ⊢1) (⊢a-app ⊢2) with ⊢a-unique wfg (wfh-e wfh wfe₁ ve) wfe ⊢1 ⊢2
+⊢unique wfg wfh wfe ⊢c ⊢c = refl
+⊢unique wfg wfh wfe ⊢c (⊢sub p-e ⊢2 A≤Σ Σ≢□) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢var x∈Γ) (⊢var x∈Γ₁) = x∈Γ-unique x∈Γ x∈Γ₁
+⊢unique wfg wfh wfe (⊢var x∈Γ) (⊢sub p-e ⊢2 A≤Σ Σ≢□) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢ann ⊢1) (⊢ann ⊢2) = refl
+⊢unique wfg wfh wfe (⊢ann ⊢1) (⊢sub p-e ⊢2 A≤Σ Σ≢□) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh (wfe-app wfe wfe₁ ve) (⊢app ⊢1) (⊢app ⊢2) with ⊢unique wfg (wfh-e wfh wfe₁ ve) wfe ⊢1 ⊢2
 ... | refl = refl
-⊢a-unique wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢a-lam₁ ⊢1) (⊢a-lam₁ ⊢2) with ⊢a-unique (wfg-, wfg x) (wfh-τ x₁) wfe ⊢1 ⊢2
+⊢unique wfg (wfh-τ (wf-arr x x₁)) (wfe-lam wfe) (⊢lam₁ ⊢1) (⊢lam₁ ⊢2) with ⊢unique (wfg-, wfg x) (wfh-τ x₁) wfe ⊢1 ⊢2
 ... | refl = refl
-⊢a-unique wfg (wfh-e wfh x ve) (wfe-lam wfe) (⊢a-lam₂ ⊢1 ⊢3) (⊢a-lam₂ ⊢2 ⊢4) with ⊢a-unique wfg wfh-□ x ⊢1 ⊢2 
-... | refl with ⊢a-unique (wfg-, wfg (⊢a-wf wfg wfh-□ x ⊢1)) (wf-⇧ wfh) wfe ⊢3 ⊢4
+⊢unique wfg (wfh-e wfh x ve) (wfe-lam wfe) (⊢lam₂ ⊢1 ⊢3) (⊢lam₂ ⊢2 ⊢4) with ⊢unique wfg wfh-□ x ⊢1 ⊢2 
+... | refl with ⊢unique (wfg-, wfg (⊢wf wfg wfh-□ x ⊢1)) (wf-⇧ wfh) wfe ⊢3 ⊢4
 ... | refl = refl
-⊢a-unique wfg wfh wfe (⊢a-sub p-e ⊢1 A≤H H≢□) ⊢a-c = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-sub p-e ⊢1 A≤H H≢□) (⊢a-var x∈Γ) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-sub p-e ⊢1 A≤H H≢□) (⊢a-ann ⊢2) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-sub p-e ⊢1 A≤H H≢□) (⊢a-sub p-e₁ ⊢2 A≤H₁ H≢□₁) with ⊢a-unique wfg wfh-□ wfe ⊢1 ⊢2
-... | refl = ≤a-unique wfg (⊢a-wf wfg wfh-□ wfe ⊢1) wfh A≤H A≤H₁
-⊢a-unique wfg wfh wfe (⊢a-sub p-e ⊢1 A≤H H≢□) (⊢a-rcd x) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh wfe (⊢a-rcd x) (⊢a-sub p-e ⊢2 A≤H H≢□) = ⊥-elim (H≢□ refl)
-⊢a-unique wfg wfh (wfe-rcd x₂) (⊢a-rcd x) (⊢a-rcd x₁) = ⊢r-unique wfg wfh x₂ x x₁
-⊢a-unique wfg wfh (wfe-prj wfe) (⊢a-prj ⊢1) (⊢a-prj ⊢2) with ⊢a-unique wfg (wfh-l wfh) wfe ⊢1 ⊢2
+⊢unique wfg wfh wfe (⊢sub p-e ⊢1 A≤Σ Σ≢□) ⊢c = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢sub p-e ⊢1 A≤Σ Σ≢□) (⊢var x∈Γ) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢sub p-e ⊢1 A≤Σ Σ≢□) (⊢ann ⊢2) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢sub p-e ⊢1 A≤Σ Σ≢□) (⊢sub p-e₁ ⊢2 A≤Σ₁ Σ≢□₁) with ⊢unique wfg wfh-□ wfe ⊢1 ⊢2
+... | refl = ≤unique wfg (⊢wf wfg wfh-□ wfe ⊢1) wfh A≤Σ A≤Σ₁
+⊢unique wfg wfh wfe (⊢sub p-e ⊢1 A≤Σ Σ≢□) (⊢rcd x) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh wfe (⊢rcd x) (⊢sub p-e ⊢2 A≤Σ Σ≢□) = ⊥-elim (Σ≢□ refl)
+⊢unique wfg wfh (wfe-rcd x₂) (⊢rcd x) (⊢rcd x₁) = ⊢r-unique wfg wfh x₂ x x₁
+⊢unique wfg wfh (wfe-prj wfe) (⊢prj ⊢1) (⊢prj ⊢2) with ⊢unique wfg (wfh-l wfh) wfe ⊢1 ⊢2
 ... | refl = refl
 
-≤a-unique wfg wf wfh ≤a-int ≤a-int = refl
-≤a-unique wfg wf wfh ≤a-float ≤a-float = refl
-≤a-unique wfg wf wfh ≤a-top ≤a-top = refl
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-top (≤a-and-l s2 x) = ≤a-unique wfg wf wfh ≤a-top s2
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-top (≤a-and-r s2 x) = ≤a-unique wfg wf₁ wfh ≤a-top s2
-≤a-unique wfg wf wfh ≤a-□ ≤a-□ = refl
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-□ (≤a-and-l s2 x) = ⊥-elim (x refl)
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh ≤a-□ (≤a-and-r s2 x) = ⊥-elim (x refl)
-≤a-unique wfg wf wfh (≤a-arr s1 s3) (≤a-arr s2 s4) = refl
-≤a-unique wfg (wf-rcd wf) (wfh-τ (wf-rcd x)) (≤a-rcd s1) (≤a-rcd s2) rewrite ≤a-unique wfg wf (wfh-τ x) s1 s2 = refl
-≤a-unique wfg (wf-arr wf wf₁) (wfh-e wfh x₂ ve) (≤a-hint x s1) (≤a-hint x₁ s2) rewrite ≤a-unique wfg wf₁ wfh s1 s2 = refl
+≤unique wfg wf wfh ≤int ≤int = refl
+≤unique wfg wf wfh ≤float ≤float = refl
+≤unique wfg wf wfh ≤top ≤top = refl
+≤unique wfg (wf-and wf wf₁ A#B) wfh ≤top (≤and-l s2 x) = ≤unique wfg wf wfh ≤top s2
+≤unique wfg (wf-and wf wf₁ A#B) wfh ≤top (≤and-r s2 x) = ≤unique wfg wf₁ wfh ≤top s2
+≤unique wfg wf wfh ≤□ ≤□ = refl
+≤unique wfg (wf-and wf wf₁ A#B) wfh ≤□ (≤and-l s2 x) = ⊥-elim (x refl)
+≤unique wfg (wf-and wf wf₁ A#B) wfh ≤□ (≤and-r s2 x) = ⊥-elim (x refl)
+≤unique wfg wf wfh (≤arr s1 s3) (≤arr s2 s4) = refl
+≤unique wfg (wf-rcd wf) (wfh-τ (wf-rcd x)) (≤rcd s1) (≤rcd s2) rewrite ≤unique wfg wf (wfh-τ x) s1 s2 = refl
+≤unique wfg (wf-arr wf wf₁) (wfh-e wfh x₂ ve) (≤hint x s1) (≤hint x₁ s2) rewrite ≤unique wfg wf₁ wfh s1 s2 = refl
 -- andl case
-≤a-unique wfg wf wfh (≤a-and-l s1 x) ≤a-top = ≤a-id-0 s1
-≤a-unique wfg wf wfh (≤a-and-l s1 x) ≤a-□ = ⊥-elim (x refl)
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-l s1 x) (≤a-and-l s2 x₁) = ≤a-unique wfg wf wfh s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-l s1 x) (≤a-and-r s2 x₁) = #-eq x wfg wfh wf wf₁ A#B s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-l s1 x) (≤a-and s2 s3)
-  rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
+≤unique wfg wf wfh (≤and-l s1 x) ≤top = ≤id-0 s1
+≤unique wfg wf wfh (≤and-l s1 x) ≤□ = ⊥-elim (x refl)
+≤unique wfg (wf-and wf wf₁ A#B) wfh (≤and-l s1 x) (≤and-l s2 x₁) = ≤unique wfg wf wfh s1 s2
+≤unique wfg (wf-and wf wf₁ A#B) wfh (≤and-l s1 x) (≤and-r s2 x₁) = #-eq x wfg wfh wf wf₁ A#B s1 s2
+≤unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤and-l s1 x) (≤and s2 s3)
+  rewrite ≤id-0 s2 | ≤id-0 s3 = ≤id-0 s1
 -- andr case
-≤a-unique wfg wf wfh (≤a-and-r s1 x) ≤a-top = ≤a-id-0 s1
-≤a-unique wfg wf wfh (≤a-and-r s1 x) ≤a-□ = ⊥-elim (x refl)
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-r s1 x) (≤a-and-l s2 x₁) = #-eq x wfg wfh wf₁ wf (#-comm A#B) s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) wfh (≤a-and-r s1 x) (≤a-and-r s2 x₁) = ≤a-unique wfg wf₁ wfh s1 s2
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and-r s1 x) (≤a-and s2 s3)
-  rewrite ≤a-id-0 s2 | ≤a-id-0 s3 = ≤a-id-0 s1
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-l s2 x)
-  rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
-≤a-unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤a-and s1 s3) (≤a-and-r s2 x)
-  rewrite ≤a-id-0 s1 | ≤a-id-0 s3 = sym (≤a-id-0 s2)
-≤a-unique wfg wf wfh (≤a-and s1 s3) (≤a-and s2 s4)
-  rewrite ≤a-id-0 s1 | ≤a-id-0 s2 | ≤a-id-0 s3 | ≤a-id-0 s4 = refl
-≤a-unique wfg (wf-rcd wf) (wfh-l wfh) (≤a-hint-l s1) (≤a-hint-l s2) with ≤a-unique wfg wf wfh s1 s2
+≤unique wfg wf wfh (≤and-r s1 x) ≤top = ≤id-0 s1
+≤unique wfg wf wfh (≤and-r s1 x) ≤□ = ⊥-elim (x refl)
+≤unique wfg (wf-and wf wf₁ A#B) wfh (≤and-r s1 x) (≤and-l s2 x₁) = #-eq x wfg wfh wf₁ wf (#-comm A#B) s1 s2
+≤unique wfg (wf-and wf wf₁ A#B) wfh (≤and-r s1 x) (≤and-r s2 x₁) = ≤unique wfg wf₁ wfh s1 s2
+≤unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤and-r s1 x) (≤and s2 s3)
+  rewrite ≤id-0 s2 | ≤id-0 s3 = ≤id-0 s1
+≤unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤and s1 s3) (≤and-l s2 x)
+  rewrite ≤id-0 s1 | ≤id-0 s3 = sym (≤id-0 s2)
+≤unique wfg (wf-and wf wf₁ A#B) (wfh-τ (wf-and x₁ x₂ A#B₁)) (≤and s1 s3) (≤and-r s2 x)
+  rewrite ≤id-0 s1 | ≤id-0 s3 = sym (≤id-0 s2)
+≤unique wfg wf wfh (≤and s1 s3) (≤and s2 s4)
+  rewrite ≤id-0 s1 | ≤id-0 s2 | ≤id-0 s3 | ≤id-0 s4 = refl
+≤unique wfg (wf-rcd wf) (wfh-l wfh) (≤hint-l s1) (≤hint-l s2) with ≤unique wfg wf wfh s1 s2
 ... | refl = refl
 
-
-⊢a-unique-0 : ∀ {Γ e A B}
+⊢unique-0 : ∀ {Γ e A B}
   → WFG Γ → WFE e
-  → Γ ⊢a □ ⇛ e ⇛ A
-  → Γ ⊢a □ ⇛ e ⇛ B
+  → Γ ⊢ □ ⇒ e ⇒ A
+  → Γ ⊢ □ ⇒ e ⇒ B
   → A ≡ B
-⊢a-unique-0 wfg wfe ⊢1 ⊢2 = ⊢a-unique wfg wfh-□ wfe ⊢1 ⊢2  
+⊢unique-0 wfg wfe ⊢1 ⊢2 = ⊢unique wfg wfh-□ wfe ⊢1 ⊢2  
 
 ⊢r-unique-0 : ∀ {Γ rs A B}
   → WFG Γ → WFR rs
-  → Γ ⊢r □ ⇛ rs ⇛ A
-  → Γ ⊢r □ ⇛ rs ⇛ B
+  → Γ ⊢r □ ⇒ rs ⇒ A
+  → Γ ⊢r □ ⇒ rs ⇒ B
   → A ≡ B
 ⊢r-unique-0 wfg wfr ⊢1 ⊢2 = ⊢r-unique wfg wfh-□ wfr ⊢1 ⊢2  
