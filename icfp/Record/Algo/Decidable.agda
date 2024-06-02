@@ -96,6 +96,11 @@ x∈Γ-dec (Γ , A) (suc n) with x∈Γ-dec Γ n
   → size-t A + size-Σ' Σ < k₂
   → Dec (∃[ B ](Γ ⊢ A ≤ Σ ⇝ B))
 
+≤dec-0 : ∀ Γ Σ A
+  → WFG Γ → WFΣ Σ → WF A
+  → Dec (∃[ B ](Γ ⊢ A ≤ Σ ⇝ B))
+≤dec-0 Γ Σ A wfΓ wfΣ wfA = ≤dec (suc (size-Σ Σ)) Γ Σ A wfΓ wfΣ wfA (s≤s m≤m)
+
 ⊢dec : ∀ k Γ Σ e
   → WFG Γ → WFΣ Σ → WFE e
   → size-e e + size-Σ Σ < k
