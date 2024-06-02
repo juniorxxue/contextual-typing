@@ -2,45 +2,101 @@
 
 Name: Contextual Typing
 
-## Artifact Instructions
+## Before you start
 
-**[Authors should add their own instructions here about how to exercise their
-   artifact. Authors can either fold the QEMU instructions below into this
-   section, or leave the QEMU section in place at the bottom.]**
+The submission attached is a revised paper, the major revisions are two:
 
-## How to build
+1. We added a paragraph about the recipe to apply our concept to the design of type systems, which lies in the conclusion.
 
-To check the sanity of materials, run
+2. We added a paragraph to illustrate the design of counters, which lies in line no. 533.
+
+## Step-by-step Instructions
+
+We provide two alternatives: (1) start from the source code in your local machine, or (2) use the provided VM with the environment installed.
+
+### Option 1: Build the source locally
+
+We recommend the reviewer to go for this option, based on two reasons:
+
+* This artifact is all about normal Agda, with its standard libraries. It will not bring too much trouble to the environment setup.
+* The review of the artifact is mainly about comparing the figures, theorems and proofs between the paper and code. And we provide a script to generate nicely rendered html files. Reviewer is able to review the whole formalisation on their own web browser, once they have finished the compilation.
+
+The author(s) tested the code in a Macbook, so the suggested steps are based on this preference, however, this artifact is expected to work on any platform that supports Agda.
+
+#### Step 1: Install Agda and its standard library
+
+This artifact is supposed to work with recent versions of Agda, we recommend using the latest one (Agda 2.6.4).
+We followed this link to install Agda in the VM image: https://agda.readthedocs.io/en/latest/getting-started/installation.html.
+
+The standard library we used is the `agda-stdlib-2.0`, which can be installed following the instructions in this link: https://github.com/agda/agda-stdlib/blob/master/doc/installation-guide.md.
+
+#### Step 2: Build (Compile) the source
+
+To check the sanity of this artifact, just `cd` to the root folder, then run
 
 ```
 agda README.agda
 ```
 
-which should type check successfully.
+`README.agda` is the entry point of the whole formalization, type check it successfully means all the theorems shown in the paper should be ok.
 
-The materials were tested with Agda version 2.6.2.2 and standard-library-2.0
+#### Step 3: Generate HTML files
 
-To generate the same html/ again, run
+We include the pre-generated html files in our source, but the reviewer can delete them and regenerate them by running
 
 ```
 agda --html README.agda --css "../css/Agda.css"
 ```
 
-### Correspondence with the paper
+The css file is configured for a nice font and layout.
+
+### Option 2: Use the provided VM
+
+We provide a VM image with the environment installed, and the project source was pre-compiled.
+
+#### Step 1: Start the VM
+
+Unarchive the provided VM image, then run the following command in the terminal:
+
+```
+./start.sh
+```
+
+This will boot the VM and show the login screen, the default username is `artifact` and the password is `password`.
+There are two folders in the home directory: `agda-stdlib` and `icfp`. The `icfp` is the source folder.
+Run the following command to type check the agda:
+
+```
+cd icfp
+agda README.agda
+```
+
+The first time it will take several minutes to compile since `agda-stdlib` needs some time.
+Since we pre-compiled it, the reviewer should only need to wait for a few seconds.
+
+We also provide the command to generate the html files:
+
+```
+agda --html README.agda --css "../css/Agda.css"
+```
+
+But it is suggested to run this command in the local machine, to utilize the web browser to view it.
+
+## Correspondence with the paper
 
 The `README.agda` is the entry, which gives the overview of our Agda formalisation.
 
-Roughly, the paper present several small QTASs in Section 3 and two main calculi in Section 3, 4 and 5.
+Roughly, the paper presents several small QTASs in Section 3 and two main calculi in Section 3, 4 and 5.
 
-The several systems are formalised in root folder and two caucli have several own projection folder.
+The several systems are formalized in root folder and two calculi have several own projection folder.
 
 We have tried our best to match the notation from Agda code with the paper, so the Agda script is readable to people with some experience in proof assistant. However, we prove the details about each theorem shown in the paper, to help better review this artifact.
 
-#### Bidirectional typing, let-argument-go-first and the corresponding QTASs
+### Bidirectional typing, let-argument-go-first and the corresponding QTASs
 
 | Figure                                    | Agda            | File Location            | Comments (if any)                                            |
 | ----------------------------------------- | --------------- | ------------------------ | ------------------------------------------------------------ |
-| Fig. 1 Bidirectional typing of STLC       | `_⊢b_#_⦂`_      | AllOrNothing.agda        | Our formorlisation is different from classic bidirecitonal type system (shown in Fig.1), we add a App2 rule and change Lit rule to a inference mode, to better connect to QTASs, which is explained in paper line 416. |
+| Fig. 1 Bidirectional typing of STLC       | `_⊢b_#_⦂`_      | AllOrNothing.agda        | Our formorlisation is different from classic bidirecitonal type system (shown in Fig.1), we add a App2 rule and change Lit rule to a inference mode, to better connect to QTASs, which is explained in paper line 420. |
 | Fig. 2 Let arguments go first             | `_~_⊢_⇒_`       | Application.agda         | Lit and Var shown in paper are syntactic sugar when application stack is empty, while in Agda we show in expanded version. |
 | Fig. 3. STLC with all-or-nothing counters | `_⊢d_#_⦂_`      | AllOrNothing.agda        |                                                              |
 | Fig. 4. STLC with application counters    | `_⊢d_#_⦂_`      | Application.agda         |                                                              |
@@ -58,15 +114,16 @@ We have tried our best to match the notation from Agda code with the paper, so t
 | Theorem 3.5 (Completeness)                       | `complete`, `complete'`                                      | AllInOne.agda            |                                                              |
 | Theorem 3.6 (Weak Annotatability)                | `complete`                                                   | STLC/Annotatability.agda |                                                              |
 | Theorem 3.7 (Strong Annotatability)              | `annotatability`, `annotatability'`                          | STLC/Annotatability.agda |                                                              |
-| Theorem 3.7 (Strong Annotatability) (Other ver.) | `annotatability2`, `annotatability2'`, `annotatability3`, `annotatability3'` | STLC/Annotatability.agda | As claimed in paper line 612: "Rules EApp2 and EApp3 provide two different alternative annotatability strategies/guidelines" |
+| Theorem 3.7 (Strong Annotatability) (Other ver.) | `annotatability2`, `annotatability2'`, `annotatability3`, `annotatability3'` | STLC/Annotatability.agda | As claimed in paper line 650: "Rules EApp2 and EApp3 provide two different alternative annotatability strategies/guidelines" |
 
-#### The STLC Calculus
+### The STLC Calculus
 
 | Figure                                  | Agda                            | File Location    | Comments (if any)                                            |
 | --------------------------------------- | ------------------------------- | ---------------- | ------------------------------------------------------------ |
 | Fig. 8. Syntax  (part 1)                | `Type`, `Term` and `Env`        | STLC/Common.agda | constructs shared by two systems: QTAS and its algorithmic formulation |
 | Fig. 8. Syntax  (part 2)                | `Context` and `GenericConsumer` | STLC/Algo.agda   | contructs specific to Algo. system                           |
 | Fig. 9. Algorithmic typing and matching | `_⊢_⇒_⇒_` and `_⊢_≈_`           | STLC/Algo.agda   |                                                              |
+| line 544 example                        | `ex2-derivation`                | STLC/Decl.agda   |                                                              |
 
 | Theorem                                | Agda                              | File Location             | Comments (if any)                                |
 | -------------------------------------- | --------------------------------- | ------------------------- | ------------------------------------------------ |
@@ -78,19 +135,19 @@ We have tried our best to match the notation from Agda code with the paper, so t
 | Corollary 4.6 (Soundness of Typing)    | `sound-inf0` and `sound-chk0`     | STLC/Soundness.agda       | `sound-inf` and `sound-chk` are the general form |
 | Corollary 4.7 (Completeness of Typing) | `complete-inf` and `complete-chk` | STLC/Completeness.agda    | `complete` is the general form                   |
 
-#### The C& Calculus
+### The C& Calculus
 
-| Figure                      | Agda                         | File Location         | Comments (if any)                     |
-| --------------------------- | ---------------------------- | --------------------- | ------------------------------------- |
-| Fig. 10 Syntax (Part 1)     | `Type`, `Constant`, `Env`    | Record/PreCommon.agda |                                       |
-| Fig. 10 Syntax (Part 2)     | `Term`, `Record`             | Record/Common.agda    | Term and records are mutually defined |
-| Fig. 10 Syntax (Part 3)     | `CCounter`, `Counter`        | Record/Decl.agda      | check counter and counters            |
-| Fig. 10 Syntax (Part 4)     | `Context`, `GenericConsumer` | Record/Algo.agda      |                                       |
-| Fig. 11 QTAS typing         | `_⊢_#_⦂_`, `_⊢r_#_⦂_`        | Record/Decl.agda      | `r` stands for records                |
-| Fig. 11 QTAS subtyping      | `_≤_#_`                      | Record/Decl.agda      |                                       |
-| Example (line 919 and  976) | `ex-overloading`             | Record/Decl.agda      |                                       |
-| Fig. 12 Algo. Typing        | `_⊢_⇒_⇒_`, `_⊢r_⇒_⇒_`        | Record/Algo.agda      |                                       |
-| Fig. 12 Algo. Subtyping     | `⊢_≤_⇝_`                     | Record/Algo.agda      |                                       |
+| Figure                        | Agda                         | File Location         | Comments (if any)                     |
+| ----------------------------- | ---------------------------- | --------------------- | ------------------------------------- |
+| Fig. 10 Syntax (Part 1)       | `Type`, `Constant`, `Env`    | Record/PreCommon.agda |                                       |
+| Fig. 10 Syntax (Part 2)       | `Term`, `Record`             | Record/Common.agda    | Term and records are mutually defined |
+| Fig. 10 Syntax (Part 3)       | `CCounter`, `Counter`        | Record/Decl.agda      | check counter and counters            |
+| Fig. 10 Syntax (Part 4)       | `Context`, `GenericConsumer` | Record/Algo.agda      |                                       |
+| Fig. 11 QTAS typing           | `_⊢_#_⦂_`, `_⊢r_#_⦂_`        | Record/Decl.agda      | `r` stands for records                |
+| Fig. 11 QTAS subtyping        | `_≤_#_`                      | Record/Decl.agda      |                                       |
+| Example (line 1023 and  1053) | `ex-overloading`             | Record/Decl.agda      |                                       |
+| Fig. 12 Algo. Typing          | `_⊢_⇒_⇒_`, `_⊢r_⇒_⇒_`        | Record/Algo.agda      |                                       |
+| Fig. 12 Algo. Subtyping       | `⊢_≤_⇝_`                     | Record/Algo.agda      |                                       |
 
 | Theorem                                        | Agda                                                    | File Location                          | Comments (if any) |
 | ---------------------------------------------- | ------------------------------------------------------- | -------------------------------------- | ----------------- |
