@@ -100,7 +100,7 @@ x∈Γ-dec (Γ , A) (suc n) with x∈Γ-dec Γ n
 --+                                                                +--
 ----------------------------------------------------------------------
 
-≈a-dec : ∀ k Γ Σ A
+≈dec : ∀ k Γ Σ A
   → size-Σ Σ < k
   → Dec (Γ ⊢ A ≈ Σ) 
 
@@ -185,13 +185,13 @@ private
     → size-e e + size-Σ (Σ ⇧ 0) < k
   sz-case-3 {Σ = Σ} sz rewrite sym (size-⇧ Σ {0}) = sz-case-3' sz
 
-≈a-dec k Γ □ A sz = yes ≈□
-≈a-dec k Γ (τ B) A sz with τ-dec A B
+≈dec k Γ □ A sz = yes ≈□
+≈dec k Γ (τ B) A sz with τ-dec A B
 ... | yes p rewrite p = yes ≈τ
 ... | no ¬p = no λ where
   ≈τ → ¬p refl
-≈a-dec (suc k) Γ ([ e ]↝ Σ) Int sz = no (λ ())
-≈a-dec (suc k) Γ ([ e ]↝ Σ) (A `→ B) (s≤s sz) with ≈a-dec k Γ Σ B (m+n<o↝n<o (size-Σ Σ) sz)
+≈dec (suc k) Γ ([ e ]↝ Σ) Int sz = no (λ ())
+≈dec (suc k) Γ ([ e ]↝ Σ) (A `→ B) (s≤s sz) with ≈dec k Γ Σ B (m+n<o↝n<o (size-Σ Σ) sz)
                                                 | ⊢dec k Γ (τ A) e (n<o↝n+0<o (m+n<o↝m<o (size-e e) sz))
 ... | yes p | yes ⟨ C , ⊢e ⟩ = yes (≈term ⊢e p)
 ... | yes p | no ¬p = no λ where
@@ -200,13 +200,13 @@ private
   (≈term ⊢e B≈Σ) → ¬p B≈Σ
 
 -- lit
-⊢dec (suc k) Γ Σ (lit n) (s≤s sz) with ≈a-dec k Γ Σ Int sz
+⊢dec (suc k) Γ Σ (lit n) (s≤s sz) with ≈dec k Γ Σ Int sz
 ... | yes p = yes ⟨ Int , (subsumption-0 ⊢lit p) ⟩
 ... | no ¬p = no λ where
   ⟨ A , ⊢e ⟩ → inv-case-int ⊢e ¬p
 -- var  
 ⊢dec (suc k) Γ Σ (` x) (s≤s sz) with x∈Γ-dec Γ x
-⊢dec (suc k) Γ Σ (` x) (s≤s sz) | yes ⟨ A , x∈Γ ⟩ with ≈a-dec k Γ Σ A sz
+⊢dec (suc k) Γ Σ (` x) (s≤s sz) | yes ⟨ A , x∈Γ ⟩ with ≈dec k Γ Σ A sz
 ... | yes p = yes ⟨ A , (subsumption-0 (⊢var x∈Γ) p) ⟩
 ... | no ¬p = no λ where
   ⟨ A' , ⊢e ⟩ → inv-case-var ⊢e x∈Γ ¬p
@@ -235,7 +235,7 @@ private
   ⟨ A' , ⊢app {A = A''} ⊢e' ⟩ → ¬p ⟨ A'' `→ A' , ⊢e' ⟩
 -- ann  
 ⊢dec (suc k) Γ Σ (e ⦂ A) (s≤s sz) with ⊢dec k Γ (τ A) e (n<o↝n+0<o (m+n<o↝m<o (size-e e) sz))
-                                       | ≈a-dec k Γ Σ A (m+n<o↝n<o (size-Σ Σ) sz)
+                                       | ≈dec k Γ Σ A (m+n<o↝n<o (size-Σ Σ) sz)
 ... | yes ⟨ A' , ⊢e' ⟩ | yes p' = yes ⟨ A , subsumption-0 (⊢ann ⊢e') p' ⟩
 ... | yes p | no ¬p  = no λ where
   ⟨ A' , ⊢ann ⊢e' ⟩ → ¬p ≈□
@@ -246,4 +246,8 @@ private
 
 ⊢dec' : ∀ Γ Σ e
   → Dec (∃[ A ](Γ ⊢ Σ ⇒ e ⇒ A))
-⊢dec' Γ Σ e = ⊢dec (suc (size-e e + size-Σ Σ)) Γ Σ e (s≤s m≤m)  
+⊢dec' Γ Σ e = ⊢dec (1 + (size-e e + size-Σ Σ)) Γ Σ e (s≤s m≤m)
+
+≈dec' : ∀ Γ Σ A
+  → Dec (Γ ⊢ A ≈ Σ)
+≈dec' Γ Σ A = ≈dec (suc (size-Σ Σ)) Γ Σ A (s≤s m≤m)
