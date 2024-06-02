@@ -89,3 +89,16 @@ ex-derivation : ∀ {Γ} → Γ ⊢ Z # ex ⦂ Int
 ex-derivation = ⊢let ⊢int
                      (⊢app₁ (⊢ann (⊢lam-∞ (⊢app₂ (⊢sub (⊢var Z) ¬Z-S) ⊢int)))
                             (⊢let (⊢var Z) (⊢lam-∞ (⊢sub (⊢var Z) ¬Z-∞))))
+
+
+ex2-env : Env
+ex2-env = ∅ , (Int `→ Int) `→ Int `→ Int
+
+ex2-exp : Term
+ex2-exp = (ƛ ` 1) · (lit 1) · (ƛ ` 0) · (lit 2)
+
+ex2-derivation : ex2-env ⊢ Z # ex2-exp ⦂ Int
+ex2-derivation = ⊢app₁
+                  (⊢app₁ (⊢app₂ (⊢lam-n (⊢var (S Z))) ⊢int)
+                   (⊢lam-∞ (⊢sub (⊢var Z) ¬Z-∞)))
+                  (⊢sub ⊢int ¬Z-∞)
