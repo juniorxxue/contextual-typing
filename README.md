@@ -2,17 +2,12 @@
 
 Name: Contextual Typing
 
-## Before you start
-
-The submission attached is a revised paper, the major revisions are two:
-
-1. We added a paragraph about the recipe to apply our concept to the design of type systems, which lies in the conclusion.
-
-2. We added a paragraph to illustrate the design of counters, which lies in line no. 533.
-
 ## Step-by-step Instructions
 
-We provide two alternatives: (1) start from the source code in your local machine, or (2) use the provided VM with the environment installed.
+We provide two alternatives: 
+
+1. start from the source code in your local machine, or 
+1. use the provided VM with the environment installed.
 
 ### Option 1: Build the source locally
 
@@ -109,8 +104,8 @@ We have tried our best to match the notation from Agda code with the paper, so t
 | ------------------------------------------------ | ------------------------------------------------------------ | ------------------------ | ------------------------------------------------------------ |
 | Theorem 3.1 (Soundness)                          | `sound`, `sound-inf`, `sound-chk`                            | AllOrNothing.agda        | sound is the general form, the theorem shown on the paepr are corollaries. |
 | Theorem 3.2 (Completeness)                       | `complete`, `complete-inf`, `complete-chk`                   | AllOrNothing.agda        | like above                                                   |
-| Theorem 3.3 (Soundness)                          | `sound`                                                      | Applicatoin.agda         |                                                              |
-| Theorem 3.4 (Completeness)                       | `complete`                                                   | Applicatoin.agda         |                                                              |
+| Theorem 3.3 (Soundness)                          | `sound`                                                      | Application.agda         |                                                              |
+| Theorem 3.4 (Completeness)                       | `complete`                                                   | Application.agda         |                                                              |
 | Theorem 3.5 (Completeness)                       | `complete`, `complete'`                                      | AllInOne.agda            |                                                              |
 | Theorem 3.6 (Weak Annotatability)                | `complete`                                                   | STLC/Annotatability.agda |                                                              |
 | Theorem 3.7 (Strong Annotatability)              | `annotatability`, `annotatability'`                          | STLC/Annotatability.agda |                                                              |
@@ -149,25 +144,25 @@ We have tried our best to match the notation from Agda code with the paper, so t
 | Fig. 12 Algo. Typing          | `_⊢_⇒_⇒_`, `_⊢r_⇒_⇒_`        | Record/Algo.agda      |                                       |
 | Fig. 12 Algo. Subtyping       | `⊢_≤_⇝_`                     | Record/Algo.agda      |                                       |
 
-| Theorem                                        | Agda                                                    | File Location                          | Comments (if any) |
-| ---------------------------------------------- | ------------------------------------------------------- | -------------------------------------- | ----------------- |
-| Lemma 5.1 (Reflexivity of Subtyping (Infinity) | `≤refl∞`                                                | Record/Decl.agda                       |                   |
-| Lemma 5.2 (Transitivity of Subtyping)          | `≤trans`                                                | Record/Decl/Properties.agda            |                   |
-| Lemma 5.3 (A full type context) typing         | `⊢id-0`                                                 | Record/Algo/Properties.agda            |                   |
-| Lemma 5.4 (A full type context) subtyping      | `≤id-0`                                                 | Record/Algo/Properties.agda            |                   |
-| Lemma 5.5 (Typing implies subtyping)           | `⊢to-≤`                                                 | Record/Algo/Properties.agda            |                   |
-| Lemma 5.6 (General Subsumption)                | `subsumption-0`                                         | Record/Algo/Properties.agda            |                   |
-| Corollary 5.7 (Soundness of Typing)            | `sound-inf-0`, `sound-chk-0`, `sound-r`                 | Record/Soundness.agda                  |                   |
-| Corollary 5.8 (Completeness of Typing)         | `complete-inf`, `complete-chk`, `complete-r`            | Record/Completeness.agda               |                   |
-| Theorem 5.9 (Strong Annotatability)            | `annotatability`, `annotatability'`, `annotatability-r` | Record/Annotatability/Elaboration.agda |                   |
-| Theorem 5.10 (Type preservation after erasure) | `preserve`, `preserve-r`                                | TypeSound/Main.agda                    |                   |
-| Theorem 5.11 (Preservation of TAS)             | `preserve`, `preserve-r`                                | TypeSound/Target.agda                  |                   |
-| Theorem 5.12 (Progress of TAS)                 | `progress`, `progress-r`                                | TypeSound/Target.agda                  |                   |
-| Lemma 5.13 (Determinism of Typing)             | `⊢unique`, `⊢r-unique`                                  | Record/Algo/Uniqueness.agda            |                   |
-| Lemma 5.14 (Determinism of Subtyping)          | `≤unique`                                               | Record/Algo/Uniqueness.agda            |                   |
-| Theorem 5.15 (Decidability of Typing)          | `⊢dec-0`, `⊢r-dec`                                      | Record/Algo/Decidable.agda             |                   |
-| Theorem 5.16 (Decidability of Subtyping)       | `≤dec-0`                                                | Record/Algo/Decidable.agda             |                   |
-| Corollary 5.17 (Decidability of the QTAS)      | `qtas-dec-0`                                            | Record/Dec.agda                        |                   |
+| Theorem                                         | Agda                                                    | File Location                          | Comments (if any) |
+| ----------------------------------------------- | ------------------------------------------------------- | -------------------------------------- | ----------------- |
+| Lemma 5.1 (Reflexivity of Subtyping (Infinity)) | `≤refl∞`                                                | Record/Decl.agda                       |                   |
+| Lemma 5.2 (Transitivity of Subtyping)           | `≤trans`                                                | Record/Decl/Properties.agda            |                   |
+| Lemma 5.3 (A full type context) typing          | `⊢id-0`                                                 | Record/Algo/Properties.agda            |                   |
+| Lemma 5.4 (A full type context) subtyping       | `≤id-0`                                                 | Record/Algo/Properties.agda            |                   |
+| Lemma 5.5 (Typing implies subtyping)            | `⊢to-≤`                                                 | Record/Algo/Properties.agda            |                   |
+| Lemma 5.6 (General Subsumption)                 | `subsumption-0`                                         | Record/Algo/Properties.agda            |                   |
+| Corollary 5.7 (Soundness of Typing)             | `sound-inf-0`, `sound-chk-0`, `sound-r`                 | Record/Soundness.agda                  |                   |
+| Corollary 5.8 (Completeness of Typing)          | `complete-inf`, `complete-chk`, `complete-r`            | Record/Completeness.agda               |                   |
+| Theorem 5.9 (Strong Annotatability)             | `annotatability`, `annotatability'`, `annotatability-r` | Record/Annotatability/Elaboration.agda |                   |
+| Theorem 5.10 (Type preservation after erasure)  | `preserve`, `preserve-r`                                | TypeSound/Main.agda                    |                   |
+| Theorem 5.11 (Preservation of TAS)              | `preserve`, `preserve-r`                                | TypeSound/Target.agda                  |                   |
+| Theorem 5.12 (Progress of TAS)                  | `progress`, `progress-r`                                | TypeSound/Target.agda                  |                   |
+| Lemma 5.13 (Determinism of Typing)              | `⊢unique`, `⊢r-unique`                                  | Record/Algo/Uniqueness.agda            |                   |
+| Lemma 5.14 (Determinism of Subtyping)           | `≤unique`                                               | Record/Algo/Uniqueness.agda            |                   |
+| Theorem 5.15 (Decidability of Typing)           | `⊢dec-0`, `⊢r-dec`                                      | Record/Algo/Decidable.agda             |                   |
+| Theorem 5.16 (Decidability of Subtyping)        | `≤dec-0`                                                | Record/Algo/Decidable.agda             |                   |
+| Corollary 5.17 (Decidability of the QTAS)       | `qtas-dec-0`                                            | Record/Dec.agda                        |                   |
 
 ## QEMU Instructions
 
