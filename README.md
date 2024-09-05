@@ -1,22 +1,6 @@
-# ICFP 2024 Artifact
-
-Name: Contextual Typing
+# Contextual Typing
 
 ## Step-by-step Instructions
-
-We provide two alternatives: 
-
-1. start from the source code in your local machine, or 
-1. use the provided VM with the environment installed.
-
-### Option 1: Build the source locally
-
-We recommend the reviewer to go for this option, based on two reasons:
-
-* This artifact is all about normal Agda, with its standard libraries. It will not bring too much trouble to the environment setup.
-* The review of the artifact is mainly about comparing the figures, theorems and proofs between the paper and code. And we provide a script to generate nicely rendered html files. Reviewer is able to review the whole formalisation on their own web browser, once they have finished the compilation.
-
-The author(s) tested the code in a Macbook, so the suggested steps are based on this preference, however, this artifact is expected to work on any platform that supports Agda.
 
 #### Step 1: Install Agda and its standard library
 
@@ -45,38 +29,6 @@ agda --html README.agda --css "../css/Agda.css"
 
 The css file is configured for a nice font and layout.
 
-### Option 2: Use the provided VM
-
-We provide a VM image with the environment installed, and the project source was pre-compiled.
-
-#### Step 1: Start the VM
-
-Unarchive the provided VM image, then run the following command in the terminal:
-
-```
-./start.sh
-```
-
-This will boot the VM and show the login screen, the default username is `artifact` and the password is `password`.
-There are two folders in the home directory: `agda-stdlib` and `icfp`. The `icfp` is the source folder.
-Run the following command to type check the agda:
-
-```
-cd icfp
-agda README.agda
-```
-
-The first time it will take several minutes to compile since `agda-stdlib` needs some time.
-Since we pre-compiled it, the reviewer should only need to wait for a few seconds.
-
-We also provide the command to generate the html files:
-
-```
-agda --html README.agda --css "../css/Agda.css"
-```
-
-But it is suggested to run this command in the local machine, to utilize the web browser to view it.
-
 ## Correspondence with the paper
 
 The `README.agda` is the entry, which gives the overview of our Agda formalisation.
@@ -84,8 +36,6 @@ The `README.agda` is the entry, which gives the overview of our Agda formalisati
 Roughly, the paper presents several small QTASs in Section 3 and two main calculi in Section 3, 4 and 5.
 
 The several systems are formalized in root folder and two calculi have several own projection folder.
-
-We have tried our best to match the notation from Agda code with the paper, so the Agda script is readable to people with some experience in proof assistant. However, we prove the details about each theorem shown in the paper, to help better review this artifact.
 
 ### Bidirectional typing, let-argument-go-first and the corresponding QTASs
 
@@ -163,117 +113,3 @@ We have tried our best to match the notation from Agda code with the paper, so t
 | Theorem 5.15 (Decidability of Typing)           | `⊢dec-0`, `⊢r-dec`                                      | Record/Algo/Decidable.agda             |                   |
 | Theorem 5.16 (Decidability of Subtyping)        | `≤dec-0`                                                | Record/Algo/Decidable.agda             |                   |
 | Corollary 5.17 (Decidability of the QTAS)       | `qtas-dec-0`                                            | Record/Dec.agda                        |                   |
-
-## QEMU Instructions
-
-The ICFP 2024 Artifact Evaluation Process is using a Debian QEMU image as a
-base for artifacts. The Artifact Evaluation Committee (AEC) will verify that
-this image works on their own machines before distributing it to authors.
-Authors are encouraged to extend the provided image instead of creating their
-own. If it is not practical for authors to use the provided image then please
-contact the AEC co-chairs before submission.
-
-QEMU is a hosted virtual machine monitor that can emulate a host processor
-via dynamic binary translation. On common host platforms QEMU can also use
-a host provided virtualization layer, which is faster than dynamic binary
-translation.
-
-QEMU homepage: https://www.qemu.org/
-
-### Installation
-
-#### OSX
-``brew install qemu``
-
-#### Debian and Ubuntu Linux
-``apt-get install qemu-kvm``
-
-On x86 laptops and server machines you may need to enable the
-"Intel Virtualization Technology" setting in your BIOS, as some manufacturers
-leave this disabled by default. See Debugging.md for details.
-
-
-#### Arch Linux
-
-``pacman -Sy qemu``
-
-See the [Arch wiki](https://wiki.archlinux.org/title/QEMU) for more info.
-
-See Debugging.md if you have problems logging into the artifact via SSH.
-
-
-#### Windows 10
-
-Download and install QEMU via the links at
-
-https://www.qemu.org/download/#windows.
-
-Ensure that `qemu-system-x86_64.exe` is in your path.
-
-Start Bar -> Search -> "Windows Features"
-          -> enable "Hyper-V" and "Windows Hypervisor Platform".
-
-Restart your computer.
-
-#### Windows 8
-
-See Debugging.md for Windows 8 install instructions.
-
-### Startup
-
-The base artifact provides a `start.sh` script to start the VM on unix-like
-systems and `start.bat` for Windows. Running this script will open a graphical
-console on the host machine, and create a virtualized network interface.
-On Linux you may need to run with `sudo` to start the VM. If the VM does not
-start then check `Debugging.md`
-
-Once the VM has started you can login to the guest system from the host.
-Whenever you are asked for a password, the answer is `password`. The default
-username is `artifact`.
-
-```
-$ ssh -p 5555 artifact@localhost
-```
-
-You can also copy files to and from the host using scp.
-
-```
-$ scp -P 5555 artifact@localhost:somefile .
-```
-
-### Shutdown
-
-To shutdown the guest system cleanly, login to it via ssh and use
-
-```
-$ sudo shutdown now
-```
-
-### Artifact Preparation
-
-Authors should install software dependencies into the VM image as needed,
-preferably via the standard Debian package manager. For example, to install
-GHC and cabal-install, login to the host and type:
-
-```
-$ sudo apt update
-$ sudo apt install ghc
-$ sudo apt install cabal-install
-```
-
-If you really need a GUI then you can install X as follows, but we prefer
-console-only artifacts whenever possible.
-
-```
-$ sudo apt install xorg
-$ sudo apt install xfce4   # or some other window manager
-$ startx
-```
-
-See Debugging.md for advice on resolving other potential problems.
-
-If your artifact needs lots of memory you may need to increase the value
-of the `QEMU_MEM_MB` variable in the `start.sh` script.
-
-When preparing your artifact, please also follow the [Submission
-Guidelines](https://icfp24.sigplan.org/track/icfp-2024-artifact-evaluation#Submission-Guidelines).
