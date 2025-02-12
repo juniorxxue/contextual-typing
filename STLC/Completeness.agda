@@ -31,19 +31,18 @@ data _⊢_~_ where
 ~weaken ~∞ = ~∞
 ~weaken (~S⇒ ⊢e j~H) = ~S⇒ (⊢weaken ⊢e) (~weaken j~H)
 
-complete : ∀ {Γ H j e A}
-  → Γ ⊢ j # e ⦂ A
-  → Γ ⊢ ⟨ j , A ⟩ ~ H
-  → Γ ⊢ H ⇒ e ⇒ A
 
 complete-≈ : ∀ {Γ A j H}
   → Γ ⊢ ⟨ j , A ⟩ ~ H
   → Γ ⊢ A ≈ H
-
 complete-≈ ~Z = ≈□
 complete-≈ ~∞ = ≈τ
 complete-≈ (~S⇒ ⊢e j~H) = ≈term (subsumption-0 ⊢e ≈τ) (complete-≈ j~H)
 
+complete : ∀ {Γ H j e A}
+  → Γ ⊢ j # e ⦂ A
+  → Γ ⊢ ⟨ j , A ⟩ ~ H
+  → Γ ⊢ H ⇒ e ⇒ A
 complete ⊢int ~Z = ⊢lit
 complete (⊢var x) ~Z = ⊢var x
 complete (⊢ann ⊢e) ~Z = ⊢ann (complete ⊢e ~∞)

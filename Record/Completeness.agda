@@ -24,7 +24,7 @@ data _⊢_~_ where
     → Γ ⊢ □ ⇒ e ⇒ A
     → Γ ⊢ ⟨ i , B ⟩ ~ Σ
     → Γ ⊢ ⟨ S⇒ i , A `→ B ⟩ ~ (⟦ e ⟧⇒ Σ)
-    
+
 data _⊢_~j_ where
 
   ~Z : ∀ {Γ A}
@@ -45,7 +45,7 @@ data _⊢_~j_ where
 ~weaken : ∀ {Γ A i B Σ n n≤l}
   → Γ ⊢ ⟨ i , B ⟩ ~ Σ
   → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ i , B ⟩ ~ (Σ ⇧ n)
-  
+
 ~jweaken : ∀ {Γ A j B Σ n n≤l}
   → Γ ⊢ ⟨ j , B ⟩ ~j Σ
   → (Γ ↑ n [ n≤l ] A) ⊢ ⟨ j , B ⟩ ~j (Σ ⇧ n)
@@ -68,36 +68,11 @@ data _⊢_~j_ where
 Σ≢□→i≢Z {i = ♭ (Sl x)} i≢Z (~j (~Sl x₁)) = λ ()
 Σ≢□→i≢Z {i = S⇒ i} i≢Z (~S⇒ x i~Σ) = λ ()
 
--- the most general form of completeness theorem
-complete : ∀ {Γ Σ i e A}
-  → Γ ⊢ i # e ⦂ A
-  → Γ ⊢ ⟨ i , A ⟩ ~ Σ
-  → Γ ⊢ Σ ⇒ e ⇒ A
 
 complete-≤ : ∀ {Γ Σ i A B}
   → B ≤ i # A
   → Γ ⊢ ⟨ i , A ⟩ ~ Σ
   → Γ ⊢ B ≤ Σ ⇝ A
-
-complete-r : ∀ {Γ rs A}
-  → Γ ⊢r ♭ Z # rs ⦂ A
-  → Γ ⊢r □ ⇒ rs ⇒ A
-complete-r ⊢r-nil = ⊢nil
-complete-r (⊢r-one x) = ⊢one (complete x (~j ~Z))
-complete-r (⊢r-cons x ⊢r neq) = ⊢cons (complete x (~j ~Z)) (complete-r ⊢r) neq
-  
-complete ⊢c (~j ~Z) = ⊢c
-complete (⊢var x) (~j ~Z) = ⊢var x
-complete (⊢ann ⊢e) (~j ~Z) = ⊢ann (complete ⊢e (~j ~∞))
-complete (⊢lam₁ ⊢e) (~j ~∞) = ⊢lam₁ (complete ⊢e (~j ~∞))
-complete (⊢lam₂ ⊢e) (~S⇒ ⊢e' newΣ) = ⊢lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newΣ))
-complete (⊢app⇐ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~j (~S⇐ (complete ⊢e₁ (~j ~∞)) x)))
-complete (⊢app⇒ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
-complete (⊢app⇒ ⊢e ⊢e₁) (~S⇒ x newΣ) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newΣ)))
-complete (⊢sub ⊢e x x₁) newΣ = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newΣ )
-complete (⊢rcd x) (~j ~Z) = ⊢rcd (complete-r x)
-complete (⊢prj ⊢e) (~j x) = ⊢prj (complete ⊢e (~j (~Sl x)))
-
 complete-≤ ≤Z (~j ~Z) = ≤□
 complete-≤ ≤int∞ (~j ~∞) = ≤int
 complete-≤ ≤float∞ (~j ~∞) = ≤float
@@ -110,6 +85,31 @@ complete-≤ (≤rcd-Sl B≤A) (~j (~Sl x)) = ≤hint-l (complete-≤ B≤A (~j 
 complete-≤ (≤and₁ B≤A x) newΣ = ≤and-l (complete-≤ B≤A newΣ) (Σ≢□→i≢Z x newΣ)
 complete-≤ (≤and₂ B≤A x) newΣ = ≤and-r (complete-≤ B≤A newΣ) (Σ≢□→i≢Z x newΣ)
 complete-≤ (≤and B≤A B≤A₁) (~j ~∞) = ≤and (complete-≤ B≤A (~j ~∞)) (complete-≤ B≤A₁ (~j ~∞))
+
+-- the most general form of completeness theorem
+complete : ∀ {Γ Σ i e A}
+  → Γ ⊢ i # e ⦂ A
+  → Γ ⊢ ⟨ i , A ⟩ ~ Σ
+  → Γ ⊢ Σ ⇒ e ⇒ A
+
+complete-r : ∀ {Γ rs A}
+  → Γ ⊢r ♭ Z # rs ⦂ A
+  → Γ ⊢r □ ⇒ rs ⇒ A
+complete-r ⊢r-nil = ⊢nil
+complete-r (⊢r-one x) = ⊢one (complete x (~j ~Z))
+complete-r (⊢r-cons x ⊢r neq) = ⊢cons (complete x (~j ~Z)) (complete-r ⊢r) neq
+
+complete ⊢c (~j ~Z) = ⊢c
+complete (⊢var x) (~j ~Z) = ⊢var x
+complete (⊢ann ⊢e) (~j ~Z) = ⊢ann (complete ⊢e (~j ~∞))
+complete (⊢lam₁ ⊢e) (~j ~∞) = ⊢lam₁ (complete ⊢e (~j ~∞))
+complete (⊢lam₂ ⊢e) (~S⇒ ⊢e' newΣ) = ⊢lam₂ ⊢e' (complete ⊢e (~weaken {n≤l = z≤n} newΣ))
+complete (⊢app⇐ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~j (~S⇐ (complete ⊢e₁ (~j ~∞)) x)))
+complete (⊢app⇒ ⊢e ⊢e₁) (~j x) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~j x)))
+complete (⊢app⇒ ⊢e ⊢e₁) (~S⇒ x newΣ) = ⊢app (complete ⊢e (~S⇒ (complete ⊢e₁ (~j ~Z)) (~S⇒ x newΣ)))
+complete (⊢sub ⊢e x x₁) newΣ = subsumption-0 (complete ⊢e (~j ~Z)) (complete-≤ x newΣ )
+complete (⊢rcd x) (~j ~Z) = ⊢rcd (complete-r x)
+complete (⊢prj ⊢e) (~j x) = ⊢prj (complete ⊢e (~j (~Sl x)))
 
 -- two corollaries
 complete-inf : ∀ {Γ e A}
